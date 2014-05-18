@@ -1,0 +1,52 @@
+---
+layout: post
+title: "Another SynchronizationContext Gotcha: InvokeRequired?"
+tags: ["Threading", ".NET"]
+---
+
+
+There was a good post today by the Parallel Programming .NET Team where they clarify [how the upcoming Task class can make use of SynchronizationContext](http://blogs.msdn.com/pfxteam/archive/2009/09/22/9898090.aspx). In reading that post, I was reminded of Yet Another SynchronizationContext Gotcha.
+
+
+
+
+
+Given a [SynchronizationContext](http://msdn.microsoft.com/en-us/library/system.threading.synchronizationcontext.aspx) of unknown type, you _cannot tell_ if you are on a thread that is associated with that SynchronizationContext. This is the old "Do I need to invoke?" question that is answered by [ISynchronizeInvoke.InvokeRequired](http://msdn.microsoft.com/en-us/library/system.componentmodel.isynchronizeinvoke.invokerequired.aspx) on Windows Forms and [Dispatcher.CheckAccess](http://msdn.microsoft.com/en-us/library/system.windows.threading.dispatcher.checkaccess.aspx) on Windows Presentation Foundation. However, use of these methods is usually an earmark of poor design; most methods should not be designed to be called "from any thread" (unless they are part of a class used for thread synchronization).
+
+
+
+
+
+Back to the original statement: SynchronizationContext does not provide any way to determine if the current thread is associated with that SynchronizationContext. Note the vague term "associated with": normally, when people think of a SynchronizationContext, they assume that there is a single, specific associated thread with that SynchronizationContext, or that SynchronizationContext instances may be compared. However, that is not necessarily the case. In fact, **there is not a 1:1 correspondence between a SynchronizationContext and a Thread**. Consider the various types of SynchronizationContexts provided in the 3.5 framework:
+
+
+
+
+- [WindowsFormsSynchronizationContext](http://msdn.microsoft.com/en-us/library/system.windows.forms.windowsformssynchronizationcontext.aspx) - The Windows Forms implementation does in fact have a single, specific associated thread. Furthermore, there appears to be a 1:1 correspondence between SynchronizationContext instances and GUI threads.
+- [DispatcherSynchronizationContext](http://msdn.microsoft.com/en-us/library/system.windows.threading.dispatchersynchronizationcontext.aspx) - The WPF implementation also has a single, specific associated thread. However, there is not a 1:1 correspondence between SynchronizationContext instances and GUI threads. In particular, each WPF window gets its own SynchronizationContext instance, even though they all use the same Dispatcher for synchronization (assuming a single GUI thread). This is easy enough to test: create a solution with two windows, show them both, and have a button on each one access SynchronizationContext.Current; they will result in different instances even though they are both running on the same thread.
+- [SynchronizationContext](http://msdn.microsoft.com/en-us/library/system.threading.synchronizationcontext.aspx) - The base SynchronizationContext class itself is used as the ThreadPool implementation. This type doesn't even have a single, specific associated thread; it has a _set_ of associated threads which may grow and shrink over time.
+- AspNetSynchronizationContext - The strangest implementation of them all. Conceptually, this type does not have _any_ associated threads! When queueing delegates to its SynchronizationContext, ASP.NET applications just execute them directly. AspNetSynchronizationContext temporarily borrows its thread from the caller, so to speak.
+
+
+
+
+By now, it should be clear that there is not a 1:1 correspondence between SynchronizationContext instances and threads. Furthermore, implementations of SynchronizationContext may have a specific associated thread, a set of associated threads, or no associated threads at all.
+
+
+
+
+
+SynchronizationContext implementations also do not override equality to indicate whether they are in the same "associated thread set". While it is possible to do this with the current implementations, it is easy to imagine an implementation where this would be much more difficult (a custom thread pool, for instance, comprised of foreground threads).
+
+
+
+
+
+This situation is problematic for the asynchronous component designer. Starting with Version 1.4, the [Nito.Async](http://www.codeplex.com/NitoAsync) library contains a SynchronizationContextRegister that understands which guarantees are provided by which implementations of SynchronizationContext. The [previous gotchas](http://blog.stephencleary.com/2009/08/gotchas-from-synchronizationcontext.html) I mentioned are included (e.g., whether Post is non-reentrant), and the "single specific associated thread" guarantee covered in this post is also included. This is done in a generic way, allowing programs to override the built-in default values and also provide their own if they have their own implementations of SynchronizationContext.
+
+
+
+
+
+However, the fact remains that there is no generic way to determine if a SynchronizationContext is "associated" with the current thread. That is one "gotcha" that remains.
+
