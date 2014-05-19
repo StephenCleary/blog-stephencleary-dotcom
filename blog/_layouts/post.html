@@ -11,5 +11,38 @@ layout: default
   <article class="post-content">
   {{ content }}
   </article>
+    
+    <footer>
+        {% if page.series %}
+        
+        {% assign sawSelf = false %}
+        {% assign takeNext = false %}
+        {% assign siblings = site.posts | sort 'date' | sort 'seriesIndex' %}
+        {% for sibling in siblings %}
+            {% if sibling.series == page.series %}
+                {% if takeNext %}
+                    {% assign nextSibling = sibling %}
+                    {% assign takeNext = false %}
+                {% endif %}
+                {% if sibling.id == page.id %}
+                    {% assign sawSelf = true %}
+                    {% assign takeNext = true %}
+                {% endif %}
+                {% unless sawSelf %}
+                    {% assign previousSibling = sibling %}
+                {% endunless %}
+            {% endif %}
+        {% endfor %}
+        
+        <ul class="pager">
+            {% if previousSibling %}<li class="previous"><a href="{{ previousSibling.url }}">&larr; Previous in {{ page.series }}</a></li>{% endif %}
+            {% if nextSibling %}<li class="next"><a href="{{ nextSibling.url }}">Next in {{ page.series }} &rarr;</a></li>{% endif %}
+        </ul>
+        {% endif %}
 
+        <ul class="pager">
+            {% if page.previous %}<li class="previous"><a href="{{ page.previous.url }}">&larr; Previous Post</a></li>{% endif %}
+            {% if page.next %}<li class="next"><a href="{{ page.next.url }}">Next Post &rarr;</a></li>{% endif %}
+        </ul>
+    </footer>
 </div>
