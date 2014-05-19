@@ -94,9 +94,28 @@ body {
   color: #818181;
 }
 
+/* Fixes for Google Custom Search in a Bootstrap navbar */
+.content-box-sizing, .content-box-sizing *, .content-box-sizing *:before, .content-box-sizing *:after {
+    -webkit-box-sizing: content-box;
+    -moz-box-sizing: content-box;
+    box-sizing: content-box;
+}
+
+.content-box-sizing {
+    max-width: 400px;
+    padding-top: 4px;
+}
+
+.gsc-input-box {
+    height: auto;
+}
 
 /* Post styles */
 /* ----------------------------------------------------------*/
+
+.post .center {
+    text-align: center;
+}
 
 .post table {
     border-collapse:collapse;
@@ -106,6 +125,12 @@ body {
 }
 .post th, .post td {
     padding: 3px 5px;
+}
+
+.post img {
+    display: inline-block;
+    height: auto;
+    max-width: 100%;
 }
 
 @media(max-width:767px) {
