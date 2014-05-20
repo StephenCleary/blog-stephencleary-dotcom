@@ -3,38 +3,38 @@
 
   {% include head.html %}
 
-    <body>
+<body>
+    {% include header.html %}
 
-        {% include header.html %}
-        
-        <div class="google">
-            <gcse:searchresults></gcse:searchresults>            
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            {{ content }}
         </div>
-        <div class="container-fluid">
-            <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
-                {{ content }}
-            </div>
-            <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
-                {% if page.series %}
-                <ul class="nav nav-pills nav-stacked">
-                    <li class="navbar-brand sidenavitem">{{ page.series }}</li>
-                    {% assign siblings = site.posts | sort 'date' | sort 'seriesIndex' %}
-                    {% for sibling in siblings %}
-                    {% if sibling.series == page.series %}
-                    {% if sibling.id == page.id %}
-                    <li class="active sidenavitem"><a href="{{ sibling.url }}">{{ sibling.seriesTitle }}</a></li>
-                    {% else %}
-                    <li class="sidenavitem"><a href="{{ sibling.url }}">{{ sibling.seriesTitle }}</a></li>
-                    {% endif %}
-                    {% endif %}
-                    {% endfor %}
-                </ul>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            {% if page.series %}
+            <ul class="nav nav-pills nav-stacked">
+                <li class="navbar-brand sidenavitem">{{ page.series }}</li>
+                {% assign siblings = site.posts | sort 'date' | sort 'seriesIndex' %}
+                {% for sibling in siblings %}
+                {% if sibling.series == page.series %}
+                {% if sibling.id == page.id %}
+                <li class="active sidenavitem"><a href="{{ sibling.url }}">{{ sibling.seriesTitle }}</a></li>
+                {% else %}
+                <li class="sidenavitem"><a href="{{ sibling.url }}">{{ sibling.seriesTitle }}</a></li>
                 {% endif %}
-            </div>
-            <div class="col-sm-2 col-md-3">Test content.</div>
+                {% endif %}
+                {% endfor %}
+            </ul>
+            {% endif %}
         </div>
+        <div class="col-sm-2 col-md-3">Test content.</div>
+    </div>
 
-        {% include footer.html %}
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
 
-    </body>
+    {% include footer.html %}
+
+</body>
 </html>
