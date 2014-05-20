@@ -72,13 +72,16 @@ namespace ImportBlog
                             var series = tags.Intersect(KnownSeries.Keys).FirstOrDefault();
                             if (series != null)
                             {
+                                var seriesTitle = title;
+                                if (title.LastIndexOf(':') != -1)
+                                    seriesTitle = title.Substring(title.LastIndexOf(':') + 1).Trim();
                                 sb.AppendLine("series: " + YamlString(KnownSeries[series]));
-                                sb.AppendLine("seriesTitle: " + YamlString(title));
+                                sb.AppendLine("seriesTitle: " + YamlString(seriesTitle));
                                 log.WriteLine("series: " + published + ": " + title);
                             }
                             //sb.AppendLine("tags: [" + string.Join(", ", tags.Select(YamlString)) + "]");
                             sb.AppendLine("---");
-                            sb.Append(HtmlToMarkdown(XDocument.Parse(content, LoadOptions.PreserveWhitespace).Root, published, title, log));
+                            sb.Append(PostProcess(HtmlToMarkdown(XDocument.Parse(content, LoadOptions.PreserveWhitespace).Root, published, title, log)));
                             File.WriteAllText(filename, sb.ToString());
                         }
                         catch (Exception ex)
@@ -99,6 +102,12 @@ namespace ImportBlog
                 Console.WriteLine(ex);
             }
             Console.ReadKey();
+        }
+
+        private static readonly Regex ExcessiveLines = new Regex("\r?\n\r?\n(\r?\n)+");
+        private static string PostProcess(string value)
+        {
+            return ExcessiveLines.Replace(value, "\r\n\r\n");
         }
 
         private static string YamlString(string value)
@@ -133,8 +142,6 @@ namespace ImportBlog
             private static readonly HashSet<string> _unknownElementTypes = new HashSet<string>();
             private bool _inPre;
             private Stack<bool> _lists = new Stack<bool>();
-            private bool _inTableData;
-            private bool _inTable;
 
             public HtmlToMarkdownTranslator(DateTimeOffset published, string title, StreamWriter log)
             {
@@ -196,9 +203,9 @@ namespace ImportBlog
                                 var attribute = child.Attribute("class");
                                 var type = attribute == null ? null : attribute.Value;
                                 if (type == "csharp")
-                                    sb.Append("{% highlight csharp %}" + Parse(child) + "{% endhighlight %}");
+                                    sb.Append("{% highlight csharp %}\r\n" + Parse(child) + "{% endhighlight %}");
                                 else if (type == "xml")
-                                    sb.Append("{% highlight xml %}" + Parse(child) + "{% endhighlight %}");
+                                    sb.Append("{% highlight xml %}\r\n" + Parse(child) + "{% endhighlight %}");
                                 else
                                 {
                                     var text = Parse(child).Trim().Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
@@ -343,30 +350,15 @@ namespace ImportBlog
                         }
                         else if (child.Name == "table")
                         {
-                            _log.WriteLine("table: " + _published + ": " + _title);
-                            _inTable = true;
-                            _inTableData = false;
-                            sb.Append("{:.table .table-striped}\r\n");
-                            sb.Append(Parse(child));
-                            _inTable = false;
-                        }
-                        else if (child.Name == "tr")
-                        {
-                            sb.Append("|" + Parse(child) + "\r\n");
-                            if (!_inTableData)
-                            {
-                                sb.Append("|-\r\n");
-                                _inTableData = true;
-                            }
-                        }
-                        else if (child.Name == "th" || child.Name == "td")
-                        {
-                            sb.Append(Parse(child) + "|");
-                        }
-                        else if (child.Name == "caption")
-                        {
-                            sb.Append("{:.center.caption}\r\n");
-                            sb.Append(Parse(child) + "\r\n\r\n");
+                            sb.Append("<div class=\"panel panel-default\">\r\n");
+                            var caption = child.Element("caption");
+                            if (caption != null)
+                                sb.Append("  <div class=\"panel-heading\">" + caption.Value + "</div>\r\n");
+                            sb.Append("  <table class=\"table table-striped\">\r\n");
+                            foreach (var childNode in child.Nodes().Where(x => x.NodeType != XmlNodeType.Element || ((XElement)x).Name != "caption"))
+                                sb.Append(childNode);
+                            sb.Append("  </table>\r\n");
+                            sb.Append("</div>\r\n");
                         }
                         else
                         {
@@ -396,12 +388,7 @@ namespace ImportBlog
 
             private string Escape(string value)
             {
-                var result = value.Replace("\u00A0", "&nbsp;");
-                if (_inTable)
-                    result = result.Trim();
-                return result;
-                //.Replace("{", "\\{").Replace("}", "\\}").Replace("[", "\\[").Replace("]", "\\]").Replace("(", "\\(").Replace(")", "\\)")
-                //.Replace("+", "\\+").Replace("-", "\\-").Replace(".", "\\.").Replace("!", "\\!"));
+                return value.Replace("\u00A0", "&nbsp;");
             }
         }
     }

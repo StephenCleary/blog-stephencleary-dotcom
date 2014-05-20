@@ -2,31 +2,21 @@
 layout: post
 title: "Option Parsing: Default and Nullable Argument Values"
 series: "Option parsing"
-seriesTitle: "Option Parsing: Default and Nullable Argument Values"
+seriesTitle: "Default and Nullable Argument Values"
 ---
 Most of our examples so far have already dealt with options taking arguments, because most options in the real world _do_ take arguments. Today we'll start looking at option arguments in depth.
 
-
-
 The [option pipeline]({% post_url 2011-06-09-option-parsing-option-parsing-pipeline %}) post laid out the steps taken when using an Option Arguments class:
-
-
 
 1. The Option Arguments class is default-constructed.
 1. Attributes of properties on the class are used to produce a collection of option definitions.
 1. The command line is parsed, setting properties on the Option Arguments instance.
 
-
 We'll take advantage of these steps to handle several common scenarios.
-
-
 
 ## Default Values
 
 Default argument values are set in the default constructor:
-
-
-
 
 class Program
 {
@@ -69,8 +59,6 @@ class Program
   }
 }
 
-
-
 > CommandLineParsingTest.exe
 Level: 0
 Quality: 3
@@ -83,13 +71,9 @@ Quality: 3
 Level: 0
 Quality: 4
 
-
 ## Nullable Values
 
 There are some situations where a "default value" doesn't make sense for an option; you need to know whether there was a value passed, and what the value is (if it was passed). In this situation, you can use a nullable value type for your property:
-
-
-
 
 class Program
 {
@@ -131,8 +115,6 @@ class Program
     }
   }
 }
-
-
 
 > CommandLineParsingTest.exe
 Level not specified.

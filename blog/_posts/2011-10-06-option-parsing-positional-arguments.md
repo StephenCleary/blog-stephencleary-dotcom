@@ -6,22 +6,13 @@ seriesTitle: "Option Parsing; Positional Arguments"
 ---
 "Positional arguments" are any arguments not associated with an option. When using the [Nito.KitchenSink option parsing library](http://nuget.org/List/Packages/Nito.KitchenSink.OptionParsing), positional arguments must come after any options and their arguments.
 
-
-
 ## Individual Positional Arguments
 
 You can use the **PositionalArgumentAttribute** to specify positional arguments in your options class. This attribute takes a single integral parameter, the 0-based index of the positional argument.
 
-
-
 Positional arguments support the entire range of [parsing possibilities]({% post_url 2011-08-11-option-parsing-argument-parsing %}), including **SimpleParserAttribute**.
 
-
-
 This example uses a regular **Level** option along with a **Name** positional parameter.
-
-
-
 
 class Program
 {
@@ -58,8 +49,6 @@ class Program
   }
 }
 
-
-
 > CommandLineParsingTest.exe
 Level:
 Name:
@@ -79,15 +68,9 @@ Name: Bob
 > CommandLineParsingTest.exe Bob -l 13
 Unknown parameter  -l
 
-
 The last test above shows that positional arguments must come after all regular options.
 
-
-
 If you need to pass a positional argument that starts with a dash (-) or forward slash (/), you can pass the special option "--", which forces all remaining command-line arguments to be interpreted as positional arguments:
-
-
-
 
 > CommandLineParsingTest.exe -Negative
 Unknown option  N  in parameter  -Negative
@@ -96,21 +79,13 @@ Unknown option  N  in parameter  -Negative
 Level:
 Name: -Negative
 
-
 ## The Positional Argument Collection
 
 Every options class must have one property that can receive "extra" positional arguments. Extra positional arguments are any positional arguments after those defined by **PositionalArgumentAttribute**.
 
-
-
 Most programs do not need this functionality, so the **OptionArgumentsBase** class provides a simple collection called **AdditionalArguments**. By default, **OptionArgumentsBase.Validate** will throw an **UnknownOptionException** if any positional arguments end up in that collection.
 
-
-
 A program may make use of the **AdditionalArguments** collection by overriding **Validate**:
-
-
-
 
 class Program
 {
@@ -148,8 +123,6 @@ class Program
   }
 }
 
-
-
 > CommandLineParsingTest.exe
 Name:
 ArgList:
@@ -170,22 +143,13 @@ ArgList: -l, 13
 Name: Bob
 ArgList:
 
-
 Alternatively, an options class may provide its own collection, marked with the **PositionalArgumentsAttribute** (note the plural "Argument**s**"). When it does this, the options class may _not_ derive from **OptionArgumentsBase**; rather, it should implement the **IOptionArguments** interface.
-
-
 
 The property does not have to be **List<string>** (which is used by **OptionArgumentsBase**). The only requirements on the collection is that it only have one method named **Add** which takes a single parameter. The parameter does not have to be **string**; it can be any type, and the [standard parsing rules]({% post_url 2011-08-11-option-parsing-argument-parsing %}) apply.
 
-
-
 > This means that **PositionalArguments** can be placed on a property of dictionary type, as long as a matching parser is provided.
 
-
 Here's an example of a program taking any number of integer parameters:
-
-
-
 
 class Program
 {
@@ -226,8 +190,6 @@ class Program
     }
   }
 }
-
-
 
 > CommandLineParsingTest.exe
 Integers:

@@ -4,15 +4,9 @@ title: "NuGet Packages for Nito.KitchenSink"
 ---
 Ever since NuGet was released, I've been working on changing the design of the [Nito.KitchenSink](http://nitokitchensink.codeplex.com/) library. As a CodePlex project, it's acted as a "catch-all" for reusable code that wasn't large enough for its own project. NuGet provides a simple way to handle many small packages.
 
-
-
 I've been taking the more stable parts of Nito.KitchenSink, reviewing the design of each type, completing the XML documentation, and instrumenting them with Code Contracts. Tonight, the first twelve packages were published to the official NuGet feed. They all start with "Nito.KitchenSink".
 
-
-
 The KitchenSink project will continue, but this is the first step of making it into a "library collection" rather than a single library. Eventually, the huge ILMerged binary will be replaced by many independent NuGet packages and a single, smaller binary.
-
-
 
 <!--
 

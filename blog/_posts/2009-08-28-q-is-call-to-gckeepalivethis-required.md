@@ -8,7 +8,6 @@ title: "Q&A: Is a call to GC.KeepAlive(this) required in Dispose?"
 
 ## Rationale:
 
-
 - Dispose() must be safe to call multiple times.
 - To prevent multiple disposal of unmanaged resources, there must exist some kind of object-level flag (e.g., "bool disposed") or state (e.g., an invalid handle value) to detect if the object has been disposed.
 - This flag must be set by Dispose (or a method invoked by Dispose) _after_ it is checked.
@@ -18,18 +17,14 @@ title: "Q&A: Is a call to GC.KeepAlive(this) required in Dispose?"
 - The [concurrency rules for the Microsoft CLR](http://www.bluebytesoftware.com/blog/2007/11/10/CLR20MemoryModel.aspx) guarantee that this is safe for any reasonable type of flag (bool, IntPtr, or reference type).
 - Therefore, GC.KeepAlive(this) is only required if the flag is of a very unusual type (such as a Double) OR if the flag is inside _another_ object.
 
-
 This reasoning concludes that for 99% of handle objects, a call to GC.KeepAlive(this) is not required. Furthermore, for 99% of the remaining objects, [a call to GC.SuppressFinalize should be used instead of a call to GC.KeepAlive]({% post_url 2009-08-28-q-if-dispose-calls-suppressfinalize-is %}).
-
-
 
 ## Example 1 not requiring GC.KeepAlive(this)
 
 This example uses a "bool disposed" flag, set _before_ disposing the unmanaged resource:
 
-
-
-{% highlight csharp %}// Do not run these tests from a Debug build or under the debugger. A standalone release build is required.
+{% highlight csharp %}
+// Do not run these tests from a Debug build or under the debugger. A standalone release build is required.
 private bool disposed;
  
 ~Test()
@@ -60,9 +55,8 @@ public void Dispose()
 
 This example uses a "bool disposed" flag, set _after_ disposing the unmanaged resource:
 
-
-
-{% highlight csharp %}// Do not run these tests from a Debug build or under the debugger. A standalone release build is required.
+{% highlight csharp %}
+// Do not run these tests from a Debug build or under the debugger. A standalone release build is required.
 private bool disposed;
  
 ~Test()
@@ -93,9 +87,8 @@ public void Dispose()
 
 This example uses an "invalid handle" flag:
 
-
-
-{% highlight csharp %}// Do not run these tests from a Debug build or under the debugger. A standalone release build is required.
+{% highlight csharp %}
+// Do not run these tests from a Debug build or under the debugger. A standalone release build is required.
 private IntPtr handle;
  
 ~Test()
@@ -126,9 +119,8 @@ public void Dispose()
 
 It is possible to create a more pathological case where GC.KeepAlive(this) is required; the code below requires GC.KeepAlive because it holds its actual handle value inside of another class:
 
-
-
-{% highlight csharp %}// Do not run these tests from a Debug build or under the debugger. A standalone release build is required.
+{% highlight csharp %}
+// Do not run these tests from a Debug build or under the debugger. A standalone release build is required.
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -250,7 +242,6 @@ public class Test : IDisposable
 
 ## Output with [2] commented out (as written above):
 
-
 Thread 1: CloseHandle starting
 Thread 1: Garbage collection in CloseHandle!
 Thread 2: Finalizer called
@@ -263,9 +254,7 @@ Thread 1: CloseHandle ending
 Thread 1: Returning from Main
 Thread 2: CloseHandle ending
 
-
 ## Output with [1] and [2] commented out:
-
 
 Thread 1: CloseHandle starting
 Thread 1: Garbage collection in CloseHandle!
@@ -279,9 +268,7 @@ Thread 1: Released handle 0x0
 Thread 1: CloseHandle ending
 Thread 1: Returning from Main
 
-
 ## Output with neither line commented out, OR with just [1] commented out:
-
 
 Thread 1: CloseHandle starting
 Thread 1: Garbage collection in CloseHandle!
@@ -291,7 +278,6 @@ Thread 1: CloseHandle ending
 Thread 1: Returning from Main
 Thread 2: Finalizer called
 Thread 2: CloseHandle starting
-
 
 ## Closing Notes
 

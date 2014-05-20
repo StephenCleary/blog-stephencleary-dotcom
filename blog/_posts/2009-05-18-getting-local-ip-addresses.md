@@ -4,13 +4,11 @@ title: "Sample Code: Getting the Local IP Addresses"
 ---
 (This post is part of the [TCP/IP .NET Sockets FAQ]({% post_url 2009-04-30-tcpip-net-sockets-faq %}))
 
-
-
 The sample code below enumerates all the adapters on a machine, and then enumerates all IPv4 addresses for each adapter. This is necessary because [a computer may have multiple IP addresses]({% post_url 2009-05-18-getting-local-ip-address %}).
 
-
  
-{% highlight csharp %}/// <summary>
+{% highlight csharp %}
+/// <summary>
 /// This utility function displays all the IP (v4, not v6) addresses of the local computer.
 /// </summary>
 public static void DisplayIPAddresses()

@@ -4,21 +4,14 @@ title: "Async Producer/Consumer Queue using Dataflow"
 ---
 Today we'll build on what we learned about Dataflow to build an async-compatible producer/consumer queue.
 
-
-
 A _producer/consumer queue_ is a classic problem in multithreading: you have one (or more) "producers" which are producing data, you have one (or more) "consumers" which are consuming data, and you need some kind of data structure that will receive data from the producer(s) and provide it to the consumer(s).
-
-
 
 Using TPL Dataflow, this is incredibly easy: a `BufferBlock` is an async-ready producer/consumer queue. We'll start with the simple example of a single producer and consumer, and build from there.
 
-
-
 Our producer can just enqueue a sequence of values, and then mark the queue as complete:
 
-
-
-{% highlight csharp %}private static void Produce(BufferBlock<int> queue, IEnumerable<int> values)
+{% highlight csharp %}
+private static void Produce(BufferBlock<int> queue, IEnumerable<int> values)
 {
     foreach (var value in values)
     {
@@ -31,9 +24,8 @@ Our producer can just enqueue a sequence of values, and then mark the queue as c
 
 Similarly, the consumer can just await until a value is ready in the queue, and then add it to its collection of received values. Note that this works only if we have a single consumer; if we have multiple consumers, then they would all see the output available, but they wouldn't all be able to receive it.
 
-
-
-{% highlight csharp %}private static async Task<IEnumerable<int>> Consume(BufferBlock<int> queue)
+{% highlight csharp %}
+private static async Task<IEnumerable<int>> Consume(BufferBlock<int> queue)
 {
     var ret = new List<int>();
     while (await queue.OutputAvailableAsync())
@@ -47,9 +39,8 @@ Similarly, the consumer can just await until a value is ready in the queue, and 
 
 We can wrap these up in a simple unit test:
 
-
-
-{% highlight csharp %}[TestMethod]
+{% highlight csharp %}
+[TestMethod]
 public async Task ConsumerReceivesCorrectValues()
 {
     // Define the mesh.
@@ -73,13 +64,10 @@ public async Task ConsumerReceivesCorrectValues()
 
 A common requirement for producer/consumer queues is a throttling restriction. We don't want to run out of memory if the producers can produce data items faster than consumers can consume them!
 
-
-
 First, we need to change our producer. `Post` will (synchronously) block once the throttling threshold is reached, so we'll switch to the asynchronous `SendAsync` (and make the producer itself asynchronous):
 
-
-
-{% highlight csharp %}private static async Task Produce(BufferBlock<int> queue, IEnumerable<int> values)
+{% highlight csharp %}
+private static async Task Produce(BufferBlock<int> queue, IEnumerable<int> values)
 {
     foreach (var value in values)
     {
@@ -92,9 +80,8 @@ First, we need to change our producer. `Post` will (synchronously) block once th
 
 Dataflow blocks have built-in support for throttling, so adding this to the mesh is rather easy once we have an asynchronous producer. We can say there should never be more than 5 data items in the queue, and it's a one-line change (the line that defines the mesh):
 
-
-
-{% highlight csharp %}[TestMethod]
+{% highlight csharp %}
+[TestMethod]
 public async Task ConsumerReceivesCorrectValues()
 {
     // Define the mesh.
@@ -118,13 +105,10 @@ public async Task ConsumerReceivesCorrectValues()
 
 We can have multiple producers pushing data to the same queue (or any dataflow mesh). The only thing we have to change is when the block is completed.
 
-
-
 First, we remove the block completion from the producers:
 
-
-
-{% highlight csharp %}private static async Task Produce(BufferBlock<int> queue, IEnumerable<int> values)
+{% highlight csharp %}
+private static async Task Produce(BufferBlock<int> queue, IEnumerable<int> values)
 {
     foreach (var value in values)
     {
@@ -135,9 +119,8 @@ First, we remove the block completion from the producers:
 
 Now, we can write a simple "producer manager" method that will complete the queue when all producers complete:
 
-
-
-{% highlight csharp %}public async Task ProduceAll(BufferBlock<int> queue)
+{% highlight csharp %}
+public async Task ProduceAll(BufferBlock<int> queue)
 {
     var producer1 = Produce(queue, Enumerable.Range(0, 10));
     var producer2 = Produce(queue, Enumerable.Range(10, 10));
@@ -149,9 +132,8 @@ Now, we can write a simple "producer manager" method that will complete the queu
 
 The updated test looks like this (note that because we have three independent producers, the order of results is no longer guaranteed):
 
-
-
-{% highlight csharp %}[TestMethod]
+{% highlight csharp %}
+[TestMethod]
 public async Task ConsumerReceivesCorrectValues()
 {
     // Define the mesh.
@@ -174,13 +156,10 @@ public async Task ConsumerReceivesCorrectValues()
 
 The consumer side of this example does _work,_ but it's not done in a TPL Dataflowish sort of way. It starts to get more complicated when we consider multiple consumers, because there's no `TryReceiveAsync` available on our block.
 
-
-
 Instead of fighting the flow, let's change our consumer side to be TPL Dataflowish. Specifically, we're going to replace the consumer _method_ with a dataflow `ActionBlock`:
 
-
-
-{% highlight csharp %}[TestMethod]
+{% highlight csharp %}
+[TestMethod]
 public async Task ConsumerReceivesCorrectValues()
 {
     var results = new List<int>();
@@ -204,13 +183,10 @@ public async Task ConsumerReceivesCorrectValues()
 
 Notice that we set the `ExecutionDataflowBlockOptions.BoundedCapacity` for the consumer block to `1`. This is necessary if we want to maintain throttling. Without this set, the producers could produce tons of data items which pass through the queue block and get buffered up in the consumer block (making our queue throttling meaningless).
 
-
-
 Now that we have a consumer block, it's much more straightforward to add multiple consumers:
 
-
-
-{% highlight csharp %}[TestMethod]
+{% highlight csharp %}
+[TestMethod]
 public async Task ConsumerReceivesCorrectValues()
 {
     var results1 = new List<int>();
@@ -242,8 +218,5 @@ public async Task ConsumerReceivesCorrectValues()
 
 Note that `ExecutionDataflowBlockOptions.BoundedCapacity` is now performing another important function: in addition to maintaining the throttling, it is performing load balancing. If this is left at the default value (`DataflowBlockOptions.Unbounded`), then all of the data items will end up in the first consumer, which will buffer them up until it can process them. With the buffer limited to a single data item, the queue will offer its item to the next consumer when the first consumer is busy.
 
-
-
 In summary, we just reviewed two scenarios where we should set `BoundedCapacity` to a low number: when we want to maintain throttling throughout a pipeline, and when we have a "T" in our dataflow mesh.
-
 

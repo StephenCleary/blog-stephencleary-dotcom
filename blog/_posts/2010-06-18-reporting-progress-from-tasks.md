@@ -8,46 +8,25 @@ title: "Reporting Progress from Tasks"
 
 The .NET 4.0 [Task Parallel Library](http://msdn.microsoft.com/en-us/library/dd460717.aspx) respresents a huge shift in the way future multithreaded code will be written. The TPL and higher-level abstractions (such as the [Parallel class](http://msdn.microsoft.com/en-us/library/system.threading.tasks.parallel.aspx), [Parallel LINQ](http://msdn.microsoft.com/en-us/library/dd460688.aspx), and the [Reactive Extensions](http://msdn.microsoft.com/en-us/devlabs/ee794896.aspx)) will (hopefully) become the default approach for handling all multithreading situations. There is (almost) no reason to use the old [Thread class](http://msdn.microsoft.com/en-us/library/system.threading.thread.aspx) anymore.
 
-
-
 Similarly, the [BackgroundWorker class](http://msdn.microsoft.com/en-us/library/system.componentmodel.backgroundworker.aspx) has seen its heyday. It is time for this old class to retire as well. However, BGW does have one benefit over the TPL: it is easier to use for background tasks that need to report progress to the UI.
-
-
 
 Background tasks come in two basic flavors. Some of them update the UI infrequently, and can be easily broken into separate tasks which only update at each "checkpoint." Other background tasks update the UI more frequently, and cannot be easily divided this way.
 
-
-
 For the background tasks that infrequently update the UI, the common approach is to split them into separate Tasks with "checkpoints" in-between. At these "checkpoints," a [task continuation](http://msdn.microsoft.com/en-us/library/ee372288.aspx) is used to update the UI. The C# FAQ blog has [an entry](http://blogs.msdn.com/b/csharpfaq/archive/2010/06/18/parallel-programming-task-schedulers-and-synchronization-context.aspx) describing this approach.
-
-
 
 For the background tasks that need to frequently update the UI (and can't be easily split into "checkpointed" Tasks), another approach is necessary. The easiest solution is to create an inner Task to update the UI.
 
-
-
 This post introduces the ProgressReporter type, which greatly simplifies background tasks that need to do frequent progress reporting. The goal for ProgressReporter is to allow update code that is as simple as [BackgroundWorker.ProgressChanged](http://msdn.microsoft.com/en-us/library/system.componentmodel.backgroundworker.progresschanged.aspx).
-
-
 
 ## The Example Framework
 
 The UI is a single form with 3 buttons and a progress bar. The three buttons are Start, Error, and Cancel. The buttons are enabled and disabled based on whether the background task is running. The progress bar shows the progress of the task.
 
-
-
 The background task runs for 3 seconds, counting from 0 to 99, updating the progress bar every 30 milliseconds. The task will then produce a result of 42. If the Error button is used to start the task, then the task will throw an exception instead of producing a result. The task is also cancelable, checking for cancellation each time it reports progress.
-
-
 
 This is a rather complex example; it covers each background task scenario (successful completion, error conditions, and cancellation).
 
-
-
 The UI framework is the same regardless of whether a BackgroundWorker or Task object is used for the background task:
-
-
-
 
 using System;
 using System.Windows.Forms;
@@ -136,21 +115,13 @@ class Program
   }
 }
 
-
 This defines a form called MainForm that has the UI described above. The two methods TaskIsRunning and TaskIsComplete handle the enabling and disabling of the buttons. There are also partial methods as placeholders for the button click events; these are used by the sample code below.
 
-
-
 You can copy the code above by double-clicking it and then pressing Ctrl-C; then paste it into the Program.cs of a Windows Forms project. It should compile and run, displaying the form, but the buttons don't do anything yet.
-
-
 
 ## A BGW That Updates Progress Frequently
 
 Here's what the code looks like for a BGW that checks in frequently:
-
-
-
 
 using System;
 using System.ComponentModel;
@@ -245,17 +216,11 @@ partial class MainForm
   }
 }
 
-
 You can copy and paste this code into a cs file in the Windows Forms solution, such as MainForm.cs. The solution should then build, and you can play with the buttons to test all three scenarios (successful completion, error condition, and cancellation).
-
-
 
 ## A Task That Updates Progress Frequently
 
 Using the ProgressReporter class (defined below), translating this BGW code to Task code is rather easy; no explicit continuation scheduling is needed:
-
-
-
 
 using System;
 using System.Threading;
@@ -345,33 +310,19 @@ partial class MainForm
   }
 }
 
-
 You can copy and paste this code into a cs file in the Windows Forms solution, such as MainForm.cs. The solution won't build until you add the code for the ProgressReporter class below.
-
-
 
 ## The ProgressReporter Class
 
 The ProgressReporter class is responsible for two things: the reporting of _progress_ by a background task, and the reporting of a _final result_ by the background task.
 
-
-
 A background Task calls ProgressReporter.ReportProgress to report progress to the UI thread. This method will pause the background task until the UI has finished updating; if the task does not need to wait, then it can call ProgressReporter.ReportProgressAsync.
-
-
 
 The code starting the background Task can also use ProgressReporter to retrieve the final result of the background task. This is done by calling the ProgressReporter.RegisterContinuation method. The delegate passed to this method is executed in the UI thread context after the background task completes. The delegate can then examine the Task object for its status (see the example code above).
 
-
-
 In addition to the RegisterContinuation method, the ProgressReporter provides RegisterSucceededHandler, RegisterFaultedHandler, and RegisterCancelledHandler methods if it is easier to handle these situations separately.
 
-
-
 The code for this class is not very complex:
-
-
-
 
 using System;
 using System.Threading;
@@ -523,7 +474,6 @@ public sealed class ProgressReporter
     return task.ContinueWith(_ => action(), CancellationToken.None, TaskContinuationOptions.OnlyOnCanceled, this.Scheduler);
   }
 }
-
 
 You can copy and paste this code into a cs file in the Windows Forms solution, such as ProgressReporter.cs. The solution should then build, and you can play with the buttons to test all three scenarios (successful completion, error condition, and cancellation).
 

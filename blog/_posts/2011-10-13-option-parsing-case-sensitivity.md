@@ -2,12 +2,9 @@
 layout: post
 title: "Option Parsing: Case Sensitivity"
 series: "Option parsing"
-seriesTitle: "Option Parsing: Case Sensitivity"
+seriesTitle: "Case Sensitivity"
 ---
 By default, all option parsing is case-sensitive:
-
-
-
 
 class Program
 {
@@ -38,19 +35,13 @@ class Program
   }
 }
 
-
-
 > CommandLineParsingTest.exe /name Bob
 Name: Bob
 
 > CommandLineParsingTest.exe /Name Bob
 Unknown option  Name  in parameter  /Name
 
-
 This is normal for Unix users, but Windows users expect case-insensitivity. You can pass your own **StringComparer** to the **Parse** method to support case-insensitivity:
-
-
-
 
 class Program
 {
@@ -80,8 +71,6 @@ class Program
     }
   }
 }
-
-
 
 > CommandLineParsingTest.exe /name Bob
 Name: Bob

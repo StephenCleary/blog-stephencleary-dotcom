@@ -4,22 +4,16 @@ title: "Detection of Half-Open (Dropped) Connections"
 ---
 (This post is part of the [TCP/IP .NET Sockets FAQ]({% post_url 2009-04-30-tcpip-net-sockets-faq %}))
 
-
-
 There is a three-way handshake to open a TCP/IP connection, and a four-way handshake to close it. However, once the connection has been established, if neither side sends any data, then no packets are sent over the connection. TCP is an "idle" protocol, happy to assume that the connection is active until proven otherwise.
-
 
  
 TCP was designed this way for resiliency and efficiency. This design enables a graceful recovery from unplugged network cables and router crashes. e.g., a client may connect to a server, an intermediate router may be rebooted, and after the router comes back up, the original connection still exists (this is true unless data is sent across the connection while the router was down). This design is also efficient, since no "polling" packets are sent across the network just to check if the connection is still OK (reduces unnecessary network traffic).
 
-
  
 TCP does have acknowledgments for data, so when one side sends data to the other side, it will receive an acknowledgment if the connection is stil active (or an error if it is not). Thus, broken connections can be detected by sending out data. It is important to note that the act of _receiving_ data is completely passive in TCP; a socket that only reads cannot detect a dropped connection.
 
-
  
 This leads to a scenario known as a "half-open connection". At any given point in most protocols, one side is expected to send a message and the other side is expecting to receive it. Consider what happens if an intermediate router is suddenly rebooted at that point: the receiving side will continue waiting for the message to arrive; the sending side will send its data, and receive an error indicating the connection was lost. Since broken connections can only be detected by _sending_ data, the receiving side will wait forever. This scenario is called a "half-open connection" because one side realizes the connection was lost but the other side believes it is still active.
-
 
  
 > Terminology alert: "half-open" is completely different than "half-closed". Half-closed connections are when one side performs a Shutdown operation on its socket, shutting down only the sending (outgoing) stream. See [Socket Operations]({% post_url 2009-05-05-socket-operations %}) for more details on the Shutdown operation.
@@ -35,22 +29,16 @@ Half-open connections are in that annoying list of problems that one seldomly se
 - **Network cable unplugged.** Any network cables unplugged along the route from one side to the other will cause a loss of connection without any notification. This is similar to the router case; if there is no data being transferred, then the connection is not actually lost. However, computers usually will detect if their specific network cable is unplugged and may notify their local sockets that the network was lost (the remote side will not be notified).
 - **Wireless devices (including laptops) moving out of range.** A wireless device that moves out of its access point range will lose its connection. This is an often-overlooked but increasingly common situation.
 
-
-
-
  
 In all of the situations above, it is possible that one side may be aware of the loss of connection, while the other side is not.
-
 
  
 ## Is Explicit Detection Necessary?
  
 There are some situations in which detection is not necessary. A "poll" system (as opposed to a "subscription/event" system) already has a timer built in (the poll timer), and sends data across the connection regularly. So the polling side does not need to explicitly check for connection loss.
 
-
  
 The necessity of detection must be considered separately for each side of the communication. e.g., if the protocol is based on a polling scheme, then the side doing the polling does not need explicit keepalive handling, but the side responding to the polling likely does need explicit keepalive handling.
-
 
  
 > True Story: I once had to write software to control a serial device that operated through a "bridge" device that exposed the serial port over TCP/IP. The company that developed the bridge implemented a simple protocol: they listened for a single TCP/IP connection (from anywhere), and - once the connection was established - sent any data received from the TCP/IP connection to the serial port, and any data received from the serial port to the TCP/IP connection. Of course, they only allowed one TCP/IP connection (otherwise, there could be contention over the serial port), so other connections were refused as long as there was an established connection.
@@ -71,9 +59,6 @@ There are a couple of wrong methods to detect dropped connections. Beginning soc
 
  - **A Second socket connection.** A new socket connection cannot determine the validity of an existing connection in all cases. In particular, if the remote side has crashed and rebooted, then a second connection attempt will succeed even though the original connection is in a half-open state.
  - **Ping.** Sending a ping (ICMP) to the remote side has the same problem: it may succeed even when the connection is unusable. Furthermore, ICMP traffic is often treated differently than TCP traffic by routers.
-
-
-
 
  
 ## Correct Methods to Detect Dropped Connections
@@ -104,15 +89,10 @@ _Advantages._ Once the code to set the keepalive parameters is working, there is
 
 _Disadvantages._ RFC 1122, section 4.2.3.6 indicates that acknowledgements for TCP keepalives without data may not be transmitted reliably by routers; this may cause valid connections to be dropped. Furthermore, TCP/IP stacks are not required to support keepalives at all (and many embedded stacks do not), so this solution may not translate to other platforms.
 
-
  
 Each side of the application protocol may employ different keepalive solutions, and even different keepalive solutions at different states in the protocol. For example, the client side of a request/response style protocol may choose to send "null" requests when there is not a request pending, and switch to a timeout solution while waiting for a response.
 
-
-
 However, when designing a new protocol, it is best to employ one of the solutions consistently.
-
-
 
 (This post is part of the [TCP/IP .NET Sockets FAQ]({% post_url 2009-04-30-tcpip-net-sockets-faq %}))
 

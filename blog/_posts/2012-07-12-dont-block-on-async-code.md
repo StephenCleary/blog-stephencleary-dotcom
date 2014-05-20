@@ -4,14 +4,9 @@ title: "Don't Block on Async Code"
 ---
 This is a problem that is brought up repeatedly on the forums and Stack Overflow. I think it's the most-asked question by async newcomers once they've learned the basics.
 
-
-
 ## UI Example
 
 Consider the example below. A button click will initiate a REST call and display the results in a text box (this sample is for Windows Forms, but the same principles apply to _any_ UI application).
-
-
-
 
 // My "library" method.
 public static async Task<JObject> GetJsonAsync(Uri uri)
@@ -30,21 +25,13 @@ public void Button1_Click(...)
   textBox1.Text = jsonTask.Result;
 }
 
-
 The "GetJson" helper method takes care of making the actual REST call and parsing it as JSON. The button click handler waits for the helper method to complete and then displays its results.
 
-
-
 This code will deadlock.
-
-
 
 ## ASP.NET Example
 
 This example is very similar; we have a library method that performs a REST call, only this time it's used in an ASP.NET context (Web API in this case, but the same principles apply to _any_ ASP.NET application):
-
-
-
 
 // My "library" method.
 public static async Task<JObject> GetJsonAsync(Uri uri)
@@ -66,29 +53,17 @@ public class MyController : ApiController
   }
 }
 
-
 This code will also deadlock. For the same reason.
-
-
 
 ## What Causes the Deadlock
 
 Here's the situation: remember [from my intro post]({% post_url 2012-02-02-async-and-await %}) that after you await a Task, when the method continues it will continue _in a context_.
 
-
-
 In the first case, this context is a UI context (which applies to _any_ UI except Console applications). In the second case, this context is an ASP.NET request context.
-
-
 
 One other important point: an ASP.NET request context is not tied to a specific thread (like the UI context is), but it _does_ only allow one thread in _at a time_. This interesting aspect is not officially documented anywhere AFAIK, but it is mentioned in [my MSDN article about SynchronizationContext](http://msdn.microsoft.com/en-us/magazine/gg598924.aspx).
 
-
-
 So this is what happens, starting with the top-level method (Button1_Click for UI / MyController.Get for ASP.NET):
-
-
-
 
 1. The top-level method calls GetJsonAsync (within the UI/ASP.NET context).
 1. GetJsonAsync starts the REST request by calling HttpClient.GetStringAsync (still within the context).
@@ -99,26 +74,16 @@ So this is what happens, starting with the top-level method (Button1_Click for U
 1. The continuation for GetJsonAsync is now ready to run, and it waits for the context to be available so it can execute in the context.
 1. Deadlock. The top-level method is blocking the context thread, waiting for GetJsonAsync to complete, and GetJsonAsync is waiting for the context to be free so it can complete.
 
-
 For the UI example, the "context" is the UI context; for the ASP.NET example, the "context" is the ASP.NET request context. This type of deadlock can be caused for either "context".
-
-
 
 ## Preventing the Deadlock
 
 There are two best practices (both covered in [my intro post]({% post_url 2012-02-02-async-and-await %})) that avoid this situation:
 
-
-
-
  1. In your "library" async methods, use ConfigureAwait(false) wherever possible.
  1. Don't block on Tasks; use async all the way down.
 
-
 Consider the first best practice. The new "library" method looks like this:
-
-
-
 
 public static async Task<JObject> GetJsonAsync(Uri uri)
 {
@@ -129,15 +94,9 @@ public static async Task<JObject> GetJsonAsync(Uri uri)
   }
 }
 
-
 This changes the continuation behavior of GetJsonAsync so that it does _not_ resume on the context. Instead, GetJsonAsync will resume on a thread pool thread. This enables GetJsonAsync to complete the Task it returned without having to re-enter the context.
 
-
-
 Consider the second best practice. The new "top-level" methods look like this:
-
-
-
 
 public async void Button1_Click(...)
 {
@@ -154,37 +113,24 @@ public class MyController : ApiController
   }
 }
 
-
 This changes the blocking behavior of the top-level methods so that the context is never actually blocked; all "waits" are "asynchronous waits".
-
-
 
 **Note:** It is best to apply both best practices. Either one will prevent the deadlock, but _both_ must be applied to achieve maximum performance and responsiveness.
 
-
-
 ## Resources
-
 
   - My [introduction to async/await]({% post_url 2012-02-02-async-and-await %}) is a good starting point. 
   - Stephen Toub's blog post [Await, and UI, and deadlocks! Oh, my!](http://blogs.msdn.com/b/pfxteam/archive/2011/01/13/10115163.aspx) covers this exact type of deadlock (in January of 2011, no less!).
   - If you prefer videos, [Stephen Toub demoed this deadlock live](http://channel9.msdn.com/Events/BUILD/BUILD2011/TOOL-829T) (39:40 - 42:50, but the whole presentation is great!). [Lucian Wischik also demoed this deadlock](http://blogs.msdn.com/b/lucian/archive/2012/03/29/talk-async-part-1-the-message-loop-and-the-task-type.aspx) using VB (17:10 - 19:15).
   - The [Async/Await FAQ](http://blogs.msdn.com/b/pfxteam/archive/2012/04/12/10293335.aspx) goes into detail on exactly when contexts are captured and used for continuations.
 
-
 This kind of deadlock is always the result of mixing synchronous with asynchronous code. Usually this is because people are just trying out async with one small piece of code and use synchronous code everywhere else. Unfortunately, partially-asynchronous code is much more complex and tricky than just making everything asynchronous.
 
-
-
 If you _do_ need to maintain a partially-asynchronous code base, then be sure to check out two more of Stephen Toub's blog posts: [Asynchronous Wrappers for Synchronous Methods](http://blogs.msdn.com/b/pfxteam/archive/2012/03/24/10287244.aspx) and [Synchronous Wrappers for Asynchronous Methods](http://blogs.msdn.com/b/pfxteam/archive/2012/04/13/10293638.aspx), as well as my [AsyncEx library](http://nitoasyncex.codeplex.com/).
-
-
 
 ## Answered Questions
 
 There are scores of answered questions out there that are all caused by the same deadlock problem. It has shown up on WinRT, WPF, Windows Forms, Windows Phone, MonoDroid, Monogame, and ASP.NET.
-
-
 
 <!--
 Boring list that I'm no longer interested enough in to maintain.

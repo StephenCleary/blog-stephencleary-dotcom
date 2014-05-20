@@ -4,20 +4,11 @@ title: "Dynamically Binding to Static (Class-Scoped) Members"
 ---
 .NET 4.0 was a huge release, containing a wide variety of much-anticipated features. One of these features is the C# support for dynamic languages via the new keyword _dynamic_. Dynamic brings some very powerful semantics into the language, and naturally also comes with a few limitations.
 
-
-
 One limitation is dynamically accessing static (class-scoped) members. The _dynamic_ type is intended to represent a dynamic instance, not a dynamic class. For example, if two different classes have the same static method defined, there is no way to use _dynamic_ to invoke those static methods.
-
-
 
 One can use the [DynamicObject](http://msdn.microsoft.com/en-us/library/system.dynamic.dynamicobject.aspx) class to redirect instance member access to static member access. This approach was first explored in David Ebbo's blog post ["Using C# dynamic to call static members"](http://blogs.msdn.com/davidebb/archive/2009/10/23/using-c-dynamic-to-call-static-members.aspx). However, this approach brings with it its own limitation.
 
-
-
 The general concept is to implement a DynamicObject type that uses reflection to access static members. This makes sense since _dynamic_ may be seen as a more user-friendly type of reflection (of course, this simple interpretation ignores a lot of other DLR benefits). Unfortunately, DynamicObject does not support the concept of ref/out parameters, even though they are fully supported by _dynamic_. There is a work-around for this: wrapping ref or out parameters, adding a layer of indirection. The RefOutArg class was invented for this purpose ([official source](http://nitokitchensink.codeplex.com/SourceControl/changeset/view/51391#1073961)):
-
-
-
 
 /// <summary>
 /// A wrapper around a "ref" or "out" argument invoked dynamically.
@@ -73,15 +64,9 @@ public sealed class RefOutArg
     }
 }
 
-
 RefOutArg is a very simple class that contains a single value (which can be accessed either as _object_ or _dynamic_).
 
-
-
 The DynamicStaticTypeMembers class enables dynamic access to static members. It is similar to David's StaticMembersDynamicWrapper, only this class allows setting static properties, invoking overloaded static methods, and ref/out parameters using RefOutArg ([official source](http://nitokitchensink.codeplex.com/SourceControl/changeset/view/51391#1073960)):
-
-
-
 
 using System;
 using System.Diagnostics;
@@ -233,43 +218,27 @@ public sealed class DynamicStaticTypeMembers : DynamicObject
     }
 }
 
-
 An instance of DynamicStaticTypeMembers may be constructed by passing either a generic type or Type instance into the Create method:
-
-
-
 
 var mathClass = DynamicStaticTypeMembers.Create(typeof(Math));
 var intEqualityComparerClass = DynamicStaticTypeMembers.Create<EqualityComparer<int>>();
 var threadClass = DynamicStaticTypeMembers.Create<Thread>();
 var intClass = DynamicStaticTypeMembers.Create<int>();
 
-
 Once created, any static property or method of that class may be invoked using instance syntax:
-
-
-
 
 int result0 = mathClass.Min(13, 15); // invokes Math.Min(int, int)
 var comparer = intEqualityComparerClass.Default; // gets EqualityComparer<int>.Default
 threadClass.CurrentPrincipal = new GenericPrincipal(new GenericIdentity("Bob"), new string[] { }); // sets Thread.CurrentPrincipal
 
-
 Invoking methods with ref or out parameters is more awkward, but possible:
-
-
-
 
 int result1;
 var result1arg = RefOutArg.Create<int>(); // or: RefOutArg.Create(0);
 intClass.TryParse("13", result1arg); // invokes int.TryParse(string, out int)
 result1 = result1arg.Value;
 
-
 This can be a powerful tool in some cases, allowing a higher form of "duck typing." For instance, the new [BigInteger](http://msdn.microsoft.com/en-us/library/system.numerics.biginteger.aspx) numeric type defines its own _DivRem_ method similar to the existing _DivRem_ methods defined on the [Math](http://msdn.microsoft.com/en-us/library/system.math.aspx) class for _int_ and _long_. Using DynamicStaticTypeMembers, it is possible to define a generic _DivRem_ that attempts to invoke _Math.DivRem_ but falls back on a _DivRem_ defined by the numeric type:
-
-
-
 
 public static T DivRem<T>(T dividend, T divisor, out T remainder)
 {
@@ -290,10 +259,7 @@ public static T DivRem<T>(T dividend, T divisor, out T remainder)
     return ret;
 }
 
-
 Our generic _DivRem_ can be invoked with T being _int_, _long_, _BigInteger_, or any other type as long as that type defines its own _DivRem_ with a compatible signature.
-
-
 
 Most programs will not require this level of type flexibility, but it's nice to know it's there for those few cases that do need it.
 

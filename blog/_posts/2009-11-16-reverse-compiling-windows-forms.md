@@ -4,19 +4,15 @@ title: "Reverse Compiling Windows Forms"
 ---
 Today I had a fun task: the source code for an existing executable had been lost, and I got the job of getting it back. The good news is that [Red Gate's Reflector](http://www.red-gate.com/products/reflector/) (formerly Lutz Roeder's Reflector) is a standard tool for any serious .NET programmer, and it does quite a decent job of decompiling (nonobfuscated) .NET code. The bad news is that I had to also reverse-engineer the GUI.
 
-
-
 After finding nothing on Google, and a bit of trial and error, I discovered the following procedure worked adequately, at least for my (simple) executable on Visual Studio 2008:
-
-
-
 
 1. First, export the source from Reflector, create a solution, and ensure it builds.
 1. Convert the ".resources" files into ".resx" files. Reflector just dumps out the binary .NET resources, but VS prefers them as XML. Fire up your VS command prompt and run this command: "resgen My.Long.Resource.Name.resources Name.resx".
 1. Move the resulting ".resx" files into their appropriate directories (e.g., "My\Long\Resource"). The rest of these steps must be done for each ".resx" file.
 1. Add the ".resx" files to your solution (they should be inserted under the matching ".cs" file), remove the old ".resources" file from the solution, and rebuild.
 1. Add a new empty C# code file named "Name.Designer.cs" file in the same directory, and paste in the following code:
-{% highlight csharp %}namespace My.Long.Resource
+{% highlight csharp %}
+namespace My.Long.Resource
 {
     partial class Name
     {
@@ -61,8 +57,6 @@ After finding nothing on Google, and a bit of trial and error, I discovered the 
 
  - "The designer cannot process the code..." - Any enum member variables that have the same name as their type need to have their value fully qualified, e.g., "base.AutoScaleMode = AutoScaleMode.Font;" needs to be "base.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;").
  - "The variable ... is either undeclared or was never assigned" - Many types seem to require fully qualified type names when declared (e.g., "private OpenFileDialog openFileDialog;" needs to be "private System.Windows.Forms.OpenFileDialog openFileDialog;").
-
-
 
 After following the (rather tedious) procedure above, you should have a form that can be opened in the VS designer. If I had more time, I'd wrap it up as a Reflector add-in, but time seems to be a fleeting resource these days.
 

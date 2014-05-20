@@ -4,73 +4,134 @@ title: "Sharp Corner: Reference Types, Value Types, and Weirdos"
 ---
 This week I was writing some code that had to respond differently depending on whether a generic argument was a _reference type_ or a _value type_. This was bit complex, since "reference type" and "value type" do not have very specific meanings - which was actually a good thing because it forced me to consider _exactly_ what my code requirements were, and it turned out that I was using just slightly different meanings of "reference type" in different places.
 
-
-
 During this exploration, I developed a few tests to evaluate the type system (code at the end of this post). The results are summarized below, along with some of my thoughts on the weirdos (types which are sort-of reference and sort-of value, depending on your definition of "reference" and "value").
-
-
 
 One way of defining a "reference type" is whether [Type.IsClass](http://msdn.microsoft.com/en-us/library/system.type.isclass.aspx) is true; another way of defining a "reference type" is whether it satisfies a [generic class constraint](http://msdn.microsoft.com/en-us/library/d5x73970.aspx) (e.g., _void Test<T>() where T : class_). Likewise, value types have [Type.IsValueType](http://msdn.microsoft.com/en-us/library/system.type.isvaluetype.aspx) and generic struct constraints.
 
-
-
 The table below includes tests on a variety of types, grouped into "mostly reference types" and "mostly value types". The types that are more clearly reference/value types are at the top of each group, with the weirdos at the bottom.
 
+<div class="panel panel-default">
+  <table class="table table-striped">
 
-
-{:.table .table-striped}
-|Category|Example Type|IsClass|Satisfies class Constraint|IsValueType|Satisfies struct Constraint|Satisfies Without Constraints|
-|-
-|Classes|class Class {}|&nbsp;|&nbsp;|&nbsp;|&nbsp;|&nbsp;|
-|Arrays|int[]|&nbsp;|&nbsp;|&nbsp;|&nbsp;|&nbsp;|
-|Delegates|delegate void DelegateT();|&nbsp;|&nbsp;|&nbsp;|&nbsp;|&nbsp;|
-|Interfaces|interface Interface {}|&nbsp;|&nbsp;|&nbsp;|&nbsp;|&nbsp;|
-|Pointers|int*|&nbsp;|&nbsp;|&nbsp;|&nbsp;|&nbsp;|
-|
-|Value types|int|&nbsp;|&nbsp;|&nbsp;|&nbsp;|&nbsp;|
-|Enumerations|enum EnumT {}|&nbsp;|&nbsp;|&nbsp;|&nbsp;|&nbsp;|
-|Nullable value types|int?|&nbsp;|&nbsp;|&nbsp;|&nbsp;|&nbsp;|
-|Void|void|&nbsp;|&nbsp;|&nbsp;|&nbsp;|&nbsp;|
-
+<tr>
+  <th width="20%">Category</th>
+  <th width="30%">Example Type</th>
+  <th width="10%">IsClass</th>
+  <th width="10%">Satisfies class Constraint</th>
+  <th width="10%">IsValueType</th>
+  <th width="10%">Satisfies struct Constraint</th>
+  <th width="10%">Satisfies Without Constraints</th>
+</tr>
+<tr>
+ <td>Classes</td>
+ <td>class Class {}</td>
+ <td bgcolor="#00ff00"> </td>
+ <td bgcolor="#00ff00"> </td>
+ <td bgcolor="#ff0000"> </td>
+ <td bgcolor="#ff0000"> </td>
+ <td bgcolor="#00ff00"> </td>
+</tr>
+<tr>
+ <td>Arrays</td>
+ <td>int[]</td>
+ <td bgcolor="#00ff00"> </td>
+ <td bgcolor="#00ff00"> </td>
+ <td bgcolor="#ff0000"> </td>
+ <td bgcolor="#ff0000"> </td>
+ <td bgcolor="#00ff00"> </td>
+</tr>
+<tr>
+ <td>Delegates</td>
+ <td>delegate void DelegateT();</td>
+ <td bgcolor="#00ff00"> </td>
+ <td bgcolor="#00ff00"> </td>
+ <td bgcolor="#ff0000"> </td>
+ <td bgcolor="#ff0000"> </td>
+ <td bgcolor="#00ff00"> </td>
+</tr>
+<tr>
+ <td>Interfaces</td>
+ <td>interface Interface {}</td>
+ <td bgcolor="#ff0000"> </td>
+ <td bgcolor="#00ff00"> </td>
+ <td bgcolor="#ff0000"> </td>
+ <td bgcolor="#ff0000"> </td>
+ <td bgcolor="#00ff00"> </td>
+</tr>
+<tr>
+ <td>Pointers</td>
+ <td>int*</td>
+ <td bgcolor="#00ff00"> </td>
+ <td bgcolor="#ff0000"> </td>
+ <td bgcolor="#ff0000"> </td>
+ <td bgcolor="#ff0000"> </td>
+ <td bgcolor="#ff0000"> </td>
+</tr>
+<tr height="10" />
+<tr>
+ <td>Value types</td>
+ <td>int</td>
+ <td bgcolor="#ff0000"> </td>
+ <td bgcolor="#ff0000"> </td>
+ <td bgcolor="#00ff00"> </td>
+ <td bgcolor="#00ff00"> </td>
+ <td bgcolor="#00ff00"> </td>
+</tr>
+<tr>
+ <td>Enumerations</td>
+ <td>enum EnumT {}</td>
+ <td bgcolor="#ff0000"> </td>
+ <td bgcolor="#ff0000"> </td>
+ <td bgcolor="#00ff00"> </td>
+ <td bgcolor="#00ff00"> </td>
+ <td bgcolor="#00ff00"> </td>
+</tr>
+<tr>
+ <td>Nullable value types</td>
+ <td>int?</td>
+ <td bgcolor="#ff0000"> </td>
+ <td bgcolor="#ff0000"> </td>
+ <td bgcolor="#00ff00"> </td>
+ <td bgcolor="#ff0000"> </td>
+ <td bgcolor="#00ff00"> </td>
+</tr>
+<tr>
+ <td>Void</td>
+ <td>void</td>
+ <td bgcolor="#ff0000"> </td>
+ <td bgcolor="#ff0000"> </td>
+ <td bgcolor="#00ff00"> </td>
+ <td bgcolor="#ff0000"> </td>
+ <td bgcolor="#ff0000"> </td>
+</tr>
+  </table>
+</div>
 
 ## Interfaces are a Bit Weird
 
 Interfaces return false for both **IsClass** and **IsValueType**. This makes sense, since either reference types or value types may inherit from an interface. However, interface variables may be declared and act like reference types (boxing value types as necessary), so interfaces do satisfy generic **class** constraints.
 
-
-
 > Take-home point: If **IsClass** is false but **IsInterface** is true, the type will still satisfy a generic **class** constraint.
-
 
 ## Nullable Value Types are a Bit Weird
 
 Nullable types return true for **IsValueType**, but do not satisfy generic **struct** constraints (nor **class** constraints). They can only be used as generic parameters without **class** or **struct** constraints.
 
-
-
 > Take-home point: Nullable types **(type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))** will not satisfy a generic **struct** constraint, even though **IsValueType** is true.
-
 
 ## Pointers are Definitely Weird
 
 To be honest, I don't know [why IsClass is true for pointers](http://stackoverflow.com/questions/3317587/why-are-pointers-reference-types) (the spec says they are, but without any reason given). They act exactly like value types, and they can't satisfy a generic **class** constraint. In fact, they can't be used as any kind of generic argument. This makes pointer types a corner case: they only have to be dealt with if the user is passing a Type instance rather than a generic type argument.
 
-
-
 > Take-home point: If **IsPointer** is true, then the type cannot be used as a generic type parameter at all (and therefore cannot satisfy a **class** constraint, even though **IsClass** is true).
-
 
 ## Void is Definitely Weird
 
 Void claims to be a value type (**IsValueType** is true) - which sort of makes sense, if we think of it as a value type that cannot have a value - but it cannot satisfy a **struct** constraint. In fact, like pointers, **void** cannot be used as a generic type argument at all. This makes **void** another corner case: they only have to be dealt with if the user is passing a Type instance rather than a generic type argument.
 
-
-
 > Take-home point: The **void** type **(type == typeof(void))** cannot be used as a generic type parameter at all (and therefore cannot satisfy a **struct** constraint, even though **IsValueType** is true).
 
-
 ## Test Code
-
 
 using System;
 using System.Text;
@@ -234,7 +295,6 @@ namespace TypeSystemTests
                 Assert.IsFalse(type.IsNullable());
             }
         }
-
 
         [TestMethod]
         public void ValueTypes()
