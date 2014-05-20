@@ -1,21 +1,14 @@
 ---
 layout: post
 title: "Cross-browser Silverlight"
-tags: [".NET", "Silverlight"]
 ---
-
-
 I tried becoming a web developer back in the version 4 browser war days; my scars from that time made me swear off web page writing for years, until recently. In my mind, one of the greatest advantages of Silverlight is that it completely kills all that nasty browser compatibility stuff. However, when writing Silverlight controls that interact more heavily with HTML, cross-browser issues begin to rise up from the grave.
 
 
 
 ## Partial URLs
 
-
-
 Partial URLs are transformed by Internet Exporer into absolute URLs as they enter the object model. This can cause exceptions from the Uri constructor if you're only passing a single string argument. The workaround that I've opted to use is to always use the Uri constructor that takes a Uri and a string as arguments, and I pass in the current page's Uri as the first argument.
-
-
 
 
 
@@ -28,8 +21,6 @@ I recommend never using the Uri constructor taking a single string parameter; in
 new Uri(item.GetAttribute("href"))
 
 
-
-
 Instead, pass the document Uri as the context of the relative Uri string. If the second parameter is actually an absolute Uri (e.g., when running in Internet Explorer), the context Uri is ignored:
 
 
@@ -40,8 +31,6 @@ new Uri(HtmlPage.Document.DocumentUri, item.GetAttribute("href"))
 
 
 ## Text Content
-
-
 
 Internet Explorer has an "innerText" attribute, while the DOM supports a "textContent" property. A simple extension method on HtmlElement suffices to get the text content of a node:
 
@@ -66,17 +55,11 @@ public static string GetTextContent(this HtmlElement htmlElement)
 
 ## DocumentReady
 
-
-
 A long-standing bug in Internet Explorer (at least since IE6; still present in IE8) causes document.onreadystatechange to be fired incorrectly, and the standard DOMContentLoaded isn't suppored. This means that HtmlPage.Document.DocumentReady _will fire_ when the document is not ready. This behavior has [been discussed](http://forums.silverlight.net/forums/p/82810/193149.aspx#193149) on a Silverlight forum.
 
 
 
-
-
 I've also seen some situations where the jQuery ready handlers (and the window.onload handlers) will fire before the Silverlight control begins executing; this can happen if the page contains several images. To be safe, I recommend having both jQuery and Silverlight register "readyness", and the last one to register kicks off the initialization code.
-
-
 
 
 
@@ -93,8 +76,6 @@ HtmlPage.RegisterScriptableObject("SLMenu", this);
 public void BuildMenu()
 
 
-
-
 Define the "readyness" flags in plain, top-level JavaScript before the Silverlight control; this ensures that they're interpreted immediately:
 
 
@@ -103,8 +84,6 @@ Define the "readyness" flags in plain, top-level JavaScript before the Silverlig
 // Top-level code; not in a function!
 var silverlightLoaded = false;
 var htmlLoaded = false;
-
-
 
 
 Also define the JavaScript function that the Silverlight control should call in top-level JavaScript before the Silverlight control:
@@ -123,8 +102,6 @@ MenuOnLoad = function() {
 }
 
 
-
-
 The code above is straightforward; it marks Silverlight as having loaded and then invokes the initialization code if the HTML has already loaded. The code run by the HTML when it loads is similar (shown here using jQuery, but window.onload could be used as well):
 
 
@@ -140,8 +117,6 @@ $(function() {
 });
 
 
-
-
 Finally, the Silverlight control must invoke the JavaScript "MenuOnLoad" function when it is loaded. This must come after its registration with the browser:
 
 
@@ -154,17 +129,11 @@ HtmlPage.Window.Invoke("MenuOnLoad");
 
 ## Conclusion
 
-
-
 Of course, these few examples are just minor inconsistencies. I'm sure that many more ugly browser incompatibilities will become troublesome over the next few months.
 
 
 
-
-
 The Silverlight menu used as the example above is live at this site: [http://www.landmarkbaptist.ws/](http://www.landmarkbaptist.ws/). If it doesn't work properly for you, please let me know! (I'm particularly interested if there are any holes in my initialization serialization logic).
-
-
 
 
 

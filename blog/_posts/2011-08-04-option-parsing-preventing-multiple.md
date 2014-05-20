@@ -1,19 +1,14 @@
 ---
 layout: post
 title: "Option Parsing: Preventing Multiple Argument Values"
-tags: ["Option Parsing", ".NET", "Nito.KitchenSink"]
+series: "Option parsing"
+seriesTitle: "Option Parsing: Preventing Multiple Argument Values"
 ---
-
-
 When dealing with multiple argument values, there are four basic behaviors: _overwrite_, _append_, _prevent_, and _ignore_.
 
 
 
-
-
-[Last week's post](http://blog.stephencleary.com/2011/07/option-parsing-allowing-multiple.html) contained a few examples of the _append_ behavior, which is supported by having the property setter place the values into a backing list.
-
-
+[Last week's post]({% post_url 2011-07-28-option-parsing-allowing-multiple %}) contained a few examples of the _append_ behavior, which is supported by having the property setter place the values into a backing list.
 
 
 
@@ -65,17 +60,11 @@ Level: 3
 Level: 9
 
 
-
-
 This is the default behavior, and is probably what users expect. However, for some options, the _prevent_ or _ignore_ behaviors may make sense.
 
 
 
-
-
 The _prevent_ and _ignore_ behaviors are closely related. Like last week's post, these behaviors are implemented by placing special code in the property setter.
-
-
 
 
 
@@ -142,8 +131,6 @@ Level: 3
 The value may only be specified once.
 
 
-
-
 Likewise, the _ignore_ behavior can be implemented by having a nullable backing value, and ignoring the setter if it is already set:
 
 
@@ -204,8 +191,6 @@ Level: 3
 
 > CommandLineParsingTest.exe -l 3 -l 9
 Level: 3
-
-
 
 
 Note that the _ignore_ behavior may confuse users; most command-line programs use _overwrite_ behavior, which is the default.

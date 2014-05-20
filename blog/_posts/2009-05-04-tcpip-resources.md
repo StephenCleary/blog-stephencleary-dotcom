@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "TCP/IP Resources"
-tags: [".NET", "TCP/IP sockets"]
 ---
-
-
-(This post is part of the [TCP/IP .NET Sockets FAQ](http://blog.stephencleary.com/2009/04/tcpip-net-sockets-faq.html))
-
-
+(This post is part of the [TCP/IP .NET Sockets FAQ]({% post_url 2009-04-30-tcpip-net-sockets-faq %}))
 
 
 
@@ -20,13 +15,9 @@ There are two books that any TCP/IP network programmer needs to have. Unfortunat
 - [Network Programming for Microsoft Windows, by Jones and Ohlund](http://www.amazon.com/gp/product/0735615799?ie=UTF8&tag=stepheclearys-20&linkCode=as2&camp=1789&creative=390957&creativeASIN=0735615799). Chapter 5 has an excellent overview of the various I/O models available, which helps socket programmers understand how the BCL code is using asynchronous calls under the hood. This entire book should be read by TCP/IP programmers.
 
 
-
-
 Note that when reading the unmanaged socket documentation, there are some potentially confusing terms:
  - The terms _blocking_ and _nonblocking_ do not mean the same as the terms _synchronous_ and _asynchronous_. Nonblocking sockets were a special quasi-asynchronous socket mode that is maintained only for backwards compatibility. Most modern WinSock programs (including .NET programs) use blocking sockets.
  - TCP is a byte stream, connection-oriented protocol. Ignore any remarks specifically for message-based or connectionless protocols; they do not apply to TCP sockets.
-
-
 
 
 
@@ -35,7 +26,5 @@ There is a command-line utility that comes with Windows named _netstat_ which di
 
 
 
-
-
-(This post is part of the [TCP/IP .NET Sockets FAQ](http://blog.stephencleary.com/2009/04/tcpip-net-sockets-faq.html))
+(This post is part of the [TCP/IP .NET Sockets FAQ]({% post_url 2009-04-30-tcpip-net-sockets-faq %}))
 

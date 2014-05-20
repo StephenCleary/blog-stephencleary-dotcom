@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "Windows 8 Boot to Differencing VHD"
-tags: ["IT"]
 ---
-
-
 Last night I installed Windows 8, booting to a differencing vhd. This is a bit of an advanced setup, so I thought I'd quickly type up my reasoning for this approach and the steps taken. Of course, you do this at your own risk, etc, etc. I also am assuming that you have a currently working Windows 7 or Windows 8 Preview/Beta installation.
-
-
 
 
 
@@ -17,17 +12,11 @@ We only have one computer in our house. Sometimes it's used for work, and someti
 
 ## Considering Hyper-V
 
-
-
 One of the (many) hallmarks of Windows 8 is that [Microsoft is providing client Hyper-V](http://blogs.msdn.com/b/b8/archive/2011/09/07/bringing-hyper-v-to-windows-8.aspx). Using Hyper-V, I could run multiple virtual computers at the same time. Hyper-V (like every virtualization system) also has a nice "snapshot" feature. However, I decided not to go with Hyper-V because it's not a very seamless experience - e.g., for USB devices to work, you have to actually remote desktop into the VM.
 
 
 
-
-
 I made the decision to boot from VHD instead. With this approach, only one OS can be running at a time - the only thing virtualized is the disk access, and it's virtualized within the OS itself, not by another full layer (like Hyper-V). So, boot from VHD runs faster and you get full access to hardware, but you lose the multiple-VMs-running-at-once that you can get from Hyper-V. Also, you can use snapshots with boot-from-VHD, but they're not as easy to use as snapshots in Hyper-V.
-
-
 
 
 
@@ -37,8 +26,6 @@ Everyone's needs are different, so choose wisely.
 
 ## Emulating Snapshots with Differencing VHDs
 
-
-
 VHD stands for Virtual Hard Disk, and that's just what it is: a disk file that contains a full hard disk. Usually, you'll want to create a "dynamic VHD", which only takes up as much physical disk space as it needs to; empty parts of the VHD are not actually saved to disk.
 
 
@@ -46,11 +33,7 @@ VHD stands for Virtual Hard Disk, and that's just what it is: a disk file that c
 > Terminology alert: "dynamic VHD" is completely different than "dynamic disk".
 
 
-
-
 There's another type of VHD: a "differencing VHD". This is a "child" VHD that only saves the _differences_ from its _parent_ VHD. We can make this work kind of like a snapshot.
-
-
 
 
 
@@ -58,17 +41,11 @@ Here's where I'd like to end up: one VHD that is just the OS freshly installed (
 
 
 
-
-
 That way, all my development tools will live on "Win8Dev.vhd". In a couple of years when VS2014 (or whatever) comes out, I can just nuke it and create another child VHD with the new toolset.
 
 
 
-
-
 Likewise, all the entertainment programs go on "Win8Ent.vhd". This one won't be nuked unless it gets into a really bad state, but it will have many programs installed and uninstalled over the years. And I prefer to keep that isolated from my development setup.
-
-
 
 
 
@@ -78,11 +55,7 @@ You can create and delete differencing VHDs at will. You usually don't end up do
 
 ## Step 1 - Install Windows 8
 
-
-
 By far, the easiest way to install Windows 8 on a VHD is to first boot into Windows 8. Yeah, I'm not kidding, unfortunately - it's a real chicken-and-egg problem. There are [ways to do this](http://www.hanselman.com/blog/GuideToInstallingAndBootingWindows8DeveloperPreviewOffAVHDVirtualHardDisk.aspx) by breaking into a command prompt during a Windows 8 installation while the option is right in front of you to destroy your current OS, but that approach just seems unnecessarily risky compared to this one.
-
-
 
 
 
@@ -92,11 +65,7 @@ If you've already got Windows 8 RTM (as of the time of this writing), then you (
 
 ## Step 2 - Use Convert-WindowsImage
 
-
-
 Once you have Windows 8 installed (virtually, if necessary), download the excellent [Convert-WindowsImage](http://gallery.technet.microsoft.com/scriptcenter/Convert-WindowsImageps1-0fe23a8f) PowerShell script (remember to [unblock](http://support.microsoft.com/kb/883260) it and [Set-ExecutionPolicy RemoteSigned](http://technet.microsoft.com/en-us/library/ee176961.aspx), or the OS won't let you run it).
-
-
 
 
 
@@ -104,17 +73,11 @@ I like to run Convert-WindowsImage with a user interface. To do this, hit the Wi
 
 
 
-
-
 The user interface is pretty self-explanatory. You choose an input file (e.g., your Windows 8 ISO), select an edition, make sure the VHD is large enough (remember, a dynamic VHD won't actually take up that much disk space unless it is full), choose where to save the VHD, and click the big button. If you don't choose the VHD file name, this script will give it some huge name and stick it on your desktop.
 
 
 
-
-
 Get coffee. If you're running virtually, this will take a really long time (several hours for me).
-
-
 
 
 
@@ -124,11 +87,7 @@ One more thing: Windows 8 will helpfully offer to format the VHD for you. Do **n
 
 ## Step 3 (optional) - Create Differencing VHD
 
-
-
 Once you have the VHD (which I placed at "C:\vhd\Win8-base.vhd"), you're ready to go! For myself, I'm going to create the first differencing VHD before proceeding. I have a tendency to really mess stuff up, and keeping that initial VHD absolutely pure gives me a nice retreat in case something goes wrong.
-
-
 
 
 
@@ -142,25 +101,17 @@ Creating a differencing VHD is not difficult, but it's not particularly easy, ei
 > exit
 
 
-
-
 It should only take a few seconds to create the differencing VHD, because all it really needs to do is reference the parent VHD.
 
 
 
 ## Step 4 - Backup BCD
 
-
-
 OK, now we're to the point where we edit the BCD (Boot Configuration Data). This is where it gets scary.
 
 
 
-
-
 So the first thing we do (of course) is backup our current BCD so that we can restore it later when... er... **if** we mess anything up.
-
-
 
 
 
@@ -174,11 +125,7 @@ Back to the elevated command prompt, using [bcdedit](http://technet.microsoft.co
 
 ## Step 5 - Add Boot Entry
 
-
-
 First, mount the VHD you want to boot to. If you created a differencing VHD in Step 3, then you want to use the child VHD ("Win8.vhd"), not the parent VHD ("Win8-base.vhd"). On Windows 8 you can just right-click the VHD and select Mount; on Windows 7 you have to go into the Disk Manager, select Actions -> Attach VHD, and browse to the VHD file (I mounted mine read-only).
-
-
 
 
 
@@ -190,19 +137,13 @@ Then (assuming that it was mounted at drive K:), run bcdboot from an elevated co
 > bcdboot k:\windows
 
 
-
-
 Then you reboot. Crossing your fingers or saying a brief prayer would not hurt.
 
 
 
 ## Step 6 - Repeat as Necessary
 
-
-
 You can repeat steps 3 (creating a differencing VHD from an existing VHD) and 5 (mounting the child VHD and adding a boot entry) as many times as you like.
-
-
 
 
 
@@ -281,8 +222,6 @@ resumeobject            {2449059c-985a-11de-8155-c187f01c6abe}
 nx                      OptOut
 
 > bcdedit /set {244905a2-985a-11de-8155-c187f01c6abe} description "Old Win8"
-
-
 
 
 Enjoy!

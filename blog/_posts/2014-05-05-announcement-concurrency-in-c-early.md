@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "Announcement: Concurrency in C# Early Release Ebook Available"
-tags: ["Books", "Announcements"]
 ---
-
-
 My editor at O'Reilly was able to get my book into the O'Reilly's Early Release program at the last minute. So, you can buy it today through the Early Release program and get the final eBook when it's completed shortly (it's really just proofreading and formatting at this point).
-
-
 
 
 

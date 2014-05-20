@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "StartNew is Dangerous"
-tags: ["Threading", "async", ".NET"]
 ---
-
-
 I see a lot of code on blogs and in SO questions that use Task.Factory.StartNew to spin up work on a background thread. Stephen Toub has an [excellent blog article that explains why Task.Run is better than Task.Factory.StartNew](http://blogs.msdn.com/b/pfxteam/archive/2011/10/24/10229468.aspx), but I think a lot of people just haven't read it (or don't understand it). So, I've taken the same arguments, added some more forceful language, and we'll see how this goes. :)
-
-
 
 
 
@@ -16,8 +11,6 @@ StartNew does offer many more options than Task.Run, but it is quite dangerous, 
 
 
 ## Why Use Task.Factory.StartNew?
-
-
 
 There are only four reasons that you would _ever_ want to use Task.Factory.StartNew in async code:
 
@@ -29,11 +22,7 @@ There are only four reasons that you would _ever_ want to use Task.Factory.Start
 1. You need to pass a state object to the delegate to reduce memory pressure from lambda variable capture.
 
 
-
-
 Let's consider each of these in turn.
-
-
 
 
 
@@ -41,11 +30,7 @@ Let's consider each of these in turn.
 
 
 
-
-
 2. _You need to specify a custom TaskScheduler, instead of using the thread pool scheduler._ If you need to pass a specialized TaskScheduler to StartNew, then reconsider your API design. There are better ways of creating tasks for a specific context (e.g., TaskFactory).
-
-
 
 
 
@@ -53,11 +38,7 @@ Let's consider each of these in turn.
 
 
 
-
-
 4. _You need to pass a state object to the delegate to reduce memory pressure from lambda variable capture._ Again, avoid the premature optimization. You should discover that you need this after doing memory profiling.
-
-
 
 
 
@@ -70,8 +51,6 @@ Now, I'm not saying to _never_ use Task.Factory.StartNew. If you're writing a lo
 
 ## Why Not to Use Task.Factory.StartNew?
 
-
-
 We've covered some (very obscure) situations where Task.Factory.StartNew could be useful. Now, let's take a look at why you _shouldn't_ use Task.Factory.StartNew:
 
 
@@ -80,17 +59,11 @@ We've covered some (very obscure) situations where Task.Factory.StartNew could b
  1. Confusing default scheduler.
 
 
-
-
 Let's consider each of these in turn.
 
 
 
-
-
 1. _Does not understand async delegates._ This is actually the same as point 1 in the reasons why you _would_ want to use StartNew. The problem is that when you pass an async delegate to StartNew, it's natural to assume that the returned task represents that delegate. However, since StartNew does not understand async delegates, what that task actually represents is just the beginning of that delegate. This is one of the first pitfalls that coders encounter when using StartNew in async code.
-
-
 
 
 
@@ -103,8 +76,6 @@ Let's consider each of these in turn.
 private static void A() { }
 {% endhighlight %}
 
-
-
 Well, you know it's a trick question, eh? If you answered "a thread pool thread", I'm sorry, but that's not correct. "A" will run on whatever TaskScheduler is currently executing! OK, so let's give a bit of context to the question: in the code below, what thread does the method "A" run on?
 
 
@@ -116,8 +87,6 @@ Well, you know it's a trick question, eh? If you answered "a thread pool thread"
 
 private static void A() { }
 {% endhighlight %}
-
-
 
 In this case, "A" _will_ run on a thread pool thread! But it's important to understand _why_: Task.Factory.StartNew will first examine the current TaskScheduler. There is none, so it uses the thread pool TaskScheduler. Easy enough for the simple case, but let's consider a more realistic example:
 
@@ -151,11 +120,7 @@ private int A(int value)
 }
 {% endhighlight %}
 
-
-
 This is a bit more complex, but it uses a pattern common in older code that used tasks before async was introduced. The "Compute" method first checks to see if it's done computing; if it is, then it returns. If there's more work to do, then it throws "A" onto the thread pool to do the CPU-intensive calculations. "Compute" also registers a continuation, so that when "A" is complete, it will marshal back to the UI thread, update the UI with the results so far, and then continue computing.
-
-
 
 
 
@@ -163,11 +128,7 @@ Now, the question returns: what thread does "A" run on? Go ahead and walk throug
 
 
 
-
-
 Ready? The method "A" runs on a thread pool thread the first time, and then it runs on the UI thread the last two times.
-
-
 
 
 
@@ -175,11 +136,7 @@ Here's why: the first time through "Compute", there's no task scheduler and Star
 
 
 
-
-
 This is some pretty dangerous and unexpected behavior, IMO. In fact, many software teams have implemented rules for their source that _disallow StartNew unless you pass an explicit TaskScheduler_. And I think that's a great idea.
-
-
 
 
 
@@ -189,8 +146,6 @@ Unfortunately, the only overloads for StartNew that take a TaskScheduler also re
 
 {% highlight csharp %}Task.Factory.StartNew(A, CancellationToken.None, TaskCreationOptions.DenyChildAttach, TaskScheduler.Default);
 {% endhighlight %}
-
-
 
 And really, that's kind of ridiculous. Just use `Task.Run(() => A());`.
 

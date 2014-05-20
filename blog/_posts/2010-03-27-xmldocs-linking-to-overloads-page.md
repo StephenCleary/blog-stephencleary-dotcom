@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "XmlDocs: Linking to the Overloads Page"
-tags: ["xmldoc"]
 ---
-
-
 XML documentation has a natural "link to code" element: the [<see> tag](http://msdn.microsoft.com/en-us/library/acd0tfbe.aspx). When a function is overloaded, the resulting help file contains an "overloads" page [like this](http://msdn.microsoft.com/en-us/library/system.text.encoding.getstring.aspx), but getting the **see** element to link to the overloads page is not exactly straightforward.
-
-
 
 
 
@@ -16,14 +11,11 @@ The <see> tag is one of the tags that is verified by the compiler, so it's not p
 
 
 > **Example warning/error message when attempting to link to an overload group:**  
+> 
 > Warning as Error: Ambiguous reference in cref attribute: 'FindFiles'. Assuming 'Nito.KitchenSink.WinInet.FtpHandle.FindFiles(string, Nito.KitchenSink.WinInet.FtpHandle.FindFilesFlags)', but could have also matched other overloads including 'Nito.KitchenSink.WinInet.FtpHandle.FindFiles()'.
 
 
-
-
 Here's a little-known fact about the <see> tag: it will _not_ verify any **see.cref** values that start with a single character followed by a colon. This enables specifying full DocumentationId links such as "T:Nito.Async.ActionDispatcher".
-
-
 
 
 
@@ -31,11 +23,7 @@ There is a standard extension of the DocumentationId format for overloads that i
 
 
 
-
-
 The workaround is to use the "O:" prefix for such links (this prefix is unused by the DocumentationId format), and modify the XML documentation file before it is passed to Sandcastle. The "O:" prefix bypasses Visual Studio's verification, and the "Overload:" prefix is correctly understood by Sandcastle.
-
-
 
 
 
@@ -62,8 +50,6 @@ In my projects, I use the following XSLT transformation to automatically transla
     </xsl:attribute>
    </xsl:template>
 </xsl:stylesheet>
-
-
 
 
 By the way, it's not difficult to include an XSLT transformation as part of an MSBuild project file (with the [MSBuild Extension Pack](http://msbuildextensionpack.codeplex.com/)). It's beyond the scope of this blog post, but you can check out the [Nito.Async main project build file](http://nitoasync.codeplex.com/SourceControl/changeset/view/40861#324550) for an example.

@@ -1,7 +1,6 @@
 ---
 layout: post
 title: "Q&A: Is a call to GC.KeepAlive(this) required in Dispose?"
-tags: [".NET", "IDisposable/Finalizers"]
 ---
 ### Question: Is a call to GC.KeepAlive(this) required in Dispose?
 
@@ -20,15 +19,11 @@ tags: [".NET", "IDisposable/Finalizers"]
 - Therefore, GC.KeepAlive(this) is only required if the flag is of a very unusual type (such as a Double) OR if the flag is inside _another_ object.
 
 
-
-
-This reasoning concludes that for 99% of handle objects, a call to GC.KeepAlive(this) is not required. Furthermore, for 99% of the remaining objects, [a call to GC.SuppressFinalize should be used instead of a call to GC.KeepAlive](http://blog.stephencleary.com/2009/08/q-if-dispose-calls-suppressfinalize-is.html).
+This reasoning concludes that for 99% of handle objects, a call to GC.KeepAlive(this) is not required. Furthermore, for 99% of the remaining objects, [a call to GC.SuppressFinalize should be used instead of a call to GC.KeepAlive]({% post_url 2009-08-28-q-if-dispose-calls-suppressfinalize-is %}).
 
 
 
 ## Example 1 not requiring GC.KeepAlive(this)
-
-
 
 This example uses a "bool disposed" flag, set _before_ disposing the unmanaged resource:
 
@@ -63,8 +58,6 @@ public void Dispose()
 
 ## Example 2 not requiring GC.KeepAlive(this)
 
-
-
 This example uses a "bool disposed" flag, set _after_ disposing the unmanaged resource:
 
 
@@ -98,8 +91,6 @@ public void Dispose()
 
 ## Example 3 not requiring GC.KeepAlive(this)
 
-
-
 This example uses an "invalid handle" flag:
 
 
@@ -132,8 +123,6 @@ public void Dispose()
 {% endhighlight %}
 
 ## Example 4 - requiring GC.KeepAlive(this)
-
-
 
 It is possible to create a more pathological case where GC.KeepAlive(this) is required; the code below requires GC.KeepAlive because it holds its actual handle value inside of another class:
 
@@ -306,7 +295,5 @@ Thread 2: CloseHandle starting
 
 ## Closing Notes
 
-
-
-It is cleaner and more efficient to [include a call to GC.SuppressFinalize(this) instead of a call to GC.KeepAlive(this)](http://blog.stephencleary.com/2009/08/q-if-dispose-calls-suppressfinalize-is.html). The only true reason a call to GC.KeepAlive should be required is if the disposed flag is of an unusual type (like Double).
+It is cleaner and more efficient to [include a call to GC.SuppressFinalize(this) instead of a call to GC.KeepAlive(this)]({% post_url 2009-08-28-q-if-dispose-calls-suppressfinalize-is %}). The only true reason a call to GC.KeepAlive should be required is if the disposed flag is of an unusual type (like Double).
 

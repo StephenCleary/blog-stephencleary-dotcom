@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "Introducing Sharp Corners"
-tags: [".NET", "Sharp Corners"]
 ---
-
-
 Every language, no matter how well-designed, has its "corners." These are the Dark Places that every programmer eventually runs into. I define such a "corner" as a situation where the language has surprising results. Corners are discovered as a programmer moves from one phase to the next in language mastery; e.g., as a programmer who has an "intermediate" skill in the language becomes "advanced," he will discover corners during that transition.
-
-
 
 
 
@@ -15,11 +10,7 @@ Most modern languages are easy to learn and contain few if any surprises at the 
 
 
 
-
-
 Eventually the programmer will extend their assumptions and realize that his assumed rules are _not_ the same as the language specification (in many cases, in fact, there is a _drastic_ difference). At this point, the good developer will explore this newly-uncovered corner and discover the actual rule being used by the language. When the developer discards their previously-held assumptions and embraces the language rule, he takes another step towards language mastery.
-
-
 
 
 
@@ -27,17 +18,11 @@ Eventually the programmer will extend their assumptions and realize that his ass
 
 
 
-
-
 There are a few programmers who do read (and understand) language specifications. Most, however, follow a natural process of discovering and exploring corners.
 
 
 
-
-
 On my blog, I hope to build up a small collection of corners for the C# language (hence the name "Sharp Corners"). The intention is to help educate any C# programmer on their way to language mastery.
-
-
 
 
 

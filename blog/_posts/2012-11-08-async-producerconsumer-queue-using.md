@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "Async Producer/Consumer Queue using Dataflow"
-tags: ["Threading", "async", ".NET"]
 ---
-
-
 Today we'll build on what we learned about Dataflow to build an async-compatible producer/consumer queue.
-
-
 
 
 
@@ -15,11 +10,7 @@ A _producer/consumer queue_ is a classic problem in multithreading: you have one
 
 
 
-
-
 Using TPL Dataflow, this is incredibly easy: a `BufferBlock` is an async-ready producer/consumer queue. We'll start with the simple example of a single producer and consumer, and build from there.
-
-
 
 
 
@@ -38,8 +29,6 @@ Our producer can just enqueue a sequence of values, and then mark the queue as c
 }
 {% endhighlight %}
 
-
-
 Similarly, the consumer can just await until a value is ready in the queue, and then add it to its collection of received values. Note that this works only if we have a single consumer; if we have multiple consumers, then they would all see the output available, but they wouldn't all be able to receive it.
 
 
@@ -55,8 +44,6 @@ Similarly, the consumer can just await until a value is ready in the queue, and 
     return ret;
 }
 {% endhighlight %}
-
-
 
 We can wrap these up in a simple unit test:
 
@@ -84,11 +71,7 @@ public async Task ConsumerReceivesCorrectValues()
 
 ## Throttling
 
-
-
 A common requirement for producer/consumer queues is a throttling restriction. We don't want to run out of memory if the producers can produce data items faster than consumers can consume them!
-
-
 
 
 
@@ -106,8 +89,6 @@ First, we need to change our producer. `Post` will (synchronously) block once th
     queue.Complete();
 }
 {% endhighlight %}
-
-
 
 Dataflow blocks have built-in support for throttling, so adding this to the mesh is rather easy once we have an asynchronous producer. We can say there should never be more than 5 data items in the queue, and it's a one-line change (the line that defines the mesh):
 
@@ -135,11 +116,7 @@ public async Task ConsumerReceivesCorrectValues()
 
 ## Multiple Producers
 
-
-
 We can have multiple producers pushing data to the same queue (or any dataflow mesh). The only thing we have to change is when the block is completed.
-
-
 
 
 
@@ -156,8 +133,6 @@ First, we remove the block completion from the producers:
 }
 {% endhighlight %}
 
-
-
 Now, we can write a simple "producer manager" method that will complete the queue when all producers complete:
 
 
@@ -171,8 +146,6 @@ Now, we can write a simple "producer manager" method that will complete the queu
     queue.Complete();
 }
 {% endhighlight %}
-
-
 
 The updated test looks like this (note that because we have three independent producers, the order of results is no longer guaranteed):
 
@@ -199,11 +172,7 @@ public async Task ConsumerReceivesCorrectValues()
 
 ## Multiple Consumers
 
-
-
 The consumer side of this example does _work,_ but it's not done in a TPL Dataflowish sort of way. It starts to get more complicated when we consider multiple consumers, because there's no `TryReceiveAsync` available on our block.
-
-
 
 
 
@@ -233,11 +202,7 @@ public async Task ConsumerReceivesCorrectValues()
 }
 {% endhighlight %}
 
-
-
 Notice that we set the `ExecutionDataflowBlockOptions.BoundedCapacity` for the consumer block to `1`. This is necessary if we want to maintain throttling. Without this set, the producers could produce tons of data items which pass through the queue block and get buffered up in the consumer block (making our queue throttling meaningless).
-
-
 
 
 
@@ -275,11 +240,7 @@ public async Task ConsumerReceivesCorrectValues()
 }
 {% endhighlight %}
 
-
-
 Note that `ExecutionDataflowBlockOptions.BoundedCapacity` is now performing another important function: in addition to maintaining the throttling, it is performing load balancing. If this is left at the default value (`DataflowBlockOptions.Unbounded`), then all of the data items will end up in the first consumer, which will buffer them up until it can process them. With the buffer limited to a single data item, the queue will offer its item to the next consumer when the first consumer is busy.
-
-
 
 
 

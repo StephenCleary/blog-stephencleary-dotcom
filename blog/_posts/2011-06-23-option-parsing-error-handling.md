@@ -1,19 +1,14 @@
 ---
 layout: post
 title: "Option Parsing: Error Handling"
-tags: ["Option Parsing", ".NET", "Nito.KitchenSink"]
+series: "Option parsing"
+seriesTitle: "Option Parsing: Error Handling"
 ---
-
-
 The [Nito.KitchenSink Option Parsing Library](http://www.nuget.org/List/Packages/Nito.KitchenSink.OptionParsing) wraps all option parsing errors into an exception derived from **Nito.KitchenSink.OptionParsing.OptionParsingException**. There are three more specific exception types (**InvalidParameterException**, **OptionArgumentException**, and **UnknownOptionException**), but they are seldomly needed.
 
 
 
-
-
 All steps of the option parsing pipeline should only throw exceptions derived from **OptionParsingException**. In particular, this is true for custom validation (which will be described in detail in a future post).
-
-
 
 
 
@@ -67,8 +62,6 @@ class Program
 }
 
 
-
-
 First, the **Options** class is declared, which defines the options our program takes. It also exposes a **Usage** method, which displays command-line usage information. **Usage** writes its information to **Console.Error** and returns an error code.
 
 
@@ -76,17 +69,11 @@ First, the **Options** class is declared, which defines the options our program 
 > The Nito.KitchenSink.OptionParsing library does not attempt to write the **Usage** method for you automatically. Other option parsing libraries have attempted this, but the results are (IMHO) less than ideal.
 
 
-
-
 The program's **Main** method returns an **int**, and contains a top-level try/catch. The try block parses the options, performs its requested task (in this case, the program just writes the Level option to the console), and then returns 0 (meaning "success").
 
 
 
-
-
 If there is an option parsing exception, then the exception message is written to **Console.Error**, usage information is displayed, and an error code is returned.
-
-
 
 
 
@@ -96,11 +83,7 @@ If there is some other (unexpected) exception (during option parsing or program 
 
 ## Notes
 
-
-
 For console programs, a return value of 0 indicates success and any other return value usually indicates an error. I used two different error codes in the example above, but they could just as easily be a single error code because distinguishing usage errors is not normally useful.
-
-
 
 
 

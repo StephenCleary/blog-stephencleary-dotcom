@@ -1,21 +1,14 @@
 ---
 layout: post
 title: "Reporting Progress from Async Tasks"
-tags: ["async", ".NET"]
 ---
-
-
-Today, we'll look at how async methods satisfy a [common requirement](http://blog.stephencleary.com/2010/08/various-implementations-of-asynchronous.html) of background operations: reporting progress.
+Today, we'll look at how async methods satisfy a [common requirement]({% post_url 2010-08-16-various-implementations-of-asynchronous %}) of background operations: reporting progress.
 
 
 
 ## Progress Reporter Abstraction
 
-
-
 When asynchronous methods report progress, they use an abstraction of the "progress reporter" concept: [**IProgress<in T>**](http://msdn.microsoft.com/en-us/library/hh138298(v=VS.110).aspx). This interface has a single method: **void Report(T value)**. You can't get much simpler than that!
-
-
 
 
 
@@ -28,11 +21,7 @@ An asynchronous method that wants to report progress just takes an IProgress<T> 
 1. IProgress<T>.Report is thread-safe, but asynchronous. In other words, you're "posting" the progress reports to the progress reporter. The progress reporter probably hasn't responded to the progress update by the time your method continues.
 
 
-
-
 That second rule can trip people up - it means _you can't modify the progress object after it's passed to Report._ It is an error to keep a single "current progress" object, update it, and repeatedly pass it to Report.
-
-
 
 
 
@@ -45,17 +34,11 @@ To avoid this problem, you should create a new progress object each time you cal
 
 ## Progress Reporter Implementation
 
-
-
 Now let's look at the "receiving" side of progress reports. The caller of the asynchronous method passes in the progress reporter, so it has complete control of how progress reports are handled.
 
 
 
-
-
 There is one built-in progress reporter: [Progress<T>](http://msdn.microsoft.com/en-us/library/hh193692(v=vs.110).aspx). You can either pass an Action<T> into the constructor or handle the ProgressChanged event.
-
-
 
 
 
@@ -89,11 +72,7 @@ public void DoProcessing(IProgress<int> progress)
 }
 
 
-
-
 The context keeps the updates nicely synchronized.
-
-
 
 
 
@@ -106,25 +85,17 @@ However, this doesn't work as well if there's no context to capture. In this cas
  - Updates after completion. If a method issues an update just before it completes, the event may be raised on a thread pool thread _after_ the task has been completed!
 
 
-
-
 You do need to be aware of these problems when using Progress<T> without a UI context. We'll cover more advanced progress composition in a later post, and consider solutions to these problems.
 
 
 
 ## Progress Report Exceptions
 
-
-
 Progress<T> raises its event within a captured context. However, this event is not wrapped in a Task or anything like that; it is just executed directly. This means that any exceptions from that event's handlers will propagate directly to the context.
 
 
 
-
-
 In other words, exceptions from Progress<T>.ProgressChanged are treated just like exceptions from other event handlers.
-
-
 
 
 
@@ -133,8 +104,6 @@ In _other_ words, don't throw exceptions from Progress<T>.ProgressChanged. :)
 
 
 ## More Progress Reporter Implementations!
-
-
 
 The callback-based Progress<T> is great for general use, but there's no reason you couldn't write your own IProgress<T> that works better with your own code base. Here are some implementations from the [AsyncEx library:](http://nitoasyncex.codeplex.com)
 
@@ -148,8 +117,6 @@ The callback-based Progress<T> is great for general use, but there's no reason y
 
 ## Defining "Progress"
 
-
-
 We've covered a lot about progress reporting without actually saying much about the progress update itself (other than it must be passed by value - so either a value type, or an immutable reference type works best).
 
 
@@ -157,11 +124,7 @@ We've covered a lot about progress reporting without actually saying much about 
 > The information in this section is not Gospel. It's just a tip from my own (limited) experience dealing with progress updates from async methods. YMMV.
 
 
-
-
 It's natural to think of a progress report as _cumulative_ - the canonical example being "percent complete." However, I recommend a different approach: have _incremental_ progress reports for all reusable code and only convert it to _cumulative_ just before it is displayed to the user.
-
-
 
 
 
@@ -186,8 +149,6 @@ public async Task DownloadFileAsync(string fileName, IProgress<int> progress)
     }
   }
 }
-
-
 
 
 Perhaps it's just me, but I find it easier to compose incremental updates like this rather than cumulative ones.

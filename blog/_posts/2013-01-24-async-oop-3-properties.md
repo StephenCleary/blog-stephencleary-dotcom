@@ -1,19 +1,14 @@
 ---
 layout: post
 title: "Async OOP 3: Properties"
-tags: ["async", ".NET", "async oop"]
+series: "Async OOP"
+seriesTitle: "Async OOP 3: Properties"
 ---
-
-
 Unlike `async` constructors, `async` properties could be added to the language without much difficulty (well, property _getters_ could, at least). Properties are just syntactic sugar for getter and setter methods, and it wouldn't be a huge leap to make these methods `async`. However, `async` properties are not allowed.
 
 
 
-
-
 This is a purposeful design decision, because "asynchronous properties" is an oxymoron. Property getters should return current values; they should not be kicking off background operations. Also, the semantics behind an "asynchronous setter" are not at all clear.
-
-
 
 
 
@@ -27,19 +22,13 @@ Usually, when someone wants an "asynchronous property", what they really want is
 - A value that can be used in data-binding but which must be calculated or retrieved asynchronously.
 
 
-
-
 We'll look at each of these in turn.
 
 
 
 ## Asynchronous Operations
 
-
-
 If your "property" needs to be asynchronously evaluated every time it's accessed, then you're really talking about an asynchronous operation.The best solution is to change the property to an `async` method. Semantically, it shouldn't be a property.
-
-
 
 
 
@@ -70,8 +59,6 @@ public static async Task TestAsyncProperty()
 }
 {% endhighlight %}
 
-
-
 However, I do not recommend this approach. If every access to a property is going to kick off a new asynchronous operation, then that "property" should really be a _method_:
 
 
@@ -94,19 +81,13 @@ public static async Task TestAsyncProperty()
 }
 {% endhighlight %}
 
-
-
 Personally, I think the asynchronous method makes it clearer that a new asynchronous operation is initiated every time.
 
 
 
 ## Cached Values
 
-
-
 In this case, you only want the asynchronous operation executed once: the first time it's requested. After the operation completes, the result of the operation should be cached and returned immediately.
-
-
 
 
 
@@ -137,19 +118,13 @@ public static async Task TestAsyncProperty()
 }
 {% endhighlight %}
 
-
-
 In this case, I find the property syntax acceptable, since there's only one actual asynchronous operation and every method waiting on it will wait on the same operation.
 
 
 
 ## Data-Bound Values
 
-
-
 Data binding requires immediate (synchronous) results, and it can only deal with a limited set of types. Data binding will not give awaitable types any special treatment, so the type of an "asynchronous property" used for data binding must be the type of the result of the asynchronous operation (e.g., `int` instead of `Task<int>`).
-
-
 
 
 
@@ -185,11 +160,7 @@ For this to work, the data-bound value must be initially set to some default or 
 }
 {% endhighlight %}
 
-
-
-In the example code above, I'm assuming that the code constructing a `MyClass` will call its `InitializeAsync` method. Alternatively, if this instance is contained in an enclosing data bound instance, you could wrap the construction and `InitializeAsync` into an asynchronous factory method [as we discussed last time](/2013/01/async-oop-2-constructors.html).
-
-
+In the example code above, I'm assuming that the code constructing a `MyClass` will call its `InitializeAsync` method. Alternatively, if this instance is contained in an enclosing data bound instance, you could wrap the construction and `InitializeAsync` into an asynchronous factory method [as we discussed last time]({% post_url 2013-01-17-async-oop-2-constructors %}).
 
 
 
@@ -213,8 +184,6 @@ If your property value is simply the result of a `Task<TResult>`, then you can u
     }
 }
 {% endhighlight %}
-
-
 
 In this case, you can databind to `MyProperty.Result`, which will be initialized to the default value (`null`). When the `GetValueAsync` task completes, `MyProperty.Result` will be updated to the result value (`13`). `NotifyTaskCompletion` implements `INotifyPropertyChanged`, so this change will be picked up automatically by the data binding.
 

@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "First CodeProject Article on Nito.MVVM"
-tags: [".NET", "MVVM/WPF"]
 ---
-
-
 The [first Nito.MVVM CodeProject article](http://www.codeproject.com/KB/WPF/NitoMVVMCommands.aspx) is up! This article describes the ICommand implementations that are in the [Nito.MVVM library](http://nitomvvm.codeplex.com/), along with some comparisions to existing work.
-
-
 
 
 

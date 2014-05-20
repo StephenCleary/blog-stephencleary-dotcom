@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "A New Web Site"
-tags: [".NET", "ASP.NET", "jQuery"]
 ---
-
-
 This weekend, I _finally_ updated [my personal home page](http://stephencleary.com) (it's only been about 5 years...). The new site uses several technologies I wanted to play around with.
-
-
 
 
 
@@ -15,11 +10,7 @@ The site is served by [GitHub Pages](http://pages.github.com/), though I don't u
 
 
 
-
-
 The site itself (technically) uses ASP.NET MVC and jQuery Mobile UI. Inspired by John Papa's recent [excellent blog series on single-page applications](http://johnpapa.net/spapost10), my site is also an SPA, only it's served statically, without any dynamic parts (yet). :)
-
-
 
 
 
@@ -27,11 +18,7 @@ To get the (dynamic) ASP.NET MVC converted to a (static) GitHub page, I run a [p
 
 
 
-
-
 As part of this web page, I developed my own [C#-to-HTML formatter](https://github.com/StephenCleary/stephencleary-dotcom/blob/master/Api/Api/Business/CSharpFormatter.cs) wrapped in an [HTML helper](https://github.com/StephenCleary/stephencleary-dotcom/blob/master/StephenCleary.com/Helpers/CSharpHtmlHelper.cs). The C# formatter uses backticks (`) to surround type names, and a backtick command (`!) to surround highlighting. Both [inline](https://github.com/StephenCleary/stephencleary-dotcom/blob/master/StephenCleary.com/Views/Home/Index.cshtml#L58) and [block](https://github.com/StephenCleary/stephencleary-dotcom/blob/master/StephenCleary.com/Views/Home/Index.cshtml#L234) C# code segments are supported.
-
-
 
 
 

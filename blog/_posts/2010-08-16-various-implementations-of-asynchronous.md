@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "Various Implementations of Asynchronous Background Tasks"
-tags: ["Threading", ".NET", "Nito.Async"]
 ---
-
-
 This is going to be a long blog post, because there's plenty of ground to cover. Executive summary: there are lots of ways to do background tasks in .NET, but use the new Task class if possible because it's the best. :D
-
-
 
 
 
@@ -16,8 +11,6 @@ Many user interface applications find that they need to support some kind of an 
 
 
 ## Common Requirements
-
-
 
 Not all applications need all of these, but some common requirements are:
 
@@ -33,9 +26,7 @@ Not all applications need all of these, but some common requirements are:
 
 ## Tasks (Async Methods)
 
-
-
-The best overall method is to use [Task-returning asynchronous methods](http://blog.stephencleary.com/2012/02/async-and-await.html), new in .NET 4.5 and C# 5.0. They naturally support all of the common requirements:
+The best overall method is to use [Task-returning asynchronous methods]({% post_url 2012-02-02-async-and-await %}), new in .NET 4.5 and C# 5.0. They naturally support all of the common requirements:
 
 
 
@@ -50,8 +41,6 @@ The best overall method is to use [Task-returning asynchronous methods](http://b
 
 ## Tasks (Task Parallel Library)
 
-
-
 You can also use tasks without asynchronous methods. Tasks were introduced in the [Task Parallel 
 Library](http://msdn.microsoft.com/en-us/library/dd537609.aspx) (.NET 4.0). The following requirements are fully supported:
 
@@ -64,18 +53,14 @@ Library](http://msdn.microsoft.com/en-us/library/dd537609.aspx) (.NET 4.0). The 
   - **Synchronization.** Tasks introduce a very flexible model of synchronization by separating the actual operation from how it is [scheduled](http://msdn.microsoft.com/en-us/library/dd997402.aspx). Synchronization with the user interface is only slightly awkward; a user interface task scheduler can be retrieved by calling TaskScheduler.FromCurrentSynchronizationContext while on the UI thread. This scheduler [can then be used](http://msdn.microsoft.com/en-us/library/dd997394.aspx) to schedule a [task continuation](http://msdn.microsoft.com/en-us/library/ee372288.aspx) to marshal the result, error, or cancellation update to the UI thread.
 
 
-
-
 Progress reporting is a bit complex for tasks:
 
 
 
-   - **Progress.** One way to report progress from a task is to create another task (to update the UI), schedule it to the UI thread, and wait for it to complete. There is a [ProgressReporter wrapper class on this blog](http://blog.stephencleary.com/2010/06/reporting-progress-from-tasks.html) which helps simplify the code.
+   - **Progress.** One way to report progress from a task is to create another task (to update the UI), schedule it to the UI thread, and wait for it to complete. There is a [ProgressReporter wrapper class on this blog]({% post_url 2010-06-18-reporting-progress-from-tasks %}) which helps simplify the code.
 
 
 ## BackgroundWorker
-
-
 
 Before .NET 4.0 was released, [BackgroundWorker](http://msdn.microsoft.com/en-us/library/8xs8549b.aspx) was the de-facto standard. It supports most of the requirements:
 
@@ -86,8 +71,6 @@ Before .NET 4.0 was released, [BackgroundWorker](http://msdn.microsoft.com/en-us
     - **Progress.** Any BackgroundWorker whose WorkerSupportsProgress property is true may report progress. The DoWork delegate invokes ReportProgress, which causes the ProgressChanged event to fire. Progress reporting is always asynchronous, so DoWork will continue to run before the ProgressChanged event actually executes.
     - **Cancellation.** Any BackgroundWorker whose WorkerSupportsCancellation property is true may be cancelled. The cancelling thread first calls BackgroundWorker.CancelAsync. This causes the BackgroundWorker.CancellationPending property to become true. The DoWork delegate should monitor that property (checking it on a regular basis), and set DoWorkEventArgs.Cancel to true and return if the operation is cancelled. The RunWorkerCompleted delegate detects a cancelled result by checking RunWorkerCompletedEventArgs.Cancelled.
     - **Synchronization.** The biggest benefit of BackgroundWorker is its support for automatic synchronization. The ProgressChanged and RunWorkerCompleted events are synchronized to the SynchronizationContext that was in place when RunWorkerAsync was called. In most situations, RunWorkerAsync is called from a UI thread, and so the ProgressChanged and RunWorkerCompleted events are invoked on the UI thread.
-
-
 
 
 BackgroundWorker does have one rather significant drawback. It works perfectly for less complex systems, but does not nest easily.
@@ -103,16 +86,12 @@ This can be solved one of two ways:
 
 ## Delegate.BeginInvoke
 
-
-
 Every delegate in .NET supports [asynchronous invocation](http://msdn.microsoft.com/en-us/library/2e08f6yc.aspx). This is a lower-level technique that does not require a separate object (e.g., Task or BackgroundWorker) to define an asynchronous operation. Because it is at a lower level, it supports fewer of the standard requirements:
 
 
 
        - **Results.** The result of the delegate may be retrieved by calling Delegate.EndInvoke, even if the asynchronous delegate has already completed.
        - **Errors.** Any exception thrown by the delegate is preserved and rethrown by Delegate.EndInvoke, properly preserving the call stack.
-
-
 
 
 This lower-level approach does not cleanly support these requirements:
@@ -130,8 +109,6 @@ This lower-level approach does not cleanly support these requirements:
 
 ## ThreadPool.QueueUserWorkItem
 
-
-
 One of the lowest-level approaches is to queue the work directly to the ThreadPool. Unfortunately, this approach does not support _any_ of the requirements directly; every requirement needs a fair amount of work:
 
 
@@ -140,19 +117,13 @@ One of the lowest-level approaches is to queue the work directly to the ThreadPo
           - **Errors.** If a delegate queued to the ThreadPool allows an exception to propagate, then the entire process is killed. If any errors are possible, then they should be wrapped in a try...catch and the exception object "returned" to the calling thread (either using a child object of an argument, or using a bound variable of a lambda expression). The exception could be rethrown with the correct stack trace by calling PrepareForRethrow from the [Rx library](http://msdn.microsoft.com/en-us/devlabs/ee794896.aspx).
 
 
-
-
 The other requirements have the same problems (and mitigating solutions) as the Delegate.BeginInvoke approach above.
 
 
 
 ## Thread
 
-
-
 Of course, one obvious approach is to place a background operation in its own thread. This is often a sub-optimal solution, since the ThreadPool is designed to handle varying loads. There is almost never a need to manually create background Thread objects. However, many programmers naturally turn to the Thread class as an obvious solution.
-
-
 
 
 

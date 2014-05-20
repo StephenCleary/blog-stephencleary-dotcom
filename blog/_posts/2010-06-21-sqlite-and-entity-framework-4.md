@@ -1,17 +1,12 @@
 ---
 layout: post
 title: "SQLite and Entity Framework 4"
-tags: [".NET"]
 ---
-
-
 I met a nice fellow at the Microsoft Code Camp in Chicago recently. He had a question about how well the Entity Framework worked with other ADO.NET providers. When I told him that I had a solution working using Entity Framework running on SQLite, he was quite interested. There are a handful of hurdles to get it all working, though.
 
 
 
 ## ADO.NET Provider for SQLite
-
-
 
 The first thing you need is an ADO.NET provider for SQLite. There's an excellent (and free) solution available called [System.Data.SQLite](http://sqlite.phxsoftware.com/). This is actually an ADO.NET 2.0/3.5 provider, and also includes support for the Entity Framework.
 
@@ -19,15 +14,11 @@ The first thing you need is an ADO.NET provider for SQLite. There's an excellent
 
 ## Supporting SQLite from a .NET 4.0 Project
 
-
-
 By default, a .NET 4.0 process will happily load a .NET 2.0-3.5 managed DLL, but will refuse to load a .NET 2.0-3.5 mixed-mode DLL. This is a problem for SQLite, since it is a .NET 2.0 mixed-mode DLL. A full description of this problem and its solution is [available online](http://www.marklio.com/marklio/PermaLink,guid,ecc34c3c-be44-4422-86b7-900900e451f9.aspx), but the short answer is to set [useLegacyV2RuntimeActivationPolicy](http://msdn.microsoft.com/en-us/library/bbx34a2h.aspx) to true in your app.config.
 
 
 
 ## Opening Alternative Data Files
-
-
 
 SQLite has a simple "one database per file" concept that does not exist for all ADO.NET data sources. If you need to allow your application to access user-selected database files, it's possible to "redirect" an Entity Framework connection string to an alternative data file. The correct way to do this is to crack the Entity Framework connection string, extract the SQLite connection string, crack the SQLite connection string, replace the data file, rebuild the SQLite connection string, and finally rebuild the Entity Framework connection string:
 
@@ -63,8 +54,6 @@ public static string RedirectedEntityFrameworkConnectionString(string originalCo
 }
 
 
-
-
 The redirected Entity Framework connection string may be passed to the ObjectContext-derived class constructor (e.g., the "MyEntities" class that the Entity Framework creates for you):
 
 
@@ -80,11 +69,7 @@ using (var context = new MyEntities(connectionString))
 
 ## The Entity Framework's Database Connection
 
-
-
 The Entity Framework is actually an ADO.NET data provider that is itself wrapping an ADO.NET data provider (SQLite, to be specific). [Normally, the Entity Framework will open a database connection whenever it needs one; these automatically-opened connections are automatically closed when the Entity Framework is finished with it.](http://msdn.microsoft.com/en-us/library/bb896325.aspx) This default behavior works well with SQL Server due to its ADO.NET provider's connection pooling. However, it does not work well with SQLite, due to various "properties" existing on the SQLite connection itself. One example is "PRAGMA foreign_keys = ON", which enforces foreign keys only for that SQLite database connection. If the Entity Framework opens and closes its connections at will, then SQLite PRAGMAs such as these are lost.
-
-
 
 
 
@@ -104,8 +89,6 @@ using (var myEntities = new MyEntities())
 }
 
 
-
-
 It's often useful to get at the SQLiteConnection being used by the Entity Framework. This is available through the "EntityConnection.StoreConnection" property, as illustrated by this code sample:
 
 
@@ -116,11 +99,7 @@ var connection = (myEntities.Connection as EntityConnection).StoreConnection as 
 
 ## Directly Accessing the Database Using SQL
 
-
-
 Even when using the Entity Framework, there are situations where one wishes to execute SQL commands directly against the database. PRAGMAs are one common scenario; another is updating the schema structure to the latest version.
-
-
 
 
 
@@ -136,8 +115,6 @@ using (var command = connection.CreateCommand())
 }
 
 
-
-
 However, there's an even easier way of doing this: Entity Framework exposes a method named "ExecuteStoreCommand":
 
 
@@ -148,17 +125,11 @@ myEntities.ExecuteStoreCommand("PRAGMA encoding = \"UTF-8\"");
 
 ## Entity Framework Transactions
 
-
-
 The [official Entity Framework documentation](http://msdn.microsoft.com/en-us/library/bb896325.aspx) recommends using generic transactions (e.g., TransactionScope). This has some benefits; it can be easily promoted to a distributed transaction, etc.
 
 
 
-
-
-However, it has a timeout scheme that is not very friendly (I [mentioned this](http://blog.stephencleary.com/2010/06/transactionscope-has-default-timeout.html) a few weeks ago). In my situation, I had to potentially spend quite a bit of time upgrading the client's database on first run.
-
-
+However, it has a timeout scheme that is not very friendly (I [mentioned this]({% post_url 2010-06-02-transactionscope-has-default-timeout %}) a few weeks ago). In my situation, I had to potentially spend quite a bit of time upgrading the client's database on first run.
 
 
 
@@ -175,11 +146,7 @@ using (var transaction = connection.BeginTransaction())
 }
 
 
-
-
 SQLiteTransaction does not have the same timeout restrictions that plague TransactionScope, et. al.
-
-
 
 
 
@@ -189,8 +156,6 @@ _Reminder:_ You _do_ want to use a SQLiteTransaction! The Entity Framework by de
 
 ## Defining and Enforcing Foreign Keys
 
-
-
 First, you need to enforce foreign keys on your database connection; see the [SQLite foreign keys documentation](http://www.sqlite.org/foreignkeys.html) for more information. This is done simply as such:
 
 
@@ -199,11 +164,7 @@ First, you need to enforce foreign keys on your database connection; see the [SQ
 myEntities.ExecuteStoreCommand("PRAGMA foreign_keys = ON");
 
 
-
-
 The next step is to actually establish the Entity Framework relationships. Some SQLite databases work just fine; the EF designer is able to understand the foreign key relationships and adds them correctly. Other SQLite databases just import the entities themselves without the relationships; I'm not sure why this is the case.
-
-
 
 
 
@@ -213,9 +174,9 @@ If you have a SQLite database that does not get its relationships imported, then
 
 ### Foreign Keys: 0..1 to N and 1 to N
 
-[![](http://3.bp.blogspot.com/_lkN-6AUYgOI/TB_YCelMDiI/AAAAAAAADS0/8ahLHjxQq40/s320/1toNp1.PNG)](http://3.bp.blogspot.com/_lkN-6AUYgOI/TB_YCelMDiI/AAAAAAAADS0/8ahLHjxQq40/s1600/1toNp1.PNG)[![](http://2.bp.blogspot.com/_lkN-6AUYgOI/TB_YJeDzqVI/AAAAAAAADS8/0yLOi1dHyps/s320/1toNp2.PNG)](http://2.bp.blogspot.com/_lkN-6AUYgOI/TB_YJeDzqVI/AAAAAAAADS8/0yLOi1dHyps/s1600/1toNp2.PNG)
-
-
+[![]({{ site_url }}/assets/1toNp1.PNG)  
+]({{ site_url }}/assets/1toNp1.PNG)[![]({{ site_url }}/assets/1toNp2.PNG)  
+]({{ site_url }}/assets/1toNp2.PNG)
 
 In this type of relationship, the "parent" table has an identity, and the "child" table has its own identity and a foreign key referring to a row in the "parent" table. To establish this relationship, follow these steps:
 
@@ -231,21 +192,17 @@ In this type of relationship, the "parent" table has an identity, and the "child
 1. Click OK. The foreign key association is now completed.
 
 
-
-
 Thanks to the Entity Framework Design team for their [blog post on FK Associations](http://blogs.msdn.com/b/efdesign/archive/2009/03/16/foreign-keys-in-the-entity-framework.aspx); my instructions above are derived from that post.
 
 
 
 ### Foreign Keys: M to N
 
-[![](http://2.bp.blogspot.com/_lkN-6AUYgOI/TB_YOlFOr1I/AAAAAAAADTE/OXn3IMi0pck/s320/MtoNp1.PNG)](http://2.bp.blogspot.com/_lkN-6AUYgOI/TB_YOlFOr1I/AAAAAAAADTE/OXn3IMi0pck/s1600/MtoNp1.PNG)[![](http://4.bp.blogspot.com/_lkN-6AUYgOI/TB_YTI6qZeI/AAAAAAAADTM/b131G-Gksjs/s320/MtoNp2.PNG)](http://4.bp.blogspot.com/_lkN-6AUYgOI/TB_YTI6qZeI/AAAAAAAADTM/b131G-Gksjs/s1600/MtoNp2.PNG)
-
-
+[![]({{ site_url }}/assets/MtoNp1.PNG)  
+]({{ site_url }}/assets/MtoNp1.PNG)[![]({{ site_url }}/assets/MtoNp2.PNG)  
+]({{ site_url }}/assets/MtoNp2.PNG)
 
 This type of relationship has a special table in the database, commonly called a "join table". Unfortunately, the Entity Framework support for SQLite does not pick up on these relationships either, so the join table will actually be added to the Entity Framework designer as an entity.
-
-
 
 
 
@@ -264,11 +221,7 @@ To convert this join table entity into an M to N relationship, follow these step
 
 ### Final Notes on Foreign Key Associations
 
-
-
 Once the entity associations are defined (as above), you may freely "update" your model from the database without losing those associations.
-
-
 
 
 

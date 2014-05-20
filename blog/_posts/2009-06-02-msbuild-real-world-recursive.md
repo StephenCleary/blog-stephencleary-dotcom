@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "MSBuild: A Real-World Recursive Application"
-tags: ["Sample code", "MSBuild"]
 ---
-
-
-I recently posted on this blog a "toy application" of MSBuild that [calculates factorials](http://blog.stephencleary.com/2009/05/msbuild-factorial.html). Well, this weekend I was working on the new build script for the [Nito.Async library](http://nitoasync.codeplex.com/), and surprised myself by finding an actual real-world application for this code!
-
-
+I recently posted on this blog a "toy application" of MSBuild that [calculates factorials]({% post_url 2009-05-28-msbuild-factorial %}). Well, this weekend I was working on the new build script for the [Nito.Async library](http://nitoasync.codeplex.com/), and surprised myself by finding an actual real-world application for this code!
 
 
 
@@ -15,17 +10,11 @@ It turns out that this is useful when autogenerating publisher policies. Nito.As
 
 
 
-
-
 To autogenerate publisher policies for a version _maj.min_, the build script must build a separate dll for each version in the range [_maj_.0, _maj.min_). It turns out that the recursive behavior in my "factorial.proj" toy was exactly what I needed; I just changed the return value to concatenate a list of numbers instead of multiplying them together.
 
 
 
-
-
 There was one other small hurdle to overcome; I had to perform a cross product of two different item groups (the list of "previous minor versions" and the list of library dlls). This is not exactly straightforward in MSBuild, and is a common question (just Google for "MSBuild cross product").
-
-
 
 
 

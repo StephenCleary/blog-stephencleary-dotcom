@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "Announcement: Calculated Properties"
-tags: [".NET", "MVVM/WPF"]
 ---
-
-
 I am pleased to announce the creation of my latest library: [calculated properties for C# MVVM apps](https://github.com/StephenCleary/CalculatedProperties).
-
-
 
 
 

@@ -1,10 +1,7 @@
 ---
 layout: post
 title: "Finalizers at Process Exit"
-tags: [".NET", "IDisposable/Finalizers"]
 ---
-
-
 I spent too long investigating a problem in a colleague's code today; the bug was something I knew about but had forgotten:
 
 
@@ -12,11 +9,7 @@ I spent too long investigating a problem in a colleague's code today; the bug wa
 > During process shutdown, finalizers are given a strict timeout. If they overrun their timeout, the process is terminated.
 
 
-
-
 This can easily happen if, say, someone you work with writes a program that leaves cleaning up database objects to the finalizers. The program works fine with their small test databases, but then seems to have no effect when used with larger databases (database engines tend to get excited and roll back operations when their client programs suddenly terminate).
-
-
 
 
 
@@ -26,17 +19,11 @@ I can't believe that I spent over an hour today tracking this down (sigh). So, I
 
 ## Supporting Statements
 
-
-
 "Finalization during process termination will eventually timeout." (Chris Brumme, [Finalization](http://blogs.msdn.com/cbrumme/archive/2004/02/20/77460.aspx)).
 
 
 
-
-
 "We run most of the above shutdown under the protection of a watchdog thread.  By this I mean that the shutdown thread signals the finalizer thread to perform most of the above steps.  Then the shutdown thread enters a wait with a timeout.  If the timeout triggers before the finalizer thread has completed the next stage of the managed shutdown, the shutdown thread wakes up and skips the rest of the managed part of the shutdown." (Chris Brumme, [Startup, Shutdown and related matters](http://blogs.msdn.com/cbrumme/archive/2003/08/20/51504.aspx)).
-
-
 
 
 

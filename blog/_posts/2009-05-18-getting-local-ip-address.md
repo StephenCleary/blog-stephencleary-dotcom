@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "Getting the Local IP Address"
-tags: [".NET", "TCP/IP sockets"]
 ---
-
-
-(This post is part of the [TCP/IP .NET Sockets FAQ](http://blog.stephencleary.com/2009/04/tcpip-net-sockets-faq.html))
-
-
+(This post is part of the [TCP/IP .NET Sockets FAQ]({% post_url 2009-04-30-tcpip-net-sockets-faq %}))
 
 
 
@@ -18,13 +13,9 @@ One common FAQ is how to get the local IP address of the computer. In fact, the 
 > True (but boring) story: my laptop (on which I am writing this) currently has seven network "adapters": one physical, one wireless, one dialup, two VPN, and two for virtual machine networks. This is not including the Teredo virtual adapter, and others may also install the loopback adapter, which is commonly seen on testing machines.
 
  
-
-
-The moral of this (short) FAQ entry? Never, ever assume that a computer only has one IP address. A lot of sample code for retrieving the local IP address does make this faulty assumption. However, the code [here](http://blog.stephencleary.com/2009/05/getting-local-ip-addresses.html) displays a _list_ of IP addresses.
-
+The moral of this (short) FAQ entry? Never, ever assume that a computer only has one IP address. A lot of sample code for retrieving the local IP address does make this faulty assumption. However, the code [here]({% post_url 2009-05-18-getting-local-ip-addresses %}) displays a _list_ of IP addresses.
 
 
 
-
-(This post is part of the [TCP/IP .NET Sockets FAQ](http://blog.stephencleary.com/2009/04/tcpip-net-sockets-faq.html))
+(This post is part of the [TCP/IP .NET Sockets FAQ]({% post_url 2009-04-30-tcpip-net-sockets-faq %}))
 

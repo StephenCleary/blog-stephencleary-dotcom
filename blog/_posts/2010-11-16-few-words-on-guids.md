@@ -1,17 +1,12 @@
 ---
 layout: post
 title: "A Few Words on GUIDs"
-tags: ["Programming", ".NET"]
 ---
-
-
-I keep seeing a lot of confusion in programmers as to how exactly GUIDs work, likeliness of collision, etc. I did some work [a while ago](http://blog.stephencleary.com/2009/08/alternative-guids-for-mobile-devices.html) developing my own GUID, so I thought I'd post some clarifications about GUIDs.
+I keep seeing a lot of confusion in programmers as to how exactly GUIDs work, likeliness of collision, etc. I did some work [a while ago]({% post_url 2009-08-17-alternative-guids-for-mobile-devices %}) developing my own GUID, so I thought I'd post some clarifications about GUIDs.
 
 
 
 ## The Standard
-
-
 
 First off, GUIDs do have a standard: [RFC 4122](http://www.apps.ietf.org/rfc/rfc4122.html). However, there are other types of GUIDs; these will be called "non-conforming GUIDs" in this blog post.
 
@@ -19,11 +14,7 @@ First off, GUIDs do have a standard: [RFC 4122](http://www.apps.ietf.org/rfc/rfc
 
 ## High-Level Structure
 
-
-
 A GUID is a 128-bit (16-byte) value that is normally divided into five groups of varying lengths: 4 bytes, 2 bytes, 2 bytes, 2 bytes, and 6 bytes. Certain bits have certain meanings.
-
-
 
 
 
@@ -31,11 +22,7 @@ RFC 4122 defines several different types of GUIDs, each of which may be composed
 
 
 
-
-
 The second field of note is the Version field. This acts as a sort of "sub-type" for Variant 2 RFC 4122 GUIDs. The four most significant bits in the 7th octet determine the version: 1 is a time-based GUID; 2 is a DCE GUID (not described in the RFC); 3 is an MD5-hashed name-based GUID; 4 is a random GUID; 5 is a SHA1-hashed name-based GUID; and [0, 6-15] are undefined. Again, almost all discussion of GUIDs on the Internet are dealing with Version 1 or 4 GUIDs.
-
-
 
 
 
@@ -45,11 +32,7 @@ Name-based GUIDs (versions 3 and 5) are hardly ever used; they provide a means t
 
 ## Random GUIDs (Version 4)
 
-
-
 Today, the most common type of GUIDs are Variant 2, Version 4 RFC 4122 GUIDs, also known as "random GUIDs". Aside from the Variant and Version fields, all other bits in the GUID are random. In particular, random GUIDs do _not_ expose a MAC address.
-
-
 
 
 
@@ -59,11 +42,7 @@ The .NET Framework [Guid.NewGuid](http://msdn.microsoft.com/en-us/library/system
 
 ## Likelihood of Collision
 
-
-
 The Variant and Version fields are 6 bits together, which leaves 122 bits of randomness in a random GUID. There are 5.3e36 total unique random GUIDs, which is a lot. What is more important, however, is the _likelihood of collision_.
-
-
 
 
 
@@ -71,11 +50,7 @@ Assuming a perfect source of entropy on each device generating random GUIDs, the
 
 
 
-
-
 Even if you reduce the chance of collision to 1%, it would still take about 3.27e17 random GUIDs for just a 1% chance of collision. That's more than 326 million billion. That's a lot.
-
-
 
 
 
@@ -85,11 +60,7 @@ Random GUIDs cannot ever collide with other types of RFC 4122 GUIDs (e.g., time-
 
 ## Time-Based GUIDs (Version 1)
 
-
-
 Time-based GUIDs are Variant 2, Version 1 RFC 4122 GUIDs, also known as "sequential GUIDs" because they can be generated with values very close to each other. They consist of three fields in addition to Variant and Version: a 60-bit UTC Timestamp, a 14-bit Clock Sequence, and a 48-bit Node Identifier.
-
-
 
 
 
@@ -100,11 +71,7 @@ The Node Identifier is normally the MAC address of the computer generating the t
 > Note: using a random value instead of the MAC address is not currently supported by Microsoft's Win32 API. This means that any GUID generation done using [UuidCreateSequential](http://msdn.microsoft.com/en-us/library/aa379322(VS.85).aspx) _will_ expose the MAC address.
 
 
-
-
 The Clock Sequence field is initialized to a random value and incremented whenever the system clock has moved backward since the last generated GUID (e.g., if the computer corrects its time with a time server, or if it lost its date and thinks it's 1980). This allows 16,384 clock resets without any danger of a collision. If the GUIDs are being generated so quickly that the system clock has not moved _forward_ since the last GUID's timestamp, then the GUID generation algorithm will generally stall until the system clock increments the timestamp.
-
-
 
 
 
@@ -112,11 +79,7 @@ Sequential GUIDs are not actually _sequential_. In normal circumstances, GUIDs b
 
 
 
-
-
 It's important to note that the likelihood of collisions of sequential GUIDs is extremely small. The Clock Sequence and Timestamp almost certainly uniquely identify a point in time, and the Node Identifier almost certainly identifies a unique source.
-
-
 
 
 
@@ -126,11 +89,7 @@ Sequential GUIDs can be created by the Win32 function [UuidCreateSequential](htt
 
 ## Microsoft's Change
 
-
-
 The primary method for creating GUIDs on Windows is the [UuidCreate](http://msdn.microsoft.com/en-us/library/aa379205(VS.85).aspx) function. Before Windows 2000 (e.g., Windows NT and the 9x line), GUIDs created by this function were time-based (version 1) GUIDs. This was changed in Windows 2000 to return random (version 4) GUIDs due to privacy concerns regarding the exposure of the MAC address in Version 1 GUIDs.
-
-
 
 
 
@@ -140,11 +99,7 @@ Note that "the" GUID algorithm did not change. Microsoft simply changed which GU
 
 ## The Database Problem(s)
 
-
-
 Database indexes do not work well with random values; the on-disk search trees end up very wide because the indexes do not cluster well. So, when using GUIDs for keys, it helps to use a more... _sequential..._ solution.
-
-
 
 
 
@@ -152,13 +107,9 @@ However, there's another problem with GUIDs as database keys: the order in which
 
 
 
-
-
 So, when Microsoft added [newsequentialid()](http://msdn.microsoft.com/en-us/library/ms189786.aspx) to SQL Server, they did not just return a regular sequential GUID. They [shuffled some of the bytes](http://www.jorriss.net/blog/jorriss/archive/2008/04/24/unraveling-the-mysteries-of-newsequentialid.aspx) ([webcite](http://www.webcitation.org/5ylItnhAb)) to make index clustering more efficient.
 
  
-
-
 
 Unfortunately, the shuffled bytes include the Version and Variant fields. This means that **newsequentialid() GUIDs are not RFC 4122 compliant!** As a result, GUIDs from newsequentialid() have a higher likelihood of colliding with RFC 4122 compliant GUIDs such as sequential or random GUIDs.
 
@@ -166,11 +117,7 @@ Unfortunately, the shuffled bytes include the Version and Variant fields. This m
 
 ## Conclusion
 
-
-
 When using GUIDs as keys in a database, you must ensure that the GUIDs are all compatible with each other. In particular, newsequentialid() is not compatible with Guid.NewGuid or UuidCreateSequential (unless you're doing byte swapping manually). Guid.NewGuid and UuidCreateSequential are compatible with each other (since they are both RFC 4122 compliant). Other made-up GUIDs - including ["comb" GUIDs](http://www.informit.com/articles/article.aspx?p=25862) ([webcite](http://www.webcitation.org/5ylJ1c1VK)) - are not compatible with any other type of GUID.
-
-
 
 
 
@@ -178,11 +125,7 @@ Mixing incompatible GUIDs may work for a while, but you do greatly increase your
 
 
 
-
-
 There are many statements on the Internet about observing GUID collisions in production. These statements almost always conclude that "GUIDs can collide", which should be taken with a healthy dose of skepticism. Collisions are most likely a result of using two incompatible GUID formats (e.g., an RFC 4122 GUID and a non-conforming GUID); however, they may also be caused by one of the devices using a poor source of entropy (for random GUIDs), or a device repeatedly having its clock reset (for sequential GUIDs).
-
-
 
 
 
@@ -192,7 +135,5 @@ Another possible problem is when well-meaning coders actually _increment_ an exi
 
 ## Code!
 
-
-
-When doing the research for [my own combed GUID](http://blog.stephencleary.com/2009/08/alternative-guids-for-mobile-devices.html), I wrote [a few extension methods](http://nitokitchensink.codeplex.com/SourceControl/changeset/view/57812#1006424) for the Guid structure that allow examining the RFC 4122 fields. For example, you can extract the MAC address and creation time for a sequential GUID. Naturally, these extension methods will only work for RFC 4122 GUIDs.
+When doing the research for [my own combed GUID]({% post_url 2009-08-17-alternative-guids-for-mobile-devices %}), I wrote [a few extension methods](http://nitokitchensink.codeplex.com/SourceControl/changeset/view/57812#1006424) for the Guid structure that allow examining the RFC 4122 fields. For example, you can extract the MAC address and creation time for a sequential GUID. Naturally, these extension methods will only work for RFC 4122 GUIDs.
 

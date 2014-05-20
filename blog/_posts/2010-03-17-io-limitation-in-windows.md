@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "I/O Limitation in Windows"
-tags: ["Windows", "Nito.Async"]
 ---
-
-
 Earlier today I was stress-testing a SerialPort component for [Nito.Async](http://nitoasync.codeplex.com/) when I ran into an unusual error: ERROR_NO_SYSTEM_RESOURCES (1450).
-
-
 
 
 
@@ -15,11 +10,7 @@ This error can be caused by exhausting any of several OS resources, though all t
 
 
 
-
-
 There's a limit to how big of a user-mode buffer one can send to a device driver (so this comes into play if you're talking to a _device_, such as a serial port or named pipe; it also affects I/O to regular files if FILE_FLAG_NO_BUFFERING was used). According to Dan Moseley of Microsoft, the basis of this limitation is in how the I/O Manager creates its memory descriptor list (MDL).
-
-
 
 
 
@@ -27,6 +18,7 @@ I'm in a position where I will need to transfer large amounts of data over seria
 
 
 
+{:.table .table-striped}
 {:.center.caption}
 Maximum I/O Buffer Size for Individual Unbuffered Read/Write Operations
 
@@ -41,11 +33,7 @@ Maximum I/O Buffer Size for Individual Unbuffered Read/Write Operations
 |Win7/2K8R2|IA-64|8192|(4 GB - PAGE_SIZE)|4294959104 bytes (3.999992 GB)|
 
 
-
-
 The lowest entry here is for XP/2K3 running on x64. So, if 64-bit XP is important, then you should not use I/O buffers over ~31 MB. If you ignore 64-bit XP, then you can use I/O buffers up to ~63 MB. Newer operating systems take great strides towards removing this limitation completely.
-
-
 
 
 

@@ -1,19 +1,12 @@
 ---
 layout: post
 title: "MSDN Article and GRDevDay"
-tags: ["async", ".NET", "Nito.AsyncEx"]
 ---
-
-
 We interrupt this blog series to bring you a special announcement.
 
 
 
-
-
 [My MSDN Magazine article "Best Practices in Asynchronous Programming" has been published](http://msdn.microsoft.com/en-us/magazine/jj991977.aspx). I'm not sure what's up with the MSDN Magazine table CSS; the layout looks rather poor IMO.
-
-
 
 
 

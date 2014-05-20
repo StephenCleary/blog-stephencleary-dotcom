@@ -1,17 +1,14 @@
 ---
 layout: post
 title: "Option Parsing: Argument Parsing"
-tags: ["Option Parsing", ".NET", "Nito.KitchenSink"]
+series: "Option parsing"
+seriesTitle: "Option Parsing: Argument Parsing"
 ---
-
-
 This is going to be an in-depth post on how argument parsing works in the [Nito.KitchenSink.OptionParsing library](http://nuget.org/List/Packages/Nito.KitchenSink.OptionParsing), and a couple of ways the parsing can be modified.
 
 
 
 ## General Option Argument Parsing Rules
-
-
 
 First, a reminder about terminology; in this example, the "v" is the short option name, and the "3" is the option argument:
 
@@ -19,17 +16,11 @@ First, a reminder about terminology; in this example, the "v" is the short optio
 
 > CommandLineTest.exe -v 3
 
-
-
-Also remember that an option argument may be _required_ for an option, or it may be _optional_. If you need a refresher, read the earlier post [options with optional arguments](http://blog.stephencleary.com/2011/07/option-parsing-options-with-optional.html).
-
-
+Also remember that an option argument may be _required_ for an option, or it may be _optional_. If you need a refresher, read the earlier post [options with optional arguments]({% post_url 2011-07-14-option-parsing-options-with-optional %}).
 
 
 
 Required option arguments are allowed to begin with a dash (**-**) or forward-slash (**/**), but optional option arguments are not. To start an optional option argument with these characters, specify the argument using a full-colon (**:**) or equals sign (**=**).
-
-
 
 
 
@@ -98,40 +89,28 @@ Optional Value: /b
 Optional Value: /b
 
 
-
-
 Note that placing the argument in double-quotes does _not_ allow the argument to start with a dash or forward-slash.
 
 
 
-
-
-Reminder: the command shell has its own set of reserved characters (**&**, **|**, **(**, **)**, **<**, **>**, and **^**). These can be escaped using **^**, or they can be wrapped in double-quotes. Command shell escapes are described in more detail in the [post on command-line lexing](http://blog.stephencleary.com/2011/06/option-parsing-lexing.html).
+Reminder: the command shell has its own set of reserved characters (**&**, **|**, **(**, **)**, **<**, **>**, and **^**). These can be escaped using **^**, or they can be wrapped in double-quotes. Command shell escapes are described in more detail in the [post on command-line lexing]({% post_url 2011-06-16-option-parsing-lexing %}).
 
 
 
 ## Implementing a Simple Argument Parser
 
-
-
 Parsing an argument option is done in two steps. The first step is to parse that portion of the command line as a string, using the rules above. The second step is to parse the string into an instance of the corresponding property type on the option arguments class. Since the examples above used a property type of string, there was no processing during the second step.
 
 
 
-> It is possible to use only a part of the [option parsing pipeline](http://blog.stephencleary.com/2011/06/option-parsing-option-parsing-pipeline.html) to get options and their arguments as strings. Pass a sequence of **OptionDefinition** instancess and a command line into the parser; the result is a sequence of **Option** instances (where each argument is typed as **string**). Details of these types will be covered in a future blog post.
-
-
+> It is possible to use only a part of the [option parsing pipeline]({% post_url 2011-06-09-option-parsing-option-parsing-pipeline %}) to get options and their arguments as strings. Pass a sequence of **OptionDefinition** instancess and a command line into the parser; the result is a sequence of **Option** instances (where each argument is typed as **string**). Details of these types will be covered in a future blog post.
 
 
 The option parsing library uses a collection of "simple parsers" to convert from a string to a known type. By default, the simple parser collection understands how to parse **bool**; signed and unsigned 8-bit, 16-bit, 32-bit, and 64-bit integers; **BigInteger**; single and double-precision floating point; **decimal**; **Guid**; **TimeSpan**; **DateTime**; and **DateTimeOffset**. Strings, enumerations and nullable types are treated specially: strings are never parsed, enumerations use **Enum.Parse**, and nullable types are supported if their corresponding non-nullable types are supported. The built-in parsers all use the standard **TryParse** methods.
 
 
 
-
-
 Say, for example, we wanted to accept an argument of type [Complex](http://msdn.microsoft.com/en-us/library/system.numerics.complex.aspx). The Complex type is not included in the default simple parser collection (in fact, it does not even have a Parse or TryParse method!).
-
-
 
 
 
@@ -178,17 +157,11 @@ class Program
 Could not parse  (3,5)  as Complex
 
 
-
-
 We can create a parser for the **Complex** type by implementing **ISimpleParser**. This interface only has two members: the type of the result and a **TryParse** method.
 
 
 
-
-
 Once we've implemented our special parser, we need to pass it to the Parse method. To do this, we create a **SimpleParserCollection**, add our special parser, and pass the collection to the Parse method.
-
-
 
 
 
@@ -262,11 +235,7 @@ class Program
 Value: (3, 5)
 
 
-
-
 We added a custom parser to the collection, and the option parsing library now understands how to parse a new type. We could add any number of **Complex** properties, and they would all use the new parser.
-
-
 
 
 
@@ -276,11 +245,7 @@ This is a powerful extension point, but what if we want to modify the way an ext
 
 ## Replacing a Simple Argument Parser
 
-
-
 The default parsers in a simple parser collection only use the basic **TryParse** methods, which may not be exactly what is needed. **SimpleParserCollection.Add** will actually _replace_ the parser for a given type if there is already a parser for that type.
-
-
 
 
 
@@ -328,8 +293,6 @@ Value: 11
 
 > CommandLineParsingTest.exe -v 0x11
 Could not parse  0x11  as UInt32
-
-
 
 
 Just like the last example, we'll implement our own parser, and we'll add it to the parser collection (replacing the default parser).
@@ -403,11 +366,7 @@ Value: 11
 Value: 17
 
 
-
-
 Our program now allows decimal or hexadecimal values for all **uint** argument values.
-
-
 
 
 
@@ -417,11 +376,7 @@ These custom parsers can be written for any type, including types specific for y
 
 ## Overriding the Simple Argument Parser
 
-
-
 The examples so far have implemented a custom parser and added it to the parser collection. This changes the parsing behavior for _every_ property of that type. Sometimes we just want to apply a parser to a single property; this can be done by using the **SimpleParserAttribute**.
-
-
 
 
 
@@ -493,9 +448,7 @@ DecValue: 11
 
 ## Custom Parsers for Multiple Argument Values
 
-
-
-Revisiting the problem of [multiple argument values](http://blog.stephencleary.com/2011/07/option-parsing-allowing-multiple.html), we can use a custom parser for a cleaner solution. This example "sequence parser" uses the default simple parser for **int** types, which is easier to deal with than **int.TryParse**:
+Revisiting the problem of [multiple argument values]({% post_url 2011-07-28-option-parsing-allowing-multiple %}), we can use a custom parser for a cleaner solution. This example "sequence parser" uses the default simple parser for **int** types, which is easier to deal with than **int.TryParse**:
 
 
 
@@ -563,8 +516,6 @@ Could not parse  2,3a,5  as IEnumerable<Int32>
 
 > CommandLineParsingTest.exe -v 2,3 -v 5,7
 Values: 5 7
-
-
 
 
 The last example above shows that the default behavior of the actual property setter is still _overwrite_, not _append_. If you want to allow appending sequences, you'll need to change the setter to append each sequence to an internal collection.

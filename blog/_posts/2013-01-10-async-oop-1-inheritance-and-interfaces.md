@@ -1,13 +1,10 @@
 ---
 layout: post
 title: "Async OOP 1: Inheritance and Interfaces"
-tags: ["async", ".NET", "async oop"]
+series: "Async OOP"
+seriesTitle: "Async OOP 1: Inheritance and Interfaces"
 ---
-
-
 Before we dive all the way into "asynchronous OOP", let's address one fairly common question: how does one deal with inheritance of asynchronous methods? What about an "asynchronous interface"?
-
-
 
 
 
@@ -20,8 +17,6 @@ Fortunately, `async` does work well with inheritance (and interfaces). Remember 
   Task MyMethodAsync();
 }
 {% endhighlight %}
-
-
 
 You can then implement it using `async`:
 
@@ -36,17 +31,11 @@ You can then implement it using `async`:
 }
 {% endhighlight %}
 
-
-
 If you have an implementation that _isn't_ `async`, you can use `TaskCompletionSource<T>` or one of its shorthand forms such as `Task.FromResult` to implement the asynchronous method signature synchronously.
 
 
 
-
-
 Similarly, if you have a base class method that returns `Task` or `Task<T>` (which may be asynchronous or synchronous), you can override it with an asynchronous or synchronous method.
-
-
 
 
 

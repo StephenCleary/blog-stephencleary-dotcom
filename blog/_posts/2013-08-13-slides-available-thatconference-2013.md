@@ -1,25 +1,16 @@
 ---
 layout: post
 title: "Slides Available: ThatConference 2013"
-tags: ["async", ".NET", "Windows Services", "Nito.AsyncEx", "ASP.NET"]
 ---
-
-
 I have [uploaded the slides](http://ge.tt/9cG0uko/v/0?c) for the talk I gave this morning at ThatConference 2013, entitled "Making the Best of the Short Bunk: Scaling Your Servers with Async/Await". This was a highly technical async/await talk that focused specifically on the server side.
 
 
 
-
-
-This talk specifically was _not_ an intro to async/await. If you need an intro, I recommend starting with my [intro blog post](http://blog.stephencleary.com/2012/02/async-and-await.html) and following up with the links at the bottom (in particular, don't ignore the MSDN docs; they're actually quite good!). An intermediate-level followup is my MSDN article [Best Practices in Asynchronous Programming](http://msdn.microsoft.com/en-us/magazine/jj991977.aspx).
-
-
+This talk specifically was _not_ an intro to async/await. If you need an intro, I recommend starting with my [intro blog post]({% post_url 2012-02-02-async-and-await %}) and following up with the links at the bottom (in particular, don't ignore the MSDN docs; they're actually quite good!). An intermediate-level followup is my MSDN article [Best Practices in Asynchronous Programming](http://msdn.microsoft.com/en-us/magazine/jj991977.aspx).
 
 
 
 The server-side async/await talk that I gave today did assume about that level of knowledge, and dove into the details of how async and await are used on the server side (mostly ASP.NET, but a lot of the information and techniques apply to any kind of server).
-
-
 
 
 

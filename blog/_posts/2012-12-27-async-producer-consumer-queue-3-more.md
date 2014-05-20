@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "Async Producer-Consumer Queue 3: More Flexibility"
-tags: ["async", ".NET", "Nito.AsyncEx"]
 ---
-
-
-[Last time](/2012/12/async-producer-consumer-queue-2-more.html) we implemented an `async`-compatible producer/consumer queue using portable `async`-ready synchronization primitives. This time, we'll give up some of that portability but increase flexibility: we'll build an `async`-compatible producer/consumer collection that can be used as a queue (FIFO), stack (LIFO), or bag (unordered).
-
-
+[Last time]({% post_url 2012-12-20-async-producer-consumer-queue-2-more %}) we implemented an `async`-compatible producer/consumer queue using portable `async`-ready synchronization primitives. This time, we'll give up some of that portability but increase flexibility: we'll build an `async`-compatible producer/consumer collection that can be used as a queue (FIFO), stack (LIFO), or bag (unordered).
 
 
 
@@ -15,9 +10,7 @@ The BCL has already done some of the hard work for us here. The [BlockingCollect
 
 
 
-
-
-Actually, it's pretty simple. It's almost exactly like [our last implementation](/2012/12/async-producer-consumer-queue-2-more.html), which wrapped a `Queue`. This time, we wrap an `IProducerConsumerCollection`:
+Actually, it's pretty simple. It's almost exactly like [our last implementation]({% post_url 2012-12-20-async-producer-consumer-queue-2-more %}), which wrapped a `Queue`. This time, we wrap an `IProducerConsumerCollection`:
 
 
 
@@ -79,8 +72,6 @@ Actually, it's pretty simple. It's almost exactly like [our last implementation]
     }
 }
 {% endhighlight %}
-
-
 
 Now we have an `AsyncCollection` that can be used as a front for many different kinds of collections.
 

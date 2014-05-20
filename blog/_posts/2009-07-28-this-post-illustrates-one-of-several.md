@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "SimplePropertyPath: A Poor Man's Binding"
-tags: [".NET", "MVVM/WPF", "Sample code"]
 ---
-
-
 This post illustrates one of several utility classes that are in the [Nito.MVVM](http://nitomvvm.codeplex.com/) library: SimplePropertyPath.
-
-
 
 
 
@@ -19,11 +14,7 @@ SimplePropertyPath is used to create a very simple binding using only [INotifyPr
 - It allows all ViewModel classes to be POCO (utilizing INotifyPropertyChanged) instead of forcing them to be derived from DependencyObject. (In my mind, at least, DependencyObject or FrameworkElement-derived classes are more of a View class).
 
 
-
-
 SimplePropertyPath merely propagates an existing INotifyPropertyChanged implementation "forward" to other listeners, and propogates writes "back" to the original property. It is only capable of understanding a "simple" property path: one comprised entirely of member accessors.
-
-
 
 
 
@@ -68,19 +59,14 @@ Some examples will help clarify how this class can be used; the following "fake 
 }
 {% endhighlight %}
 
-
-
 The API of SimplePropertyPath is rather simple:
 
 
 
-![SimplePropertyPath Class Diagram](http://2.bp.blogspot.com/_lkN-6AUYgOI/Sm-WsjXaqvI/AAAAAAAACBY/0wfSTT1waVg/s400/SimplePropertyPath.png)
-
+![SimplePropertyPath Class Diagram]({{ site_url }}/assets/SimplePropertyPath.png)  
 
 
 The two properties "Root" and "Path" are used to define the SimplePropertyPath. The "Value" property is used to read or write the nested property.
-
-
 
 
 
@@ -97,8 +83,6 @@ path.Value = 17;
 Assert.AreEqual(17, obj.Value);
 {% endhighlight %}
 
-
-
 Nothing too difficult there. The next example exercises reading and writing to a longer path:
 
 
@@ -111,8 +95,6 @@ Assert.AreEqual(10, path.Value);
 path.Value = 17;
 Assert.AreEqual(17, obj.Child.Value);
 {% endhighlight %}
-
-
 
 Now it's starting to act more like a real binding. Invalid property paths will result in a Value of null (writing errors to PresentationTraceSources.DataBindingSource just like WPF data binding does):
 
@@ -128,8 +110,6 @@ Assert.AreEqual(13, obj.Value);
 Assert.IsNull(path.Value);
 {% endhighlight %}
 
-
-
 The "childmost" property is not the only one that is being monitored; SimplePropertyPath will monitor INotifyPropertyChanged for each object along the path:
 
 
@@ -143,17 +123,11 @@ obj.Child = new FakeVM { Value = 113 };
 Assert.AreEqual(113, path.Value);
 {% endhighlight %}
 
-
-
 Finally, SimplePropertyPath will raise its own INotifyPropertyChanged for its Value property every time it changes, whether it was caused by a change in the "childmost" property or any of the objects along the path.
 
 
 
-
-
 SimplePropertyPath is used by the [Nito.MVVM](http://nitomvvm.codeplex.com/) library as a building block to construct some of the more advanced classes, such as MultiProperty and MultiCommand. However, it can be useful in its own right.
-
-
 
 
 

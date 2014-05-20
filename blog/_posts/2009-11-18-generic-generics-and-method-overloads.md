@@ -1,10 +1,7 @@
 ---
 layout: post
 title: "Generic Generics and Method Overloads"
-tags: [".NET"]
 ---
-
-
 I was happily coding along this week, adding more IList<T> extension methods to my general utility library, when I came across an annoying problem. The following code works fine:
 
 
@@ -24,11 +21,7 @@ public void TestMethod1()
 }
 
 
-
-
 The behavior is just as you'd expect; the correct overloaded method is chosen based on the [better conversion](http://msdn.microsoft.com/en-us/library/aa691339(VS.71).aspx) of the static types of the arguments.
-
-
 
 
 
@@ -54,11 +47,7 @@ public void TestMethod2()
 }
 
 
-
-
 The compiler can choose the correct overload when the argument matches the specific expected type (e.g., "list2"), but fails to deduce that one overload is better than another when the argument is not as specific (e.g., "list3").
-
-
 
 
 
@@ -72,8 +61,6 @@ IList<IList<int>> tmp1 = list3;
 IEnumerable<IEnumerable<int>> tmp2 = list3;
 
 
-
-
 However, when determining which overload is "better", the compiler _cannot_ convert from IList<IList<int>> to IEnumerable<IEnumerable<int>>, so it decides that neither overload is better, and therefore they are ambiguous. The first example worked because there _is_ a conversion from IList<T> to IEnumerable<T>, so the IList<T> overload was chosen.
 
 
@@ -83,11 +70,7 @@ However, when determining which overload is "better", the compiler _cannot_ conv
 //tmp2 = tmp1;
 
 
-
-
 Note also that this situation _may_ change when .NET 4 comes out. .NET 4 introduces covariance and contravariance for generics. The concepts don't apply to APIs that are both readable and writeable (e.g., IList<T>), but they do apply to APIs that are one or the other (e.g., IEnumerable<T>). It's expected that .NET 4 will have an implicit conversion from IList<IList<int>> to IEnumerable<IEnumerable<int>> (because IList<IList<int>> implements IEnumerable<IList<int>>), but it's unclear exactly how "smart" the compiler will be while resolving overload resolution.
-
-
 
 
 

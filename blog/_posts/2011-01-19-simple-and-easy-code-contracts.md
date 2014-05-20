@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "Simple and Easy Code Contracts"
-tags: [".NET", "Code Contracts", "Simple and Easy"]
 ---
-
-
 [Code Contracts](http://research.microsoft.com/en-us/projects/contracts/) are a wonderful thing. Every new library I write uses CC right from the beginning.
-
-
 
 
 
@@ -17,8 +12,6 @@ Here's Steve's "simple and easy" guide to getting started with Code Contracts (a
 
 ## Project Setup
 
-
-
 After you've downloaded and installed Code Contracts and created a library project, you need to enable CC for that library. Under the Project Properties, there is a new tab called Code Contracts. Here's the way that I like to set it up:
 
 
@@ -26,12 +19,12 @@ After you've downloaded and installed Code Contracts and created a library proje
 
 - Set "Assembly Mode" to "Standard Contract Requires".
 - **Debug** - Check "Perform Runtime Contract Checking" and set to "Full". Check "Call-site Requires Checking".
-[![](http://2.bp.blogspot.com/_lkN-6AUYgOI/TTctkUEfelI/AAAAAAAAEDo/QxEv15AHduI/s400/CC-debug.PNG)](http://2.bp.blogspot.com/_lkN-6AUYgOI/TTctkUEfelI/AAAAAAAAEDo/QxEv15AHduI/s1600/CC-debug.PNG)
+[![]({{ site_url }}/assets/CC-debug.PNG)  
+]({{ site_url }}/assets/CC-debug.PNG)
 
 - **Release** - Set "Contract Reference Assembly" to "Build" and check "Emit contracts into XML doc file".
-[![](http://3.bp.blogspot.com/_lkN-6AUYgOI/TTct7M3lH3I/AAAAAAAAEDw/0i1jnPgmlcI/s400/CC-release.PNG)](http://3.bp.blogspot.com/_lkN-6AUYgOI/TTct7M3lH3I/AAAAAAAAEDw/0i1jnPgmlcI/s1600/CC-release.PNG)
-
-
+[![]({{ site_url }}/assets/CC-release.PNG)  
+]({{ site_url }}/assets/CC-release.PNG)
 
 
 
@@ -39,9 +32,8 @@ In addition, if you have the Academic or Commercial Premium edition of Code Cont
 
 
 
-[![](http://4.bp.blogspot.com/_lkN-6AUYgOI/TTc3F4BLDjI/AAAAAAAAEEQ/U5Ly3FuxFOo/s400/CC-analysis.PNG)](http://4.bp.blogspot.com/_lkN-6AUYgOI/TTc3F4BLDjI/AAAAAAAAEEQ/U5Ly3FuxFOo/s1600/CC-analysis.PNG)
-
-
+[![]({{ site_url }}/assets/CC-analysis.PNG)  
+]({{ site_url }}/assets/CC-analysis.PNG)
 
 This will give you three separate builds, with separate behavior:
 
@@ -53,24 +45,20 @@ This will give you three separate builds, with separate behavior:
  - **Release** - This turns off all code contracts in your dll at runtime. However, it includes a separate ".Contracts.dll" which contains the contracts for your library's public API.
 
 
-
-
 Projects _consuming_ your library should reference your **Release** build. In their **Debug** configuration, they should check "Perform Runtime Contract Checking" and "Call-site Requires Checking"; this will ensure that the code contracts for your library's public API are enforced at runtime (the "Call-site" option uses the ".Contracts.dll" assembly that you built). In their **Release** configuration, they should leave code contracts disabled, which allows all assemblies to run at full speed.
 
 
 
-[![](http://1.bp.blogspot.com/_lkN-6AUYgOI/TTct7ry5LrI/AAAAAAAAEEA/m5xPg-lUmzo/s400/CC-consumer-debug.PNG)](http://1.bp.blogspot.com/_lkN-6AUYgOI/TTct7ry5LrI/AAAAAAAAEEA/m5xPg-lUmzo/s1600/CC-consumer-debug.PNG)
-[![](http://2.bp.blogspot.com/_lkN-6AUYgOI/TTct73ex9II/AAAAAAAAEEI/0iSZVJvS8XY/s400/CC-consumer-release.PNG)](http://2.bp.blogspot.com/_lkN-6AUYgOI/TTct73ex9II/AAAAAAAAEEI/0iSZVJvS8XY/s1600/CC-consumer-release.PNG)
-
-
+[![]({{ site_url }}/assets/CC-consumer-debug.PNG)  
+]({{ site_url }}/assets/CC-consumer-debug.PNG)
+[![]({{ site_url }}/assets/CC-consumer-release.PNG)  
+]({{ site_url }}/assets/CC-consumer-release.PNG)
 
 If the consuming project suspects a bug in your library (i.e., their **Debug** build doesn't cause any Contracts violations but your library is still not behaving as expected), they can remove the reference to your **Release** build and add a reference to your **Debug** build. This is an easy way to enable all the code contract checks in your library, even the internal ones.
 
 
 
 ## Preconditions (Contract.Requires)
-
-
 
 Preconditions require some condition at the beginning of a method. Common examples are requiring a parameter to be non-null, or to require the object to be in a particular state.
 
@@ -85,8 +73,6 @@ public string GetObjectInfo(object obj)
 
 
 ## Postconditions (Contract.Ensures)
-
-
 
 Postconditions guarantee some condition at the end of a method. It is often used with Contract.Result to guarantee that a particular method won't return null.
 
@@ -105,8 +91,6 @@ public string Name
 
 
 ## Preconditions and Postconditions on Interfaces
-
-
 
 Both preconditions and postconditions are commonly placed on interface members. Code Contracts includes the ContractClassAttribute and ContractClassForAttribute to facilitate this:
 
@@ -138,8 +122,6 @@ internal abstract class MyInterfaceContracts : IMyInterface
     }
   }
 }
-
-
 
 
 With generic interfaces, the same idea holds:
@@ -175,8 +157,6 @@ internal abstract class MyInterfaceContracts<T, U> : IMyInterface<T, U>
 
 
 ## Invariants (ContractInvariantMethod, Contract.Invariant)
-
-
 
 Object invariants are expressed using the ContractInvariantMethod. If they are enabled by the build, then they are checked at the beginning of each method (except constructors) and at the end of each method (except Dispose and the finalizer).
 
@@ -218,17 +198,11 @@ public class MyClass<T, U>: public IMyInterface<T, U>
 
 ## Assertions and Assumptions (Contract.Assert, Contract.Assume)
 
-
-
 There will always be some things that should be true but just have to be checked at runtime. For these, use Contract.Assert unless the static checker (i.e., the CodeAnalysis configuration) complains. You can then change them to be Contract.Assume so that the static checker can use them. There's no difference between Contract.Assert and Contract.Assume at runtime.
 
 
 
-
-
 Reminder: if you're using the **Release** build setup recommended above, then all your **Contract.Assert** and **Contract.Assume** calls get removed from your release builds. So they can't be used to throw vexing exceptions, e.g., rejecting invalid input.
-
-
 
 
 
@@ -249,8 +223,6 @@ public static IMyInterface<T, U> CreateUsingReflection()
 
 ## For More Information
 
-
-
 The Code Contracts library has a thorough [user manual](http://research.microsoft.com/en-us/projects/contracts/userdoc.pdf) available. It's a bit of a hard read, but they include a lot of information that I've skipped for this "intro" post, such as:
 
 
@@ -263,8 +235,6 @@ The Code Contracts library has a thorough [user manual](http://research.microsof
   - Applying contracts to sequences (e.g., **ForAll** and **Exists** quantifiers).
   - Advanced contract checking with **Pure** methods.
   - Tips for working with the static checker.
-
-
 
 
 Another great source of information is Jon Skeet's updated [C# in Depth](http://www.amazon.com/gp/product/1935182471?ie=UTF8&tag=stepheclearys-20&linkCode=as2&camp=1789&creative=390957&creativeASIN=1935182471) - the second edition added a whole chapter just on Code Contracts.

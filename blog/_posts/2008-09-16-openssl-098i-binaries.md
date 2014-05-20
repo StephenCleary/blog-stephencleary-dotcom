@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "OpenSSL 0.9.8i Binaries"
-tags: ["OpenSSL"]
 ---
-
-
 We built the OpenSSL binaries for Windows, and made them publicly available at [http://sourceforge.net/project/showfiles.php?group_id=26202&package_id=291670](http://sourceforge.net/project/showfiles.php?group_id=26202&package_id=291670)
-
-
 
 
 

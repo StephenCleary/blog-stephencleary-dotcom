@@ -1,19 +1,12 @@
 ---
 layout: post
 title: "Virtualizing Two Machines over Thanksgiving"
-tags: ["IT"]
 ---
-
-
 Like many "computer people," I do a lot of admin work for friends and familiy. Over the last few years, I've worked with [my church](http://landmarkbaptist.com) to get them out of the dark ages of computing. The process is almost complete; I only have one more machine to replace, and then they will all be 64-bit dual-core 4GB systems running Pro editions of Windows. Next year I hope to (finally) put in a domain.
 
 
 
-
-
 It turns out that two of the old machines have some outdated software that's critical to weekly operations. I'm working on replacements for the software, but in the meantime, the old machines were just sitting around, taking up space in the church office.
-
-
 
 
 
@@ -23,11 +16,7 @@ I decided to try to virtualize these machines on Friday (the day after Thanksgiv
 
 ## The Challenge, and the Plan
 
-
-
 The old "server" (XP Home with 192 MB RAM) and the old office machine (XP Home with 256 MB RAM) both needed virtualization. Due to the way the weekly process is done in the office, the old server would have to be virtualized onto the new server, and the old office machine would have to be virtualized onto the new office machine.
-
-
 
 
 
@@ -35,11 +24,7 @@ I'm most familiar with [VMWare products](http://www.vmware.com/) (particularly V
 
 
 
-
-
 The server was the first machine to be replaced, so unfortunately at this point the new server has the most outdated hardware/OS. It's running Server 2008 but without Hyper-V... or even CPU virtualization support. :(  Furthermore, according to what I've read, Hyper-V doesn't support USB, which IMO is a significant limitation (and a showstopper for the old "server").
-
-
 
 
 
@@ -47,11 +32,7 @@ So, I decided to try using Virtual PC for both virtual machines. The new office 
 
 
 
-
-
 One limitation with Virtual PC is that it can only handle 127 GB hard drives. In my case, both machines had hard drives much smaller than that, so it wasn't a problem.
-
-
 
 
 
@@ -59,11 +40,7 @@ The plan at this point was to virtualize each machine to a different version of 
 
 
 
-
-
 Systems Internals has a great tool called [disk2vhd](http://technet.microsoft.com/en-us/sysinternals/ee656415), which can create a virtual disk from a physical disk - even storing the virtual disk image on the physical disk it's imaging, while the physical disk is running the OS running disk2vhd. If you think about it, that's pretty cool.
-
-
 
 
 
@@ -71,17 +48,11 @@ Disk2vhd can take quite a while (i.e., 8-10 hours) to run, so I tried to make my
 
 
 
-
-
 There are several articles on the Internet where others have successfully converted a physical XP machine to a virtual PC on Windows 7. The steps are straightforward: Create a disk image using disk2vhd; copy the image to the host PC; set up a new virtual machine in Virtual PC; re-activate Windows on the virtual machine; and install Integration Components/Services.
 
 
 
-
-
 One final note: during my preparations, I discovered that XP can run into a stop 0x7B when backing up to a disk image and restoring on different hardware (which is very similar to what I'm doing with disk2vhd). The steps to fix this are in [KB314082](http://support.microsoft.com/kb/314082). I did not run into this issue, but I'm including it here for others who may.
-
-
 
 
 
@@ -91,11 +62,7 @@ On Wednesday (the day before Thanksgiving), I had done all the research and esta
 
 ## A Snag: OEM OS
 
-
-
 I popped in to check the status on Thursday morning. The server disk2vhd failed; my external USB drive had a faulty power adapter and it had shorted out overnight. So I restarted it with my other USB drive, and turned my attention to the office machine.
-
-
 
 
 
@@ -103,17 +70,11 @@ I had noticed on the disk2vhd download page that OEM OS licenses prevent virtual
 
 
 
-
-
 Re-installing the OS was out of the question (if I actually _had_ the install media for the outdated programs, I would have installed them on the new machine and we wouldn't need to virtualize in the first place). In desperation, I searched online for any way to convert OEM to Retail in-place. Most of the articles recommended running a repair from a different CD, but that seemed hokey to me (how would that affect updates already installed?).
 
 
 
-
-
 Finally, I discovered the [Product Key Update Tool](http://go.microsoft.com/fwlink/?LinkId=204141). I ran it on the old office machine, converting it from OEM to Retail, and then re-started disk2vhd. This time, I ran disk2vhd with the output disk image going directly over the network to the new host PC; this worked just fine and I highly recommend it.
-
-
 
 
 
@@ -123,11 +84,7 @@ During my searching, I also discovered **sysprep**. The Product Key Update Tool 
 
 ## Another Snag: Remote Control
 
-
-
 I was hoping to do most of the work on Friday from the comfort of my Mom's living room, eating Thanksgiving leftovers and watching the kids play with their uncles. Unfortunately, I could not get mouse capture to work at all remotely before Integration Services were installed.
-
-
 
 
 
@@ -135,11 +92,7 @@ It doesn't appear to be possible to set up a new virtual machine remotely. At le
 
 
 
-
-
 I also tried to LogMeIn into another computer and Remote Desktop to the Virtual PC host; however, the mouse capture was still funky (the scale was messed up). Once I got Integration Services installed, remotely controlling a host PC worked fine.
-
-
 
 
 
@@ -149,11 +102,7 @@ So, I ended up having to physically be present for the initial virtual machine s
 
 ## Another Snag: Networking
 
-
-
 When I brought up the old "server" as a virtual machine on the new server, the networking didn't work. Since I only had the Windows Activation UI available, it wasn't possible to diagnose. By default, Virtual PC will share the host's network card (using a network switch in software). The new server had a static IP, but this shouldn't have caused a problem. When I switched it to use NAT (a network router in software), the problem went away.
-
-
 
 
 
@@ -163,17 +112,11 @@ I've always used NAT for my VMWare virtual machines, so this was a natural step.
 
 ## Issue: Slow Initial Boot
 
-
-
 The "server" disk2vhd process never finished. I'm not entirely sure why; the disk file was approximately the correct size, but disk2vhd never completed. Eventually I just exited the program and decided to try to use the file anyway.
 
 
 
-
-
 When starting the old server as a virtual machine for the first time, it took about an hour to get from initial startup, through Windows activation, and to the desktop. Virtual PC was pegging the CPU the entire time. I'm unsure of the reason for this; the host PC does not have virtualization hardware, the vhd could be incomplete, the vhd is dynamic, ...
-
-
 
 
 
@@ -183,11 +126,7 @@ Once I installed Integration Components and rebooted, the CPU problems disappear
 
 ## Issue: Integration Components on XP Home
 
-
-
 The virtualized XP office machine is running on Windows Virtual PC under a Windows 7 Pro host. Normally, this situation allows a really neat trick: you can set up a program on the virtual machine so it looks like a program on the host, with its own Start menu entry, running in a regular window instead of a full virtual machine desktop, etc.
-
-
 
 
 
@@ -197,11 +136,7 @@ Unfortunately, that does not work if the virtual machine is XP Home. Apparently,
 
 ## Conclusion
 
-
-
 The project was completed, though it took longer than I expected. I'll find out next week if everything works sufficiently on the virtualized machines.
-
-
 
 
 

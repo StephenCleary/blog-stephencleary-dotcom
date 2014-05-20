@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "Creating Tasks"
-tags: ["async", ".NET"]
 ---
-
-
 Microsoft will give us lots of awaitables in .NET 4.5, but there are some situations where we want to create our own awaitable. Task<T> and Task are the easiest awaitable types to work with in .NET, so today we'll look at different ways awaitable Task objects can be constructed.
-
-
 
 
 
@@ -17,11 +12,7 @@ All Task objects fall into one of two types: "code" and "event". Code-based task
 
 ## Tasks as Events
 
-
-
 Tasks without code can represent any kind of event. The most common examples are I/O completion events, but event-based tasks can actually wrap _any_ kind of event.
-
-
 
 
 
@@ -51,11 +42,7 @@ public static Task<int> MyIntegerEventAsync()
 }
 
 
-
-
 Remember that Task<T> and Task are awaitable, so you can await the result of MyIntegerEventAsync even though it's not an async method.
-
-
 
 
 
@@ -68,9 +55,7 @@ You _probably_ won't have to use TaskCompletionSource<TResult> directly; you can
 
 ## Tasks as Code
 
-
-
-Remember (from our [async intro post](http://blog.stephencleary.com/2012/02/async-and-await.html)) that the async keyword does _not_ run the method on a background thread. However, you can use **Task.Run** to run code on a background thread:
+Remember (from our [async intro post]({% post_url 2012-02-02-async-and-await %})) that the async keyword does _not_ run the method on a background thread. However, you can use **Task.Run** to run code on a background thread:
 
 
 
@@ -88,11 +73,7 @@ public async Task DoStuffAsync()
 }
 
 
-
-
-Task.Run will take a delegate and run it on the thread pool for you. It wraps the delegate into a Task<T> or Task, and the Task wrapper [takes care of all the error handling and other stuff correctly](http://blog.stephencleary.com/2010/08/various-implementations-of-asynchronous.html).
-
-
+Task.Run will take a delegate and run it on the thread pool for you. It wraps the delegate into a Task<T> or Task, and the Task wrapper [takes care of all the error handling and other stuff correctly]({% post_url 2010-08-16-various-implementations-of-asynchronous %}).
 
 
 
@@ -100,11 +81,7 @@ What about other threads? What if you don't want to run your code on the thread 
 
 
 
-
-
 If you have a particular context in which you want to run your code, you can use a **TaskFactory** initialized with a **TaskScheduler** that targets your context. You can then call **TaskFactory.StartNew** to run your code in that context. In fact, Task.Run is just a shorthand for Task.Factory.StartNew.
-
-
 
 
 
@@ -112,9 +89,7 @@ It's possible to capture the current synchronization context into a TaskSchedule
 
 
 
-> Before async/await, this was [a good way to send progress reports from a background task to the UI](http://blog.stephencleary.com/2010/06/reporting-progress-from-tasks.html). With async/await, there is now [a better way](http://blog.stephencleary.com/2012/02/reporting-progress-from-async-tasks.html).
-
-
+> Before async/await, this was [a good way to send progress reports from a background task to the UI]({% post_url 2010-06-18-reporting-progress-from-tasks %}). With async/await, there is now [a better way]({% post_url 2012-02-16-reporting-progress-from-async-tasks %}).
 
 
 Writing your own TaskScheduler is possible, but frustrating due to the lack of MSDN documentation. Fortunately, it's almost never necessary.
@@ -124,19 +99,13 @@ Writing your own TaskScheduler is possible, but frustrating due to the lack of M
 > If you need a specific thread (e.g., an STA thread) that supports TaskScheduler, you can use the [**AsyncContextThread** type](http://nitoasyncex.codeplex.com/wikipage?title=AsyncContextThread) in the [Nito.AsyncEx library](http://nuget.org/packages/Nito.AsyncEx).
 
 
-
-
 There are some pretty cool tricks we can pull off using the built-in TaskScheduler/TaskFactory types. We'll look at more advanced TaskScheduler situations in later posts.
 
 
 
 ## Tasks as Async Methods
 
-
-
 This is a special case of Task creation - and it's easy to overlook!
-
-
 
 
 
@@ -152,11 +121,7 @@ public async Task<int> DivideAsync(int numerator, int denominator)
 }
 
 
-
-
 We do not create a Task<int> in our code, but the compiler rewrites our code so that a Task<int> is created and returned. When the method completes, the task completes. This type of task is actually an event-based task, since an event (the method returning) causes the task to complete.
-
-
 
 
 

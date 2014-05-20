@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "Achievement Unlocked: Speak at CodeMash"
-tags: ["async", ".NET", "ASP.NET", "Announcements"]
 ---
-
-
 I'm pleased to say that I'm now a CodeMash speaker! I gave a talk this morning on "Async on the Server." This talk was an introduction to async/await on ASP.NET.
-
-
 
 
 

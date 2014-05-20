@@ -1,19 +1,12 @@
 ---
 layout: post
 title: "Using Rx for Stream Encoding and Decoding"
-tags: ["Rx", ".NET"]
 ---
-
-
 Still on my Rx kick...
 
 
 
-
-
 The Rx team had a two-part series last month demonstrating one way to use Rx on the server: [asynchronous Stream](http://blogs.msdn.com/b/jeffva/archive/2010/07/23/rx-on-the-server-part-1-of-n-asynchronous-system-io-stream-reading.aspx) and [asynchronous StreamReader](http://blogs.msdn.com/b/jeffva/archive/2010/07/26/rx-on-the-server-part-2-of-n-asynchronous-streamreader.aspx). In the asynchronous StreamReader example, they punt on the decoding issue, instead demonstrating how to split the text into lines.
-
-
 
 
 
@@ -135,8 +128,6 @@ public static class EncodingObservables
 }
 
 
-
-
 This class defines two operators (Encode and Decode) which can be used like this:
 
 
@@ -204,11 +195,7 @@ public class EncodingObservablesUnitTests
 }
 
 
-
-
 Note that I've defined the Encode and Decode operators as working on "chunks" of data. As such, they don't really "fit in" with most LINQ and Rx operators, which work on individual data elements. However, this approach makes sense any time there's buffered reading going on. The Encode and Decode operators here will work fine with the Rx team's example AsyncRead operator.
-
-
 
 
 

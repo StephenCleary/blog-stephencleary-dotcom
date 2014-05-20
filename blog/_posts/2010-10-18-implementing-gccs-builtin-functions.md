@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "Implementing GCC's Builtin Functions"
-tags: ["Firmware"]
 ---
-
-
 GCC has a number of [useful builtin functions](http://gcc.gnu.org/onlinedocs/gcc-4.3.2/gcc/Other-Builtins.html), which translate directly to the appropriate assembly instruction if the processor supports it. A certain algorithm I was coding made use of a few of these: __builtin_ffs (find first set bit), __builtin_clz (count leading zero bits), and __builtin_ctz (count trailing zero bits).
-
-
 
 
 
@@ -15,11 +10,7 @@ In theory, if the target processor does not support these instructions (like min
 
 
 
-
-
 The solution was surprisingly simple: I just had to implement the [expected functions](http://gcc.gnu.org/onlinedocs/gccint/Integer-library-routines.html) myself. The mapping is fairly obvious (e.g., __builtin_clz is implemented by __clzsi2).
-
-
 
 
 
@@ -65,8 +56,6 @@ int __ffsdi2 (unsigned x)
 {
   return (x == 0) ? 0 : __builtin_ctz(x) + 1;
 }
-
-
 
 
 Presumably, this same approach would work for the many other GCC builtins.

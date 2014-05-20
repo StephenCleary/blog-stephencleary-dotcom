@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "Signed and Unsigned Comparisons in C, C#, and T-SQL"
-tags: ["Language design", ".NET", "Linq"]
 ---
-
-
 As noted earlier, I've been doing a lot of firmware development recently (in C). A long-standing rule of C (and C++) is to convert **signed int** values to **unsigned int** values if both are used in a comparison; this is what the standard specifies. It's also traditional to issue a warning (the famous _comparison between signed and unsigned integer expressions_ warning) because such code is usually a mistake.
-
-
 
 
 
@@ -15,11 +10,7 @@ In C, the expression **( (unsigned)-1 == -1 )** will compile (with a warning), a
 
 
 
-
-
 In C#, the expression **( unchecked((uint)-1) == -1 )** will compile without warning and have a value of **false**. What [actually happens](http://msdn.microsoft.com/en-us/library/aa691330(v=VS.71).aspx) ([webcite](http://www.webcitation.org/5ySVSNhTE)) is that the unsigned value of 0xFFFFFFFF and the signed value of -1 are both converted to **long** values and _then_ compared.
-
-
 
 
 
@@ -27,11 +18,7 @@ The C# behavior does makes sense. C# continues the C/C++ tradition of implicitly
 
 
 
-
-
 In SQL Server's TSQL, the expression **select 'true' where -1 = 4294967295;** will return an empty result set (meaning **-1** is not considered equivalent to **4294967295**). Interestingly, it's doing the [same kind of promotion as C#](http://msdn.microsoft.com/en-us/library/ms190309.aspx) ([webcite](http://www.webcitation.org/5ySZdwwtV)). In this case, the value **4294967295** is typed as a **bigint** (a 64-bit signed integer).
-
-
 
 
 
@@ -47,8 +34,6 @@ using (var context = new MyEntities())
 }
 
 
-
-
 The generated T-SQL statement (for SQL Server Compact Edition) was like this:
 
 
@@ -57,11 +42,7 @@ The generated T-SQL statement (for SQL Server Compact Edition) was like this:
 SELECT TOP (2) [Extent1].[ID] AS [ID], [Extent1].[SerialNumber] AS [SerialNumber] FROM [Items] AS [Extent1]  WHERE ( CAST( [Extent1].[SerialNumber] AS bigint)) = @p__linq__0
 
 
-
-
 **p__linq__0** had a [DbType](http://msdn.microsoft.com/en-us/library/system.data.dbtype.aspx) of **Int64**. Note that the generated T-SQL includes an explicit cast to **bigint** because the C# language implicitly inserted a cast to **long** in the expression **x.SerialNumber == serialNumber**.
-
-
 
 
 

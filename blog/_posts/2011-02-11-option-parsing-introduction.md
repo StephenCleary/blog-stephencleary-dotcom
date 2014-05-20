@@ -1,13 +1,10 @@
 ---
 layout: post
 title: "Option Parsing: Introduction"
-tags: ["Option Parsing", ".NET", "Nito.KitchenSink"]
+series: "Option parsing"
+seriesTitle: "Option Parsing: Introduction"
 ---
-
-
 Last week, [Nito.KitchenSink.OptionParsing](http://nuget.org/List/Packages/Nito.KitchenSink.OptionParsing) was released on NuGet. This is a command-line option parsing library that I've used for years. Since my day job currently consists of re-architecting firmware, I figured I'd write a few posts on the Nito.KitchenSink NuGet (mini-)libraries.
-
-
 
 
 
@@ -66,17 +63,11 @@ class Program
 }
 
 
-
-
 The sample program above only takes a single option: a "level". First, I define the option in the **MyOptions** class, along with a static **Usage** to display command-line usage.
 
 
 
-
-
 The actual program just parses its command-line options and then displays the level if it was specified. The error handling code distinguishes between usage errors and operating errors (all option parsing errors derive from **OptionParsingException**).
-
-
 
 
 
@@ -100,11 +91,7 @@ Level: 3
 Level: 3
 
 
-
-
 By default, the Nito.KitchenSink.OptionParsing library allows short options (with a single dash), long options (with a double dash), and short _or_ long options (with a forward slash).
-
-
 
 
 
@@ -121,8 +108,6 @@ Level: 3
 
 > myprog -l=3
 Level: 3
-
-
 
 
 The Nito.KitchenSink.OptionParsing library also handles common errors, and tries to give meaningful error messages:
@@ -156,8 +141,6 @@ Usage: myprog [OPTIONS]...
   -l, --level=LEVEL   Sets the level at which to operate.
 
 
-
-
 Option parsing is case sensitive by default:
 
 
@@ -167,8 +150,6 @@ Option parsing is case sensitive by default:
 Unknown option  Level  in parameter  /Level:3
 Usage: myprog [OPTIONS]...
   -l, --level=LEVEL   Sets the level at which to operate.
-
-
 
 
 There's actually a lot of work being done in the single-line **OptionParser.Parse<MyOptions>()**! And this post is just scratching the surface; the Nito.KitchenSink.OptionParsing library is all about flexibility and extensibility.

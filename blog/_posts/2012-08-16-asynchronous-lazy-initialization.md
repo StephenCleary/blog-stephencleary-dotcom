@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "Asynchronous Lazy Initialization"
-tags: ["async", ".NET"]
 ---
-
-
 When you have a lazy-created value, it's often useful to lazy-create it in an asynchronous fashion. A simple Lazy<T> provides lazy initialization, but the initialization executes synchronously when the value is created.
-
-
 
 
 
@@ -63,11 +58,7 @@ public sealed class AsyncLazy<T>
 }
 
 
-
-
 The idea is to have a lazy-initialized task, which represents the initialization of the resource.
-
-
 
 
 
@@ -75,11 +66,7 @@ The factory delegate passed to the constructor can be either synchronous (Func<T
 
 
 
-
-
 There are two "triggers" which can start the initialization: awaiting an AsyncLazy<T> instance or explicitly calling Start. When the factory delegate completes, the value is available, and any methods awaiting the AsyncLazy<T> instance receive the value.
-
-
 
 
 
@@ -104,8 +91,6 @@ public async Task UseResource()
 
 
 ## Update, 2012-09-30
-
-
 
 The AsyncLazy<T> type is now part of [Nito.AsyncEx](http://nitoasyncex.codeplex.com/), which you can get via NuGet.
 

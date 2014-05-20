@@ -1,27 +1,18 @@
 ---
 layout: post
 title: "Extension-Based Types"
-tags: [".NET"]
 ---
-
-
 There's a new paradign rising in .NET: _extension-based types (EBTs)_.
 
 
 
 ## Introduction
 
-
-
 It's an exciting time to be a .NET developer. I'm reminded of the time when Boost was young, and programmers were first starting to realize the capabilities of templates. Generic programming became a powerful mainstream paradign, producing techniques now described in [C++ Templates](http://www.amazon.com/gp/product/0201734842?ie=UTF8&tag=stepheclearys-20&linkCode=as2&camp=1789&creative=390957&creativeASIN=0201734842) and [C++ Template Metaprogramming](http://www.amazon.com/gp/product/0321227255?ie=UTF8&tag=stepheclearys-20&linkCode=as2&camp=1789&creative=390957&creativeASIN=0321227255).
 
 
 
-
-
 Currently, we're seeing a similar transformation taking place with C# generics. The adoption of generics is just beginning to reach a critical mass, where new and inventive approches are discovered. The thrust towards generic programming is driven by a desire for higher levels of _abstraction_ and _extensibility_.
-
-
 
 
 
@@ -31,17 +22,11 @@ The EBT approach allows writing .NET libraries that permit an unprecedented leve
 
 ## Extension-Based Types
 
-
-
 An EBT is a type that is primarily defined through extension methods on interfaces. Only a few core methods are defined on the interfaces themselves. Properly-designed EBTs have the minimal set of methods defined in their interface (often only one, and sometimes none).
 
 
 
-
-
 EBTs are useful for end-user extensibility (and raising the level of abstraction), but they also have a few "gotchas" since they are dependent on the compile-time nature of method overload resolution.
-
-
 
 
 
@@ -72,8 +57,6 @@ class Program
 
 ## Simple Inheritance
 
-
-
 EBT inheritance is performed using interface inheritance. Here's an example of a base interface that defines MethodA and a derived interface defining MethodB; the derived interface ends up supporting both methods:
 
 
@@ -103,8 +86,6 @@ class Program
 
 
 ## Overriding Inherited Methods: Simple Overriding
-
-
 
 A derived EBT may override a base EBT method by defining its own method with an identical signature. Here's a derived type that overrides the MethodA defined by its base type:
 
@@ -139,8 +120,6 @@ class Program
 
 ## Overriding Inherited Methods: Invoking the Base Method
 
-
-
 In order to invoke the base method when the derived EBT overrides it, the compile-time type of the variable must explicitly be the base type. Here's an example that invokes the derived and base MethodA implementations on the same object:
 
 
@@ -169,8 +148,6 @@ class Program
         Console.ReadKey();
     }
 }
-
-
 
 
 For convenience, an "identity transformation method" is usually provided that restricts the type of a subexpression; this way, a separate variable is not necessary. By convention, the identity transformation method is named "As{I}". The following example shows how an "AsBase" method removes the need for the IBase variable:
@@ -203,8 +180,6 @@ class Program
 
 ## Overriding Inherited Methods: The Importance of Compile-Time Types
 
-
-
 It's important to note that the compile-time type of the expression is what's used for method overloading, so the EBT style of overriding inherited methods is _not_ like object-oriented virtual function overriding:
 
 
@@ -233,15 +208,11 @@ class Program
 }
 
 
-
-
 In fact, even something as minor as missing a "using" statement could cause the wrong method to be called. Consider the case where "MethodA(this IDerived)" is defined in a class in a different namespace. It must be brought into scope via a "using" statement before it could be considered by method resolution.
 
 
 
 ## Multiple Inheritance
-
-
 
 Multiple inheritance is supported for EBTs; any ambiguity causes a compiler error:
 
@@ -269,8 +240,6 @@ class Program
         Console.ReadKey();
     }
 }
-
-
 
 
 Ambiguity may be resolved by overriding the method in the derived EBT, or by constraining the compile-time type using the identity transformation method. The second approach is more flexible, since it allows any user-defined extensions. This example uses the second approach:
@@ -306,8 +275,6 @@ class Program
 
 ## Properties
 
-
-
 Due to .NET limitations, properties may only be defined on interfaces (there's no such thing as an "extension property"). However, they may be simulated:
 
 
@@ -342,11 +309,7 @@ class Program
 }
 
 
-
-
 One may think of this as the interface holding the property _declaration_ while the extension methods (derived EBT methods) hold the property _definition_.
-
-
 
 
 
@@ -355,8 +318,6 @@ Note that the property getter will always call the same derived method, regardle
 
 
 ## Limitations: Inability to Override Interface Methods
-
-
 
 If a method is defined in the interface instead of as an extension method, then that method may never be overridden by a derived EBT type:
 
@@ -392,19 +353,13 @@ class Program
 }
 
 
-
-
 For this reason, it is important to distill as many methods as possible out of the interface that defines the EBT.
 
 
 
 ## Limitations: Dependency on Compile-Time Types
 
-
-
 Code that uses EBTs must "see" all the associated methods in order for overridden derived methods to work properly. The parallel problem for C++ templates eventually resulted in "header file libraries", where libraries transitioned from dlls to source code that was included in the program using the library.
-
-
 
 
 
@@ -414,17 +369,11 @@ A similar transition will probably occur if EBTs are embraced. Currently, if EBT
 
 ## Real-World Examples from LINQ
 
-
-
 As LINQ continues to evolve, it approaches EBTs. In particular, the [IEnumerable<T>](http://msdn.microsoft.com/en-us/library/9eekhta0.aspx) interface is extended by the [Enumerable](http://msdn.microsoft.com/en-us/library/system.linq.enumerable.aspx) class, including an [AsEnumerable](http://msdn.microsoft.com/en-us/library/bb335435.aspx) identity transformation method. [IOrderedEnumerable<T>](http://msdn.microsoft.com/en-us/library/bb534852.aspx) is one derived type; the interface adds no methods, but the Enumerable class does. The rarely-used [IQueryable<T>](http://msdn.microsoft.com/en-us/library/bb351562.aspx) derived type is extended by [Queryable](http://msdn.microsoft.com/en-us/library/system.linq.queryable.aspx). Grouping and ordering follow the same pattern.
 
 
 
-
-
 The new PLINQ has a similar structure (though the derived [ParallelQuery<T>](http://msdn.microsoft.com/en-us/library/dd383736(VS.100).aspx) is a class instead of an interface).
-
-
 
 
 
@@ -433,8 +382,6 @@ The new PLINQ has a similar structure (though the derived [ParallelQuery<T>](htt
 
 
 ## Future Blog Posts
-
-
 
 In the (hopefully near) future, I'll be showing how to use EBTs to do compile-time generic specialization (including partial specialization, generic method specialization, and inheritance specialization). I also intend to cover "namespaces" and wrapper objects. Lots of fun! :)
 

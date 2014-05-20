@@ -1,27 +1,20 @@
 ---
 layout: post
 title: "Option Parsing; Positional Arguments"
-tags: ["Option Parsing", ".NET", "Nito.KitchenSink"]
+series: "Option parsing"
+seriesTitle: "Option Parsing; Positional Arguments"
 ---
-
-
 "Positional arguments" are any arguments not associated with an option. When using the [Nito.KitchenSink option parsing library](http://nuget.org/List/Packages/Nito.KitchenSink.OptionParsing), positional arguments must come after any options and their arguments.
 
 
 
 ## Individual Positional Arguments
 
-
-
 You can use the **PositionalArgumentAttribute** to specify positional arguments in your options class. This attribute takes a single integral parameter, the 0-based index of the positional argument.
 
 
 
-
-
-Positional arguments support the entire range of [parsing possibilities](http://blog.stephencleary.com/2011/08/option-parsing-argument-parsing.html), including **SimpleParserAttribute**.
-
-
+Positional arguments support the entire range of [parsing possibilities]({% post_url 2011-08-11-option-parsing-argument-parsing %}), including **SimpleParserAttribute**.
 
 
 
@@ -87,11 +80,7 @@ Name: Bob
 Unknown parameter  -l
 
 
-
-
 The last test above shows that positional arguments must come after all regular options.
-
-
 
 
 
@@ -110,17 +99,11 @@ Name: -Negative
 
 ## The Positional Argument Collection
 
-
-
 Every options class must have one property that can receive "extra" positional arguments. Extra positional arguments are any positional arguments after those defined by **PositionalArgumentAttribute**.
 
 
 
-
-
 Most programs do not need this functionality, so the **OptionArgumentsBase** class provides a simple collection called **AdditionalArguments**. By default, **OptionArgumentsBase.Validate** will throw an **UnknownOptionException** if any positional arguments end up in that collection.
-
-
 
 
 
@@ -188,21 +171,15 @@ Name: Bob
 ArgList:
 
 
-
-
 Alternatively, an options class may provide its own collection, marked with the **PositionalArgumentsAttribute** (note the plural "Argument**s**"). When it does this, the options class may _not_ derive from **OptionArgumentsBase**; rather, it should implement the **IOptionArguments** interface.
 
 
 
-
-
-The property does not have to be **List<string>** (which is used by **OptionArgumentsBase**). The only requirements on the collection is that it only have one method named **Add** which takes a single parameter. The parameter does not have to be **string**; it can be any type, and the [standard parsing rules](http://blog.stephencleary.com/2011/08/option-parsing-argument-parsing.html) apply.
+The property does not have to be **List<string>** (which is used by **OptionArgumentsBase**). The only requirements on the collection is that it only have one method named **Add** which takes a single parameter. The parameter does not have to be **string**; it can be any type, and the [standard parsing rules]({% post_url 2011-08-11-option-parsing-argument-parsing %}) apply.
 
 
 
 > This means that **PositionalArguments** can be placed on a property of dictionary type, as long as a matching parser is provided.
-
-
 
 
 Here's an example of a program taking any number of integer parameters:

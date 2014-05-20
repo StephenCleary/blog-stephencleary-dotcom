@@ -1,19 +1,12 @@
 ---
 layout: post
 title: "Another SynchronizationContext Gotcha: InvokeRequired?"
-tags: ["Threading", ".NET"]
 ---
-
-
 There was a good post today by the Parallel Programming .NET Team where they clarify [how the upcoming Task class can make use of SynchronizationContext](http://blogs.msdn.com/pfxteam/archive/2009/09/22/9898090.aspx). In reading that post, I was reminded of Yet Another SynchronizationContext Gotcha.
 
 
 
-
-
 Given a [SynchronizationContext](http://msdn.microsoft.com/en-us/library/system.threading.synchronizationcontext.aspx) of unknown type, you _cannot tell_ if you are on a thread that is associated with that SynchronizationContext. This is the old "Do I need to invoke?" question that is answered by [ISynchronizeInvoke.InvokeRequired](http://msdn.microsoft.com/en-us/library/system.componentmodel.isynchronizeinvoke.invokerequired.aspx) on Windows Forms and [Dispatcher.CheckAccess](http://msdn.microsoft.com/en-us/library/system.windows.threading.dispatcher.checkaccess.aspx) on Windows Presentation Foundation. However, use of these methods is usually an earmark of poor design; most methods should not be designed to be called "from any thread" (unless they are part of a class used for thread synchronization).
-
-
 
 
 
@@ -28,11 +21,7 @@ Back to the original statement: SynchronizationContext does not provide any way 
 - AspNetSynchronizationContext - The strangest implementation of them all. Conceptually, this type does not have _any_ associated threads! When queueing delegates to its SynchronizationContext, ASP.NET applications just execute them directly. AspNetSynchronizationContext temporarily borrows its thread from the caller, so to speak.
 
 
-
-
 By now, it should be clear that there is not a 1:1 correspondence between SynchronizationContext instances and threads. Furthermore, implementations of SynchronizationContext may have a specific associated thread, a set of associated threads, or no associated threads at all.
-
-
 
 
 
@@ -40,11 +29,7 @@ SynchronizationContext implementations also do not override equality to indicate
 
 
 
-
-
-This situation is problematic for the asynchronous component designer. Starting with Version 1.4, the [Nito.Async](http://www.codeplex.com/NitoAsync) library contains a SynchronizationContextRegister that understands which guarantees are provided by which implementations of SynchronizationContext. The [previous gotchas](http://blog.stephencleary.com/2009/08/gotchas-from-synchronizationcontext.html) I mentioned are included (e.g., whether Post is non-reentrant), and the "single specific associated thread" guarantee covered in this post is also included. This is done in a generic way, allowing programs to override the built-in default values and also provide their own if they have their own implementations of SynchronizationContext.
-
-
+This situation is problematic for the asynchronous component designer. Starting with Version 1.4, the [Nito.Async](http://www.codeplex.com/NitoAsync) library contains a SynchronizationContextRegister that understands which guarantees are provided by which implementations of SynchronizationContext. The [previous gotchas]({% post_url 2009-08-14-gotchas-from-synchronizationcontext %}) I mentioned are included (e.g., whether Post is non-reentrant), and the "single specific associated thread" guarantee covered in this post is also included. This is done in a generic way, allowing programs to override the built-in default values and also provide their own if they have their own implementations of SynchronizationContext.
 
 
 

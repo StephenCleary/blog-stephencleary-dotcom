@@ -1,15 +1,11 @@
 ---
 layout: post
 title: "On a Lighter Note: Airport Error"
-tags: ["Lighter Notes"]
 ---
-[![](http://4.bp.blogspot.com/_lkN-6AUYgOI/Shg9ahSLAFI/AAAAAAAABYc/pmhmkzlCyik/s320/P4200068.JPG)](http://4.bp.blogspot.com/_lkN-6AUYgOI/Shg9ahSLAFI/AAAAAAAABYc/pmhmkzlCyik/s1600-h/P4200068.JPG)
-
-
+[![]({{ site_url }}/assets/P4200068.JPG)  
+]({{ site_url }}/assets/P4200068.JPG)
 
 Being the fan of error messages that I am, I have of course seen pictures of bluescreens in airports. I even saw one myself, but that was several years ago (before I had my digital camera, sadly).
-
-
 
 
 
@@ -17,17 +13,11 @@ So, I was thrilled when I saw an error message on our way back from Tennessee! I
 
  
 
-
-
 The text is difficult to see without zooming in, so here it is: the failing application is "radpinit.exe"; caption: "DLL Initialization Failed"; message: "The application failed to initialize because the window station is shutting down." I think we've all seen that one before. :)
 
 
 
-
-
 However, we haven't all seen it from a component of Hewlett Packard's Business Technology Optimization platform. Supposedly, "radpinit" is in charge of automated software deployment and updates.
-
-
 
 
 

@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "Announcement: Over 200 Posts!"
-tags: ["Announcements"]
 ---
-
-
 This is the first post of an "announcement week". It just so happens that I have a few announcements to make, so this week instead of my regular posts I'll be posting only announcements.
-
-
 
 
 
@@ -15,17 +10,11 @@ The first announcement is this: I've reached over 200 posts on my blog! (This po
 
 
 
-
-
-All together, my blog has had more than 400,000 pageviews since I published my [first post](http://blog.stephencleary.com/2008/06/interop-on-64-bit-platforms.html) in June of '08.
-
-
+All together, my blog has had more than 400,000 pageviews since I published my [first post]({% post_url 2008-06-20-interop-on-64-bit-platforms %}) in June of '08.
 
 
 
 The vast majority of my readers come from Google or Stack Overflow, which means that they won't actually see this message. Thanks to those of you who _are_ reading this! :)
-
-
 
 
 
@@ -34,16 +23,12 @@ The all-time "most famous" posts are currently:
 
 
 
-1. The (quite old) [Reporting Progress from Tasks](http://blog.stephencleary.com/2010/06/reporting-progress-from-tasks.html).
-1. My [Async and Await Intro](http://blog.stephencleary.com/2012/02/async-and-await.html) (of course).
-1. [Detection of Half-Open (Dropped) Connections](http://blog.stephencleary.com/2009/05/detection-of-half-open-dropped.html), part of my TCP/IP .NET Sockets FAQ.
+1. The (quite old) [Reporting Progress from Tasks]({% post_url 2010-06-18-reporting-progress-from-tasks %}).
+1. My [Async and Await Intro]({% post_url 2012-02-02-async-and-await %}) (of course).
+1. [Detection of Half-Open (Dropped) Connections]({% post_url 2009-05-16-detection-of-half-open-dropped %}), part of my TCP/IP .NET Sockets FAQ.
 
 
-
-
-However, if you look at recent trends, [Reporting Progress from Tasks](http://blog.stephencleary.com/2010/06/reporting-progress-from-tasks.html) is heading down in the rankings while [Async and Await](http://blog.stephencleary.com/2012/02/async-and-await.html) is coming up fast. So I'd expect the all-time rankings to change soon.
-
-
+However, if you look at recent trends, [Reporting Progress from Tasks]({% post_url 2010-06-18-reporting-progress-from-tasks %}) is heading down in the rankings while [Async and Await]({% post_url 2012-02-02-async-and-await %}) is coming up fast. So I'd expect the all-time rankings to change soon.
 
 
 

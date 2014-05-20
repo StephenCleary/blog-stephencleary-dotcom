@@ -1,14 +1,12 @@
 ---
 layout: post
 title: "SynchronizationContext Properties Summary"
-tags: ["Threading", ".NET", "callbacks"]
 ---
-
-
 A few of my posts recently have dealt with surprises that I've found when interacting with different implementations of [SynchronizationContext](http://msdn.microsoft.com/en-us/library/system.threading.synchronizationcontext.aspx). This post is a summary of my findings.
 
 
 
+{:.table .table-striped}
 {:.center.caption}
 SynchronizationContext Implementation Properties
 
@@ -34,26 +32,16 @@ SynchronizationContext Implementation Properties
 
 ## SynchronizationContext Implementations
 
-
-
 The "Windows Forms" entry refers to the [System.Windows.Forms.WindowsFormsSynchronizationContext](http://msdn.microsoft.com/en-us/library/system.windows.forms.windowsformssynchronizationcontext.aspx), which is used by the GUI thread(s) in Windows Forms applications. Other threads in the same application may use different SynchronizationContext implementations.
-
-
 
 
 The "Windows Presentation Foundation and Silverlight" entry refers to the [System.Windows.Threading.DispatcherSynchronizationContext](http://msdn.microsoft.com/en-us/library/system.windows.threading.dispatchersynchronizationcontext.aspx), which is used by the GUI thread(s) in Windows Presentation Foundation and Silverlight applications. Other threads in the same application may use different SynchronizationContext implementations.
 
 
-
-
 The "Nito" entry refers to the Nito.Async.ActionDispatcherSynchronizationContext from the [Nito.Async](http://nitoasync.codeplex.com/) library. This includes Nito.Async.ActionThread threads.
 
 
-
-
 The "Default" entry refers the default implementation of [System.Threading.SynchronizationContext](http://msdn.microsoft.com/en-us/library/system.threading.synchronizationcontext.aspx). This includes ThreadPool and Thread class threads, Windows Services, and Console applications, unless that thread replaces the default with a different SynchronizationContext.
-
-
 
 
 The "ASP.NET" entry refers to the System.Web.dll:System.Web.AspNetSynchronizationContext, which is used by threads running in an application hosted by the ASP.NET runtime.
@@ -62,31 +50,19 @@ The "ASP.NET" entry refers to the System.Web.dll:System.Web.AspNetSynchronizatio
 
 ## SynchronizationContext Properties
 
-
-
 The "Specific Associated Thread" property means that the SynchronizationContext refers to a single, specific thread, and that queueing work to the SynchronizationContext will queue work to that thread. Note that multiple SynchronizationContexts may still refer to the same thread, even if this property is true.
-
-
 
 
 The "Synchronized Execution" property means that all work queued to the SynchronizationContext will execute one at a time.
 
 
-
-
 The "Sequential Execution" property means that all work queued to the SynchronizationContext will execute in order. If a SynchronizationContext supports Sequential Execution, then it also supports Synchronized Execution.
-
-
 
 
 The "Reentrant Send" property means that the implementation of SynchronizationContext.Send will directly invoke its delegate on the current thread.
 
 
-
-
 The "Reentrant Post" property means that the implementation of SynchronizationContext.Post will directly invoke its delegate on the current thread.
-
-
 
 
 The "Supports Equality Comparision" property means that instances of that SynchronizationContext type may be compared for equality, and that equality implies that they refer to the same Specific Associated Thread.
@@ -95,11 +71,7 @@ The "Supports Equality Comparision" property means that instances of that Synchr
 
 ## Further Reading and a Useful Library
 
-
-
-For more details, see the previous SynchronizationContext-related posts [Gotchas from SynchronizationContext!](http://blog.stephencleary.com/2009/08/gotchas-from-synchronizationcontext.html) and [Another SynchronizationContext Gotcha: InvokeRequired?](http://blog.stephencleary.com/2009/09/another-synchronizationcontext-gotcha.html)
-
-
+For more details, see the previous SynchronizationContext-related posts [Gotchas from SynchronizationContext!]({% post_url 2009-08-14-gotchas-from-synchronizationcontext %}) and [Another SynchronizationContext Gotcha: InvokeRequired?]({% post_url 2009-09-22-another-synchronizationcontext-gotcha %})
 
 
 

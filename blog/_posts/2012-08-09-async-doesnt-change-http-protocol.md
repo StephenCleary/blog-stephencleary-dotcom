@@ -1,19 +1,12 @@
 ---
 layout: post
 title: "Async Doesn't Change the HTTP Protocol"
-tags: ["async", ".NET", "ASP.NET"]
 ---
-
-
 In my experience, there are two questions commonly asked by programmers new to async after they've learned the basics.
 
 
 
-
-
-The most-asked question is ["why does my partially-async code deadlock?"](http://blog.stephencleary.com/2012/07/dont-block-on-async-code.html).
-
-
+The most-asked question is ["why does my partially-async code deadlock?"]({% post_url 2012-07-12-dont-block-on-async-code %}).
 
 
 
@@ -21,11 +14,7 @@ The second-most-asked question usually takes a form like this: "I have a long-ru
 
 
 
-
-
 The answer is: Async doesn't change the HTTP protocol.
-
-
 
 
 
@@ -33,11 +22,7 @@ The HTTP protocol is centered around a request and a matching response. That's i
 
 
 
-
-
 You can use async on the client and server, but that won't change the way the HTTP protocol works.
-
-
 
 
 
@@ -45,11 +30,7 @@ When you use async on the client side (e.g., with HttpClient), then you can trea
 
 
 
-
-
 When you use async on the server side (e.g., with ApiController), then you can treat each web request as an asynchronous operation. But when you yield, you only yield to the web server thread pool, not to the client. HTTP only allows a single response, so the response can only be sent when the request is fully complete.
-
-
 
 
 
@@ -58,8 +39,6 @@ Now, you can _use_ async to create higher-level abstractions. For example, you c
 
 
 > Frameworks such as SignalR can make implementation easier.
-
-
 
 
 There aren't too many examples of doing that these days; async is still pretty new. But I'm sure that higher-level async abstractions will become a common approach in the future.

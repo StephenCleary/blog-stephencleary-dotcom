@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "Application Protocol Specifications"
-tags: [".NET", "TCP/IP sockets"]
 ---
-
-
-(This post is part of the [TCP/IP .NET Sockets FAQ](http://blog.stephencleary.com/2009/04/tcpip-net-sockets-faq.html))
-
-
+(This post is part of the [TCP/IP .NET Sockets FAQ]({% post_url 2009-04-30-tcpip-net-sockets-faq %}))
 
 
 
@@ -17,17 +12,11 @@ When designing an application protocol, one should publish an application protoc
 
 ## Versioning
 
-
-
 The application protocol specification document should include the protocol version number to which it applies. Protocols change over time as additional requirements are added.
 
 
 
-
-
 There should also be a way for the protocol to perform some form of version negotiation. Usually, it is enough to have one side send a list of supported versions, and have the other side respond with the chosen version.
-
-
 
 
 
@@ -37,11 +26,7 @@ This is a bit of up-front work, but allows partial upgrades in the future withou
 
 ## Terminology
 
-
-
 The most important words in a specification are "must" and "may". When used consistently, these terms convey specific meanings. "Must" is used when an implementation _absolutely_ must obey the specification. "May" is used when an implementation _optionally_ may obey the specification.
-
-
 
 
 
@@ -51,17 +36,11 @@ When possible, use long-established terminology. The key reference for this is [
 
 ## Server and Client: First Contact
 
-
-
 The first question that is often answered when writing a TCP/IP protocol is: who contacts whom? More specifically, one side must be chosen as the _server_ and the other side as the _client_. In some cases, the choice of client and server sides is obvious. For other applications, it really doesn't matter which side is chosen for which role. Very loosely coupled applications (following more of a peer-to-peer model) may even act as a client, server, or both (for the same protocol).
 
 
 
-
-
 Note that _client_ and _server_ only have meaning when the connection is being established. Once the TCP/IP connection is established, it will allow either side to send data to the other side at any time.
-
-
 
 
 
@@ -71,11 +50,7 @@ Usually, it is the responsibility of the server side to accept any incoming conn
 
 ## Choosing the Port
 
-
-
 The application protocol document should include the port number used for that protocol. Choosing a port number should be done with care; one must consider reserved port ranges as well as ephemeral port ranges. Ephemeral port ranges must be considered because any random client socket may be given a port in that range, and a server would be unable to bind on its port if that port was already being used by a client socket.
-
-
 
 
 
@@ -83,11 +58,7 @@ The [Internet Assigned Numbers Authority](http://www.iana.org/assignments/port-n
 
 
 
-
-
 IANA has also reserved ports 1024-49151 in a similar manner (requiring registration). However, most people ignore this, and treat the 1024-49151 port range as available except for their ephemeral port ranges.
-
-
 
 
 
@@ -95,11 +66,7 @@ Ephemeral port ranges are trickier, since [different operating systems use diffe
 
 
 
-
-
 In short, private Windows protocols (used only within a certain network) may pick a port from the range 5001-65535, with preference given to higher port numbers (so that individual machines may increase their MaxUserPort registry setting). If Linux compatibility is necessary, the range becomes 5001-32767 and 61001-65535, again prefering higher port numbers.
-
-
 
 
 
@@ -107,13 +74,9 @@ Public (published) protocols should be registered with IANA and use the assigned
 
 
 
-
-
 Note: It is highly recommended that the port be configurable by the end user or administrator. Currently, there are not many "well-behaved" programs when it comes to choosing ports, so it is greatly beneficial to give the network admin the ability to change the port.
 
 
 
-
-
-(This post is part of the [TCP/IP .NET Sockets FAQ](http://blog.stephencleary.com/2009/04/tcpip-net-sockets-faq.html))
+(This post is part of the [TCP/IP .NET Sockets FAQ]({% post_url 2009-04-30-tcpip-net-sockets-faq %}))
 

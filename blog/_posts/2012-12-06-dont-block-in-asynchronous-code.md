@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "Don't Block in Asynchronous Code"
-tags: ["async", ".NET"]
 ---
-
-
-One of my most famous blog posts is [Don't Block on Asynchronous Code](http://blog.stephencleary.com/2012/07/dont-block-on-async-code.html), which took an in-depth look at how a synchronous method could deadlock if it blocked on asynchronous code (e.g., using `Task.Wait` or `Task.Result`). This is a fairly common beginner's mistake.
-
-
+One of my most famous blog posts is [Don't Block on Asynchronous Code]({% post_url 2012-07-12-dont-block-on-async-code %}), which took an in-depth look at how a synchronous method could deadlock if it blocked on asynchronous code (e.g., using `Task.Wait` or `Task.Result`). This is a fairly common beginner's mistake.
 
 
 
@@ -16,8 +11,6 @@ Recently, I came across another deadlock situation: in some cases, an `async` me
 
 
 > This deadlock scenario is due to an undocumented implementation detail. This post is accurate as of the initial release of .NET 4.5 in 2012. Microsoft may change this behavior in the future.
-
-
 
 
 This code will deadlock in a free-threaded context (e.g., a Console application, unit test, or `Task.Run`):
@@ -52,17 +45,11 @@ static async Task Test()
 }
 {% endhighlight %}
 
-
-
 Do you see the problem? I didn't.
 
 
 
-
-
 The deadlock is due to an optimization in the implementation of `await`: **an `async` method's continuation is scheduled with `TaskContinuationOptions.ExecuteSynchronously`**.
-
-
 
 
 
@@ -78,11 +65,7 @@ So, stepping through the example code:
 1. As a result, the last `Sleep` never actually runs. The thread pool task never completes, and `Test` never completes.
 
 
-
-
 If you place this same method in a GUI project or ASP.NET project, you won't see a deadlock. The difference is in step 4: the continuation must be run in the captured `SynchronizationContext`, but it's being scheduled by a thread pool thread; so in this case `SetResult` will schedule the continuation to run asynchronously instead of executing it directly.
-
-
 
 
 
@@ -118,17 +101,14 @@ static async Task Test()
 }
 {% endhighlight %}
 
-
-
 Most people would not write code like this. It's very unnatural to call `Task.Wait` in an `async` method; the natural code would use `await` instead. I only came across this behavior while writing unit tests for my [AsyncEx](http://nitoasyncex.codeplex.com/) library; these unit tests can get pretty complex and can involve a mixture of synchronous and asynchronous code.
 
 
 
 {:.center}
 
-![](http://1.bp.blogspot.com/-DTcbqCj8MC4/ULq-q935DKI/AAAAAAAAHoU/T7mXwVAUieA/s1600/Method%2Bno%2BBlocking.png)
+![]({{ site_url }}/assets/Method%2Bno%2BBlocking.png)  
 
 
-
-In conclusion, we already knew [not to block **on** asynchronous code](http://blog.stephencleary.com/2012/07/dont-block-on-async-code.html); now we know not to block **in** asynchronous code either!
+In conclusion, we already knew [not to block **on** asynchronous code]({% post_url 2012-07-12-dont-block-on-async-code %}); now we know not to block **in** asynchronous code either!
 

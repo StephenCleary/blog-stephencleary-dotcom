@@ -1,10 +1,7 @@
 ---
 layout: post
 title: "Interop: Multidimensional Arrays of Characters in a Structure"
-tags: ["P/Invoke", "Sample code"]
 ---
-
-
 Yesterday an interesting problem was brought up on the MSDN forums. An unmanaged structure had a form like this:
 
 
@@ -17,11 +14,7 @@ struct MyStruct
 };
 
 
-
-
 Each structure has 6 strings of up to 25 characters each. Marshaling a single "flattened" string in a structure is not difficult (UnmanagedType.ByValTStr with SizeConst), and marshaling a "flattened" array of simple types in a structure is likewise not difficult (UnmanagedType.ByValArray with SizeConst and optionally ArraySubType). However, marshaling a flattened array of flattened strings is not exactly straightforward (there is no "ArraySubTypeSizeConst" option).
-
-
 
 
 
@@ -67,17 +60,11 @@ public struct MyStruct
 }
 
 
-
-
 (The implicit conversions on the inner structure are for convenience; note that the default marshaling will silently truncate string values that are more than 24 characters).
 
 
 
-
-
 The inner structure "StringSizeConst25AsString" marshals its string as a 25-character array, and the outer structure "MyStruct" marshals an array of the inner structures. Both of them end up getting flattened correctly into a single multidimensional unmanaged character array.
-
-
 
 
 
@@ -108,8 +95,6 @@ __declspec(dllexport) void AddMultipleNames(const MyStruct* DSNames)
   OutputDebugStringA(out.str().c_str());
  }
 }
-
-
 
 
 Then we can use the managed interop definitions above like this:
@@ -144,8 +129,6 @@ private void button1_Click(object sender, EventArgs e)
 }
 
 
-
-
 And this would cause the unmanaged DLL to send to its debug output:
 
 
@@ -162,11 +145,7 @@ DSNames->names[5]: x
 
 ## Non-Null-Terminated Strings
 
-
-
 The above solution works well if each of the strings in the unmanaged structure are null-terminated. There are some APIs, however, which work with implicitly-terminated strings. It is possible that an unmanaged function may treat these strings as having an implicit length of 25 characters.
-
-
 
 
 
@@ -212,8 +191,6 @@ public struct MyStruct
 }
 
 
-
-
 This solution allows sending a 25-character, non-null-terminated string as a member of the unmanaged string array:
 
 
@@ -244,8 +221,6 @@ private void button1_Click(object sender, EventArgs e)
 }
 
 
-
-
 Which produces this debug output:
 
 
@@ -258,8 +233,6 @@ DSNames->names[2]: There
 DSNames->names[3]: 123456789012345678901234
 DSNames->names[4]: 1234567890123456789012345x
 DSNames->names[5]: x
-
-
 
 
 Note that our unmanaged function is still interpreting the strings as null-terminated, and we're marshaling them as implicitly-terminated. This is why entry [4] above "spills over" and picks up entry [5]. If the unmanaged function actually interpreted the strings as having a length of 25 (or a maximum length of 25), then this "spill over" would not happen.

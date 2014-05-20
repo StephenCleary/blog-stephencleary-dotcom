@@ -1,17 +1,14 @@
 ---
 layout: post
 title: "Option Parsing: Default and Nullable Argument Values"
-tags: ["Option Parsing", ".NET", "Nito.KitchenSink"]
+series: "Option parsing"
+seriesTitle: "Option Parsing: Default and Nullable Argument Values"
 ---
-
-
 Most of our examples so far have already dealt with options taking arguments, because most options in the real world _do_ take arguments. Today we'll start looking at option arguments in depth.
 
 
 
-
-
-The [option pipeline](http://blog.stephencleary.com/2011/06/option-parsing-option-parsing-pipeline.html) post laid out the steps taken when using an Option Arguments class:
+The [option pipeline]({% post_url 2011-06-09-option-parsing-option-parsing-pipeline %}) post laid out the steps taken when using an Option Arguments class:
 
 
 
@@ -20,15 +17,11 @@ The [option pipeline](http://blog.stephencleary.com/2011/06/option-parsing-optio
 1. The command line is parsed, setting properties on the Option Arguments instance.
 
 
-
-
 We'll take advantage of these steps to handle several common scenarios.
 
 
 
 ## Default Values
-
-
 
 Default argument values are set in the default constructor:
 
@@ -92,8 +85,6 @@ Quality: 4
 
 
 ## Nullable Values
-
-
 
 There are some situations where a "default value" doesn't make sense for an option; you need to know whether there was a value passed, and what the value is (if it was passed). In this situation, you can use a nullable value type for your property:
 

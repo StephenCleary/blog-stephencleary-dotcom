@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -22,54 +23,73 @@ namespace ImportBlog
         private const string Control = "{http://purl.org/atom/app#}control";
         private const string Draft = "{http://purl.org/atom/app#}draft";
 
+        private static readonly Dictionary<string, string> KnownSeries = new Dictionary<string, string>()
+        {
+            { "async oop", "Async OOP" },
+            { "Task members", "A Tour of Task" },
+            { "Task.Run vs BackgroundWorker", "Task.Run vs. BackgroundWorker" },
+            { "Option Parsing", "Option parsing" },
+        };
+
         static void Main(string[] args)
         {
             try
             {
                 Directory.CreateDirectory("_posts");
+                Directory.CreateDirectory("_assets");
                 var blog = XDocument.Load("blog.xml");
-                foreach (var element in blog.Root.Elements(Entry))
+                using (var log = new StreamWriter("log.txt"))
                 {
-                    DateTimeOffset published = DateTimeOffset.MinValue;
-                    string title = null;
-                    string content = null;
-                    try
+                    foreach (var element in blog.Root.Elements(Entry))
                     {
-                        var category = element.Elements(Category).Single(x => x.Attribute("scheme").Value == "http://schemas.google.com/g/2005#kind");
-                        if (category.Attribute("term").Value != "http://schemas.google.com/blogger/2008/kind#post")
-                            continue;
-                        var control = element.Element(Control);
-                        if (control != null)
+                        DateTimeOffset published = DateTimeOffset.MinValue;
+                        string title = null;
+                        string content = null;
+                        try
                         {
-                            var draft = control.Element(Draft);
-                            if (draft != null && draft.Value == "yes")
-                                continue; // TODO: import drafts
+                            var category = element.Elements(Category).Single(x => x.Attribute("scheme").Value == "http://schemas.google.com/g/2005#kind");
+                            if (category.Attribute("term").Value != "http://schemas.google.com/blogger/2008/kind#post")
+                                continue;
+                            var control = element.Element(Control);
+                            if (control != null)
+                            {
+                                var draft = control.Element(Draft);
+                                if (draft != null && draft.Value == "yes")
+                                    continue; // TODO: import drafts
+                            }
+
+                            published = DateTimeOffset.Parse(element.Element(Published).Value);
+                            var tags = element.Elements(Category).Where(x => x.Attribute("scheme").Value == "http://www.blogger.com/atom/ns#").Select(x => x.Attribute("term").Value).ToArray();
+                            title = element.Element(Title).Value;
+                            content = "<div>" + PreprocessHtml(element.Element(Content).Value) + "</div>";
+                            var url = element.Elements(Link).Single(x => x.Attribute("rel").Value == "alternate").Attribute("href").Value;
+
+                            var filename = "_posts/" + published.Year.ToString("D4") + "-" + published.Month.ToString("D2") + "-" + published.Day.ToString("D2") + "-" + Path.ChangeExtension(url, "md").Substring(url.LastIndexOf('/') + 1);
+                            var sb = new StringBuilder();
+                            sb.AppendLine("---");
+                            sb.AppendLine("layout: post");
+                            sb.AppendLine("title: " + YamlString(title));
+                            var series = tags.Intersect(KnownSeries.Keys).FirstOrDefault();
+                            if (series != null)
+                            {
+                                sb.AppendLine("series: " + YamlString(KnownSeries[series]));
+                                sb.AppendLine("seriesTitle: " + YamlString(title));
+                                log.WriteLine("series: " + published + ": " + title);
+                            }
+                            //sb.AppendLine("tags: [" + string.Join(", ", tags.Select(YamlString)) + "]");
+                            sb.AppendLine("---");
+                            sb.Append(HtmlToMarkdown(XDocument.Parse(content, LoadOptions.PreserveWhitespace).Root, published, title, log));
+                            File.WriteAllText(filename, sb.ToString());
                         }
-
-                        published = DateTimeOffset.Parse(element.Element(Published).Value);
-                        var tags = element.Elements(Category).Where(x => x.Attribute("scheme").Value == "http://www.blogger.com/atom/ns#").Select(x => x.Attribute("term").Value).ToArray();
-                        title = element.Element(Title).Value;
-                        content = "<div>" + PreprocessHtml(element.Element(Content).Value) + "</div>";
-                        var url = element.Elements(Link).Single(x => x.Attribute("rel").Value == "alternate").Attribute("href").Value;
-
-                        var filename = "_posts/" + published.Year.ToString("D4") + "-" + published.Month.ToString("D2") + "-" + published.Day.ToString("D2") + "-" + Path.ChangeExtension(url, "md").Substring(url.LastIndexOf('/') + 1);
-                        var sb = new StringBuilder();
-                        sb.AppendLine("---");
-                        sb.AppendLine("layout: post");
-                        sb.AppendLine("title: " + YamlString(title));
-                        sb.AppendLine("tags: [" + string.Join(", ", tags.Select(YamlString)) + "]");
-                        sb.AppendLine("---");
-                        sb.Append(HtmlToMarkdown(XDocument.Parse(content, LoadOptions.PreserveWhitespace).Root, published, title));
-                        File.WriteAllText(filename, sb.ToString());
-                    }
-                    catch (Exception ex)
-                    {
-                        if (content != null)
+                        catch (Exception ex)
                         {
-                            Console.WriteLine(title);
-                            Console.WriteLine("Published " + published);
+                            if (content != null)
+                            {
+                                Console.WriteLine(title);
+                                Console.WriteLine("Published " + published);
+                            }
+                            Console.WriteLine(ex.Message);
                         }
-                        Console.WriteLine(ex.Message);
                     }
                 }
                 Console.WriteLine("Done.");
@@ -98,15 +118,16 @@ namespace ImportBlog
             return html;
         }
 
-        private static string HtmlToMarkdown(XElement root, DateTimeOffset published, string title)
+        private static string HtmlToMarkdown(XElement root, DateTimeOffset published, string title, StreamWriter log)
         {
-            var translator = new HtmlToMarkdownTranslator(published, title);
+            var translator = new HtmlToMarkdownTranslator(published, title, log);
             translator.ImproperHeaders = root.Descendants("h3").Any();
             return translator.Parse(root);
         }
 
         private sealed class HtmlToMarkdownTranslator
         {
+            private readonly StreamWriter _log;
             private readonly string _title;
             private readonly DateTimeOffset _published;
             private static readonly HashSet<string> _unknownElementTypes = new HashSet<string>();
@@ -115,10 +136,11 @@ namespace ImportBlog
             private bool _inTableData;
             private bool _inTable;
 
-            public HtmlToMarkdownTranslator(DateTimeOffset published, string title)
+            public HtmlToMarkdownTranslator(DateTimeOffset published, string title, StreamWriter log)
             {
                 _published = published;
                 _title = title;
+                _log = log;
             }
 
             public bool ImproperHeaders { get; set; }
@@ -133,11 +155,11 @@ namespace ImportBlog
                         var child = (XElement)node;
                         if (child.Name == "p")
                         {
-                            sb.Append("\r\n\r\n" + Parse(child) + "\r\n\r\n");
+                            sb.Append(Parse(child) + "\r\n\r\n");
                         }
                         else if (child.Name == "br")
                         {
-                            sb.Append("  ");
+                            sb.Append("  \r\n");
                         }
                         else if (child.Name == "h3")
                         {
@@ -205,7 +227,51 @@ namespace ImportBlog
                         else if (child.Name == "a")
                         {
                             var href = child.Attribute("href").Value;
-                            sb.Append("[" + Parse(child) + "](" + href + ")");
+                            Uri uri = null;
+                            string host = string.Empty;
+                            try
+                            {
+                                uri = new Uri(href);
+                                host = uri.Host;
+                            }
+                            catch (Exception)
+                            {
+                                Console.WriteLine("Unparseable a: " + href + ": " + _published + ": " + _title);
+                            }
+                            if (host == "blog.stephencleary.com")
+                            {
+                                var filename = Directory.EnumerateFiles("_posts", "*" + Path.GetFileNameWithoutExtension(href) + ".*").FirstOrDefault();
+                                if (filename == null)
+                                {
+                                    _log.WriteLine("Post " +  Path.GetFileNameWithoutExtension(href) + " not found: " + _published + ": " + _title);
+                                    sb.Append("[" + Parse(child) + "]({ % post_url TODO % })");
+                                }
+                                else
+                                {
+                                    sb.Append("[" + Parse(child) + "]({% post_url " + Path.GetFileNameWithoutExtension(filename) + " %})");
+                                }
+                            }
+                            else if (href.EndsWith(".jpg", StringComparison.InvariantCultureIgnoreCase) || href.EndsWith(".jpeg", StringComparison.InvariantCultureIgnoreCase) || href.EndsWith(".png", StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                var filename = Path.GetFileName(href);
+                                try
+                                {
+                                    //Console.WriteLine("Downloading image: " + href + ": " + _published + ": " + _title);
+                                    //using (var client = new WebClient())
+                                    //    client.DownloadFile(href, "_assets/" + filename);
+                                }
+                                catch (Exception)
+                                {
+                                    Console.WriteLine("Error downloading image " + href);
+                                }
+
+                                sb.Append("[" + Parse(child) + "]({{ site_url }}/assets/" + filename + ")");
+                            }
+                            else
+                            {
+                                sb.Append("[" + Parse(child) + "](" + href + ")");
+                                _log.WriteLine("a (" + href + "): " + _published + ": " + _title);
+                            }
                         }
                         else if (child.Name == "blockquote")
                         {
@@ -252,11 +318,14 @@ namespace ImportBlog
                             var alt = child.Attribute("alt");
                             if (alt != null)
                                 sb.Append(alt.Value);
-                            sb.Append("](" + child.Attribute("src").Value + ")");
+                            var href = child.Attribute("src").Value;
+                            sb.Append("]({{ site_url }}/assets/" + Path.GetFileName(href) + ")  \r\n");
+                            //using (var client = new WebClient())
+                            //    client.DownloadFile(href, "_assets/" + Path.GetFileName(href));
                         }
                         else if (child.Name == "div")
                         {
-                            Console.WriteLine("div: " + _published + ": " + _title);
+                            _log.WriteLine("div: " + _published + ": " + _title);
                             if (!child.Attributes().Any())
                                 sb.Append(Parse(child));
                             else
@@ -274,9 +343,10 @@ namespace ImportBlog
                         }
                         else if (child.Name == "table")
                         {
-                            Console.WriteLine("table: " + _published + ": " + _title);
+                            _log.WriteLine("table: " + _published + ": " + _title);
                             _inTable = true;
                             _inTableData = false;
+                            sb.Append("{:.table .table-striped}\r\n");
                             sb.Append(Parse(child));
                             _inTable = false;
                         }

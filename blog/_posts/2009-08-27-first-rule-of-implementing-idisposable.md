@@ -1,21 +1,14 @@
 ---
 layout: post
 title: "The First Rule of Implementing IDisposable and Finalizers"
-tags: [".NET", "IDisposable/Finalizers"]
 ---
-
-
-This post is part of [How to Implement IDisposable and Finalizers: 3 Easy Rules](http://blog.stephencleary.com/2009/08/how-to-implement-idisposable-and.html).
+This post is part of [How to Implement IDisposable and Finalizers: 3 Easy Rules]({% post_url 2009-08-27-how-to-implement-idisposable-and %}).
 
 
 
 ## Don't do it (unless you need to).
 
-
-
 IDisposable is not a destructor. Remember that .NET has a garbage collector that works just fine without requiring you to set member variables to null.
-
-
 
 
 
@@ -27,11 +20,7 @@ There are only two situations when IDisposable does need to be implemented; appl
 - The class owns managed (IDisposable) resources.
 
 
-
-
 Note that only classes that _own_ resources should free them. In particular, a class may have a reference to a shared resource; in this case, it should not free the resource because other classes may still be using it.
-
-
 
 
 
@@ -64,8 +53,6 @@ public sealed class ErrorList : IDisposable
     }
 }
 {% endhighlight %}
-
-
 
 Some programmers (especially with C++ backgrounds) even go a step further and add a finalizer:
 
@@ -104,8 +91,6 @@ public sealed class ErrorList : IDisposable
 }
 {% endhighlight %}
 
-
-
 The correct implementation of IDisposable for this type is here:
 
 
@@ -124,11 +109,7 @@ public sealed class ErrorList
 }
 {% endhighlight %}
 
-
-
 That's right, folks. The correct IDisposable implementation for this class is to _not_ implement IDisposable! When an ErrorList instance becomes unreachable, the garbage collector will automatically reclaim all of its memory and resources.
-
-
 
 
 
@@ -146,7 +127,5 @@ Remember the two tests to determine if IDisposable is needed (owning unmanaged r
   1. Since there are no unmanaged resources and no managed resources owned by ErrorList, it does not need to implement IDisposable.
 
 
-
-
-This post is part of [How to Implement IDisposable and Finalizers: 3 Easy Rules](http://blog.stephencleary.com/2009/08/how-to-implement-idisposable-and.html).
+This post is part of [How to Implement IDisposable and Finalizers: 3 Easy Rules]({% post_url 2009-08-27-how-to-implement-idisposable-and %}).
 

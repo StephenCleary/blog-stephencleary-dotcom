@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "Announcement: MSDN \"async MVVM\" articles"
-tags: ["async", ".NET", "MVVM/WPF", "Announcements"]
 ---
-
-
 Oops, not sure how I missed making this announcement! Sorry for the late notice!
-
-
 
 
 

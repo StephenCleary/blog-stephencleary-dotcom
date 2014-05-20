@@ -1,21 +1,14 @@
 ---
 layout: post
 title: "Message Framing"
-tags: [".NET", "TCP/IP sockets"]
 ---
-
-
-(This post is part of the [TCP/IP .NET Sockets FAQ](http://blog.stephencleary.com/2009/04/tcpip-net-sockets-faq.html))
+(This post is part of the [TCP/IP .NET Sockets FAQ]({% post_url 2009-04-30-tcpip-net-sockets-faq %}))
 
 
 
 ## The Problem
 
-
-
 One of the most common beginner mistakes for people designing protocols for TCP/IP is that they assume that message boundaries are preserved. For example, they assume a single "Send" will result in a single "Receive".
-
-
 
 
 
@@ -23,11 +16,7 @@ Some TCP/IP documentation is partially to blame. Many people read about how TCP/
 
 
 
-
-
 Local machine (loopback) testing confirms this misunderstanding, because usually when client and server are on the same machine they communicate quickly enough that single "sends" do in fact correspond to  single "receives". Unfortunately, this is only a coincidence.
-
-
 
 
 
@@ -40,11 +29,7 @@ This problem usually manifests itself when attempting to deploy a solution to th
 
 ## The Solution, Part 1 - Understanding
 
-
-
 First, one must understand the abstraction of TCP/IP. From the application's perspective, TCP operates on _streams_ of data, _never packets_. Repeat this mantra three times: "TCP does not operate on _packets_ of data. TCP operates on _streams_ of data."
-
-
 
 
 
@@ -52,11 +37,7 @@ There is no way to send a packet of data over TCP; that function call does not e
 
 
 
-
-
 Sending data to the TCP stream is rather easy; all one has to do is call "send", and the appropriate bytes are queued to the outgoing stream. Receiving data from the TCP stream is a bit more tricky, because the "receive N bytes" operation will wait until _at least_ one byte and _at most_ N bytes arrive on the incoming stream before it returns. Note that the "receive N bytes" operation will complete even if it doesn't read all N bytes, giving the application a chance to act on partial data while the rest of the data bytes are in transit. In the real world, very few programs can process partial receives; almost all programs need a buffer to store partial receives until they have enough data to do meaningful work.
-
-
 
 
 
@@ -66,11 +47,7 @@ To repeat: TCP operates on streams, not on packets. However, most application pr
 
 ## The Solution, Part 2 - Design
 
-
-
 There are two approaches commonly used for message framing: length prefixing and delimiters.
-
-
 
 
 
@@ -78,11 +55,7 @@ There are two approaches commonly used for message framing: length prefixing and
 
 
 
-
-
 Receiving a length-prefixed message is harder, because of the possibility of partial receives. First, one must read the length of the message into a buffer until the buffer is full (e.g., if using "4-byte signed little-endian", this buffer is 4 bytes). Then one allocates a second buffer and reads the data into that buffer. When the second buffer is full, then a single message has arrived, and one goes back to reading the length of the next message.
-
-
 
 
 
@@ -92,19 +65,13 @@ Receiving a length-prefixed message is harder, because of the possibility of par
 
 ## A Brief Security Note
 
-
-
 Whether using length-prefixing or delimiters, one must include code to prevent denial of service attacks. Length-prefixed readers can be given a huge message size; delimiting readers can be given a huge amount of data without delimiters. Either of these may result in an OutOfMemoryException, so one must include a maximum message size "sanity check" in the socket reading code.
 
 
 
 ## The Solution, Part 3 - Code
 
-
-
-A code sample for using length-prefixing is in its own blog post at [http://blog.stephencleary.com/2009/04/sample-code-length-prefix-message.html](http://blog.stephencleary.com/2009/04/sample-code-length-prefix-message.html).
-
-
+A code sample for using length-prefixing is in its own blog post at [http://blog.stephencleary.com/2009/04/sample-code-length-prefix-message.html]({% post_url 2009-04-30-sample-code-length-prefix-message %}).
 
 
 
@@ -112,13 +79,9 @@ Another decent code example of length prefixing is on [Jon Cole's blog](http://b
 
 
 
-
-
 Yet another example of length prefixing is in the [Nito.Async](http://www.codeplex.com/NitoAsync) library: the Nito.Async.Sockets.SocketPacketProtocol class can be used to send or receive length-prefixed binary messages. It is written to use the Nito.Async socket classes, but the same code concepts translate well to the .NET Socket class.
 
 
 
-
-
-(This post is part of the [TCP/IP .NET Sockets FAQ](http://blog.stephencleary.com/2009/04/tcpip-net-sockets-faq.html))
+(This post is part of the [TCP/IP .NET Sockets FAQ]({% post_url 2009-04-30-tcpip-net-sockets-faq %}))
 

@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "And I'm Back!"
-tags: ["Personal"]
 ---
-
-
 I've been out of touch the last month. A whole lot of stuff going on!
-
-
 
 
 
@@ -15,17 +10,11 @@ I gave notice at my last job and spent a crazy amount of time training my replac
 
 
 
-
-
 Then, shortly after I started at my new job, my son was in the hospital for a week (unfortunately cancelling our anniversary trip), and then my wife and I took a birthday trip to Canada the next week. Good thing my new boss is a patient guy!
 
 
 
-
-
 Oh, and I refinanced my house somewhere in there, too.
-
-
 
 
 

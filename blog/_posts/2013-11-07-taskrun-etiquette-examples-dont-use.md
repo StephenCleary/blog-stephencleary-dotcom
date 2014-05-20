@@ -1,11 +1,8 @@
 ---
 layout: post
 title: "Task.Run Etiquette Examples: Don't Use Task.Run in the Implementation"
-tags: ["async", ".NET", "ASP.NET"]
 ---
-
-
-Last time we looked at [using `Task.Run` for the wrong thing](http://blog.stephencleary.com/2013/11/taskrun-etiquette-examples-using.html) (code that is not CPU-bound). So let's move on to the proper use case of `Task.Run`: CPU-bound code. We start off with some existing code, which synchronously does some heavy calculations.
+Last time we looked at [using `Task.Run` for the wrong thing]({% post_url 2013-11-06-taskrun-etiquette-examples-using %}) (code that is not CPU-bound). So let's move on to the proper use case of `Task.Run`: CPU-bound code. We start off with some existing code, which synchronously does some heavy calculations.
 
 
 
@@ -28,8 +25,6 @@ private void MyButton_Click(object sender, EventArgs e)
   myService.CalculateMandelbrot();
 }
 {% endhighlight %}
-
-
 
 Now, we want to use this from a UI thread, but this method will block our thread. This **is** a problem that should be solved using `Task.Run`. Doing these calculations is a CPU-bound operation.
 
@@ -59,11 +54,7 @@ private async void MyButton_Click(object sender, EventArgs e)
 }
 {% endhighlight %}
 
-
-
 At first glance, it may look like this solves the problem. And it does solve _this_ problem, but it does not do it in the best way.
-
-
 
 
 
@@ -71,11 +62,7 @@ Let's say that this service is a generic dll that can be used inside any .NET ap
 
 
 
-
-
 How would an ASP.NET application react to this change?
-
-
 
 
 
@@ -106,11 +93,7 @@ public class MandelbrotController: Controller
 }
 {% endhighlight %}
 
-
-
 So far, so good. When a request comes in, the controller uses the service to (synchronously) calculate the view data. A single request thread is used the entire time during that calculation.
-
-
 
 
 
@@ -145,11 +128,7 @@ public class MandelbrotController: Controller
 }
 {% endhighlight %}
 
-
-
 And when we do testing, it works! Unfortunately, this change introduced a performance problem.
-
-
 
 
 
@@ -164,11 +143,7 @@ With the original (synchronous) code, only one thread was used to process the re
 - When the calculation is complete, that thread completes the request and is returned to the ASP.NET thread pool. The ASP.NET thread pool has to deal with (unexpectedly) getting another thread.
 
 
-
-
 This will _work_ correctly, but it's not at all _efficient_.
-
-
 
 
 
@@ -183,11 +158,7 @@ There are (at least) four efficiency problems introduced as soon as you use `awa
  - ASP.NET is not able to terminate the request early, i.e., if the client disconnects or the request times out. In the synchronous case, ASP.NET knew the request thread and could abort it. In the asynchronous case, ASP.NET is not aware that the secondary thread pool thread is "for" that request. It _is_ possible to fix this by using cancellation tokens, but that's outside the scope of this blog post.
 
 
-
-
 If you have multiple calls to `Task.Run`, then the performance problems are compounded. On a busy server, this kind of implementation can kill scalability.
-
-
 
 
 
@@ -195,11 +166,7 @@ That's why one of the principles of ASP.NET is to **avoid using thread pool thre
 
 
 
-
-
 Whew! OK, so now we know what the problem is with that implementation. The plain fact is that ASP.NET prefers synchronous methods if the operation is CPU-bound. And this is also true for other scenarios: Console applications, background threads in desktop applications, etc. In fact, the only place we really _need_ an asynchronous calculation is when we call it from the UI thread.
-
-
 
 
 
@@ -209,11 +176,7 @@ But watch out! There's another pitfall just ahead...
 
 ## Using Task.Run for Asynchronous Wrappers
 
-
-
 Let's continue the "Mandelbrot" example. We've learned that some clients prefer asynchronous APIs for CPU-bound code and others prefer synchronous APIs for CPU-bound code.
-
-
 
 
 
@@ -239,11 +202,7 @@ class MyService
 }
 {% endhighlight %}
 
-
-
 Sweet. The UI app has its nice asynchronous method, and the ASP.NET app has its original synchronous method. Easy! And there are many other examples where synchronous and asynchronous APIs exist side-by-side, so developers are already used to this! But the fact is that **using `Task.Run` for asynchronous wrappers is a code smell**.
-
-
 
 
 
@@ -251,11 +210,7 @@ The problem with this approach is what is implied by this API design. Consider a
 
 
 
-
-
 When a developer sees two methods in an API `Method` and `MethodAsync`, the convention is that they represent a naturally-asynchronous operation. In other words, the developer expects that `MethodAsync` is the "natural" implementation and that `Method` is essentially a synchronous (blocking) equivalent of that operation. That API implies that `Method` will at some point have the calling thread enter a wait state as it blocks for the naturally-asynchronous operation to complete.
-
-
 
 
 
@@ -263,11 +218,7 @@ Let's make this a bit more practical. When a new ASP.NET developer approaches ou
 
 
 
-
-
 `CalculateMandelbrotAsync` is what I call "fake-asynchronous" because it's just a thread pool wrapper around a synchronous operation. But when developers see that API, they assume that it is a naturally-asynchronous operation.
-
-
 
 
 
@@ -277,11 +228,7 @@ This is just a brief description and I only covered one facet of this problem. S
 
 ## OK, enough about the _wrong_ solutions? How do we fix this the _right_ way???
 
-
-
 Back up to the original problem for a moment. What is the problem? The UI thread is blocked. How did we solve it? By changing the service. Who needs the asynchronous API? Only the UI thread. Sounds like we just seriously violated the "Separation of Concerns" principle.
-
-
 
 
 
@@ -308,11 +255,7 @@ private async void MyButton_Click(object sender, EventArgs e)
 }
 {% endhighlight %}
 
-
-
 Now the service API is clean (it exposes a synchronous API for a naturally-synchronous, CPU-bound method), it works for all consumers (e.g., ASP.NET), and the _UI_ layer is responsible for not blocking the _UI_ thread.
-
-
 
 
 

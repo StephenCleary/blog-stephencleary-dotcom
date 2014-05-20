@@ -1,13 +1,10 @@
 ---
 layout: post
 title: "A Tour of Task, Part 1: Constructors"
-tags: ["Threading", "async", ".NET", "Task members"]
+series: "A Tour of Task"
+seriesTitle: "A Tour of Task, Part 1: Constructors"
 ---
-
-
 TL;DR: Do not use `Task` or `Task<T>` constructors.
-
-
 
 
 
@@ -16,9 +13,8 @@ I actually debated quite a bit on how to start this series! I finally decided on
 
 
 {:.center}
-![](http://4.bp.blogspot.com/-Q73llSSldXw/U3TRd7p1-fI/AAAAAAAALj8/4Hup6iqXw6U/s1600/miniatus-grouper-247578_640.jpg)(not actually a red herring)
-
-
+![]({{ site_url }}/assets/miniatus-grouper-247578_640.jpg)  
+(not actually a red herring)
 
 The `Task` type has a whopping eight constructors:
 
@@ -34,11 +30,7 @@ Task(Action<Object>, Object, TaskCreationOptions);
 Task(Action<Object>, Object, CancellationToken, TaskCreationOptions);
 {% endhighlight %}
 
-
-
 The BCL avoids default parameters because they don't work well with [versioning](http://haacked.com/archive/2010/08/10/versioning-issues-with-optional-arguments.aspx/) and reflection. However, I'm going to rewrite some of the members with optional parameters to reduce the number of overloads that I need to talk about.
-
-
 
 
 
@@ -50,8 +42,6 @@ I'm going to call the eight constructors "actual members" because they actually 
     : this(_ => action(), null, token, options) { }
 Task(Action<Object>, Object, CancellationToken = new CancellationToken(), TaskCreationOptions = TaskCreationOptions.None);
 {% endhighlight %}
-
-
 
 Similarly, the `Task<T>` type has eight actual constructors:
 
@@ -67,8 +57,6 @@ Task<TResult>(Func<Object, TResult>, Object, TaskCreationOptions);
 Task<TResult>(Func<Object, TResult>, Object, CancellationToken, TaskCreationOptions);
 {% endhighlight %}
 
-
-
 Which simplify down to a single logical constructor:
 
 
@@ -78,19 +66,13 @@ Which simplify down to a single logical constructor:
 Task<TResult>(Func<Object, TResult>, Object, CancellationToken, TaskCreationOptions);
 {% endhighlight %}
 
-
-
 So, we have 16 actual constructors and two logical constructors.
 
 
 
 ## What For?
 
-
-
 The use case for the task constructors is extremely small.
-
-
 
 
 
@@ -98,11 +80,7 @@ Remember that there are two kinds of tasks: Promise Tasks and Delegate Tasks. Th
 
 
 
-
-
 Task constructors should not be used with `async`, and they should only rarely be used with parallel programming.
-
-
 
 
 
@@ -110,11 +88,7 @@ Parallel programming can be split into two types: [data](http://msdn.microsoft.c
 
 
 
-
-
 Let me put that another way: if you are doing dynamic task parallelism and need to construct a task that can run on any thread, and leave that scheduling decision up to another part of the code, and for whatever reason cannot use `Func<Task>` instead, then (and _only_ then) you should use a task constructor. I've written countless asynchronous and parallel applications, and I have **never** been in this situation.
-
-
 
 
 
@@ -124,11 +98,7 @@ Even shorter version: Do Not Use!
 
 ## What Instead?
 
-
-
 If you're writing `async` code, the easiest way to create a Promise Task is to use the `async` keyword. If you're wrapping another asynchronous API or event, use `Task.Factory.FromAsync` or `TaskCompletionSource<T>`. If you need to run some CPU-bound code and treat it asynchronously, use `Task.Run`. We'll look at all of these options and more in future posts.
-
-
 
 
 
@@ -138,11 +108,7 @@ If you're writing parallel code, first try to use [Parallel](http://msdn.microso
 
 ## Conclusion
 
-
-
 Sorry that the first post just boiled down to "don't use this", but it is what it is. I'll cover all the constructor arguments such as `CancellationToken` later when I cover `Task.Factory.StartNew`.
-
-
 
 
 
@@ -150,6 +116,7 @@ I think it would be fun to keep a running total of usable members, so here's the
 
 
 
+{:.table .table-striped}
 |Type|Actual Members|Logical Members|Usable for async|Usable for parallel|
 |-
 |Task|8|1|0|0|

@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "VS2010 Without Web Deployment Projects"
-tags: [".NET", "ASP.NET", "MSBuild"]
 ---
-
-
 Visual Studio 2010 was released yesterday, as just about everyone knows. I didn't find out until tonight that the [Beta 1 of WDP for VS2010](http://www.microsoft.com/downloads/details.aspx?FamilyID=711a2eef-b107-4784-9063-c978edc498cd) is also available.
-
-
 
 
 
@@ -17,11 +12,7 @@ I've been working on getting the [church website](http://www.landmarkbaptist.ws/
 
 ## Excluding Files
 
-
-
 We have limited bandwidth at home (Northern Michigan, remember...), so I've used WDP in the past to exclude many of the files during deployment (pdbs and xmldoc in particular). VS2010 has greatly enhanced deployment support, but it doesn't quite cover WDP's feature set.
-
-
 
 
 
@@ -40,19 +31,13 @@ VS2010 will ignore pdb files if you check the "Exclude generated debug symbols" 
   </ItemGroup>
 
 
-
-
 This is very similar to WDP's ExcludeFromBuild item group that uses the SourceWebPhysicalPath property. There are two major differences: the ExcludeFilesFromPackage property needs to be set (otherwise, the ExcludeFromPackageFiles item group would be ignored), and the ProjectDir property ends in a backslash (whereas the SourceWebPhysicalPath property did not).
 
 
 
 ## Precompiling (sort of)
 
-
-
 VS2010 does not have the option of precompiling ASP.NET web applications (it will, however, precompile ASP.NET web sites). This is sad, but there is sort-of a workaround.
-
-
 
 
 
@@ -64,11 +49,7 @@ It's possible to force MVC views to be precompiled by placing this in a Property
 <MvcBuildViews>true</MvcBuildViews>
 
 
-
-
 This will cause the MVC views to be compiled, catching all compile-time errors at build time. Unfortunately, the compiled views are then thrown away instead of being merged into the web application assembly.
-
-
 
 
 

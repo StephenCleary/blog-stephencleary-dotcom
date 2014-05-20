@@ -1,25 +1,16 @@
 ---
 layout: post
 title: "Sample code: Length-prefix message framing for streams"
-tags: [".NET", "TCP/IP sockets", "Sample code"]
 ---
-
-
-(This post is part of the [TCP/IP .NET Sockets FAQ](http://blog.stephencleary.com/2009/04/tcpip-net-sockets-faq.html))
-
+(This post is part of the [TCP/IP .NET Sockets FAQ]({% post_url 2009-04-30-tcpip-net-sockets-faq %}))
 
 
 
-
-The necessity of message framing is discussed at [http://blog.stephencleary.com/2009/04/message-framing.html](http://blog.stephencleary.com/2009/04/message-framing.html).
-
-
+The necessity of message framing is discussed at [http://blog.stephencleary.com/2009/04/message-framing.html]({% post_url 2009-04-30-message-framing %}).
 
 
 
 The class below is a modified version of Nito.Async.Sockets.SocketPacketProtocol from the [Nito.Async](http://www.codeplex.com/NitoAsync) library. The main difference is that the Nito.Async.Sockets.SocketPacketProtocol class communicates directly with the asynchronous Nito socket classes, allowing a more efficient implementation. The PacketProtocol class below is slightly less efficient, but can be used with any socket classes, including synchronous sockets or even non-socket streams such as files.
-
-
 
 
 
@@ -224,7 +215,5 @@ public class PacketProtocol
 }
 {% endhighlight %}
 
-
-
-(This post is part of the [TCP/IP .NET Sockets FAQ](http://blog.stephencleary.com/2009/04/tcpip-net-sockets-faq.html))
+(This post is part of the [TCP/IP .NET Sockets FAQ]({% post_url 2009-04-30-tcpip-net-sockets-faq %}))
 

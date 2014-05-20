@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "Task.Run Etiquette Examples: Even in the Complex Case, Don't Use Task.Run in the Implementation"
-tags: ["async", ".NET", "ASP.NET"]
 ---
-
-
-Last time, we looked at CPU-bound methods and learned [why we shouldn't use `Task.Run` in the implementation](http://blog.stephencleary.com/2013/11/taskrun-etiquette-examples-dont-use.html). Rather, we should use it at the point of the call.
-
-
+Last time, we looked at CPU-bound methods and learned [why we shouldn't use `Task.Run` in the implementation]({% post_url 2013-11-07-taskrun-etiquette-examples-dont-use %}). Rather, we should use it at the point of the call.
 
 
 
@@ -15,11 +10,7 @@ Today, let's consider a more advanced scenario. Instead of a purely CPU-bound me
 
 
 
-
-
 In order to predict the market, our service will need to get some stock quotes from a web service and then perform some very CPU-intensive analysis. During that analysis, the service may need to retrieve more quotes and/or historical data from the web service and then do more calculation.
-
-
 
 
 
@@ -51,11 +42,7 @@ class MyService
 }
 {% endhighlight %}
 
-
-
 Now, we want to start taking advantage of asynchronous code, so we can replace our blocking I/O with asynchronous I/O. But what do we do with the CPU-bound portions?
-
-
 
 
 
@@ -93,11 +80,7 @@ class MyService
 }
 {% endhighlight %}
 
-
-
-The problems here are the [same problems as last time](http://blog.stephencleary.com/2013/11/taskrun-etiquette-examples-dont-use.html). We're still using `Task.Run` in the implementation, and we get all the problems that come along with that. It's still a fake-asynchronous method.
-
-
+The problems here are the [same problems as last time]({% post_url 2013-11-07-taskrun-etiquette-examples-dont-use %}). We're still using `Task.Run` in the implementation, and we get all the problems that come along with that. It's still a fake-asynchronous method.
 
 
 
@@ -105,11 +88,7 @@ Well, the API can't be asynchronous (since it has CPU-bound portions) and it can
 
 
 
-
-
 I've discussed this scenario with some Microsoft employees. The Roslyn team in particular has encountered this situation, where some of their operations need to combine heavy file I/O with non-trivial CPU usage. (These conversations occurred before I was an MVP, so this information is not under an NDA).
-
-
 
 
 
@@ -143,8 +122,6 @@ They concluded that the best solution is to use an asynchronous signature but do
 }
 {% endhighlight %}
 
-
-
 This allows UI-based clients to properly use `Task.Run` to call the service, while ASP.NET clients would just call the method directly.
 
 
@@ -164,11 +141,7 @@ public class StockMarketController: Controller
 }
 {% endhighlight %}
 
-
-
 Doing CPU-bound work in a method with an asynchronous signature is not ideal, but it does allow every possible client to use the service in the way that makes most sense for them. Each client makes the best use of its own threading situation.
-
-
 
 
 

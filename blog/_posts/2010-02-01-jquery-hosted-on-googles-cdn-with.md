@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "jQuery hosted on Google's CDN with IntelliSense"
-tags: ["jQuery"]
 ---
-
-
 ASP.NET MVC (which I'm using for my church's web site) comes packaged with [jQuery](http://jquery.com/); the appropriate JavaScript files are placed into the Scripts folder of the default MVC project. It is a good idea, though, to [let Google (or Microsoft) host jQuery for you](http://encosia.com/2008/12/10/3-reasons-why-you-should-let-google-host-jquery-for-you/) over their CDN (content delivery network).
-
-
 
 
 
@@ -20,11 +15,7 @@ However, you lose out on the cool jQuery IntelliSense! There are various workaro
 <% if (false) { %><script type="text/javascript" src="../../App_Data/jquery-1.3.2.js"></script><% } %>
 
 
-
-
 It's a nice little trick to make the Visual Studio editor ignore the jQuery on Google's CDN (because it's injected as a string into the ASP.NET response stream), while ignoring the local file when executed.
-
-
 
 
 
@@ -34,8 +25,6 @@ You may notice that I've stuck my local jquery-1.3.2.js and jquery-1.3.2-vsdoc.j
 
 ## Update (2010-02-03)
 
-
-
 The original solution above used a comment block instead of an "if (false)" block:
 
 
@@ -43,8 +32,6 @@ The original solution above used a comment block instead of an "if (false)" bloc
 
 <%= "<script type='text/jscript' src='http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js'></script>" %>
 <% /* %><script type="text/javascript" src="../../App_Data/jquery-1.3.2.js"></script><% */ %>
-
-
 
 
 Unfortunately, this caused C# IntelliSense to fail! The new solution allows both C# and JavaScript IntelliSense.

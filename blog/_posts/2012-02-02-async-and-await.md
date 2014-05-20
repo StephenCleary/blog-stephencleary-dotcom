@@ -1,19 +1,12 @@
 ---
 layout: post
 title: "Async and Await"
-tags: ["async", ".NET"]
 ---
-
-
 Most people have already heard about the new "async" and "await" functionality coming in Visual Studio 11. This is Yet Another Introductory Post.
 
 
 
-
-
 First, the punchline: Async will fundamentally change the way most code is written.
-
-
 
 
 
@@ -23,11 +16,7 @@ Yup, I believe async/await will have a bigger impact than LINQ. Understanding as
 
 ## Introducing the Keywords
 
-
-
 Let's dive right in. I'll use some concepts that I'll expound on later on - just hold on for this first part.
-
-
 
 
 
@@ -44,11 +33,7 @@ public async Task DoSomethingAsync()
 }
 
 
-
-
 The "async" keyword enables the "await" keyword in that method. _That's all the async keyword does!_ It does not run this method on a thread pool thread, or do any other kind of magic. The async keyword _only_ enables the await keyword.
-
-
 
 
 
@@ -56,11 +41,7 @@ The beginning of an async method is executed just like any other method. That is
 
 
 
-
-
 The "await" keyword is where things can get asynchronous. Await is like a unary operator: it takes a single argument, an **awaitable** (an "awaitable" is an asynchronous operation). Await examines that awaitable to see if it has already completed; if the awaitable has already completed, then the method just continues running (synchronously, just like a regular method).
-
-
 
 
 
@@ -68,11 +49,7 @@ If "await" sees that the awaitable has not completed, then it acts asynchronousl
 
 
 
-
-
 Later on, when the awaitable completes, it will execute the remainder of the async method. If you're awaiting a built-in awaitable (such as a task), then the remainder of the async method will execute on a "context" that was captured before the "await" returned.
-
-
 
 
 
@@ -82,11 +59,7 @@ I like to think of "await" as an "asynchronous wait". That is to say, the async 
 
 ## Awaitables
 
-
-
 As I mentioned, "await" takes a single argument - an "awaitable" - which is an asynchronous operation. There are two awaitable types already common in the .NET framework: Task<T> and Task.
-
-
 
 
 
@@ -94,11 +67,7 @@ There are also other awaitable types: special methods such as "Task.Yield" retur
 
 
 
-
-
 That's all I'm going to say about making your own awaitables. I've only had to write a couple of awaitables in the entire time I've used async/await. If you want to know more about writing your own awaitables, see the [Parallel Team Blog](http://blogs.msdn.com/b/pfxteam/) or [Jon Skeet's Blog](http://msmvps.com/blogs/jon_skeet/Default.aspx).
-
-
 
 
 
@@ -132,11 +101,7 @@ public async Task ComposeAsync()
 
 ## Return Types
 
-
-
 Async methods can return Task<T>, Task, or void. In almost all cases, you want to return Task<T> or Task, and return void only when you have to.
-
-
 
 
 
@@ -144,18 +109,14 @@ Why return Task<T> or Task? Because they're awaitable, and void is not. So if yo
 
 
 
-
-
 You have to return void when you have async event handlers.
 
 
 
-> You can also use async void for other "top-level" kinds of actions - e.g., a single "static async void MainAsync()" for Console programs. However, this use of async void has its own problem; see [Async Console Programs](http://blog.stephencleary.com/2012/02/async-console-programs.html). The primary use case for async void methods is event handlers.
+> You can also use async void for other "top-level" kinds of actions - e.g., a single "static async void MainAsync()" for Console programs. However, this use of async void has its own problem; see [Async Console Programs]({% post_url 2012-02-03-async-console-programs %}). The primary use case for async void methods is event handlers.
 
 
 ## Returning Values
-
-
 
 Async methods returning Task or void do not have a return value. Async methods returning Task<T> must return a value of type T:
 
@@ -171,19 +132,13 @@ public async Task<int> CalculateAnswer()
 }
 
 
-
-
-This is a bit odd to get used to, but there are [good reasons](http://blog.stephencleary.com/2011/09/async-ctp-why-do-keywords-work-that-way.html) behind this design.
+This is a bit odd to get used to, but there are [good reasons]({% post_url 2011-09-01-async-ctp-why-do-keywords-work-that-way %}) behind this design.
 
 
 
 ## Context
 
-
-
 In the overview, I mentioned that when you await a built-in awaitable, then the awaitable will capture the current "context" and later apply it to the remainder of the async method. What exactly is that "context"?
-
-
 
 
 
@@ -196,16 +151,12 @@ Simple answer:
 1. Otherwise, it's usually a thread pool context.
 
 
-
-
 Complex answer:
 
 
 
  1. If SynchronizationContext.Current is not null, then it's the current SynchronizationContext. (UI and ASP.NET request contexts are SynchronizationContext contexts).
  1. Otherwise, it's the current TaskScheduler (TaskScheduler.Default is the thread pool context).
-
-
 
 
 What does this mean in the real world? For one thing, capturing (and restoring) the UI/ASP.NET context is done transparently:
@@ -236,15 +187,11 @@ protected async void MyButton_Click(object sender, EventArgs e)
 }
 
 
-
-
 This is great for event handlers, but it turns out to not be what you want for most other code (which is, really, most of the async code you'll be writing).
 
 
 
 ## Avoiding Context
-
-
 
 Most of the time, you don't _need_ to sync back to the "main" context. Most async methods will be designed with composition in mind: they await other operations, and each one represents an asynchronous operation itself (which can be composed by others). In this case, you want to tell the awaiter to _not_ capture the current context by calling **ConfigureAwait** and passing false, e.g.:
 
@@ -276,11 +223,7 @@ private async void DownloadFileButton_Click(object sender, EventArgs e)
 }
 
 
-
-
 The important thing to note with this example is that each "level" of async method calls has its own context. DownloadFileButton_Click started in the UI context, and called DownloadFileAsync. DownloadFileAsync also started in the UI context, but then stepped out of its context by calling ConfigureAwait(false). The rest of DownloadFileAsync runs in the thread pool context. However, when DownloadFileAsync completes and DownloadFileButton_Click resumes, it _does_ resume in the UI context.
-
-
 
 
 
@@ -289,8 +232,6 @@ A good rule of thumb is to use ConfigureAwait(false) unless you know you _do_ ne
 
 
 ## Async Composition
-
-
 
 So far, we've only considered serial composition: an async method waits for one operation at a time. It's also possible to start several operations and await for one (or all) of them to complete. You can do this by starting the operations but not awaiting them until later:
 
@@ -323,19 +264,13 @@ public async Task<int> GetFirstToRespondAsync()
 }
 
 
-
-
 By using concurrent composition (Task.WhenAll or Task.WhenAny), you can perform simple concurrent operations. You can also use these methods along with Task.Run to do simple parallel computation. However, this is not a substitute for the Task Parallel Library - any advanced CPU-intensive parallel operations should be done with the TPL.
 
 
 
 ## Guidelines
 
-
-
 Read the [Task-based Asynchronous Pattern (TAP) document](http://www.microsoft.com/download/en/details.aspx?id=19957). It is extremely well-written, and includes guidance on API design and the proper use of async/await (including cancellation and progress reporting).
-
-
 
 
 
@@ -343,6 +278,7 @@ There are many new await-friendly techniques that should be used instead of the 
 
 
 
+{:.table .table-striped}
 |Old|New|Description|
 |-
 |task.Wait|await task|Wait/await for a task to complete|
@@ -355,11 +291,7 @@ There are many new await-friendly techniques that should be used instead of the 
 
 ## Next Steps
 
-
-
 I have published an MSDN article [Best Practices in Asynchronous Programming](http://msdn.microsoft.com/en-us/magazine/jj991977.aspx), which further explains the "avoid async void", "async all the way" and "configure context" guidelines.
-
-
 
 
 
@@ -367,13 +299,9 @@ The [official MSDN documentation](http://msdn.microsoft.com/en-us/library/hh1914
 
 
 
-
-
 The async team has published an [async/await FAQ](http://blogs.msdn.com/b/pfxteam/archive/2012/04/12/10293335.aspx) that is a great place to continue learning about async. They have pointers to the best blog posts and videos on there. Also, pretty much any blog post by [Stephen Toub](http://blogs.msdn.com/b/pfxteam) is instructive!
 
 
 
-
-
-Of course, another resource is my own blog. This blog post is the beginning of a [series of posts on async](http://blog.stephencleary.com/search/label/async).
+Of course, another resource is my own blog. This blog post is the beginning of a [series of posts on async]({% post_url 2009-01-24-announcing-release-of-nitoasync %}).
 

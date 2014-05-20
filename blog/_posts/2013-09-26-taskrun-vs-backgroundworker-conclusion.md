@@ -1,34 +1,27 @@
 ---
 layout: post
 title: "Task.Run vs BackgroundWorker: Conclusion"
-tags: ["async", ".NET", "Task.Run vs BackgroundWorker"]
+series: "Task.Run vs. BackgroundWorker"
+seriesTitle: "Task.Run vs BackgroundWorker: Conclusion"
 ---
-
-
-In this [series on Task.Run vs BackgroundWorker](http://blog.stephencleary.com/search/label/Task.Run%20vs%20BackgroundWorker), we've looked at the most common aspects of running background tasks. As a recap, here's the full list of posts in chronological order:
+In this [series on Task.Run vs BackgroundWorker]({ % post_url TODO % }), we've looked at the most common aspects of running background tasks. As a recap, here's the full list of posts in chronological order:
 
 
 
 
-- [Introduction](http://blog.stephencleary.com/2013/05/taskrun-vs-backgroundworker-intro.html) - we're only contrasting `Task.Run` with `BackgroundWorker` for situations that `BackgroundWorker` was designed for.
-- [Round 1: Basics](http://blog.stephencleary.com/2013/05/taskrun-vs-backgroundworker-round-1.html) - how to run code on a background thread and receive a completion notification marshaled back to the UI thread. The `Task.Run` code is shorter and simpler with less "ceremony code".
-- [Round 2: Errors](http://blog.stephencleary.com/2013/07/taskrun-vs-backgroundworker-round-2.html) - how to handle exceptions from the background thread code. The `Task.Run` code uses the more natural and less error-prone `try/catch` blocks, and has less error-prone exception propagation.
-- [Round 3: Results](http://blog.stephencleary.com/2013/08/taskrun-vs-backgroundworker-round-3.html) - how to retrieve a result value from the background thread. The `Task.Run` code uses the more natural `return` statement and the result value is strongly-typed.
-- [Round 4: Cancellation](http://blog.stephencleary.com/2013/09/taskrun-vs-backgroundworker-round-4.html) - how to cancel the background thread. The `Task.Run` code uses the common cancellation framework, which is simpler, less error-prone, and interoperates more cleanly with other cancellation-aware APIs.
-- [Round 5: Progress Reports](http://blog.stephencleary.com/2013/09/taskrun-vs-backgroundworker-round-5.html) - how to support progress updates from the background thread. The `Task.Run` code uses a strongly-typed progress report type.
-
-
+- [Introduction]({% post_url 2013-05-02-taskrun-vs-backgroundworker-intro %}) - we're only contrasting `Task.Run` with `BackgroundWorker` for situations that `BackgroundWorker` was designed for.
+- [Round 1: Basics]({% post_url 2013-05-09-taskrun-vs-backgroundworker-round-1 %}) - how to run code on a background thread and receive a completion notification marshaled back to the UI thread. The `Task.Run` code is shorter and simpler with less "ceremony code".
+- [Round 2: Errors]({% post_url 2013-07-26-taskrun-vs-backgroundworker-round-2 %}) - how to handle exceptions from the background thread code. The `Task.Run` code uses the more natural and less error-prone `try/catch` blocks, and has less error-prone exception propagation.
+- [Round 3: Results]({% post_url 2013-08-01-taskrun-vs-backgroundworker-round-3 %}) - how to retrieve a result value from the background thread. The `Task.Run` code uses the more natural `return` statement and the result value is strongly-typed.
+- [Round 4: Cancellation]({% post_url 2013-09-12-taskrun-vs-backgroundworker-round-4 %}) - how to cancel the background thread. The `Task.Run` code uses the common cancellation framework, which is simpler, less error-prone, and interoperates more cleanly with other cancellation-aware APIs.
+- [Round 5: Progress Reports]({% post_url 2013-09-19-taskrun-vs-backgroundworker-round-5 %}) - how to support progress updates from the background thread. The `Task.Run` code uses a strongly-typed progress report type.
 
 
 What I am not planning to cover in this series are more complex situations, which is actually where `Task.Run` _really_ outperforms `BackgroundWorker`. For example, nesting one background operation within another is easier with `Task.Run`. Also, anything like [waiting for two separate background operations to complete before doing something else](http://stackoverflow.com/questions/18659124/merging-the-results-of-two-background-workers-upon-completion/18659509#18659509) is much easier with `Task.Run`. Pretty much any time you have to _coordinate_ background operations, `Task.Run` code is going to be _much_ simpler!
 
 
 
-
-
 I hope that this series is sufficient to convince you that `BackgroundWorker` is a type that should not be used in new code. Everything it can do, `Task.Run` can do better; and `Task.Run` can do a lot of things that `BackgroundWorker` can't!
-
-
 
 
 

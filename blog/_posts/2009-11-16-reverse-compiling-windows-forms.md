@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "Reverse Compiling Windows Forms"
-tags: [".NET"]
 ---
-
-
 Today I had a fun task: the source code for an existing executable had been lost, and I got the job of getting it back. The good news is that [Red Gate's Reflector](http://www.red-gate.com/products/reflector/) (formerly Lutz Roeder's Reflector) is a standard tool for any serious .NET programmer, and it does quite a decent job of decompiling (nonobfuscated) .NET code. The bad news is that I had to also reverse-engineer the GUI.
-
-
 
 
 
@@ -66,8 +61,6 @@ After finding nothing on Google, and a bit of trial and error, I discovered the 
 
  - "The designer cannot process the code..." - Any enum member variables that have the same name as their type need to have their value fully qualified, e.g., "base.AutoScaleMode = AutoScaleMode.Font;" needs to be "base.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;").
  - "The variable ... is either undeclared or was never assigned" - Many types seem to require fully qualified type names when declared (e.g., "private OpenFileDialog openFileDialog;" needs to be "private System.Windows.Forms.OpenFileDialog openFileDialog;").
-
-
 
 
 

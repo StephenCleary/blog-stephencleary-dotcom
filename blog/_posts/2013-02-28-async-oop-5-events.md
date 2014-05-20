@@ -1,13 +1,10 @@
 ---
 layout: post
 title: "Async OOP 5: Events"
-tags: ["async", ".NET", "async oop", "ASP.NET"]
+series: "Async OOP"
+seriesTitle: "Async OOP 5: Events"
 ---
-
-
 This post is going to deal with asynchronous event handlers. More specifically, how to design objects that will allow asynchronous event handlers.
-
-
 
 
 
@@ -15,17 +12,11 @@ For the vast majority of events, asynchronous event handlers work normally and w
 
 
 
-
-
 However, there's another class of events where this won't work. If the producer takes some special action when the event is completed, then the event is not really an _event_ - it's a _command_. For example, the `Application.Suspending` event in Windows Store applications is an event that is raised when the application is being suspended; when the event handler returns, Windows assumes that the application is done preparing to be suspended. An asynchronous handler for this kind of "command-style event" isn't going to work well: the handler will return early and Windows will suspend the application, preventing the rest of the handler from executing.
 
 
 
-
-
 Other examples exist, too: ASP.NET has page lifecycle "events", and when those handlers return, the page moves to the next step in the lifecycle. Class designs that implement the visitor pattern can also suffer from early returns - and this is true whether the visitor type is implemented using actual events or virtual methods that act like events. Some types just use (misuse?) events as implementations, e.g., `BackgroundWorker.DoWork`. In each of these situations, asynchronous event handlers are not going to behave as expected.
-
-
 
 
 
@@ -35,11 +26,7 @@ Normal events are _notifications_ - the producer doesn't care whether there's a 
 
 ## The WinRT Solution: Deferrals
 
-
-
 With that background in mind, let's look at how WinRT solves this problem. For command-style events, the event producer must wait for a signal before considering the event handled. In the case of multiple asynchronous handlers, the producer must wait for _all_ handlers to signal before considering the event handled. Also, it would be nice to solve this problem in a way that adds no overhead for synchronous event handlers.
-
-
 
 
 
@@ -47,17 +34,11 @@ WinRT introduces the concept of a "deferral" for command-style events. An asynch
 
 
 
-
-
 There's already a type in my [AsyncEx](http://nitoasyncex.codeplex.com) library with much of the functionality we need: [AsyncCountdownEvent](http://nitoasyncex.codeplex.com/wikipage?title=AsyncCountdownEvent). We increment the count whenever a handler acquires a deferral and signal the count whenever a deferral is completed. To prevent race conditions, we also need to increment the count before invoking the handlers and signal the count when all the handlers have returned.
 
 
 
-
-
 There is one difference in the design of WinRT deferrals and my deferral manager: WinRT provides different interfaces and implementations for each different deferral scenario (i.e., `SuspendingDeferral` has no relation to `BackgroundTaskDeferral`). Since a "deferral" only has one possible action (`Complete`), and since this action should _always_ be done regardless of exceptions, I chose to represent deferrals as `IDisposable`. This allows asynchronous event handlers to use a `using` block in their implementation.
-
-
 
 
 
@@ -104,8 +85,6 @@ Compared to the design, the code is actually quite simple:
 > The [DeferralManager in the AsyncEx library](http://nitoasyncex.codeplex.com/wikipage?title=DeferralManager) is almost identical to this code, except that it lazy-creates the asynchronous countdown event. This minimizes overhead if all the handlers are synchronous.
 
 
-
-
 Once you have a `DeferralManager`, you can extend your "command-style" event arguments type as such:
 
 
@@ -128,8 +107,6 @@ Once you have a `DeferralManager`, you can extend your "command-style" event arg
 }
 {% endhighlight %}
 
-
-
 Then, each time you raise the event, use code similar to this:
 
 
@@ -146,19 +123,13 @@ Then, each time you raise the event, use code similar to this:
 }
 {% endhighlight %}
 
-
-
 One final note: ensure that your event arguments type (`MyEventArgs`) supports concurrent access. If there are multiple asynchronous handlers, they all will share a reference to the same event arguments instance. Ideally, all the properties on that type should be immutable.
 
 
 
 ## The Task-Returning Delegate Solution
 
-
-
 I think deferrals are a perfectly acceptable solution. It's the solution that was chosen for WinRT, so it's one that programmers will be familiar with.
-
-
 
 
 
@@ -166,11 +137,7 @@ However, there's another solution that should work as well: make your event hand
 
 
 
-
-
 If you take this approach, you could use `Delegate.GetInvocationList` to invoke each handler individually and `Task.WhenAll` to detect when they have all completed.
-
-
 
 
 
@@ -180,11 +147,7 @@ The advantage of this approach is that there's no need for deferrals (or any exp
 
 ## The SynchronizationContext Solution
 
-
-
 OK, I suppose there is a third solution, if you _really_ want to go there.
-
-
 
 
 
@@ -192,17 +155,11 @@ Consider the example of ASP.NET page lifecycle events. With this example, it wou
 
 
 
-
-
 My [Feb 2011 MSDN article](http://msdn.microsoft.com/en-us/magazine/gg598924.aspx) describes how `async` methods interact with `SynchronizationContext`; at that time `async` was in a CTP stage, but that interaction did not change when `async` was released in VS2012. To summarize: `async void` methods call `SynchronizationContext.OperationStarted` at the beginning of the method and `SynchronizationContext.OperationCompleted` at the end of the method. The ASP.NET `SynchronizationContext` uses these methods to keep track of how many operations are currently in progress.
 
 
 
-
-
 So, the ASP.NET page lifecycle events use this information: after raising each event, the ASP.NET runtime (asynchronously) waits until the operation count returns to its previous level. At that point, it knows that any `async` event handlers have run to completion.
-
-
 
 
 
@@ -211,8 +168,6 @@ But don't do that. Yes, it's cool, and very clever. But having your component ov
 
 
 ## You Should Use Deferrals
-
-
 
 I recommend using deferrals. It's what programmers are expecting these days. I just mentioned these other solutions for the sake of completeness.
 

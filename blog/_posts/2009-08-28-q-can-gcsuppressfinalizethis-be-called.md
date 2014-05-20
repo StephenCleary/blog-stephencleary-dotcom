@@ -1,10 +1,7 @@
 ---
 layout: post
 title: "Q&A: Can GC.SuppressFinalize(this) be called at any time?"
-tags: [".NET", "IDisposable/Finalizers"]
 ---
-
-
 Today I was asked by a colleague about some of my blog posts yesterday regarding IDisposable and Finalize. So here's the first post in a series of Q&A regarding finalizers. Enjoy!
 
 
@@ -15,17 +12,11 @@ Today I was asked by a colleague about some of my blog posts yesterday regarding
 
 ## Additional Information
 
-
-
 There's some confusion on what exactly GC.SuppressFinalize does, because the [.NET 1.1 docs](http://www.webcitation.org/5wPLddgo3) state "The method removes _obj_ from the set of objects that require finalization." However, since .NET 2.0, the [docs](http://www.webcitation.org/5wPLgw9IJ) have been updated to read "This method sets a bit in the object header, which the system checks when calling finalizers." This clarifies GC.SuppressFinalize semantics nicely.
 
 
 
-
-
 Because of the old docs, there is some FUD regarding GC.SuppressFinalize floating around in old forum and newsgroup posts. Some people insist that it must be the last thing done by a Dispose() implementation. However, the truth is that it is safe to call at any time. In fact, [some BCL classes even call GC.SuppressFinalize in their constructors](http://www.webcitation.org/5wPLXTCHO)!
-
-
 
 
 

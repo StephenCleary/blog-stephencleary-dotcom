@@ -1,10 +1,9 @@
 ---
 layout: post
 title: "Option Parsing: Case Sensitivity"
-tags: ["Option Parsing", ".NET", "Nito.KitchenSink"]
+series: "Option parsing"
+seriesTitle: "Option Parsing: Case Sensitivity"
 ---
-
-
 By default, all option parsing is case-sensitive:
 
 
@@ -46,8 +45,6 @@ Name: Bob
 
 > CommandLineParsingTest.exe /Name Bob
 Unknown option  Name  in parameter  /Name
-
-
 
 
 This is normal for Unix users, but Windows users expect case-insensitivity. You can pass your own **StringComparer** to the **Parse** method to support case-insensitivity:

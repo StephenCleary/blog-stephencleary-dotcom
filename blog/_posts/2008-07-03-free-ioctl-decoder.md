@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "Free IOCTL Decoder"
-tags: ["Device drivers"]
 ---
-
-
 Unexpected IOCTL codes are something that every first-time driver writer must become accustomed to. Sometimes it can be difficult to find out the meaning of a particular IOCTL, since the driver sees it as just a number but the documentation requires a symbolic name and the header files use macros to define it. Often searching for just the number turns up no results, even on the WWW.
-
-
 
 
 
@@ -15,18 +10,12 @@ Because of this common problem, we at Nito Programs have developed a small comma
 
 
 
-
-
 Our IOCTL decoder also supports regular expression string matching, symbolic device name matching (useful for listing all IOCTLs for a particular device), and fuzzy matching (for those few IOCTLs that are defined with the wrong method/access type).
-
-
 
 
 
 We have decided to release this useful utility for free to the driver development community. It can be downloaded from 
 [SourceForge](http://sourceforge.net/project/showfiles.php?group_id=213700&package_id=279739)
-
-
 
 
 

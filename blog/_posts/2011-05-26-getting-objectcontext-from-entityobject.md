@@ -1,19 +1,12 @@
 ---
 layout: post
 title: "Getting the ObjectContext from an EntityObject"
-tags: [".NET", "Sample code", "Linq"]
 ---
-
-
 There are a few situations where it's useful to get an **ObjectContext** from an **EntityObject**. Note that in general I do not recommend a design that depends on this; there doesn't appear to be an easy way to do this using code first in EF 4.1 (using the **DbContext** API). That said, either of the solutions in this blog post will work when using the **ObjectContext** API.
 
 
 
-
-
 The most common solution for this problem is from [a 2009 Microsoft blog post by Alex James](http://blogs.msdn.com/b/alexj/archive/2009/06/08/tip-24-how-to-get-the-objectcontext-from-an-entity.aspx) ([webcite](http://www.webcitation.org/5yYYB64NN)). Unfortunately, that solution has several limitations (including the requirement that the entities must have relations to other entities). Both of the solutions below do not have these limitations.
-
-
 
 
 
@@ -23,11 +16,7 @@ We use an example entity container named **NorthwindEntites**, derived from **Ob
 
 ## Solution 1: Dynamic
 
-
-
 The idea behind this solution is to add a property to the entity type that points to its own **ObjectContext**. It's possible to do this by [modifying the code-generating](http://msdn.microsoft.com/en-us/library/dd456821.aspx) [template](http://msdn.microsoft.com/en-us/library/ff477605.aspx) file, but it's also possible to just add the property to each entity type manually and use dynamic duck typing to access it.
-
-
 
 
 
@@ -104,8 +93,6 @@ namespace WindowsFormsApplication1
 }
 
 
-
-
 The disadvantage to this approach is that you have to add an **ObjectContext** property to each entity type, like this:
 
 
@@ -126,19 +113,13 @@ namespace WindowsFormsApplication1
 }
 
 
-
-
 Alternatively, you could modify the creation template. Either way, it's a fair amount of work.
 
 
 
 ## Solution 2: Connected Properties
 
-
-
 The [Connected Properties](http://www.nuget.org/List/Packages/ConnectedProperties) library may be used to "attach" properties to entity objects at run-time. This means it's no longer necessary to add the **ObjectContext** property on each entity type.
-
-
 
 
 
@@ -206,11 +187,7 @@ namespace WindowsFormsApplication1
 }
 
 
-
-
 The disadvantage of this approach is that you do need to take a dependency on the [Connected Properties](http://www.nuget.org/List/Packages/ConnectedProperties) library, but I think that's a reasonable tradeoff.
-
-
 
 
 

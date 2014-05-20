@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "The Async CTP \"Why Do the Keywords Work THAT Way\" Unofficial FAQ"
-tags: ["Language design", "async", ".NET"]
 ---
-
-
 There's a lot of interest in the [Async CTP](http://msdn.microsoft.com/en-US/vstudio/async), with good reason. The Async CTP will make asynchronous programming much, much easier than it has ever been. It's somewhat less powerful but much easier to learn than [Rx](http://msdn.microsoft.com/en-us/data/gg577609).
-
-
 
 
 
@@ -15,15 +10,11 @@ The Async CTP introduces two new keywords, **async** and **await**. Asynchronous
 
 
 
-
-
-This post is not an introduction to the Async CTP; there's plenty of tutorial resources available out there (including [one by yours truly](http://blog.stephencleary.com/2012/02/async-and-await.html)). This post is an attempt to bring together the answers to a few common questions that programmers have when they start using the Async CTP.
+This post is not an introduction to the Async CTP; there's plenty of tutorial resources available out there (including [one by yours truly]({% post_url 2012-02-02-async-and-await %})). This post is an attempt to bring together the answers to a few common questions that programmers have when they start using the Async CTP.
 
 
 
 ## Inferring the Return Type
-
-
 
 When returning a value from an **async** method, the method body returns the value directly, but the method itself is declared as returning a **Task<TResult>**. There is a bit of "disconnect" when you declare a method returning one type and have to return another type:
 
@@ -36,8 +27,6 @@ public async Task<int> GetValue()
   await TaskEx.Delay(100);
   return 13; // Return type is "int", not "Task<int>"
 }
-
-
 
 
 Question: Why can't I write this:
@@ -53,11 +42,7 @@ public async int GetValue()
 }
 
 
-
-
 Consider: How will the method signature look to callers? Async methods that return a value must have an actual result type of **Task<TResult>**. So **GetValue** will show up in IntelliSense as returning **Task<TResult>** (this would also be true for the object browser, Reflector, etc).
-
-
 
 
 
@@ -65,17 +50,11 @@ Inferring the return type [was considered](http://social.msdn.microsoft.com/Foru
 
 
 
-
-
 Consider: There is a difference between **async void** and **async Task**.
 
 
 
-
-
 An **async Task** method is just like any other asynchronous operation, only without a return value. An **async void** method acts as a "top-level" asynchronous operation. An **async Task** method may be composed into other async methods using **await**. An **async void** method may be used as an event handler. An **async void** method also has another important property: in an ASP.NET context, it informs the web server that the page is not completed until it returns (see [my MSDN article](http://msdn.microsoft.com/en-us/magazine/gg598924.aspx) for more information on how this works).
-
-
 
 
 
@@ -84,8 +63,6 @@ Inferring the return type would remove the distinction between **async void** an
 
 
 ## Async Return
-
-
 
 There is still a "disconnect" between the method declaration return type and the method body return type. Another option that [has been suggested](http://gauravsmathur.wordpress.com/2010/11/04/something-wrong-with-async-await-and-the-tasktask/) is to add a keyword to **return** to indicate that the value given to **return** is not really what's being returned, e.g.:
 
@@ -100,11 +77,7 @@ public async Task<int> GetValue()
 }
 
 
-
-
 Consider: Converting large amounts of code from synchronous to asynchronous.
-
-
 
 
 
@@ -114,11 +87,7 @@ The **async return** keyword [was also considered](http://social.msdn.microsoft.
 
 ## Inferring "async"
 
-
-
 The **async** keyword _must_ be applied to a method that makes use of **await**. However, it also gives a warning if it is applied to a method that does _not_ make use of **await**.
-
-
 
 
 
@@ -136,17 +105,11 @@ public Task<int> GetValue()
 }
 
 
-
-
 Consider: Backwards compatibility and code readability.
 
 
 
-
-
 Eric Lippert has the [definitive post](http://blogs.msdn.com/b/ericlippert/archive/2010/11/11/whither-async.aspx) on the subject. It's also been discussed in [blog comments](http://blogs.msdn.com/b/ericlippert/archive/2010/10/29/asynchronous-programming-in-c-5-0-part-two-whence-await.aspx), [Channel9](http://channel9.msdn.com/Forums/Coffeehouse/Why-is-the-async-keyword-needed), [forums](http://social.msdn.microsoft.com/Forums/en-US/async/thread/75493675-4a39-4958-a493-ad8a96f8a19d), and [Stack Overflow](http://stackoverflow.com/questions/9225748/why-does-the-async-keyword-exist).
-
-
 
 
 
@@ -155,8 +118,6 @@ To summarize, a single-word **await** keyword would be too big of a breaking cha
 
 
 ## Inferring "await"
-
-
 
 Question: Since it makes sense to explicitly include **async** (see above), why can't **await** be inferred based on the presence of **async**:
 
@@ -172,17 +133,11 @@ public async Task<int> GetValue()
 }
 
 
-
-
 Consider: Parallel composition of asynchronous operations.
 
 
 
-
-
 At first glance, inferring **await** appears to simplify basic asynchronous operations. As long as all waiting is done in serial (i.e., one operation is awaited, then another, and then another), this works fine. However, it falls apart when one considers parallel composition.
-
-
 
 
 
@@ -207,8 +162,6 @@ public async Task<int> GetValue()
   int value2 = await part2; // Does not actually wait.
   return value1 + value2;
 }
-
-
 
 
 In order to do parallel composition, we must have the ability to say we're _not_ going to **await** an expression.

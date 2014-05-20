@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "Notes from the Rx talk"
-tags: ["Rx", ".NET"]
 ---
-
-
 As someone who does a lot of asynchronous programming on .NET, I had heard about the Rx ("reactive") framework some time ago. The details online have been a little sketchy, so I finally took some time to watch [Erik Meijer's talk](http://www.langnetsymposium.com/2009/talks/23-ErikMeijer-LiveLabsReactiveFramework.html). Below are my notes and initial thoughts. I haven't had time to play with the actual framework itself, but it's something that is definitely coming to .NET eventually (it's rumored to be in 4.0).
-
-
 
 
 
@@ -152,11 +147,7 @@ mouseDrag.Attach(delta => { ... move W according to delta ... });
 
 ## My thoughts
 
-
-
 Asynchronous programming has always been difficult. One of the hardest parts is the correct handling of "asynchronous state", objects whose sole purpose in life is to track the state of input as events come in. I expect the Rx framework will really shine at removing the need for explicitly tracking state, especially noticeable in situations where keeping "asynchronous state" is complex.
-
-
 
 
 
@@ -164,17 +155,11 @@ The documentation will have to be good regarding side effects, so that programme
 
 
 
-
-
 There is still a missing piece in the "pipeline story". Historically, every language has gradually developed the same ideas: consumers, then producers, then a full pipeline. Push algorithms are usually the response to the "tee problem" in a pull-based framework. I did the same thing in C++ about 6 years ago, developing what I called "pipe algorithms", named after the Unix pipe. Currently, we have Enumerable (pull) and Observable (push) models, but there are no easy translators between the two (these "translators" require dedicated threads).
 
 
 
-
-
 It's also important to note that one is not "better" than the other. Most algorithms are more naturally defined in an Enumerable model, so that is the one that is more intuitive. Other algorithms are a more natural fit to the Observable model. Once we have translators back and forth between the two models, then we'll have a more mature language.
-
-
 
 
 

@@ -1,15 +1,12 @@
 ---
 layout: post
 title: "Option Parsing: Boolean Options"
-tags: ["Option Parsing", ".NET", "Nito.KitchenSink"]
+series: "Option parsing"
+seriesTitle: "Option Parsing: Boolean Options"
 ---
 ## Options as Flags
 
-
-
-Most options require an option argument. Some options take [an optional argument](http://blog.stephencleary.com/2011/07/option-parsing-options-with-optional.html). Then there are the options that take no argument at all. These are the "flag" options - the option value is either set or unset.
-
-
+Most options require an option argument. Some options take [an optional argument]({% post_url 2011-07-14-option-parsing-options-with-optional %}). Then there are the options that take no argument at all. These are the "flag" options - the option value is either set or unset.
 
 
 
@@ -80,8 +77,6 @@ C: True
 
 ## Short Option Runs
 
-
-
 Arguments that do not take arguments may be combined on the command line into a "short option run." A short option run must use the short names of the options; it cannot use the long names.
 
 
@@ -91,8 +86,6 @@ Arguments that do not take arguments may be combined on the command line into a 
 A: True
 B: True
 C: False
-
-
 
 
 There is no way to pass an argument to an option in a short option run.
@@ -111,8 +104,6 @@ Invalid parameter  -ac=true
 
 
 ## Inverse Aliases
-
-
 
 Some programs prefer the ability to specify an "on" and an "off" version for the same option. This can be easily done by having the boolean properties share a single backing value, with the "off" version inverting its value. These are very similar to aliases, except that they mean the _opposite_ instead of the _same_.
 
@@ -200,11 +191,7 @@ A: False
 B: True
 
 
-
-
-The last example shows that the default [overwrite behavior](http://blog.stephencleary.com/2011/08/option-parsing-preventing-multiple.html) of options produces the expected result: when there are multiple conflicting options on a command line, the last one wins.
-
-
+The last example shows that the default [overwrite behavior]({% post_url 2011-08-04-option-parsing-preventing-multiple %}) of options produces the expected result: when there are multiple conflicting options on a command line, the last one wins.
 
 
 

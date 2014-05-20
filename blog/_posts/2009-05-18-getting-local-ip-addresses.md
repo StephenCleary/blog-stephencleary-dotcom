@@ -1,17 +1,12 @@
 ---
 layout: post
 title: "Sample Code: Getting the Local IP Addresses"
-tags: [".NET", "TCP/IP sockets", "Sample code"]
 ---
-
-
-(This post is part of the [TCP/IP .NET Sockets FAQ](http://blog.stephencleary.com/2009/04/tcpip-net-sockets-faq.html))
-
+(This post is part of the [TCP/IP .NET Sockets FAQ]({% post_url 2009-04-30-tcpip-net-sockets-faq %}))
 
 
 
-
-The sample code below enumerates all the adapters on a machine, and then enumerates all IPv4 addresses for each adapter. This is necessary because [a computer may have multiple IP addresses](http://blog.stephencleary.com/2009/05/getting-local-ip-address.html).
+The sample code below enumerates all the adapters on a machine, and then enumerates all IPv4 addresses for each adapter. This is necessary because [a computer may have multiple IP addresses]({% post_url 2009-05-18-getting-local-ip-address %}).
 
 
  
@@ -49,7 +44,5 @@ public static void DisplayIPAddresses()
 }
 {% endhighlight %}
 
-
-
-(This post is part of the [TCP/IP .NET Sockets FAQ](http://blog.stephencleary.com/2009/04/tcpip-net-sockets-faq.html))
+(This post is part of the [TCP/IP .NET Sockets FAQ]({% post_url 2009-04-30-tcpip-net-sockets-faq %}))
 

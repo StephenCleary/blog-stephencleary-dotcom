@@ -1,17 +1,15 @@
 ---
 layout: post
 title: "A Tour of Task, Part 0: Overview"
-tags: ["async", ".NET", "Task members"]
+series: "A Tour of Task"
+seriesTitle: "A Tour of Task, Part 0: Overview"
 ---
-
-
 I recently posted a poll on [The Twitter](https://www.youtube.com/watch?v=VqQrUngBDxU); here it is with all the responses:
 
 
 
 {:.center}
-![](http://2.bp.blogspot.com/-wpQPbufSHic/U1kR83AyjrI/AAAAAAAALUI/4i3XPJZjc-A/s1600/Poll.png)
-
+![]({{ site_url }}/assets/Poll.png)  
 
 
 It's unanimous! This post is the first in a series that will take a look at all the `Task` members (as of .NET 4.5).
@@ -19,8 +17,6 @@ It's unanimous! This post is the first in a series that will take a look at all 
 
 
 ## A Bit of Task History
-
-
 
 One of the biggest stumbling blocks to developers learning `async` is actually the `Task` type itself. Most developers fall into one of two categories:
 
@@ -31,17 +27,11 @@ One of the biggest stumbling blocks to developers learning `async` is actually t
 - Developers who have never heard of `Task` until `async` came along. To them, `Task` is just a part of `async` - one more (fairly complicated) thing to learn. "Continuation" is a foreign word. **The danger** that these developers face is assuming that every member of `Task` is applicable to `async` programming, which is most certainly not the case.
 
 
-
-
 The `async` team at Microsoft did consider writing their own "Promise" type that would act as an asynchronous task, but the `Task` type was too tempting. `Task` actually did support promise-style asynchronous tasks (somewhat awkwardly) even in .NET 4.0, and it only took a bit of extension for it to support `async` fully. Also, by merging this "Promise" with the existing `Task` type, we end up with a nice unification: it's trivially easy to kick off some operation on a background thread and treat it asynchronously. No conversion from `Task` to "Promise" is necessary.
 
 
 
-
-
 The downside to using the same type is that it does create some developer confusion. As noted above, developers who have used `Task` in the past tend to try to use it the same way in the `async` world (which is wrong); and developers who have not used `Task` in the past face a bewildering selection of `Task` members, almost all of which should not be used in the `async` world.
-
-
 
 
 
@@ -51,17 +41,11 @@ So, that's how we got to where we are today. This blog series will go through al
 
 ## Two Types of Task
 
-
-
 There are two types of tasks. The first type is a Delegate Task; this is a task that has code to run. The second type is a Promise Task; this is a task that represents some kind of event or signal. Promise Tasks are often I/O-based signals (e.g., "the HTTP download has completed"), but they can actually represent anything (e.g., "the 10-second timer has expired").
 
 
 
-
-
-In the TPL world, most tasks were Delegate Tasks (with some support for Promise Tasks). When code does parallel processing, the various Delegate Tasks are divided up among different threads, which then actually _execute_ the code in those Delegate Tasks. In the `async` world, most tasks are Promise Tasks (with some support for Delegate Tasks). When code does an `await` on a Promise Task, [there is no thread](http://blog.stephencleary.com/2013/11/there-is-no-thread.html) tied up waiting for that promise to complete.
-
-
+In the TPL world, most tasks were Delegate Tasks (with some support for Promise Tasks). When code does parallel processing, the various Delegate Tasks are divided up among different threads, which then actually _execute_ the code in those Delegate Tasks. In the `async` world, most tasks are Promise Tasks (with some support for Delegate Tasks). When code does an `await` on a Promise Task, [there is no thread]({% post_url 2013-11-21-there-is-no-thread %}) tied up waiting for that promise to complete.
 
 
 

@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "GRDevDay Slides and Code"
-tags: ["async", ".NET", "Nito.AsyncEx"]
 ---
-
-
 I had a wonderful time at [GRDevDay](http://grdevday.org) today! The [slides](https://speakerdeck.com/stephencleary/intermediate-async) and [sources](https://github.com/StephenCleary/Presentations-IntermediateAsync) for my "Intermediate Async" talk are now available.
-
-
 
 
 

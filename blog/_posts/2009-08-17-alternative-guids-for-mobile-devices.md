@@ -1,10 +1,7 @@
 ---
 layout: post
 title: "Alternative GUIDs for mobile devices using SQL Server Compact"
-tags: [".NET"]
 ---
-
-
 This is a bit of an obscure topic, but something I had to work on recently. A company I work for does a lot of mobile (compact framework) projects, and all of them use SQL Server CE to store collected data in a database. This data is later synchronized up to a central machine. The synchronization (and other data access) right now is very slow on the devices, since they are using the same code for data access as the desktop applications. As part of a re-thinking of the data layer, I came up with a new type of GUID.
 
 
@@ -16,8 +13,6 @@ This is a bit of an obscure topic, but something I had to work on recently. A co
 - GUIDs are compared by SQL server as byte groups right-to-left, then each byte left-to-right within the group. (See [http://blogs.msdn.com/sqlprogrammability/archive/2006/11/06/how-are-guids-compared-in-sql-server-2005.aspx](http://blogs.msdn.com/sqlprogrammability/archive/2006/11/06/how-are-guids-compared-in-sql-server-2005.aspx)).
 - The performance benefits of a custom GUID generation based on time (even with most bits left random) are well known. (See [http://www.informit.com/articles/article.aspx?p=25862&seqNum=7](http://www.informit.com/articles/article.aspx?p=25862&seqNum=7)).
 - SQL server's newsequentialid() function actually does not return a standards-conforming (RFC 4122) GUID because it reverses the bytes in the first group. (See [http://www.jorriss.net/blog/jorriss/archive/2008/04/24/unraveling-the-mysteries-of-newsequentialid.aspx](http://www.jorriss.net/blog/jorriss/archive/2008/04/24/unraveling-the-mysteries-of-newsequentialid.aspx)).
-
-
 
 
 The problem is that SQL Server Compact Edition does not support newsequentialid(), so I experimented with finding a replacement. UuidCreateSequential is not supported on CE/WM (though there have been some reports of people getting it working), so I decided to write my own GUID generation algorithm.
@@ -36,11 +31,7 @@ The problem is that SQL Server Compact Edition does not support newsequentialid(
 
 ## Considering RFC 4122 Conformity
 
-
-
 The version 1 and 4 GUIDs are quite well known. Version 1 is unacceptable because of the exposure of the MAC address, although a 47-bit random number can be substituted. Version 4 does not have a sequential variant because it is fully random. Versions 3 and 5 are name-based GUIDs, but they use one-way hashing, so they are also not sequential.
-
-
 
 
 
@@ -66,14 +57,10 @@ It is possible to use a RFC 4122 Version 1 GUID if the MAC address is replaced w
       - All fields are stored in little-endian instead of big-endian, to maximize the efficiency of SQL server's comparision algorithm.
 
 
-
-
 Non-volatile storage needs:
        - Lowest MAC address on the device, and its hash; or, the random value used in place of the hash.
        - Last clock sequence value.
        - Last timestamp generated.
-
-
 
 
 
@@ -91,11 +78,7 @@ Implementation notes:
 
 ## Final Words
 
-
-
 This is just a rough draft of a replacement GUID design. These GUIDs are designed specifically for use as primary keys in a SQL Server database; they are not guaranteed to be unique when compared with normal GUIDs.
-
-
 
 
 

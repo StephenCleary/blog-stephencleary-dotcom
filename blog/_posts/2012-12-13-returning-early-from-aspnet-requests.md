@@ -1,36 +1,25 @@
 ---
 layout: post
 title: "Returning Early from ASP.NET Requests"
-tags: ["async", "Nito.AsyncEx", "ASP.NET"]
 ---
 > **Update, 2014-05-07: ** The [.NET Framework 4.5.2 introduced `HostingEnvironment.QueueBackgroundWorkItem`](http://msdn.microsoft.com/en-us/library/ms171868(v=vs.110).aspx#v452), which effectively rendered the code below obsolete. On .NET 4.5.2, you can use the new API instead of the `BackgroundTaskManager.Run` described below. However, the same safety warnings apply.
-
-
 
 
 I have great reservations about writing this blog post. Pretty much everything I'm going to describe here is a bad idea and you should strongly avoid putting it into production, but there _are_ just a few situations where this technique can be really helpful.
 
 
 
-
-
-As I described in [Async Doesn't Change the HTTP Protocol](http://blog.stephencleary.com/2012/08/async-doesnt-change-http-protocol.html), in the ASP.NET worldview you only get one "response" for each "request". You can't return early just by using an `await`. However, in some situations you have enough information to generate the response but the actual request processing may take some more time. That's were today's solution comes in.
+As I described in [Async Doesn't Change the HTTP Protocol]({% post_url 2012-08-09-async-doesnt-change-http-protocol %}), in the ASP.NET worldview you only get one "response" for each "request". You can't return early just by using an `await`. However, in some situations you have enough information to generate the response but the actual request processing may take some more time. That's were today's solution comes in.
 
 
 
 ## Not Recommended
 
-
-
 The solution in this blog post is not recommended. Before putting it into production, you **need** to understand **why** it's not recommended.
 
 
 
-
-
 ASP.NET executes your web site (or web application) in an AppDomain, separated from other web sites (or web applications) on the same server. There are [many](http://blogs.msdn.com/b/tess/archive/2006/08/02/asp-net-case-study-lost-session-variables-and-appdomain-recycles.aspx) [reasons](http://blogs.msdn.com/b/johan/archive/2007/05/16/common-reasons-why-your-application-pool-may-unexpectedly-recycle.aspx) why this AppDomain may be shut down; modern versions of IIS [recycle the entire process](http://www.iis.net/configreference/system.applicationhost/applicationpools/add/recycling) every 29 hours by default just to keep things clean. Also, you have to take into consideration unmanaged shutdowns: hard drive failures, hurricanes, etc.
-
-
 
 
 
@@ -40,11 +29,7 @@ Consider what happens if you generate (and return) the response but you're still
 
 ## Proper Solutions
 
-
-
 The correct solutions are all complicated: you need to put the additional work in a safe place, like an Azure queue, database, or persistent messaging system (Azure message bus, MSMQ, WebSphere MQ, etc). And each of those solutions brings a whole scope of additional work: setup and configuration, dead-letter queues, poison messages, etc.
-
-
 
 
 
@@ -54,11 +39,7 @@ But that's the correct way to do it, because _you can't drop the ball!_ You stor
 
 ## The Improper "Solution"
 
-
-
 The _unsafe_ way to do it is to keep the work in memory. The simple way to do this is to just toss the work into `Task.Run`. Unfortunately, ASP.NET has no idea if you have queued work like this, and it will feel free to take down your AppDomain when it thinks it's idle.
-
-
 
 
 
@@ -69,8 +50,6 @@ The _slightly safer but still unsafe_ way to do it is to keep the work in memory
 
 - By default, you only have 30 seconds total from the time the notification goes out to the time the AppDomain is yanked out from under you.
 - You _may_ not get notification at all. In an unmanaged shutdown (e.g., power loss), all bets are off.
-
-
 
 
 Still, this approach _can_ be useful in a limited set of scenarios, so with great reservation let's take a look at the code. **Update 2014-04: A newer version of this code is now [on GitHub.](https://github.com/StephenCleary/AspNetBackgroundTasks)**
@@ -162,11 +141,7 @@ public sealed class BackgroundTaskManager : IRegisteredObject
 }
 {% endhighlight %}
 
-
-
 `BackgroundTaskManager` is a singleton that keeps track of background operations. It uses an [AsyncCountdownEvent](http://nitoasyncex.codeplex.com/wikipage?title=AsyncCountdownEvent) from [AsyncEx](http://nitoasyncex.codeplex.com/) as a counter of background operations (plus an extra count that is decremented when ASP.NET notifies us that the AppDomain is going down).
-
-
 
 
 
@@ -184,8 +159,6 @@ BackgroundTaskManager.Run(async () =>
 });
 {% endhighlight %}
 
-
-
 `BackgroundTaskManager` also publishes a `CancellationToken` that is canceled when ASP.NET notifies us that our AppDomain is shutting down. `async` code can use this to abort processing (when it is safe to do so):
 
 
@@ -196,11 +169,7 @@ BackgroundTaskManager.Run(async () =>
 });
 {% endhighlight %}
 
-
-
 One important note about background operations: **exceptions are ignored!** So if you want to catch errors and toss a "hail Mary" to ETW or the Event Log, you'll need to do so with a `try ... catch` inside each operation. In the example above, if the AppDomain is recycled while the operation is doing the delay, the cancellation exception will be raised from the operation and then it will be ignored.
-
-
 
 
 

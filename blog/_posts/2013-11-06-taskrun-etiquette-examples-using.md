@@ -1,19 +1,12 @@
 ---
 layout: post
 title: "Task.Run Etiquette Examples: Don't Use Task.Run for the Wrong Thing"
-tags: ["async", ".NET"]
 ---
-
-
-I had quite a few comments on [my last post](http://blog.stephencleary.com/2013/10/taskrun-etiquette-and-proper-usage.html) asking for more explicit examples of Correct vs. Incorrect `Task.Run` usage.
-
-
+I had quite a few comments on [my last post]({% post_url 2013-10-17-taskrun-etiquette-and-proper-usage %}) asking for more explicit examples of Correct vs. Incorrect `Task.Run` usage.
 
 
 
 First, let's consider the "beginner's error". This is where the user misuses `Task.Run` because they want to make their code "asynchronous" but aren't sure how to do it.
-
-
 
 
 
@@ -33,8 +26,6 @@ This kind of user starts off with existing code, which usually does some kind of
 }
 {% endhighlight %}
 
-
-
 They've read a bit about how `async` helps in those areas, and decide to give it a spin. "Let's see if I can figure out this `async` thing. I'll just add an `async` and see what happens. Oh, I have to change the return type to `Task`, too."
 
 
@@ -51,8 +42,6 @@ class MyService
   }
 }
 {% endhighlight %}
-
-
 
 "Now the compiler is complaining that I'm not using `await`. OK, so what can I await? [Google-Fu] Ah, `Task.Run` looks promising!"
 
@@ -74,17 +63,11 @@ class MyService
 }
 {% endhighlight %}
 
-
-
 "Hey, it worked! My UI thread is no longer blocked! Yay for `async`!"
 
 
 
-
-
 Unfortunately, this is a misuse of `Task.Run`. The problem is that it's not _truly_ asynchronous. It's still executing blocking work, blocking a thread pool thread the whole time the operation is in progress.
-
-
 
 
 
@@ -105,8 +88,6 @@ class MyService
 }
 {% endhighlight %}
 
-
-
 Now we're getting a compiler error, and we need to make the method `async`.
 
 
@@ -123,11 +104,7 @@ Now we're getting a compiler error, and we need to make the method `async`.
 }
 {% endhighlight %}
 
-
-
 And now we end up with a more correct implementation.
-
-
 
 
 

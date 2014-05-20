@@ -1,19 +1,12 @@
 ---
 layout: post
 title: "Sharp Corner: Value Types Are Never Reference-Equal"
-tags: [".NET", "Sharp Corners"]
 ---
-
-
 There are two types of equality testing in the .NET framework: reference equality and value equality (if the type being tested supports value equality). There are numerous ways to test for equality (object.Equals, operator ==, IEqualityComparer<T>, etc), but at the end every one of them resolves to either value equality or reference equality.
 
 
 
-
-
 Conceptually, two objects are "reference equal" iff they are actually the same object. For example, two strings may have the same value (and thus be "value equal"), but they may be two different objects (and thus not "reference equal").
-
-
 
 
 
@@ -31,11 +24,7 @@ public void ValueTypes_AreNeverReferenceEqual()
 }
 
 
-
-
 Of course, people rarely wish to test value types for reference equality; this corner is more likely to be found while testing instances of a generic type for reference equality. This result is often surprising; if everything in C# is an object (including a value of type Int32, which derives from ValueType, which derives from object), then why can't they be compared for reference equality?
-
-
 
 
 
@@ -43,11 +32,7 @@ The reason that this does not work is because **unboxed value types are not obje
 
 
 
-
-
 In the example above, the value instance is implicitly _converted_ to an object - twice - and then these objects are compared. Naturally, they refer to different objects, so they are not reference-equal.
-
-
 
 
 
@@ -63,8 +48,6 @@ public void BoxedValueTypes_CanBeReferenceEqual()
 
     Assert.IsTrue(object.ReferenceEquals(num, num));
 }
-
-
 
 
 Conclusion: contrary to popular opinion, not everything in C# is an object.

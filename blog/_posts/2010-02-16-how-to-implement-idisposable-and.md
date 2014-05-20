@@ -1,17 +1,12 @@
 ---
 layout: post
 title: "How to Implement IDisposable and Finalizers: Matrix and Flowchart"
-tags: [".NET", "IDisposable/Finalizers"]
 ---
-
-
-I've decided to split off the matrix and flowchart from my original [How to Implement IDisposable and Finalizers: 3 Simple Rules](http://blog.stephencleary.com/2009/08/how-to-implement-idisposable-and.html) post, and put them into their own post here.
+I've decided to split off the matrix and flowchart from my original [How to Implement IDisposable and Finalizers: 3 Simple Rules]({% post_url 2009-08-27-how-to-implement-idisposable-and %}) post, and put them into their own post here.
 
 
 
 ## Summary: A Decision Matrix for IDisposable and Finalize
-
-
 
 The flowchart and decision matrix below use these terms:
 
@@ -25,23 +20,20 @@ The flowchart and decision matrix below use these terms:
 
 ### Decision Matrix as a Table
 
+{:.table .table-striped}
 {:.center.caption}
 Decision Matrix for IDisposable and Finalize
 
 ||Class does not own managed resources|Class owns at least one managed resource|
 |-
-|Class does not own unmanaged resources|Apply[Rule 1](http://blog.stephencleary.com/2009/08/first-rule-of-implementing-idisposable.html): no IDisposable or Finalizer|Apply[Rule 2](http://blog.stephencleary.com/2009/08/second-rule-of-implementing-idisposable.html): IDisposable but no Finalizer|
-|Class owns one unmanaged resource|Apply[Rule 3](http://blog.stephencleary.com/2009/08/third-rule-of-implementing-idisposable.html): both IDisposable and Finalizer|Refactor|
+|Class does not own unmanaged resources|Apply[Rule 1]({% post_url 2009-08-27-first-rule-of-implementing-idisposable %}): no IDisposable or Finalizer|Apply[Rule 2]({% post_url 2009-08-27-second-rule-of-implementing-idisposable %}): IDisposable but no Finalizer|
+|Class owns one unmanaged resource|Apply[Rule 3]({% post_url 2009-08-27-third-rule-of-implementing-idisposable %}): both IDisposable and Finalizer|Refactor|
 |Class owns more than one unmanaged resource|Refactor|Refactor|
 
 
 ### Decision Matrix as a Flowchart
 
-
-
 Step 1 - Does the class own a managed resource? If not, go to Step 2.
-
-
 
 
 
@@ -49,17 +41,11 @@ Step 1.1 - Does the class own an unmanaged resource? If it does, refactor the cl
 
 
 
-
-
-Step 1.2 - The class owns at least one managed resource and no unmanaged resources. Apply [Rule 2](http://blog.stephencleary.com/2009/08/second-rule-of-implementing-idisposable.html) to the class, and you're done.
-
+Step 1.2 - The class owns at least one managed resource and no unmanaged resources. Apply [Rule 2]({% post_url 2009-08-27-second-rule-of-implementing-idisposable %}) to the class, and you're done.
 
 
 
-
-Step 2 - Does the class own an unmanaged resource? If not, then apply [Rule 1](http://blog.stephencleary.com/2009/08/first-rule-of-implementing-idisposable.html) to the class, and you're done.
-
-
+Step 2 - Does the class own an unmanaged resource? If not, then apply [Rule 1]({% post_url 2009-08-27-first-rule-of-implementing-idisposable %}) to the class, and you're done.
 
 
 
@@ -67,7 +53,5 @@ Step 2.1 - Does the class own more than one unmanaged resource? If it does, refa
 
 
 
-
-
-Step 2.2 - The class owns exactly one unmanaged resource and no managed resources. Apply [Rule 3](http://blog.stephencleary.com/2009/08/third-rule-of-implementing-idisposable.html) to the class.
+Step 2.2 - The class owns exactly one unmanaged resource and no managed resources. Apply [Rule 3]({% post_url 2009-08-27-third-rule-of-implementing-idisposable %}) to the class.
 

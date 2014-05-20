@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "Exception Types"
-tags: ["Programming", ".NET"]
 ---
-
-
 A while ago, Eric Lippert wrote an excellent blog entry called [Vexing Exceptions](http://www.webcitation.org/5xQLUxwF3). He defines four categories of exceptions, along with recommendations of how to handle them. I summarized this information into a Word document which I've printed out and posted at my desk:
-
-
 
 
 
@@ -18,8 +13,6 @@ A while ago, Eric Lippert wrote an excellent blog entry called [Vexing Exception
 <!-- This should work, but doesn't:
 <iframe src="http://docs.google.com/viewer?url=http%3A%2F%2Fwww.landmarkbaptist.ws%2Fmisc%2FExceptionTypes.docx&amp;embedded=true" width="600" height="780" style="border: none;"></iframe>
 -->
-
-
 
 I've also started to use Mr. Lippert's terminology in my regular work, and I see it becoming more common in the programming communities. A brief summary of the terminology is below:
 
@@ -32,11 +25,7 @@ I've also started to use Mr. Lippert's terminology in my regular work, and I see
 - Exogenous - exceptions due to external influences, e.g., file not found.
 
 
-
-
 The question of what exactly constitutes a "non-exceptional situation" is not addressed; this is an age-old debate.
-
-
 
 
 

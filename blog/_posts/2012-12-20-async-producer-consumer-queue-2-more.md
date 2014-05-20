@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "Async Producer-Consumer Queue 2: More Portability"
-tags: ["async", ".NET", "Nito.AsyncEx"]
 ---
-
-
-In my [last Dataflow post](/2012/11/async-producerconsumer-queue-using.html), I implemented an `async`-compatible producer/consumer queue using `BufferBlock<T>`. While this approach works, it's limited to platforms that Dataflow supports (as of the time of this writing: .NET 4.5, .NET 4.0, Windows Store, and Portable net45+win8).
-
-
+In my [last Dataflow post]({% post_url 2012-11-08-async-producerconsumer-queue-using %}), I implemented an `async`-compatible producer/consumer queue using `BufferBlock<T>`. While this approach works, it's limited to platforms that Dataflow supports (as of the time of this writing: .NET 4.5, .NET 4.0, Windows Store, and Portable net45+win8).
 
 
 
@@ -15,11 +10,7 @@ The [Microsoft.Bcl.Async](https://nuget.org/packages/Microsoft.Bcl.Async) packag
 
 
 
-
-
 Traditional producer/consumer queues are easily built using locks and condition variables (or monitors). I want the ability to throttle the queue with a maximum number of elements, so my implementation will use one lock and two condition variables. One condition variable will be signaled when the queue is not full (releasing a producer), and the other condition variable will be signaled when the queue is not empty (releasing a consumer).
-
-
 
 
 
@@ -83,11 +74,7 @@ Here's a simple implementation using `async`-compatible synchronization primitiv
 }
 {% endhighlight %}
 
-
-
 Most of this is boilerplate. The interesting parts are in `EnqueueAsync` and `DequeueAsync`. They both parallel each other: take the lock, wait until their operation can be performed, perform the operation, and notify the other side that the other condition is met.
-
-
 
 
 
@@ -103,11 +90,7 @@ One question that comes up with condition variables is **why use a while loop in
 1. The original producer resumes execution and re-acquires the lock. However, the queue is now full again.
 
 
-
-
 This is a very unlikely scenario, but it _is_ possible. For this reason, condition variables are almost always used with `while` loops. There may be occasional situations where an `if` statement would suffice (e.g., if there is only one producer and it only produced one item at a time), but it's barely an optimization at all. It's safer to always use `while` loops with condition variables.
-
-
 
 
 

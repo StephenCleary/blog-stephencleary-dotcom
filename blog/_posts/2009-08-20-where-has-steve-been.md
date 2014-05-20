@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "Where Has Steve Been?"
-tags: []
 ---
-
-
 For those of you who are wondering why I haven't been blogging much the last few weeks, the biggest reason is [right here](http://picasaweb.google.com/stephenandmandy/StephenDanielTheFirstYear?feat=directlink) - our first baby! He does keep us up at night, but he makes up for it by being cute!
-
-
 
 
 

@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "Dealing with WiX data files"
-tags: ["WiX", ".NET"]
 ---
-
-
 I am not an installer guru. The story below is how another company overcame one of their installer upgrade difficulties. The solution was found by their installer guru, a friend of mine.
-
-
 
 
 
@@ -15,11 +10,7 @@ Splitting up an application into components is a pretty [straightforward process
 
 
 
-
-
 That's nice. Now, what to do if your previous installs didn't do this?
-
-
 
 
 
@@ -27,11 +18,7 @@ Unfortunately, our situation was even worse. We had the .config file being insta
 
 
 
-
-
 (BTW, for other users of util:XmlFile, there is an attribute PreserveModifiedDate. If our previous installer had set this to "yes", then we wouldn't have had these problems. But it didn't, so the modified date is changed, and we ended up where we were today.)
-
-
 
 
 
@@ -39,11 +26,7 @@ The solution we adopted is called "version lying". We added a DefaultVersion att
 
 
 
-
-
 WiX doesn't really like version lying a lot: it will give you a warning. However, it works. We are using an environment variable for the build version, and we just set DefaultVersion to "$(env.MY_BUILD_VERSION)". This way the fake version will stay in sync with the final build version.
-
-
 
 
 

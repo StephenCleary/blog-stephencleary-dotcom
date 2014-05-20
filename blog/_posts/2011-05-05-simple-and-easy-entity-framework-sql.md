@@ -1,19 +1,12 @@
 ---
 layout: post
 title: "Simple and Easy Entity Framework SQL Tracing"
-tags: [".NET", "Linq", "Simple and Easy"]
 ---
-
-
-There's an easy way to [add tracing to an application](http://blog.stephencleary.com/2010/12/simple-and-easy-tracing-in-net.html), but Entity Framework brings some special challenges. [ObjectQuery.ToTraceString](http://msdn.microsoft.com/en-us/library/system.data.objects.objectquery.totracestring.aspx) does allow tracing of SQL SELECT commands, but there's no built-in way to trace database updates.
-
-
+There's an easy way to [add tracing to an application]({% post_url 2010-12-30-simple-and-easy-tracing-in-net %}), but Entity Framework brings some special challenges. [ObjectQuery.ToTraceString](http://msdn.microsoft.com/en-us/library/system.data.objects.objectquery.totracestring.aspx) does allow tracing of SQL SELECT commands, but there's no built-in way to trace database updates.
 
 
 
 However, there is an [Entity Framework Tracing Provider](http://efwrappers.codeplex.com/) that allows this. Follow the quick-start instructions on the home page, and you'll be off in no time!
-
-
 
 
 
@@ -28,8 +21,6 @@ using (var db = new NorthwindContext())
 }
 
 
-
-
 will result in this trace:
 
 
@@ -39,11 +30,7 @@ EntityFramework.NorthwindEntities Information: 0 : Executing 1: SELECT [GroupBy1
 EntityFramework.NorthwindEntities Information: 0 : Finished 1 in 00:00:00.0466592: [DbDataReader(C1:Int)]
 
 
-
-
 Note that the total time taken by the query is included in the finishing trace. Another interesting tidbit is that _DateTime.Now_ is not evaluated on the client side; rather, the SQL statement includes a call to _GetDate_.
-
-
 
 
 
@@ -59,8 +46,6 @@ using (var db = new NorthwindContext())
 }
 
 
-
-
 resulting in this trace:
 
 
@@ -72,11 +57,7 @@ EntityFramework.NorthwindEntities Information: 0 : Executing 3: delete [Orders] 
 EntityFramework.NorthwindEntities Information: 0 : Finished 3 in 00:00:00.0482807: 1 rows affected
 
 
-
-
 As expected, the first command executes a single-row SELECT, followed by a DELETE that affects a single row. Note the use of the parameterized deletion query.
-
-
 
 
 

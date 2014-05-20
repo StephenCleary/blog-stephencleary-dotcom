@@ -1,11 +1,10 @@
 ---
 layout: post
 title: "Task.Run vs BackgroundWorker, Round 3: Returning Results"
-tags: ["async", ".NET", "Task.Run vs BackgroundWorker"]
+series: "Task.Run vs. BackgroundWorker"
+seriesTitle: "Task.Run vs BackgroundWorker, Round 3: Returning Results"
 ---
 ## ~ Ready? ~
-
-
 
 When you perform a background operation - that is, some actual CPU work that you push off to a background thread - it's usually done to calculate some result. Today we're looking at how `Task.Run` and `BackgroundWorker` handle returning results.
 
@@ -14,8 +13,6 @@ When you perform a background operation - that is, some actual CPU work that you
 ## ~ Fight! ~
 
 ### BackgroundWorker
-
-
 
 It's pretty straightforward to return values from a `BackgroundWorker`; just set the `DoWorkEventArgs.Result` property and then you can pick up the results from `RunWorkerCompletedEventArgs.Result`:
 
@@ -38,15 +35,11 @@ It's pretty straightforward to return values from a `BackgroundWorker`; just set
 }
 {% endhighlight %}
 
-
-
 The biggest awkwardness caused by this code is the loss of type information of the result. Both `DoWorkEventArgs.Result` and `RunWorkerCompletedEventArgs.Result` are of type `object`, so you have to cast it to the correct type when retrieving the result.
 
 
 
 ### Task.Run
-
-
 
 The lambda passed to `Task.Run` can simply return a value:
 
@@ -64,8 +57,6 @@ The lambda passed to `Task.Run` can simply return a value:
 {% endhighlight %}
 
 ### Discussion
-
-
 
 The `Task.Run` code uses the natural `return` syntax, is strongly typed, and is more concise than `BackgroundWorker`. This round clearly goes to `Task.Run`.
 

@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "If PusleEvent is broken, what about Monitor.Pulse?"
-tags: ["Threading", ".NET"]
 ---
-
-
-In a post not too long ago, I mentioned that [PulseEvent was broken](http://blog.stephencleary.com/2009/09/iasyncresultasyncwaithandle-and.html). That got me to thinking: [Monitor](http://msdn.microsoft.com/en-us/library/system.threading.monitor.aspx) has Pulse/PulseAll methods; are they broken, too?
-
-
+In a post not too long ago, I mentioned that [PulseEvent was broken]({% post_url 2009-09-16-iasyncresultasyncwaithandle-and %}). That got me to thinking: [Monitor](http://msdn.microsoft.com/en-us/library/system.threading.monitor.aspx) has Pulse/PulseAll methods; are they broken, too?
 
 
 
@@ -15,17 +10,11 @@ Many years ago, when [Cygwin](http://www.cygwin.com/) was young, I recall readin
 
 
 
-
-
 Unfortunately, a true monitor implementation cannot be implemented simply on Windows. It is actually necessary to manage the wait queues manually in order to implement it correctly.
 
 
 
-
-
 Fortunately, Microsoft did implement their monitor correctly. This is good, because it means I won't have to do it. ;)
-
-
 
 
 

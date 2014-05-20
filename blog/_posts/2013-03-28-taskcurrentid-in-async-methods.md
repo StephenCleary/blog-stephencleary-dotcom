@@ -1,10 +1,7 @@
 ---
 layout: post
 title: "Task.CurrentId in Async Methods"
-tags: ["async", ".NET", "Nito.AsyncEx"]
 ---
-
-
 `Task.CurrentId` returns the identifier of the _currently executing_ `Task`, or `null` if there is no currently executing `Task`. So, what is `Task.CurrentId` in an `async` method?
 
 
@@ -35,17 +32,11 @@ class Program
 }
 {% endhighlight %}
 
-
-
 The output of this program is `null,null,1`. A lot of developers are surprised at this; after all, when you return a `Task` from an `async` method, doesn't that `Task` represent the complete method? Yes, it does _conceptually_ represent the `async` method, but it does not _literally execute_ the `async` method.
 
 
 
-
-
-In fact, `Task` instances returned from `async` methods are not _executed_ at all; under the hood, they are `TaskCompletionSource<TResult>`-style (event-based) tasks, not delegate (code-based) tasks. (For more information on the differences, see my blog post on [creating tasks](http://blog.stephencleary.com/2012/02/creating-tasks.html) or Stephen Toub's blog post on [the nature of TaskCompletionSource](http://blogs.msdn.com/b/pfxteam/archive/2009/06/02/9685804.aspx)). So `Task.CurrentId` returns `null` because there is no task actually _executing_.
-
-
+In fact, `Task` instances returned from `async` methods are not _executed_ at all; under the hood, they are `TaskCompletionSource<TResult>`-style (event-based) tasks, not delegate (code-based) tasks. (For more information on the differences, see my blog post on [creating tasks]({% post_url 2012-02-09-creating-tasks %}) or Stephen Toub's blog post on [the nature of TaskCompletionSource](http://blogs.msdn.com/b/pfxteam/archive/2009/06/02/9685804.aspx)). So `Task.CurrentId` returns `null` because there is no task actually _executing_.
 
 
 
@@ -79,17 +70,11 @@ class Program
 }
 {% endhighlight %}
 
-
-
 The output of this program is `1,null,2`. That pesky `null` is still there! The `null` comes into play because the `async` method is first executed as an actual task on the thread pool. However, after its `await`, it resumes as a regular delegate on the thread pool (not an actual task).
 
 
 
-
-
 Note that this is an implementation detail. I'm not aware of any documentation stating that the first part of a thread pool `async` method runs as a task and the rest of it never will. It's likely that this behavior is just the result of the easiest and most efficient implementation.
-
-
 
 
 
@@ -122,17 +107,11 @@ class Program
 }
 {% endhighlight %}
 
-
-
 The output of this program is `1,2`, because `AsyncContext` wraps _everything_ into a `Task` before executing it, including `async` method continuations.
 
 
 
-
-
 Note that this is also an implementation detail. Please do not depend on this behavior.
-
-
 
 
 

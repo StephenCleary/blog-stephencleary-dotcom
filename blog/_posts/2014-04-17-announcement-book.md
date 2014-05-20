@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "Announcement: Book"
-tags: ["Rx", "async", "Dataflow", "Books", "Announcements"]
 ---
-
-
 I am very pleased to announce that I have finished writing a **book!**
-
-
 
 
 
@@ -16,9 +11,8 @@ The title is quite a mouthful: [Concurrency in C# Cookbook: Asynchronous, Parall
 
 
 {:.center}
-[![](http://1.bp.blogspot.com/-_NoUaSDcWHo/U0_02wpOKHI/AAAAAAAALSk/0r4L8jGH1TQ/s1600/Book.jpg)](http://tinyurl.com/ConcurrencyCookbook)
-
-
+[![]({{ site_url }}/assets/Book.jpg)  
+](http://tinyurl.com/ConcurrencyCookbook)
 
 I have to say that writing this book took a lot more time than I originally thought! I should be able to resume a more normal pace of blogging shortly. :)
 

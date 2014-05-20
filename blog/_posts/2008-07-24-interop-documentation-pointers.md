@@ -1,10 +1,7 @@
 ---
 layout: post
 title: "Interop documentation pointers"
-tags: ["P/Invoke", ".NET"]
 ---
-
-
 To become really proficient at good interop code, one must master a range of skills. The MSDN documentation is rather spread out regarding this, so here's an attempt to bring it together, as a "C++ .NET interop quick reference":
 
 - [Development Tools and Languages :: Visual Studio :: .NET Framework Programming in Visual Studio :: .NET Framework Advanced Development :: Interoperability :: Interoperating with Unmanaged Code :: Interop Marshaling :: Marshaling Data with Platform Invoke](http://msdn.microsoft.com/en-us/library/fzhhdwae.aspx) - Gives a good overview of how to marshal the actual data to and from unmanaged code. Particularly useful when dealing with arrays and strings.

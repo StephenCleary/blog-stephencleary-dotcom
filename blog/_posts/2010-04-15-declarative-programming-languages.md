@@ -1,19 +1,12 @@
 ---
 layout: post
 title: "Declarative Programming Languages"
-tags: ["Language design", ".NET", "MVVM/WPF", "Linq"]
 ---
-
-
 There's a lot of excitement about declarative languages, as opposed to imperative languages.
 
 
 
-
-
 Any programmer who has been around for a while knows that there's _always been_ a lot of excitement about declarative languages. There's a tendency to overinflate their importance. Why, by using declarative constructs, we can program more efficiently (developer time gains)! Why, by using declarative constructs, we can have more intelligent interpreters (run-time gains)! Why, by using declarative constructs, we can have threadsafe programs (safety gains)!
-
-
 
 
 
@@ -26,8 +19,6 @@ And all of this is true, **but only to a point.** That point is at a very specif
 1. The declarative language includes extension points (which are not written in the declarative language itself), so that others may add to the language; this results in a handful of experts feeding libraries to the masses.
 
 
-
-
 Neither solution is maintainable in the long term.
 
 
@@ -37,11 +28,7 @@ Neither solution is maintainable in the long term.
 
 ## Blast from the Past
 
-
-
 I'm a relatively new programmer, entering the workforce in 1995. There was a big, new thing that came out around that time. It was called XML. XML was a declarative language, and if you believed all the hype about it, it could cure cancer.
-
-
 
 
 
@@ -49,11 +36,7 @@ XML was perfectly fine for what it was used for: structuring text data. Binary d
 
 
 
-
-
 So, XML worked for data, and worked well. But then some genius decided to write an XML _programming language._ There was lot of talk about how XML declarative languages would be the future of all programming - seriously!
-
-
 
 
 
@@ -63,11 +46,7 @@ A lot of work went into designing various XML languages, only one of which has s
 
 ## A Word about Functional Languages
 
-
-
 Functional languages are sometimes called declarative languages, but I disagree with this classification. Imperative languages and functional languages are both concerned with _how_ a program is supposed to run. Declarative languages attempt to make the semantic leap to only being concerned with _what_ a program is supposed to do.
-
-
 
 
 
@@ -77,17 +56,11 @@ When looked at from this perspective, functional languages are really the same a
 
 ## Partially-Declarative Languages
 
-
-
 LINQ is an example of a declarative sub-language within an imperative language (C# or VB). LINQ, when used with the Queryable system, will actually build a complete expression tree. The LINQ provider can then use that higher-level view of the code to generate the most efficient implementation.
 
 
 
-
-
 Since anyone is free to implement a LINQ provider, LINQ is an example of a declarative language with an extension point (the Queryable system). People have written providers for an amazing array of data sources.
-
-
 
 
 
@@ -97,11 +70,7 @@ The problem: implementing a LINQ provider is [hard!](http://blogs.msdn.com/mattw
 
 ## Declarative Languages Aren't All Bad
 
-
-
 If a programmer can stay within the existing boundaries of a declarative language, then they are very useful! I love LINQ and I love XAML data binding, both of which are declarative. I'm just trying to point out that "declarative languages" are not general-purpose solutions for all problems.
-
-
 
 
 
@@ -109,16 +78,13 @@ Microsoft made a genius decision with regards to LINQ in particular: they allow 
 
 
 
-> Example: LINQ to Entities cannot select new object instances like this: "db.ServiceSet.Select(x => new SelectListItem { Text = x.Name, Value = x.Id.ToString(), Selected = x.Id == serviceId });"  However, one can use LINQ to Entities to retrieve the entity set and then switch to LINQ to Objects to complete the transformation: "db.ServiceSet.AsEnumerable().Select(x => new SelectListItem { Text = x.Name, Value = x.Id.ToString(), Selected = x.Id == serviceId });"
+> Example: LINQ to Entities cannot select new object instances like this: "db.ServiceSet.Select(x => new SelectListItem { Text = x.Name, Value = x.Id.ToString(), Selected = x.Id == serviceId });"  
+> However, one can use LINQ to Entities to retrieve the entity set and then switch to LINQ to Objects to complete the transformation: "db.ServiceSet.AsEnumerable().Select(x => new SelectListItem { Text = x.Name, Value = x.Id.ToString(), Selected = x.Id == serviceId });"
 
 
 ## Final Rant: Declarative Code Is Still Code
 
-
-
 Remember a few years ago when XAML came out? I had a hard time keeping from laughing out loud at some of those demos.
-
-
 
 
 
@@ -126,11 +92,7 @@ First off, the central breakthrough is that we're now using _declarations_ to _d
 
 
 
-
-
 The _really_ funny part of a lot of these demos, though, is when they would try to code in XAML. After showing how _amazing_ it was to declare a UI in XML, they showed us how it could even support (limited) programming! Without fail, after cutting and pasting tons of XAML, they would show some fancy UI animation and proudly proclaim: _"with zero lines of code!"_
-
-
 
 
 
@@ -138,11 +100,7 @@ So... um... you just took a dozen lines of C# and replaced it with a couple hund
 
 
 
-
-
 Of course, XAML is good for declaring things like UIs or even animation sequences. But programmers trying to do real _programming_ in XAML quickly run into its limitations. Ever try to chain a converter? Or apply a filter on a collection? Just like LINQ, XAML can be extended, but it is surprisingly difficult.
-
-
 
 
 
@@ -152,11 +110,7 @@ MVVM advocates originally attempted to achieve the "no code-behind nirvana," but
 
 ## Conclusion
 
-
-
 The fundamental problem with every declarative language is that the programmer has to place themselves at the complete mercy of the language designer(s). It's simply unmaintainable as a permanent solution. I believe that every sane programmer will continue _programming_ in imperative languages and continue _declaring_ in declarative languages.
-
-
 
 
 

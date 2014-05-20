@@ -1,10 +1,7 @@
 ---
 layout: post
 title: "Implicit Async Context (\"AsyncLocal\")"
-tags: ["async", ".NET"]
 ---
-
-
 Occasionally, someone will ask about support for some kind of implicit "context" that will flow with `async` code. The most common use case is for logging, where you can maintain a stack of logical operations so every time you log you capture (and log) the state of that stack (e.g., [CorrelationManager](http://msdn.microsoft.com/en-us/library/1fxyt46s.aspx) for `TraceSource`, or the Nested Diagnostic Context for log4net). [Jon Skeet has a great blog entry on this kind of implicit "context" with several possible uses](http://msmvps.com/blogs/jon_skeet/archive/2010/11/08/the-importance-of-context-and-a-question-of-explicitness.aspx).
 
 
@@ -77,11 +74,7 @@ the thread pool context.</p>
 
 ## Logical CallContext
 
-
-
 There is a solution for this problem: the "logical call context", which you can access by [CallContext.LogicalGetData](http://msdn.microsoft.com/en-us/library/system.runtime.remoting.messaging.callcontext.logicalgetdata.aspx) and [CallContext.LogicalSetData](http://msdn.microsoft.com/en-us/library/system.runtime.remoting.messaging.callcontext.logicalsetdata.aspx). The regular call context (`CallContext.GetData` and `CallContext.SetData`) acts just like thread-local storage, which of course doesn't work for `async` methods.
-
-
 
 
 
@@ -89,11 +82,7 @@ Here's how logical call context works with asynchronous code.
 
 
 
-
-
 Logical call context data flows with `ExecutionContext`. This means that it's not affected by `ConfigureAwait(continueOnCapturedContext: false)`; you can't "opt-out" of the logical call context. So the logical call context at the beginning of an `async` method will _always_ flow through to its continuations.
-
-
 
 
 
@@ -101,11 +90,7 @@ When an `async` method starts, it notifies its logical call context to activate 
 
 
 
-
-
 This "copying" of the logical call context data is a _shallow_ copy. You can think of the logical call context data as an `IDictionary<string, object>` of name/value pairs. When it's copied, it creates a new dictionary and copies all the name/value pairs into the new dictionary. Both dictionaries then refer to all the same actual object instances; there's no "deep cloning" of any of your data being done.
-
-
 
 
 
@@ -113,11 +98,7 @@ Because the references are shared, it's important not to mutate any values retri
 
 
 
-
-
 Also note that the design is heavily optimized for the common case: when there is no logical call context data at all. When you start adding "implicit context", you're going to start adding overhead. Probably not too much, though, since everything is shallow-copied at worst.
-
-
 
 
 
@@ -127,11 +108,7 @@ As a final note, remember that you can end up sharing data two different ways: .
 
 ## An Example
 
-
-
 Let's take a simple example. We want to keep an implicit stack of logical operations, and when we call our "log" method we want to output the stack as part of that log.
-
-
 
 
 
@@ -158,8 +135,6 @@ First, let's define a strongly-typed accessor for the logical call context data 
     }
 }
 {% endhighlight %}
-
-
 
 So far, so good. Now we have a strongly-typed property we can use to get (or update) the current stack. Next we'll start defining our public API. We want the ability to "push" a string onto the stack, and get back a disposable that will pop that string back off the stack when disposed. Simple enough:
 
@@ -193,8 +168,6 @@ So far, so good. Now we have a strongly-typed property we can use to get (or upd
 }
 {% endhighlight %}
 
-
-
 The final part of our public API is a method that returns the current stack. I'll just return it as a string:
 
 
@@ -211,8 +184,6 @@ The final part of our public API is a method that returns the current stack. I'l
 }
 {% endhighlight %}
 
-
-
 Now let's turn our attention to the code that will be using `MyStack`. First, our "log" method:
 
 
@@ -226,11 +197,7 @@ Now let's turn our attention to the code that will be using `MyStack`. First, ou
 }
 {% endhighlight %}
 
-
-
 Yeah, that was pretty easy.
-
-
 
 
 
@@ -246,8 +213,6 @@ Main 1 B: </MoreWork>
 Main 1: </SomeWork>
 
 
-
-
 with this output from "2":
 
 
@@ -260,11 +225,7 @@ Main 2 B: </MoreWork>
 Main 2: </SomeWork>
 
 
-
-
 Remember, "1" and "2" are concurrent, so there's no one right answer for the output. As long as all the messages above are present and in the correct (relative) order, it's acceptable.
-
-
 
 
 
@@ -307,8 +268,6 @@ The code, without further ado:
 }
 {% endhighlight %}
 
-
-
 One sample run from my machine is:
 
 
@@ -327,17 +286,11 @@ Main 1 B: </MoreWork>
 Main 1: </SomeWork>
 
 
-
-
 If you sort out the "1" and the "2" messages, you'll see that each set is in the correct order and that the stacks are nicely laid out as expected.
 
 
 
-
-
 Similar code will compile targeting .NET 4.0 (with [Microsoft.Bcl.Async](http://nuget.org/packages/Microsoft.Bcl.Async/)); however, it will _not_ work correctly (unless it happens to run on .NET 4.5) because the logical call context is not copied at the right time. In that situation, different parts of different `async` methods will end up sharing the same stack (and overwriting each other's stack).
-
-
 
 
 

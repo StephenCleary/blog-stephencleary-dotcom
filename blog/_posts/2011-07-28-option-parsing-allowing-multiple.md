@@ -1,17 +1,14 @@
 ---
 layout: post
 title: "Option Parsing: Allowing Multiple Argument Values"
-tags: ["Option Parsing", ".NET", "Nito.KitchenSink"]
+series: "Option parsing"
+seriesTitle: "Option Parsing: Allowing Multiple Argument Values"
 ---
-
-
 Some options need to take a _sequence_ of argument values. There are several ways to accomplish this using the [Nito.KitchenSink Option Parsing library](http://nuget.org/List/Packages/Nito.KitchenSink.OptionParsing).
 
 
 
 ## Enumeration Flags
-
-
 
 If the option values are a series of enumerated flags, then the built-in enumeration parser will handle multiple values automatically:
 
@@ -78,17 +75,11 @@ Could not parse  DogBites  as FavoriteThings
 
 ## Using a Property Setter for Individual Values
 
-
-
 The example above works well enough for enumerations, but not all arguments are that simple. In these situations, we can take advantage of the fact that arguments are applied to the options class by property setters.
 
 
 
-
-
 The following example allows multiple individual values for an argument. As each argument value is set, it is saved into a collection of values.
-
-
 
 
 
@@ -156,19 +147,13 @@ class Program
 Could not parse  3,6  as Int32
 
 
-
-
 Note that the last test failed; the options class above only allows multiple individual arguments, not a group of values.
 
 
 
 ## Using a Property Setter for Grouped Values
 
-
-
 In this case, we want to be able to pass a sequence of values (delimited somehow) as a single argument, and have them interpreted as multiple individual values.
-
-
 
 
 
@@ -232,7 +217,5 @@ class Program
 3, 6
 
 
-
-
-This works, but still feels a bit "hackish". We're out of time for today, but in [a few weeks](http://blog.stephencleary.com/2011/08/option-parsing-argument-parsing.html) we'll revisit this problem when we talk about _custom argument parsers_.
+This works, but still feels a bit "hackish". We're out of time for today, but in [a few weeks]({% post_url 2011-08-11-option-parsing-argument-parsing %}) we'll revisit this problem when we talk about _custom argument parsers_.
 

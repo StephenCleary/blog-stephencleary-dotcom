@@ -1,27 +1,18 @@
 ---
 layout: post
 title: "The Third Rule of Implementing IDisposable and Finalizers"
-tags: [".NET", "IDisposable/Finalizers"]
 ---
-
-
-This post is part of [How to Implement IDisposable and Finalizers: 3 Easy Rules](http://blog.stephencleary.com/2009/08/how-to-implement-idisposable-and.html).
+This post is part of [How to Implement IDisposable and Finalizers: 3 Easy Rules]({% post_url 2009-08-27-how-to-implement-idisposable-and %}).
 
 
 
 ## For a class owning a single unmanaged resource, implement IDisposable and a finalizer
 
-
-
 A class that owns a single unmanaged resource should not be responsible for anything else. It should _only_ be responsible for _closing_ that resource.
 
 
 
-
-
 No classes should be responsible for multiple unmanaged resources. It's hard enough to properly free a single resource; writing a class that handles multiple unmanaged resources is much more difficult.
-
-
 
 
 
@@ -30,8 +21,6 @@ No classes should be responsible for both managed and unmanaged resources. It's 
 
 
 > Note: a lot of the really overly-complex Microsoft IDisposable documentation is because they assume your class will want to handle both managed and unmanaged resources. This is a holdover from .NET 1.0, and it's kept only for backwards compatibility. Take a clue from Microsoft: their own classes don't even follow that old pattern (they were changed in .NET 2.0 to follow the pattern described in this blog post). FxCop will yell at you because you need to [implement IDisposable "correctly"](http://msdn.microsoft.com/en-us/library/ms244737.aspx) (i.e., using the old pattern); ignore it - FxCop is wrong.
-
-
 
 
 The class should look something like this:
@@ -97,11 +86,7 @@ internal static partial class NativeMethods
 }
 {% endhighlight %}
 
-
-
 IDisposable.Dispose ends with a call to [GC.SuppressFinalize(this)](http://msdn.microsoft.com/en-us/library/system.gc.suppressfinalize.aspx). This ensures that the object will remain live until after its finalizer has been suppressed.
-
-
 
 
 
@@ -109,11 +94,7 @@ If Dispose is not explicitly invoked, then the finalizer will eventually be invo
 
 
 
-
-
 CloseHandle first checks if the handle is invalid. Then it closes the handle, being careful _not_ to throw exceptions; CloseHandle may be called from the finalizer, and an exception at that point would crash the process. CloseHandle finishes by marking the handle as invalid, making it safe to invoke this method multiple times; this, in turn, makes it safe to invoke Dispose multiple times. It is possible to move this "validity check" into the Dispose method, but placing it in CloseHandle also allows invalid handles to be passed into the constructor or set in the Handle property.
-
-
 
 
 
@@ -121,11 +102,7 @@ The only reason that SuppressFinalize is called _after_ CloseHandle is because t
 
 
 
-
-
 **Important!** The WindowStationHandle class does _not_ obtain a window station handle; it knows nothing of creating or opening window stations. That responsibility (along with all the other window station-related methods) belongs in another class (presumably named "WindowStation"). This helps create a correct implementation, because every finalizer must be able to execute without error on a partially-constructed object if the constructor throws; in practice, this is very difficult, and this is another reason why a wrapper class should be split into a "handle closer" class and a "proper wrapper" class.
-
-
 
 
 
@@ -133,7 +110,5 @@ Note: this is the simplest possible solution, and it does have some very obscure
 
 
 
-
-
-This post is part of [How to Implement IDisposable and Finalizers: 3 Easy Rules](http://blog.stephencleary.com/2009/08/how-to-implement-idisposable-and.html).
+This post is part of [How to Implement IDisposable and Finalizers: 3 Easy Rules]({% post_url 2009-08-27-how-to-implement-idisposable-and %}).
 

@@ -1,19 +1,12 @@
 ---
 layout: post
 title: "Async Unit Tests, Part 2: The Right Way"
-tags: ["async", ".NET"]
 ---
-
-
 **Update:** The information in this blog post _only applies to Visual Studio 2010_. Visual Studio 2012 _will_ support asynchronous unit tests, **as long as those tests are "async Task" tests, not "async void" tests**.
 
 
 
-
-
-Last time, we looked at [incorrect approaches to async unit testing](http://blog.stephencleary.com/2012/02/async-unit-tests-part-1-wrong-way.html). We also identified the underlying problem: that unit tests do not have an appropriate async context.
-
-
+Last time, we looked at [incorrect approaches to async unit testing]({% post_url 2012-02-06-async-unit-tests-part-1-wrong-way %}). We also identified the underlying problem: that unit tests do not have an appropriate async context.
 
 
 
@@ -21,11 +14,7 @@ At this point, the solution should be pretty obvious: give the unit tests an asy
 
 
 
-
-
 It really is that easy! Why, all you have to do is write your own SynchronizationContext implementation. Keep in mind that thread-safety is paramount, because the methods under test may interact with the thread pool or other async contexts. Note that [async void methods interact with SynchronizationContext in a different way](http://msdn.microsoft.com/en-us/magazine/gg598924.aspx) than other async methods. Oh, and also remember that exceptions need special handling in some cases so their original call stack is preserved appropriately, and if you're on VS2010 you'll need to hack this in because [there's no support for it on .NET 4.0](http://connect.microsoft.com/VisualStudio/feedback/details/633822/allow-preserving-stack-traces-when-rethrowing-exceptions).
-
-
 
 
 
@@ -35,17 +24,11 @@ Just kidding! Ha, ha! The good folks on the Async team have done all the hard wo
 
 ## Right Way #1: The Official Approach
 
-
-
 If you have the Async CTP installed, then check out the "My Documents\Microsoft Visual Studio Async CTP\Samples\(C# Testing) Unit Testing\AsyncTestUtilities" folder. You'll find not just one, but _three_ async-compatible contexts, ready for you to use!
 
 
 
-
-
 You should use GeneralThreadAffineContext unless you absolutely need another one. To use it, just copy AsyncTestUtilities.cs, CaptureAndRestorer.cs, and GeneralThreadAffineContext.cs into your test project.
-
-
 
 
 
@@ -75,14 +58,11 @@ public void DenominatorIsZeroThrowsDivideByZero()
 }
 
 
-
-
 Our unit test methods are not async. Each one sets up an async context and passes the _actual_ test into it as an async lambda expression. So, the _actual_ test code can still be written with all the benefits of async/await, and the async context takes care of making sure it runs as expected:
 
 
 
-![](http://4.bp.blogspot.com/-PUJd91U-KOQ/Tywglwj2h8I/AAAAAAAAGZ0/leAosXERVls/s400/AsyncUnitTests8.png)
-
+![]({{ site_url }}/assets/AsyncUnitTests8.png)  
 
 
 Just as importantly, the async context ensures that tests that _should_ fail, _will_ fail:
@@ -101,13 +81,10 @@ public void FourDividedByTwoIsThirteen_ShouldFail()
 }
 
 
-![](http://1.bp.blogspot.com/-GbDb5DN0zTs/TywheaMRyuI/AAAAAAAAGaA/mhBhZbrlMz0/s400/AsyncUnitTests9.png)
-
+![]({{ site_url }}/assets/AsyncUnitTests9.png)  
 
 
 And everyone lived happily ever after!
-
-
 
 
 
@@ -117,11 +94,7 @@ Well, sort of. This solution does work, but it's a bit cumbersome. Copying code 
 
 ## Right Way #2: Now with Less Effort!
 
-
-
 Boy, if only there was _some way_ to have the MSTest framework apply the async context _for_ us, then we could just write async unit test methods and not worry about it!
-
-
 
 
 
@@ -135,11 +108,7 @@ Oh yeah - there is. Visual Studio allows you to define a custom "test type." It 
 - Change your [TestClass] attribute to [AsyncTestClass].
 
 
-
-
 Sweet.
-
-
 
 
 
@@ -163,14 +132,11 @@ public async void DenominatorIsZeroThrowsDivideByZeroAsync()
 }
 
 
-
-
 And it works:
 
 
 
-![](http://4.bp.blogspot.com/-HzZzWRIjps4/TywnDiLrNCI/AAAAAAAAGaM/vi76_Zooyvs/s400/AsyncUnitTests10.png)
-
+![]({{ site_url }}/assets/AsyncUnitTests10.png)  
 
 
 And test failures actually fail:
@@ -186,13 +152,10 @@ public async void FourDividedByTwoIsThirteenAsync_ShouldFail()
 }
 
 
-![](http://4.bp.blogspot.com/-KPICu-SIVrg/TywnkasIGUI/AAAAAAAAGaY/L72wYtkLIyY/s1400/AsyncUnitTests11.png)
-
+![]({{ site_url }}/assets/AsyncUnitTests11.png)  
 
 
 _Sniff..._ It's... so... beautiful...
-
-
 
 
 
@@ -205,17 +168,11 @@ But not quite perfect. You still have to add a NuGet package _and_ remember to c
 
 ## Future Directions
 
-
-
 xUnit.NET has recently released [first-class support for asynchronous unit tests](http://xunit.codeplex.com/workitem/9733): in version 1.9 (2012-01-02) and newer, for any test method returning Task/Task<T>, the test framework will wait until the task completes before declaring success/failure. However, as of now, it does not support async void unit tests; this [is planned](http://xunit.codeplex.com/workitem/9752) for a future release.
 
 
 
-
-
 I've been in contact with some people inside of Microsoft regarding this issue, and they said they're aware of it and are considering various options. They wouldn't give me any details, of course, but they did suggest that I would be "pleasantly surprised" when Visual Studio vNext comes out.
-
-
 
 
 

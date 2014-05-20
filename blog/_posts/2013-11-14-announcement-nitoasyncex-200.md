@@ -1,13 +1,8 @@
 ---
 layout: post
 title: "Announcement: Nito.AsyncEx 2.0.0"
-tags: ["async", ".NET", "Nito.AsyncEx"]
 ---
-
-
 This is more of a minor/feature change, but one of the bug fixes required an API change, so it is technically considered a major release.
-
-
 
 
 
