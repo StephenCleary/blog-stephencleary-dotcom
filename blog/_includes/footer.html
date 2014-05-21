@@ -3,6 +3,9 @@
 <script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
 <script type="text/javascript">
     var disqus_loaded = false;
+    var disqus_identifier = "{{ page.id }}";
+    var disqus_title = "{% if page.title %}{{ page.title }}{% else %}{{ site.title }}{% endif %}";
+    var disqus_url = "{{ page.url | replace:'index.html','' | prepend: site.baseurl | prepend: site.url }}";
     $('.pager').waypoint({
         offset: 'bottom-in-view',
         handler: function () {
