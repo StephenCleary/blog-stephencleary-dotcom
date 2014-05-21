@@ -8,7 +8,10 @@ To use:
 
 You can serve Jekyll from within VS, but it can't be stopped in the Package Manager Console. So use a regular Powershell console instead:
 > D:\Programs\PortableJekyll\setpath.ps1
+> chcp 65001
 > jekyll serve -w
 
 When publishing:
-> jekyll serve -w --lsi
+> D:\Programs\PortableJekyll\setpath.ps1
+> chcp 65001
+> jekyll build --lsi
