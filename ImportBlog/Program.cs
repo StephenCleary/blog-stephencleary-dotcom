@@ -144,6 +144,7 @@ namespace ImportBlog
             private Stack<bool> _lists = new Stack<bool>();
             private bool _inTableData;
             private bool _inTable;
+            private bool _preserveWhitespace;
 
             public HtmlToMarkdownTranslator(DateTimeOffset published, string title, StreamWriter log)
             {
@@ -197,7 +198,7 @@ namespace ImportBlog
                         }
                         else if (child.Name == "pre" && !(child.Attribute("class") != null && child.Attribute("class").Value.Contains("brush")))
                         {
-                            _inPre = true;
+                            _inPre = _preserveWhitespace = true;
                             if (child.Element("code") != null)
                                 sb.Append(Parse(child));
                             else
@@ -206,7 +207,7 @@ namespace ImportBlog
                                 foreach (var line in text)
                                     sb.Append("    " + line + "\r\n");
                             }
-                            _inPre = false;
+                            _inPre = _preserveWhitespace = false;
                         }
                         else if (child.Name == "code" || (child.Name == "pre" && child.Attribute("class") != null && child.Attribute("class").Value.Contains("brush")))
                         {
@@ -227,7 +228,9 @@ namespace ImportBlog
                             }
                             else
                             {
+                                _preserveWhitespace = true;
                                 sb.Append("`" + Parse(child) + "`");
+                                _preserveWhitespace = false;
                             }
                         }
                         else if (child.Name == "span")
@@ -421,7 +424,7 @@ namespace ImportBlog
             private string Escape(string value)
             {
                 var result = value.Replace("\u00A0", "&nbsp;");
-                if (_inTable)
+                if (_inTable && !_preserveWhitespace)
                     result = result.Trim();
                 return result;
             }
