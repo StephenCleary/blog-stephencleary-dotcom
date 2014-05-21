@@ -6,6 +6,9 @@ To use:
 - Download ez\_setup.py from https://pypi.python.org/pypi/setuptools#windows and run "python ez_setup.py".
 - Run "easy_install Pygments"
 
-Start VS. In the Package Manager Console:
+You can serve Jekyll from within VS, but it can't be stopped in the Package Manager Console. So use a regular Powershell console instead:
+> D:\Programs\PortableJekyll\setpath.ps1
+> jekyll serve -w
 
-- "D:\Programs\PortableJekyll\setpath.ps1"
+When publishing:
+> jekyll serve -w --lsi
