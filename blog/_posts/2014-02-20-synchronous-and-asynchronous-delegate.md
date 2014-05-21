@@ -17,24 +17,12 @@ This a bit complex to describe in words, so here's a little table that lays out 
 {:.table .table-striped}
 |Standard Type|Example Lambda|Parameters|Return Value|
 |-
-|`Action`  
-`Func<Task>`|`() => { }`  
-`async() => {awaitTask.Yield(); }`|None|None|
-|`Func<TResult>`  
-`Func<Task<TResult>>`|`() => {return13; }`  
-`async() => {awaitTask.Yield();return13; }`|None|`TResult`|
-|`Action<TArg1>`  
-`Func<TArg1, Task>`|`x => { }`  
-`asyncx => {awaitTask.Yield(); }`|`TArg1`|None|
-|`Func<TArg1, TResult>`  
-`Func<TArg1, Task<TResult>>`|`x => {return13; }`  
-`asyncx => {awaitTask.Yield();return13; }`|`TArg1`|`TResult`|
-|`Action<TArg1, TArg2>`  
-`Func<TArg1, TArg2, Task>`|`(x, y) => { }`  
-`async(x, y) => {awaitTask.Yield(); }`|`TArg1, TArg2`|None|
-|`Func<TArg1, TArg2, TResult>`  
-`Func<TArg1, TArg2, Task<TResult>>`|`(x, y) => {return13; }`  
-`async(x, y) => {awaitTask.Yield();return13; }`|`TArg1, TArg2`|`TResult`|
+|`Action`<br/>`Func<Task>`|`() => { }`<br/>`async() => {awaitTask.Yield(); }`|None|None|
+|`Func<TResult>`<br/>`Func<Task<TResult>>`|`() => {return13; }`<br/>`async() => {awaitTask.Yield();return13; }`|None|`TResult`|
+|`Action<TArg1>`<br/>`Func<TArg1, Task>`|`x => { }`<br/>`asyncx => {awaitTask.Yield(); }`|`TArg1`|None|
+|`Func<TArg1, TResult>`<br/>`Func<TArg1, Task<TResult>>`|`x => {return13; }`<br/>`asyncx => {awaitTask.Yield();return13; }`|`TArg1`|`TResult`|
+|`Action<TArg1, TArg2>`<br/>`Func<TArg1, TArg2, Task>`|`(x, y) => { }`<br/>`async(x, y) => {awaitTask.Yield(); }`|`TArg1, TArg2`|None|
+|`Func<TArg1, TArg2, TResult>`<br/>`Func<TArg1, TArg2, Task<TResult>>`|`(x, y) => {return13; }`<br/>`async(x, y) => {awaitTask.Yield();return13; }`|`TArg1, TArg2`|`TResult`|
 
 </div>
 

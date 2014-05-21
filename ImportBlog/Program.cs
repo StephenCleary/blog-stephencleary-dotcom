@@ -168,7 +168,10 @@ namespace ImportBlog
                         }
                         else if (child.Name == "br")
                         {
-                            sb.Append("  \r\n");
+                            if (_inTable)
+                                sb.Append("<br/>");
+                            else
+                                sb.Append("  \r\n");
                         }
                         else if (child.Name == "h3")
                         {
