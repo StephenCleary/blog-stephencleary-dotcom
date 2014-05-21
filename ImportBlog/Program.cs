@@ -142,6 +142,8 @@ namespace ImportBlog
             private static readonly HashSet<string> _unknownElementTypes = new HashSet<string>();
             private bool _inPre;
             private Stack<bool> _lists = new Stack<bool>();
+            private bool _inTableData;
+            private bool _inTable;
 
             public HtmlToMarkdownTranslator(DateTimeOffset published, string title, StreamWriter log)
             {
@@ -351,15 +353,34 @@ namespace ImportBlog
                         }
                         else if (child.Name == "table")
                         {
-                            sb.Append("<div class=\"panel panel-default\">\r\n");
+                            _log.WriteLine("table: " + _published + ": " + _title);
+                            _inTable = true;
+                            _inTableData = false;
+                            sb.Append("<div class=\"panel panel-default\" markdown=\"1\">\r\n");
                             var caption = child.Element("caption");
                             if (caption != null)
-                                sb.Append("  <div class=\"panel-heading\">" + caption.Value + "</div>\r\n");
-                            sb.Append("  <table class=\"table table-striped\">\r\n");
-                            foreach (var childNode in child.Nodes().Where(x => x.NodeType != XmlNodeType.Element || ((XElement)x).Name != "caption"))
-                                sb.Append(childNode);
-                            sb.Append("  </table>\r\n");
-                            sb.Append("</div>\r\n");
+                            {
+                                caption.Remove();
+                                sb.Append("  <div class=\"panel-heading\" markdown=\"1\">" + caption.Value + "</div>\r\n");
+                            }
+
+                            sb.Append("\r\n{:.table .table-striped}\r\n");
+                            sb.Append(Parse(child));
+                            sb.Append("\r\n</div>\r\n");
+                            _inTable = false;
+                        }
+                        else if (child.Name == "tr")
+                        {
+                            sb.Append("|" + Parse(child) + "\r\n");
+                            if (!_inTableData)
+                            {
+                                sb.Append("|-\r\n");
+                                _inTableData = true;
+                            }
+                        }
+                        else if (child.Name == "th" || child.Name == "td")
+                        {
+                            sb.Append(Parse(child) + "|");
                         }
                         else
                         {
@@ -389,7 +410,10 @@ namespace ImportBlog
 
             private string Escape(string value)
             {
-                return value.Replace("\u00A0", "&nbsp;");
+                var result = value.Replace("\u00A0", "&nbsp;");
+                if (_inTable)
+                    result = result.Trim();
+                return result;
             }
         }
     }

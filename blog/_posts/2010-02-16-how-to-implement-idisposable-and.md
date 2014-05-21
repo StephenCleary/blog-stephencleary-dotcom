@@ -14,31 +14,16 @@ The flowchart and decision matrix below use these terms:
 
 ### Decision Matrix as a Table
 
-<div class="panel panel-default">
-  <div class="panel-heading">Decision Matrix for IDisposable and Finalize</div>
-  <table class="table table-striped">
+<div class="panel panel-default" markdown="1">
+  <div class="panel-heading" markdown="1">Decision Matrix for IDisposable and Finalize</div>
 
-<tr>
-  <th />
-  <th>Class does not own managed resources</th>
-  <th>Class owns at least one managed resource</th>
-</tr>
-<tr>
-  <th>Class does not own unmanaged resources</th>
-  <td>Apply <a href="http://blog.stephencleary.com/2009/08/first-rule-of-implementing-idisposable.html">Rule 1</a>: no IDisposable or Finalizer</td>
-  <td>Apply <a href="http://blog.stephencleary.com/2009/08/second-rule-of-implementing-idisposable.html">Rule 2</a>: IDisposable but no Finalizer</td>
-</tr>
-<tr>
-  <th>Class owns one unmanaged resource</th>
-  <td>Apply <a href="http://blog.stephencleary.com/2009/08/third-rule-of-implementing-idisposable.html">Rule 3</a>: both IDisposable and Finalizer</td>
-  <td>Refactor</td>
-</tr>
-<tr>
-  <th>Class owns more than one unmanaged resource</th>
-  <td>Refactor</td>
-  <td>Refactor</td>
-</tr>
-  </table>
+{:.table .table-striped}
+||Class does not own managed resources|Class owns at least one managed resource|
+|-
+|Class does not own unmanaged resources|Apply[Rule 1]({% post_url 2009-08-27-first-rule-of-implementing-idisposable %}): no IDisposable or Finalizer|Apply[Rule 2]({% post_url 2009-08-27-second-rule-of-implementing-idisposable %}): IDisposable but no Finalizer|
+|Class owns one unmanaged resource|Apply[Rule 3]({% post_url 2009-08-27-third-rule-of-implementing-idisposable %}): both IDisposable and Finalizer|Refactor|
+|Class owns more than one unmanaged resource|Refactor|Refactor|
+
 </div>
 
 ### Decision Matrix as a Flowchart

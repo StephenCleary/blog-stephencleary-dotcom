@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Option Parsing: Option Names"
-series: "Option parsing"
+series: "Option Parsing"
 seriesTitle: "Option Names"
 ---
 An option may have a long name, a short name, or both. "Short names" are just single characters, while "long names" are strings. Option names may not contain the special characters **:** or **=**.

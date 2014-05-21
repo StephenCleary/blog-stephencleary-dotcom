@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Option Parsing: Case Sensitivity"
-series: "Option parsing"
+series: "Option Parsing"
 seriesTitle: "Case Sensitivity"
 ---
 By default, all option parsing is case-sensitive:

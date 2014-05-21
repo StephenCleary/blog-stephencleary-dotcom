@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Option Parsing: Introduction"
-series: "Option parsing"
+series: "Option Parsing"
 seriesTitle: "Introduction"
 ---
 Last week, [Nito.KitchenSink.OptionParsing](http://nuget.org/List/Packages/Nito.KitchenSink.OptionParsing) was released on NuGet. This is a command-line option parsing library that I've used for years. Since my day job currently consists of re-architecting firmware, I figured I'd write a few posts on the Nito.KitchenSink NuGet (mini-)libraries.

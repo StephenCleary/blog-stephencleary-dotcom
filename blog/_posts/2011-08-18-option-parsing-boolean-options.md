@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Option Parsing: Boolean Options"
-series: "Option parsing"
+series: "Option Parsing"
 seriesTitle: "Boolean Options"
 ---
 ## Options as Flags

@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Option Parsing: Allowing Multiple Argument Values"
-series: "Option parsing"
+series: "Option Parsing"
 seriesTitle: "Allowing Multiple Argument Values"
 ---
 Some options need to take a _sequence_ of argument values. There are several ways to accomplish this using the [Nito.KitchenSink Option Parsing library](http://nuget.org/List/Packages/Nito.KitchenSink.OptionParsing).

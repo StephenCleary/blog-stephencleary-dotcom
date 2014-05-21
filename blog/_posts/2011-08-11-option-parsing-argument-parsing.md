@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Option Parsing: Argument Parsing"
-series: "Option parsing"
+series: "Option Parsing"
 seriesTitle: "Argument Parsing"
 ---
 This is going to be an in-depth post on how argument parsing works in the [Nito.KitchenSink.OptionParsing library](http://nuget.org/List/Packages/Nito.KitchenSink.OptionParsing), and a couple of ways the parsing can be modified.

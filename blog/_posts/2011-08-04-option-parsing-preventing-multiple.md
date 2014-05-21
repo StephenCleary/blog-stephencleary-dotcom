@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Option Parsing: Preventing Multiple Argument Values"
-series: "Option parsing"
+series: "Option Parsing"
 seriesTitle: "Preventing Multiple Argument Values"
 ---
 When dealing with multiple argument values, there are four basic behaviors: _overwrite_, _append_, _prevent_, and _ignore_.

@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Option Parsing: Lexing"
-series: "Option parsing"
+series: "Option Parsing"
 seriesTitle: "Lexing"
 ---
 The first step in parsing a command line is _lexing_, which converts a single string (the command line) into a sequence of strings (individual options and/or arguments). Actually, the _very_ first step takes place before the program even runs: the command shell has its own simple lexer.

@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Option Parsing: Validation"
-series: "Option parsing"
+series: "Option Parsing"
 seriesTitle: "Validation"
 ---
 The [option parsing pipeline]({% post_url 2011-06-09-option-parsing-option-parsing-pipeline %}) consists of three steps: lexing, parsing, and validation. So far, we've only talked about the first two steps; today we'll look at validation.

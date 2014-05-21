@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Option Parsing: Options with Optional Arguments"
-series: "Option parsing"
+series: "Option Parsing"
 seriesTitle: "Options with Optional Arguments"
 ---
 All of the examples so far have illustrated _options with required arguments_; that is, if the option is passed, it must be followed by an argument. It's also possible to define an option that takes an optional argument:

@@ -4,59 +4,18 @@ title: "SynchronizationContext Properties Summary"
 ---
 A few of my posts recently have dealt with surprises that I've found when interacting with different implementations of [SynchronizationContext](http://msdn.microsoft.com/en-us/library/system.threading.synchronizationcontext.aspx). This post is a summary of my findings.
 
-<div class="panel panel-default">
-  <div class="panel-heading">SynchronizationContext Implementation Properties</div>
-  <table class="table table-striped">
+<div class="panel panel-default" markdown="1">
+  <div class="panel-heading" markdown="1">SynchronizationContext Implementation Properties</div>
 
-<tr>
-  <th />
-  <th>Specific Associated Thread</th>
-  <th>Synchronized Execution</th>
-  <th>Sequential Execution</th>
-  <th>Reentrant Send</th>
-  <th>Reentrant Post</th>
-  <th>Supports Equality Comparision</th></tr>
-<tr>
-  <th>Windows Forms</th>
-  <td>Yes</td>
-  <td>Yes</td>
-  <td>Yes</td>
-  <td>Sometimes [1]</td>
-  <td>Never</td>
-  <td>Yes</td></tr>
-<tr>
-  <th>Windows Presentation Foundation and Silverlight</th>
-  <td>Yes</td>
-  <td>Yes</td>
-  <td>Yes</td>
-  <td>Sometimes [1]</td>
-  <td>Never</td>
-  <td>No [3]</td></tr>
-<tr>
-  <th>Nito</th>
-  <td>Yes</td>
-  <td>Yes</td>
-  <td>Yes</td>
-  <td>Never [2]</td>
-  <td>Never</td>
-  <td>No [4]</td></tr>
-<tr>
-  <th>Default</th>
-  <td>No</td>
-  <td>No</td>
-  <td>No</td>
-  <td>Always</td>
-  <td>Never</td>
-  <td>N/A [5]</td></tr>
-<tr>
-  <th>ASP.NET</th>
-  <td>No</td>
-  <td>Yes</td>
-  <td>No</td>
-  <td>Always</td>
-  <td>Always [6]</td>
-  <td>N/A [5]</td></tr>
-  </table>
+{:.table .table-striped}
+||Specific Associated Thread|Synchronized Execution|Sequential Execution|Reentrant Send|Reentrant Post|Supports Equality Comparision|
+|-
+|Windows Forms|Yes|Yes|Yes|Sometimes [1]|Never|Yes|
+|Windows Presentation Foundation and Silverlight|Yes|Yes|Yes|Sometimes [1]|Never|No [3]|
+|Nito|Yes|Yes|Yes|Never [2]|Never|No [4]|
+|Default|No|No|No|Always|Never|N/A [5]|
+|ASP.NET|No|Yes|No|Always|Always [6]|N/A [5]|
+
 </div>
 
 ## Notes

@@ -198,45 +198,18 @@ Read the [Task-based Asynchronous Pattern (TAP) document](http://www.microsoft.c
 
 There are many new await-friendly techniques that should be used instead of the old blocking techniques. If you have any of these Old examples in your new async code, you're Doing It Wrong(TM):
 
-<div class="panel panel-default">
-  <table class="table table-striped">
+<div class="panel panel-default" markdown="1">
 
-<tr>
-  <th>Old</th>
-  <th>New</th>
-  <th>Description</th>
-</tr>
-<tr>
-  <td>task.Wait</td>
-  <td>await task</td>
-  <td>Wait/await for a task to complete</td>
-</tr>
-<tr>
-  <td>task.Result</td>
-  <td>await task</td>
-  <td>Get the result of a completed task</td>
-</tr>
-<tr>
-  <td>Task.WaitAny</td>
-  <td>await Task.WhenAny</td>
-  <td>Wait/await for one of a collection of tasks to complete</td>
-</tr>
-<tr>
-  <td>Task.WaitAll</td>
-  <td>await Task.WhenAll</td>
-  <td>Wait/await for every one of a collection of tasks to complete</td>
-</tr>
-<tr>
-  <td>Thread.Sleep</td>
-  <td>await Task.Delay</td>
-  <td>Wait/await for a period of time</td>
-</tr>
-<tr>
-  <td>Task constructor</td>
-  <td>Task.Run or TaskFactory.StartNew</td>
-  <td>Create a code-based task</td>
-</tr>
-  </table>
+{:.table .table-striped}
+|Old|New|Description|
+|-
+|task.Wait|await task|Wait/await for a task to complete|
+|task.Result|await task|Get the result of a completed task|
+|Task.WaitAny|await Task.WhenAny|Wait/await for one of a collection of tasks to complete|
+|Task.WaitAll|await Task.WhenAll|Wait/await for every one of a collection of tasks to complete|
+|Thread.Sleep|await Task.Delay|Wait/await for a period of time|
+|Task constructor|Task.Run or TaskFactory.StartNew|Create a code-based task|
+
 </div>
 
 ## Next Steps

@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Option Parsing: Default and Nullable Argument Values"
-series: "Option parsing"
+series: "Option Parsing"
 seriesTitle: "Default and Nullable Argument Values"
 ---
 Most of our examples so far have already dealt with options taking arguments, because most options in the real world _do_ take arguments. Today we'll start looking at option arguments in depth.

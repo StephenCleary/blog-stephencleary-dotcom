@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Option Parsing: The Option Parsing Pipeline"
-series: "Option parsing"
+series: "Option Parsing"
 seriesTitle: "The Option Parsing Pipeline"
 ---
 There are three main phases during option parsing:

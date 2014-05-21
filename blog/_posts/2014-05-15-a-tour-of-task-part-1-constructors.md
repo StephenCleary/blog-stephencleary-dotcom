@@ -84,29 +84,12 @@ Sorry that the first post just boiled down to "don't use this", but it is what i
 
 I think it would be fun to keep a running total of usable members, so here's the results from today's post:
 
-<div class="panel panel-default">
-  <table class="table table-striped">
+<div class="panel panel-default" markdown="1">
 
-<tr>
-  <th>Type</th>
-  <th>Actual Members</th>
-  <th>Logical Members</th>
-  <th>Usable for async</th>
-  <th>Usable for parallel</th>
-</tr>
-<tr>
-  <th>Task</th>
-  <td>8</td>
-  <td>1</td>
-  <td>0</td>
-  <td>0</td>
-</tr>
-<tr>
-  <th>Task&lt;T&gt;</th>
-  <td>8</td>
-  <td>1</td>
-  <td>0</td>
-  <td>0</td>
-</tr>
-  </table>
+{:.table .table-striped}
+|Type|Actual Members|Logical Members|Usable for async|Usable for parallel|
+|-
+|Task|8|1|0|0|
+|Task<T>|8|1|0|0|
+
 </div>

@@ -48,74 +48,19 @@ To enable the TraceSource, you'll need to merge the following with your app.conf
 
 The switchValue attribute [may be set to](http://msdn.microsoft.com/en-us/library/system.diagnostics.sourcelevels.aspx) Off, Critical, Error, Warning, Information, Verbose, or All. This setting interacts with the TraceEvent message types exactly as you'd expect:
 
-<div class="panel panel-default">
-  <table class="table table-striped">
+<div class="panel panel-default" markdown="1">
 
-<tr>
-  <th />
-  <th>Verbose</th>
-  <th>Information</th>
-  <th>Warning</th>
-  <th>Error</th>
-  <th>Critical</th>
-</tr>
-<tr>
-  <th>Off</th>
-  <td />
-  <td />
-  <td />
-  <td />
-  <td />
-</tr>
-<tr>
-  <th>Critical</th>
-  <td />
-  <td />
-  <td />
-  <td />
-  <td>+</td>
-</tr>
-<tr>
-  <th>Error</th>
-  <td />
-  <td />
-  <td />
-  <td>+</td>
-  <td>+</td>
-</tr>
-<tr>
-  <th>Warning</th>
-  <td />
-  <td />
-  <td>+</td>
-  <td>+</td>
-  <td>+</td>
-</tr>
-<tr>
-  <th>Information</th>
-  <td />
-  <td>+</td>
-  <td>+</td>
-  <td>+</td>
-  <td>+</td>
-</tr>
-<tr>
-  <th>Verbose</th>
-  <td>+</td>
-  <td>+</td>
-  <td>+</td>
-  <td>+</td>
-  <td>+</td>
-</tr>
-<tr>
-  <th>All</th>
-  <td>+</td>
-  <td>+</td>
-  <td>+</td>
-  <td>+</td>
-  <td>+</td>
-</tr>
-  </table>
+{:.table .table-striped}
+||Verbose|Information|Warning|Error|Critical|
+|-
+|Off||||||
+|Critical|||||+|
+|Error||||+|+|
+|Warning|||+|+|+|
+|Information||+|+|+|+|
+|Verbose|+|+|+|+|+|
+|All|+|+|+|+|+|
+
 </div>
 
 Tip: you can leave the **source** element defined in your app.config / web.config when you deploy to production. As long as its switchValue is set to Off, it won't actually trace but it's easy to find and turn on.

@@ -10,101 +10,22 @@ One way of defining a "reference type" is whether [Type.IsClass](http://msdn.mic
 
 The table below includes tests on a variety of types, grouped into "mostly reference types" and "mostly value types". The types that are more clearly reference/value types are at the top of each group, with the weirdos at the bottom.
 
-<div class="panel panel-default">
-  <table class="table table-striped">
+<div class="panel panel-default" markdown="1">
 
-<tr>
-  <th width="20%">Category</th>
-  <th width="30%">Example Type</th>
-  <th width="10%">IsClass</th>
-  <th width="10%">Satisfies class Constraint</th>
-  <th width="10%">IsValueType</th>
-  <th width="10%">Satisfies struct Constraint</th>
-  <th width="10%">Satisfies Without Constraints</th>
-</tr>
-<tr>
- <td>Classes</td>
- <td>class Class {}</td>
- <td bgcolor="#00ff00"> </td>
- <td bgcolor="#00ff00"> </td>
- <td bgcolor="#ff0000"> </td>
- <td bgcolor="#ff0000"> </td>
- <td bgcolor="#00ff00"> </td>
-</tr>
-<tr>
- <td>Arrays</td>
- <td>int[]</td>
- <td bgcolor="#00ff00"> </td>
- <td bgcolor="#00ff00"> </td>
- <td bgcolor="#ff0000"> </td>
- <td bgcolor="#ff0000"> </td>
- <td bgcolor="#00ff00"> </td>
-</tr>
-<tr>
- <td>Delegates</td>
- <td>delegate void DelegateT();</td>
- <td bgcolor="#00ff00"> </td>
- <td bgcolor="#00ff00"> </td>
- <td bgcolor="#ff0000"> </td>
- <td bgcolor="#ff0000"> </td>
- <td bgcolor="#00ff00"> </td>
-</tr>
-<tr>
- <td>Interfaces</td>
- <td>interface Interface {}</td>
- <td bgcolor="#ff0000"> </td>
- <td bgcolor="#00ff00"> </td>
- <td bgcolor="#ff0000"> </td>
- <td bgcolor="#ff0000"> </td>
- <td bgcolor="#00ff00"> </td>
-</tr>
-<tr>
- <td>Pointers</td>
- <td>int*</td>
- <td bgcolor="#00ff00"> </td>
- <td bgcolor="#ff0000"> </td>
- <td bgcolor="#ff0000"> </td>
- <td bgcolor="#ff0000"> </td>
- <td bgcolor="#ff0000"> </td>
-</tr>
-<tr height="10" />
-<tr>
- <td>Value types</td>
- <td>int</td>
- <td bgcolor="#ff0000"> </td>
- <td bgcolor="#ff0000"> </td>
- <td bgcolor="#00ff00"> </td>
- <td bgcolor="#00ff00"> </td>
- <td bgcolor="#00ff00"> </td>
-</tr>
-<tr>
- <td>Enumerations</td>
- <td>enum EnumT {}</td>
- <td bgcolor="#ff0000"> </td>
- <td bgcolor="#ff0000"> </td>
- <td bgcolor="#00ff00"> </td>
- <td bgcolor="#00ff00"> </td>
- <td bgcolor="#00ff00"> </td>
-</tr>
-<tr>
- <td>Nullable value types</td>
- <td>int?</td>
- <td bgcolor="#ff0000"> </td>
- <td bgcolor="#ff0000"> </td>
- <td bgcolor="#00ff00"> </td>
- <td bgcolor="#ff0000"> </td>
- <td bgcolor="#00ff00"> </td>
-</tr>
-<tr>
- <td>Void</td>
- <td>void</td>
- <td bgcolor="#ff0000"> </td>
- <td bgcolor="#ff0000"> </td>
- <td bgcolor="#00ff00"> </td>
- <td bgcolor="#ff0000"> </td>
- <td bgcolor="#ff0000"> </td>
-</tr>
-  </table>
+{:.table .table-striped}
+|Category|Example Type|IsClass|Satisfies class Constraint|IsValueType|Satisfies struct Constraint|Satisfies Without Constraints|
+|-
+|Classes|class Class {}|&nbsp;|&nbsp;|&nbsp;|&nbsp;|&nbsp;|
+|Arrays|int[]|&nbsp;|&nbsp;|&nbsp;|&nbsp;|&nbsp;|
+|Delegates|delegate void DelegateT();|&nbsp;|&nbsp;|&nbsp;|&nbsp;|&nbsp;|
+|Interfaces|interface Interface {}|&nbsp;|&nbsp;|&nbsp;|&nbsp;|&nbsp;|
+|Pointers|int*|&nbsp;|&nbsp;|&nbsp;|&nbsp;|&nbsp;|
+|
+|Value types|int|&nbsp;|&nbsp;|&nbsp;|&nbsp;|&nbsp;|
+|Enumerations|enum EnumT {}|&nbsp;|&nbsp;|&nbsp;|&nbsp;|&nbsp;|
+|Nullable value types|int?|&nbsp;|&nbsp;|&nbsp;|&nbsp;|&nbsp;|
+|Void|void|&nbsp;|&nbsp;|&nbsp;|&nbsp;|&nbsp;|
+
 </div>
 
 ## Interfaces are a Bit Weird

@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Option Parsing: Error Handling"
-series: "Option parsing"
+series: "Option Parsing"
 seriesTitle: "Error Handling"
 ---
 The [Nito.KitchenSink Option Parsing Library](http://www.nuget.org/List/Packages/Nito.KitchenSink.OptionParsing) wraps all option parsing errors into an exception derived from **Nito.KitchenSink.OptionParsing.OptionParsingException**. There are three more specific exception types (**InvalidParameterException**, **OptionArgumentException**, and **UnknownOptionException**), but they are seldomly needed.
