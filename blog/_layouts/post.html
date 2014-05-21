@@ -16,38 +16,34 @@ layout: default
     
     <footer>
         {% if page.series %}
-        {% assign sawSelf = false %}
-        {% assign takeNext = false %}
-        {% assign siblings = site.posts | sort 'date' | sort 'seriesIndex' %}
-        {% for sibling in siblings %}
-        {% if sibling.series == page.series %}
-        {% if takeNext %}
-        {% assign nextSibling = sibling %}
-        {% assign takeNext = false %}
+            {% assign sawSelf = false %}
+            {% assign takeNext = false %}
+            {% assign siblings = site.posts | sort 'date' | sort 'seriesIndex' %}
+            {% for sibling in siblings %}
+                {% if sibling.series == page.series %}
+                    {% if takeNext %}
+                        {% assign nextSibling = sibling %}
+                        {% assign takeNext = false %}
+                    {% endif %}
+                    {% if sibling.id == page.id %}
+                        {% assign sawSelf = true %}
+                        {% assign takeNext = true %}
+                    {% endif %}
+                    {% unless sawSelf %}
+                        {% assign previousSibling = sibling %}
+                    {% endunless %}
+                {% endif %}
+            {% endfor %}
+
+            <ul class="pager">
+                {% if previousSibling %}<li class="previous"><a href="{{ previousSibling.url }}" title="{{ previousSibling.title | escape }}">&larr; Previous in {{ page.series }}</a></li>{% endif %}
+                {% if nextSibling %}<li class="next"><a href="{{ nextSibling.url }}" title="{{ nextSibling.title | escape }}">Next in {{ page.series }} &rarr;</a></li>{% endif %}
+            </ul>
         {% endif %}
-        {% if sibling.id == page.id %}
-        {% assign sawSelf = true %}
-        {% assign takeNext = true %}
-        {% endif %}
-        {% unless sawSelf %}
-        {% assign previousSibling = sibling %}
-        {% endunless %}
-        {% endif %}
-        {% endfor %}
 
         <ul class="pager">
-            {% if previousSibling %}
-            <li class="previous"><a href="{{ previousSibling.url }}" title="{{ previousSibling.title | escape }}">&larr; Previous in {{ page.series }}</a></li>{% endif %}
-            {% if nextSibling %}
-            <li class="next"><a href="{{ nextSibling.url }}" title="{{ nextSibling.title | escape }}">Next in {{ page.series }} &rarr;</a></li>{% endif %}
-        </ul>
-        {% endif %}
-
-        <ul class="pager">
-            {% if page.previous %}
-            <li class="previous"><a href="{{ page.previous.url }}" title="{{ page.previous.title | escape }}">&larr; Previous Post</a></li>{% endif %}
-            {% if page.next %}
-            <li class="next"><a href="{{ page.next.url }}" title="{{ page.next.title | escape }}">Next Post &rarr;</a></li>{% endif %}
+            {% if page.previous %}<li class="previous"><a href="{{ page.previous.url }}" title="{{ page.previous.title | escape }}">&larr; Previous Post</a></li>{% endif %}
+            {% if page.next %}<li class="next"><a href="{{ page.next.url }}" title="{{ page.next.title | escape }}">Next Post &rarr;</a></li>{% endif %}
         </ul>
 
         <div class="panel panel-default">
