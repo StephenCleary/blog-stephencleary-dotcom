@@ -37,14 +37,14 @@ layout: default
         {% endfor %}
         
         <ul class="pager">
-            {% if previousSibling %}<li class="previous"><a href="{{ previousSibling.url }}">&larr; Previous in {{ page.series }}</a></li>{% endif %}
-            {% if nextSibling %}<li class="next"><a href="{{ nextSibling.url }}">Next in {{ page.series }} &rarr;</a></li>{% endif %}
+            {% if previousSibling %}<li class="previous"><a href="{{ previousSibling.url }}" title="{{ previousSibling.title | escape }}">&larr; Previous in {{ page.series }}</a></li>{% endif %}
+            {% if nextSibling %}<li class="next"><a href="{{ nextSibling.url }}" title="{{ nextSibling.title | escape }}">Next in {{ page.series }} &rarr;</a></li>{% endif %}
         </ul>
         {% endif %}
 
         <ul class="pager">
-            {% if page.previous %}<li class="previous"><a href="{{ page.previous.url }}">&larr; Previous Post</a></li>{% endif %}
-            {% if page.next %}<li class="next"><a href="{{ page.next.url }}">Next Post &rarr;</a></li>{% endif %}
+            {% if page.previous %}<li class="previous"><a href="{{ page.previous.url }}" title="{{ page.previous.title | escape }}">&larr; Previous Post</a></li>{% endif %}
+            {% if page.next %}<li class="next"><a href="{{ page.next.url }}" title="{{ page.next.title | escape }}">Next Post &rarr;</a></li>{% endif %}
         </ul>
 
         <div id="disqus_thread"></div>
