@@ -28,7 +28,7 @@ namespace ImportBlog
             { "async oop", "Async OOP" },
             { "Task members", "A Tour of Task" },
             { "Task.Run vs BackgroundWorker", "Task.Run vs. BackgroundWorker" },
-            { "Option Parsing", "Option parsing" },
+            { "Option Parsing", "Option Parsing" },
         };
 
         static void Main(string[] args)
@@ -77,7 +77,7 @@ namespace ImportBlog
                                     seriesTitle = title.Substring(title.LastIndexOf(':') + 1).Trim();
                                 sb.AppendLine("series: " + YamlString(KnownSeries[series]));
                                 sb.AppendLine("seriesTitle: " + YamlString(seriesTitle));
-                                log.WriteLine("series: " + published + ": " + title);
+                                //log.WriteLine("series: " + published + ": " + title);
                             }
                             //sb.AppendLine("tags: [" + string.Join(", ", tags.Select(YamlString)) + "]");
                             sb.AppendLine("---");
@@ -250,7 +250,7 @@ namespace ImportBlog
                                 var filename = Directory.EnumerateFiles("_posts", "*" + Path.GetFileNameWithoutExtension(href) + ".*").FirstOrDefault();
                                 if (filename == null)
                                 {
-                                    _log.WriteLine("Post " +  Path.GetFileNameWithoutExtension(href) + " not found: " + _published + ": " + _title);
+                                    //_log.WriteLine("Post " +  Path.GetFileNameWithoutExtension(href) + " not found: " + _published + ": " + _title);
                                     sb.Append("[" + Parse(child) + "]({ % post_url TODO % })");
                                 }
                                 else
@@ -277,11 +277,12 @@ namespace ImportBlog
                             else
                             {
                                 sb.Append("[" + Parse(child) + "](" + href + ")");
-                                _log.WriteLine("a (" + href + "): " + _published + ": " + _title);
+                                //_log.WriteLine("a (" + href + "): " + _published + ": " + _title);
                             }
                         }
                         else if (child.Name == "blockquote")
                         {
+                            _log.WriteLine("blockquote: " + _published + ": " + _title);
                             var text = Parse(child).Trim().Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
                             foreach (var line in text)
                                 sb.Append("> " + line + "\r\n");
@@ -332,7 +333,7 @@ namespace ImportBlog
                         }
                         else if (child.Name == "div")
                         {
-                            _log.WriteLine("div: " + _published + ": " + _title);
+                            //_log.WriteLine("div: " + _published + ": " + _title);
                             if (!child.Attributes().Any())
                                 sb.Append(Parse(child));
                             else

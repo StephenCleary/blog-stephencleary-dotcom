@@ -1,19 +1,40 @@
 /* Layout Styles */
 /* ----------------------------------------------------------*/
 
-body {
-    padding-top: 70px;
+html {
+    font-size: 1.25rem;
 }
 
-@media(max-width:954px) {
+body {
+    padding-top: 70px;
+    font-size: inherit;
+}
+
+pre {
+    font-size: smaller;
+}
+
+.affix {
+    top: 90px;
+    bottom: 0;
+    overflow-y: auto;
+}
+
+@media(max-width:1040px) {
     body {
         padding-top: 120px;
     }
+    .affix {
+        top: 140px;
+    }
 }
 
-@media(max-width:813px) {
+@media(max-width:899px) {
     body {
         padding-top: 170px;
+    }
+    .affix {
+        top: 190px;
     }
 }
 
@@ -27,6 +48,13 @@ body {
     height: auto;
 }
 
+.sidebar img {
+    /* Responsive images */
+    display: inline-block;
+    height: auto;
+    max-width: 100%;
+}
+
 @media(max-width:767px) {
     .affix {
         position: static;
@@ -37,7 +65,12 @@ body {
     margin-top: 0;
 }
 
+.center {
+    text-align: center;
+}
+
 /* Fixes for Google Custom Search in a Bootstrap navbar */
+/* ----------------------------------------------------------*/
 .google, .google *, .google *:before, .google *:after {
     -webkit-box-sizing: content-box;
     -moz-box-sizing: content-box;
@@ -59,10 +92,6 @@ body {
 
 /* Post styles */
 /* ----------------------------------------------------------*/
-
-.post .center {
-    text-align: center;
-}
 
 .post img {
     /* Responsive images */
