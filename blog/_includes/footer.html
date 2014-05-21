@@ -1,6 +1,45 @@
-<!-- jQuery and Bootstrap -->
-<script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+<!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
 <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function () {
+    var cx = '010726907120068132004:eyobwwlvfpa';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
 
 <!-- Disqus comment counter -->
 <script type="text/javascript">
@@ -15,11 +54,13 @@ var disqus_shortname = 'stephencleary';
 
 <!-- Disqus comment section, lazy-loaded -->
 <script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoint.min.js"><\/script>')</script>
 <script type="text/javascript">
-    var disqus_loaded = false;
-    var disqus_identifier = "{{ page.id }}";
-    var disqus_title = "{% if page.title %}{{ page.title }}{% else %}{{ site.title }}{% endif %}";
-    var disqus_url = "{{ page.url | replace:'index.html','' | prepend: site.baseurl | prepend: site.url }}";
+var disqus_loaded = false;
+var disqus_identifier = "{{ page.id | escape }}";
+var disqus_title = "{% if page.title %}{{ page.title | escape }}{% else %}{{ site.title | escape }}{% endif %}";
+var disqus_url = "{{ page.url | replace:'index.html','' | prepend: site.baseurl | prepend: site.url }}";
+(function($) {
     $('.pager').waypoint({
         offset: 'bottom-in-view',
         handler: function () {
@@ -27,8 +68,9 @@ var disqus_shortname = 'stephencleary';
                 return;
             disqus_loaded = true;
             var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-            dsq.src = '//stephencleary.disqus.com/embed.js';
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
             (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
         }
     });
+})(window.jQuery);
 </script>
