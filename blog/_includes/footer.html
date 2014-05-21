@@ -1,5 +1,19 @@
+<!-- jQuery and Bootstrap -->
 <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
 <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
 <script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
 <script type="text/javascript">
     var disqus_loaded = false;
@@ -9,7 +23,6 @@
     $('.pager').waypoint({
         offset: 'bottom-in-view',
         handler: function () {
-            console.log("Loading...");
             if (disqus_loaded)
                 return;
             disqus_loaded = true;
