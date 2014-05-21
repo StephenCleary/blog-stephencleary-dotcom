@@ -27,7 +27,9 @@ Let's consider each of these in turn.
 
 Now, I'm not saying to _never_ use Task.Factory.StartNew. If you're writing a low-level, general-purpose async library, then there are some rare situations where you do want to use StartNew. But for the vast majority of async code, Task.Factory.StartNew is a mistake.
 
-> As a side note, the context of this discussion is _async code_. If you're writing _parallel code_ (e.g., [dynamic task-based parallelism](http://msdn.microsoft.com/en-us/library/ff963551.aspx)), then StartNew is the tool you want to use.
+<div class="alert alert-info" markdown="1">
+As a side note, the context of this discussion is _async code_. If you're writing _parallel code_ (e.g., [dynamic task-based parallelism](http://msdn.microsoft.com/en-us/library/ff963551.aspx){:.alert-link}), then StartNew is the tool you want to use.
+</div>
 
 ## Why Not to Use Task.Factory.StartNew?
 

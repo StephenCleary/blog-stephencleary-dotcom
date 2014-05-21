@@ -2,7 +2,11 @@
 layout: post
 title: "Announcement: AspNetBackgroundTasks NuGet library"
 ---
-> **Update, 2014-05-07: ** This library just won the "shortest lifetime" award. One month after I released this library, [.NET Framework 4.5.2 introduced `HostingEnvironment.QueueBackgroundWorkItem`](http://msdn.microsoft.com/en-us/library/ms171868(v=vs.110).aspx#v452), which effectively rendered this library obsolete. On .NET 4.5.2, you can use the new API instead of the `BackgroundTaskManager.Run` in the AspNetBackgroundTasks library. However, it's still almost always the wrong solution.
+<div class="alert alert-danger" markdown="1">
+<i class="fa fa-exclamation-triangle fa-3x pull-left"></i>
+
+**Update, 2014-05-07:** This library just won the "shortest lifetime" award. One month after I released this library, [.NET Framework 4.5.2 introduced `HostingEnvironment.QueueBackgroundWorkItem`](http://msdn.microsoft.com/en-us/library/ms171868(v=vs.110).aspx#v452){:.alert-link}, which effectively rendered this library obsolete. On .NET 4.5.2, you can use the new API instead of the `BackgroundTaskManager.Run` in the AspNetBackgroundTasks library. However, it's still almost always the wrong solution.
+</div>
 
 Yielding to popular demand - and against my better judgement - I have created a NuGet package for the code [I previously wrote]({% post_url 2012-12-13-returning-early-from-aspnet-requests %}) for handling "fire-and-forget" tasks in ASP.NET.
 
