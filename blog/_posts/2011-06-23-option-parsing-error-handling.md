@@ -10,6 +10,8 @@ All steps of the option parsing pipeline should only throw exceptions derived fr
 
 The following example program shows how option parsing errors should be handled in a console application:
 
+{% highlight csharp %}
+
 using System;
 using Nito.KitchenSink.OptionParsing;
 
@@ -53,6 +55,7 @@ class Program
     }
   }
 }
+{% endhighlight %}
 
 First, the **Options** class is declared, which defines the options our program takes. It also exposes a **Usage** method, which displays command-line usage information. **Usage** writes its information to **Console.Error** and returns an error code.
 

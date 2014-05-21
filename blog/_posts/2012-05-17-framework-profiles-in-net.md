@@ -22,8 +22,8 @@ Note that the Version applies to the Identifier; there is no version on a Profil
 
 You can type the following into the Package Manager Console window to view the target framework for any project:
 
-$p = Get-Project "MyProjectName"
-$p.Properties.Item("TargetFrameworkMoniker").Value
+    $p = Get-Project "MyProjectName"
+    $p.Properties.Item("TargetFrameworkMoniker").Value
 
 ## Known Framework Identifiers and Profiles
 

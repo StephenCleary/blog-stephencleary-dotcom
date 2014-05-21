@@ -192,19 +192,26 @@ namespace ImportBlog
                         {
                             sb.Append("**" + Parse(child) + "**");
                         }
-                        else if (child.Name == "pre")
+                        else if (child.Name == "pre" && !(child.Attribute("class") != null && child.Attribute("class").Value.Contains("brush")))
                         {
                             _inPre = true;
-                            sb.Append(Parse(child));
+                            if (child.Element("code") != null)
+                                sb.Append(Parse(child));
+                            else
+                            {
+                                var text = Parse(child).Trim().Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+                                foreach (var line in text)
+                                    sb.Append("    " + line + "\r\n");
+                            }
                             _inPre = false;
                         }
-                        else if (child.Name == "code")
+                        else if (child.Name == "code" || (child.Name == "pre" && child.Attribute("class") != null && child.Attribute("class").Value.Contains("brush")))
                         {
-                            if (_inPre)
+                            if (_inPre || child.Name == "pre")
                             {
                                 var attribute = child.Attribute("class");
                                 var type = attribute == null ? null : attribute.Value;
-                                if (type == "csharp")
+                                if (type == "csharp" || type == "brush:csharp")
                                     sb.Append("{% highlight csharp %}\r\n" + Parse(child) + "{% endhighlight %}");
                                 else if (type == "xml")
                                     sb.Append("{% highlight xml %}\r\n" + Parse(child) + "{% endhighlight %}");

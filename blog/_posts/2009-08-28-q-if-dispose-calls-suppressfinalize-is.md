@@ -139,37 +139,37 @@ public class Test : IDisposable
 
 ## Output with [2] commented out (as written above):
 
-Thread 1: CloseHandle starting
-Thread 1: Garbage collection in CloseHandle!
-Thread 2: Finalizer called
-Thread 2: CloseHandle starting
-Thread 2: Released handle 0x1
-Thread 1: CloseHandle continuing after garbage collection
-Thread 1: Released handle 0x1
-  ReleaseHandle double-released a handle! Bad, bad, bad!
-Thread 1: CloseHandle ending
-Thread 1: Returning from Main
-Thread 2: CloseHandle ending
+    Thread 1: CloseHandle starting
+    Thread 1: Garbage collection in CloseHandle!
+    Thread 2: Finalizer called
+    Thread 2: CloseHandle starting
+    Thread 2: Released handle 0x1
+    Thread 1: CloseHandle continuing after garbage collection
+    Thread 1: Released handle 0x1
+      ReleaseHandle double-released a handle! Bad, bad, bad!
+    Thread 1: CloseHandle ending
+    Thread 1: Returning from Main
+    Thread 2: CloseHandle ending
 
 ## Output with [1] and [2] commented out:
 
-Thread 1: CloseHandle starting
-Thread 1: Garbage collection in CloseHandle!
-Thread 2: Finalizer called
-Thread 2: CloseHandle starting
-Thread 2: Released handle 0x1
-Thread 2: CloseHandle ending
-Thread 1: CloseHandle continuing after garbage collection
-Thread 1: Released handle 0x0
-  ReleaseHandle released a bad handle! Bad, bad, bad!
-Thread 1: CloseHandle ending
-Thread 1: Returning from Main
+    Thread 1: CloseHandle starting
+    Thread 1: Garbage collection in CloseHandle!
+    Thread 2: Finalizer called
+    Thread 2: CloseHandle starting
+    Thread 2: Released handle 0x1
+    Thread 2: CloseHandle ending
+    Thread 1: CloseHandle continuing after garbage collection
+    Thread 1: Released handle 0x0
+      ReleaseHandle released a bad handle! Bad, bad, bad!
+    Thread 1: CloseHandle ending
+    Thread 1: Returning from Main
 
 ## Output with neither line commented out, OR with just [1] commented out:
 
-Thread 1: CloseHandle starting
-Thread 1: Garbage collection in CloseHandle!
-Thread 1: CloseHandle continuing after garbage collection
-Thread 1: Released handle 0x1
-Thread 1: CloseHandle ending
-Thread 1: Returning from Main
+    Thread 1: CloseHandle starting
+    Thread 1: Garbage collection in CloseHandle!
+    Thread 1: CloseHandle continuing after garbage collection
+    Thread 1: Released handle 0x1
+    Thread 1: CloseHandle ending
+    Thread 1: Returning from Main

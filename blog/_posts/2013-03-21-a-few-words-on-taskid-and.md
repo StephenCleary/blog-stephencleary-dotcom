@@ -59,9 +59,9 @@ class Program
 
 This program takes about 3 minutes on my machine to observe an identifier collision. The output is:
 
-Id collision!
-  task.Id == other.Id: True
-  task == other: False
+    Id collision!
+      task.Id == other.Id: True
+      task == other: False
 
 Note that `Saw Id of 0!` is _not_ in the output; the task identifiers worked their way through all possible `int` values but skipped over zero.
 

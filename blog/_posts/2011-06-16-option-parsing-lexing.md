@@ -18,28 +18,31 @@ The command shell also supports quoting; special characters may be passed within
 
 The shell escaping and quoting appears to be a simple algorithm: escaped characters (including normal characters) are passed through directly, and each (non-escaped) double-quote either starts or ends a quoted string. Consider the outputs from this example program:
 
+{% highlight csharp %}
+
 static void Main(string[] args)
 {
   Console.WriteLine(Environment.CommandLine);
 }
+{% endhighlight %}
 
-> CommandLineParsingTest.exe ^^ "^"
-CommandLineParsingTest.exe ^ "^"
-
-> CommandLineParsingTest.exe ^"^"
-CommandLineParsingTest.exe ""
-
-> CommandLineParsingTest.exe ^""
-CommandLineParsingTest.exe ""
-
-> CommandLineParsingTest.exe "^"^"
-CommandLineParsingTest.exe "^""
-
-> CommandLineParsingTest.exe "^"^^"
-CommandLineParsingTest.exe "^"^"
-
-> CommandLineParsingTest.exe "^^
-CommandLineParsingTest.exe "^^
+    > CommandLineParsingTest.exe ^^ "^"
+    CommandLineParsingTest.exe ^ "^"
+    
+    > CommandLineParsingTest.exe ^"^"
+    CommandLineParsingTest.exe ""
+    
+    > CommandLineParsingTest.exe ^""
+    CommandLineParsingTest.exe ""
+    
+    > CommandLineParsingTest.exe "^"^"
+    CommandLineParsingTest.exe "^""
+    
+    > CommandLineParsingTest.exe "^"^^"
+    CommandLineParsingTest.exe "^"^"
+    
+    > CommandLineParsingTest.exe "^^
+    CommandLineParsingTest.exe "^^
 
 Shell escaping and quoting are applied to every process by the Command Shell; there is no way to opt out of this behavior. After the command shell does its own escaping and quoting, the command line is passed to the program.
 
@@ -51,52 +54,55 @@ The .NET lexing also uses a combination of escaping and quoting, but it has some
 
 Each non-escaped double-quote starts or ends a quoted string, just like command shell quoting. However, unlike command shell quoting, escaping is allowed within quoted strings. The .NET lexing also allows two consecutive double-quotes inside a quoted string to represent a single double-quote. Consider the outputs from this example program:
 
+{% highlight csharp %}
+
 static void Main(string[] args)
 {
   foreach (var arg in args)
     Console.WriteLine(arg);
 }
+{% endhighlight %}
 
-> CommandLineParsingTest.exe "a"
-a
-
-> CommandLineParsingTest.exe \"a"
-"a
-
-> CommandLineParsingTest.exe \"a
-"a
-
-> CommandLineParsingTest.exe "a\"
-a"
-
-> CommandLineParsingTest.exe "a\\"
-a\
-
-> CommandLineParsingTest.exe a \"
-a
-"
-
-> CommandLineParsingTest.exe "a \\"
-a \
-
-> CommandLineParsingTest.exe "a\"b"
-a"b
-
-> CommandLineParsingTest.exe "a""b"
-a"b
-
-> CommandLineParsingTest.exe a "" """"
-a
-
-"
+    > CommandLineParsingTest.exe "a"
+    a
+    
+    > CommandLineParsingTest.exe \"a"
+    "a
+    
+    > CommandLineParsingTest.exe \"a
+    "a
+    
+    > CommandLineParsingTest.exe "a\"
+    a"
+    
+    > CommandLineParsingTest.exe "a\\"
+    a\
+    
+    > CommandLineParsingTest.exe a \"
+    a
+    "
+    
+    > CommandLineParsingTest.exe "a \\"
+    a \
+    
+    > CommandLineParsingTest.exe "a\"b"
+    a"b
+    
+    > CommandLineParsingTest.exe "a""b"
+    a"b
+    
+    > CommandLineParsingTest.exe a "" """"
+    a
+    
+    "
 
 This lexing behavior is particularly problematic when passing directories. Since directories may contain spaces, they should be wrapped with quotes. However, if the directory ends with a backslash, the closing quote will be escaped:
 
-> CommandLineParsingTest.exe "c:\my path"
-c:\my path
-
-> CommandLineParsingTest.exe "c:\my path\"
-c:\my path"
+    > CommandLineParsingTest.exe "c:\my path"
+    c:\my path
+    
+    > CommandLineParsingTest.exe "c:\my path\"
+    c:\my path"
 
 This is a rather serious limitation of the default .NET lexer. It is possible to write your own replacement lexer using a different algorithm. This lexer would take the process command line as input and produce a sequence of strings.
 

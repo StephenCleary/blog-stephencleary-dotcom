@@ -32,11 +32,11 @@ I haven't had a chance to play with it much, but it apparently uses profiling ho
 
 If we wanted to override the getter for System.DateTime.Now, then we would set a property on System.Stubs.MDateTime. Here's the DateTime.Now example code from the Moles/Stubs site:
 
-// let's detour DateTime.Now
-MDateTime.NowGet = () => new DateTime(2000,1,1);
-
-if (DateTime.Now == new DateTime(2000, 1, 1))
-    throw new Y2KBugException(); // take cover!
+    // let's detour DateTime.Now
+    MDateTime.NowGet = () => new DateTime(2000,1,1);
+    
+    if (DateTime.Now == new DateTime(2000, 1, 1))
+        throw new Y2KBugException(); // take cover!
 
 By setting the MDateTime.NowGet property, you're able to specify the behavior of DateTime.Now.
 

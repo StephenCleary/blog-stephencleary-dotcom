@@ -12,14 +12,19 @@ This post is not an introduction to the Async CTP; there's plenty of tutorial re
 
 When returning a value from an **async** method, the method body returns the value directly, but the method itself is declared as returning a **Task<TResult>**. There is a bit of "disconnect" when you declare a method returning one type and have to return another type:
 
+{% highlight csharp %}
+
 // Actual syntax
 public async Task<int> GetValue()
 {
   await TaskEx.Delay(100);
   return 13; // Return type is "int", not "Task<int>"
 }
+{% endhighlight %}
 
 Question: Why can't I write this:
+
+{% highlight csharp %}
 
 // Hypothetical syntax
 public async int GetValue()
@@ -27,6 +32,7 @@ public async int GetValue()
   await TaskEx.Delay(100);
   return 13; // Return type is "int"
 }
+{% endhighlight %}
 
 Consider: How will the method signature look to callers? Async methods that return a value must have an actual result type of **Task<TResult>**. So **GetValue** will show up in IntelliSense as returning **Task<TResult>** (this would also be true for the object browser, Reflector, etc).
 
@@ -42,12 +48,15 @@ Inferring the return type would remove the distinction between **async void** an
 
 There is still a "disconnect" between the method declaration return type and the method body return type. Another option that [has been suggested](http://gauravsmathur.wordpress.com/2010/11/04/something-wrong-with-async-await-and-the-tasktask/) is to add a keyword to **return** to indicate that the value given to **return** is not really what's being returned, e.g.:
 
+{% highlight csharp %}
+
 // Hypothetical syntax
 public async Task<int> GetValue()
 {
   await TaskEx.Delay(100);
   async return 13; // "async return" means the value will be wrapped in a Task
 }
+{% endhighlight %}
 
 Consider: Converting large amounts of code from synchronous to asynchronous.
 
@@ -59,6 +68,8 @@ The **async** keyword _must_ be applied to a method that makes use of **await**.
 
 Question: Why can't **async** be inferred based on the presence of **await**:
 
+{% highlight csharp %}
+
 // Hypothetical syntax
 public Task<int> GetValue()
 {
@@ -66,6 +77,7 @@ public Task<int> GetValue()
   await TaskEx.Delay(100);
   return 13;
 }
+{% endhighlight %}
 
 Consider: Backwards compatibility and code readability.
 
@@ -77,6 +89,8 @@ To summarize, a single-word **await** keyword would be too big of a breaking cha
 
 Question: Since it makes sense to explicitly include **async** (see above), why can't **await** be inferred based on the presence of **async**:
 
+{% highlight csharp %}
+
 // Hypothetical syntax
 public async Task<int> GetValue()
 {
@@ -84,12 +98,15 @@ public async Task<int> GetValue()
   TaskEx.Delay(100);
   return 13;
 }
+{% endhighlight %}
 
 Consider: Parallel composition of asynchronous operations.
 
 At first glance, inferring **await** appears to simplify basic asynchronous operations. As long as all waiting is done in serial (i.e., one operation is awaited, then another, and then another), this works fine. However, it falls apart when one considers parallel composition.
 
 Parallel composition in the Async CTP is done using **TaskEx.WhenAny** and **TaskEx.WhenAll** methods. Here's a simple example which starts two operations immediately and asynchronously waits for both of them to complete:
+
+{% highlight csharp %}
 
 // Actual syntax
 public async Task<int> GetValue()
@@ -107,6 +124,7 @@ public async Task<int> GetValue()
   int value2 = await part2; // Does not actually wait.
   return value1 + value2;
 }
+{% endhighlight %}
 
 In order to do parallel composition, we must have the ability to say we're _not_ going to **await** an expression.
 

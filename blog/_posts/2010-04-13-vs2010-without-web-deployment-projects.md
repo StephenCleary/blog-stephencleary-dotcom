@@ -12,14 +12,14 @@ We have limited bandwidth at home (Northern Michigan, remember...), so I've used
 
 VS2010 will ignore pdb files if you check the "Exclude generated debug symbols" under the "Package/Publish Web" tab. Other files are still thrown in the mix, though, unless you add this to your project file:
 
-  <PropertyGroup>
-    <ExcludeFilesFromPackage>true</ExcludeFilesFromPackage>
-  </PropertyGroup>
-  <ItemGroup>
-    <ExcludeFromPackageFiles Include="$(ProjectDir)bin\*.xml">
-      <FromTarget>Project</FromTarget>
-    </ExcludeFromPackageFiles>
-  </ItemGroup>
+    <PropertyGroup>
+        <ExcludeFilesFromPackage>true</ExcludeFilesFromPackage>
+      </PropertyGroup>
+      <ItemGroup>
+        <ExcludeFromPackageFiles Include="$(ProjectDir)bin\*.xml">
+          <FromTarget>Project</FromTarget>
+        </ExcludeFromPackageFiles>
+      </ItemGroup>
 
 This is very similar to WDP's ExcludeFromBuild item group that uses the SourceWebPhysicalPath property. There are two major differences: the ExcludeFilesFromPackage property needs to be set (otherwise, the ExcludeFromPackageFiles item group would be ignored), and the ProjectDir property ends in a backslash (whereas the SourceWebPhysicalPath property did not).
 
@@ -29,7 +29,7 @@ VS2010 does not have the option of precompiling ASP.NET web applications (it wil
 
 It's possible to force MVC views to be precompiled by placing this in a PropertyGroup in the project file (I prefer placing it in the PropertyGroup with the condition "Release|AnyCPU", so that it only takes effect on release builds):
 
-<MvcBuildViews>true</MvcBuildViews>
+    <MvcBuildViews>true</MvcBuildViews>
 
 This will cause the MVC views to be compiled, catching all compile-time errors at build time. Unfortunately, the compiled views are then thrown away instead of being merged into the web application assembly.
 

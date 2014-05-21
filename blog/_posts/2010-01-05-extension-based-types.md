@@ -20,157 +20,157 @@ EBTs are useful for end-user extensibility (and raising the level of abstraction
 
 Here's an example of an EBT that defines a single method, MethodA:
 
-public interface IMyInterface { }
-public sealed class MyImplementation : IMyInterface { }
-
-public static class MyMethods
-{
-    public static void MethodA(this IMyInterface @this) { Console.WriteLine("IMyInterface.MethodA()"); }
-}
-
-class Program
-{
-    static void Main()
+    public interface IMyInterface { }
+    public sealed class MyImplementation : IMyInterface { }
+    
+    public static class MyMethods
     {
-        var obj = new MyImplementation();
-        obj.MethodA(); // Prints: "IMyInterface.MethodA()"
-
-        Console.ReadKey();
+        public static void MethodA(this IMyInterface @this) { Console.WriteLine("IMyInterface.MethodA()"); }
     }
-}
+    
+    class Program
+    {
+        static void Main()
+        {
+            var obj = new MyImplementation();
+            obj.MethodA(); // Prints: "IMyInterface.MethodA()"
+    
+            Console.ReadKey();
+        }
+    }
 
 ## Simple Inheritance
 
 EBT inheritance is performed using interface inheritance. Here's an example of a base interface that defines MethodA and a derived interface defining MethodB; the derived interface ends up supporting both methods:
 
-public interface IBase { }
-public interface IDerived : IBase { }
-public sealed class Derived : IDerived { }
-
-public static class MyMethods
-{
-    public static void MethodA(this IBase @this) { Console.WriteLine("IBase.MethodA()"); }
-    public static void MethodB(this IDerived @this) { Console.WriteLine("IDerived.MethodB()"); }
-}
-
-class Program
-{
-    static void Main()
+    public interface IBase { }
+    public interface IDerived : IBase { }
+    public sealed class Derived : IDerived { }
+    
+    public static class MyMethods
     {
-        var obj = new Derived();
-        obj.MethodA(); // Prints: "IBase.MethodA()"
-        obj.MethodB(); // Prints: "IDerived.MethodB()"
-
-        Console.ReadKey();
+        public static void MethodA(this IBase @this) { Console.WriteLine("IBase.MethodA()"); }
+        public static void MethodB(this IDerived @this) { Console.WriteLine("IDerived.MethodB()"); }
     }
-}
+    
+    class Program
+    {
+        static void Main()
+        {
+            var obj = new Derived();
+            obj.MethodA(); // Prints: "IBase.MethodA()"
+            obj.MethodB(); // Prints: "IDerived.MethodB()"
+    
+            Console.ReadKey();
+        }
+    }
 
 ## Overriding Inherited Methods: Simple Overriding
 
 A derived EBT may override a base EBT method by defining its own method with an identical signature. Here's a derived type that overrides the MethodA defined by its base type:
 
-public interface IBase { }
-public sealed class Base : IBase { }
-public interface IDerived : IBase { }
-public sealed class Derived : IDerived { }
-
-public static class MyMethods
-{
-    public static void MethodA(this IBase @this) { Console.WriteLine("IBase.MethodA()"); }
-    public static void MethodA(this IDerived @this) { Console.WriteLine("IDerived.MethodA()"); }
-}
-
-class Program
-{
-    static void Main()
+    public interface IBase { }
+    public sealed class Base : IBase { }
+    public interface IDerived : IBase { }
+    public sealed class Derived : IDerived { }
+    
+    public static class MyMethods
     {
-        var obj1 = new Base();
-        obj1.MethodA(); // Prints: "IBase.MethodA()"
-
-        var obj2 = new Derived();
-        obj2.MethodA(); // Prints: "IDerived.MethodA()"
-
-        Console.ReadKey();
+        public static void MethodA(this IBase @this) { Console.WriteLine("IBase.MethodA()"); }
+        public static void MethodA(this IDerived @this) { Console.WriteLine("IDerived.MethodA()"); }
     }
-}
+    
+    class Program
+    {
+        static void Main()
+        {
+            var obj1 = new Base();
+            obj1.MethodA(); // Prints: "IBase.MethodA()"
+    
+            var obj2 = new Derived();
+            obj2.MethodA(); // Prints: "IDerived.MethodA()"
+    
+            Console.ReadKey();
+        }
+    }
 
 ## Overriding Inherited Methods: Invoking the Base Method
 
 In order to invoke the base method when the derived EBT overrides it, the compile-time type of the variable must explicitly be the base type. Here's an example that invokes the derived and base MethodA implementations on the same object:
 
-public interface IBase { }
-public interface IDerived : IBase { }
-public sealed class Derived : IDerived { }
-
-public static class MyMethods
-{
-    public static void MethodA(this IBase @this) { Console.WriteLine("IBase.MethodA()"); }
-    public static void MethodA(this IDerived @this) { Console.WriteLine("IDerived.MethodA()"); }
-}
-
-class Program
-{
-    static void Main()
+    public interface IBase { }
+    public interface IDerived : IBase { }
+    public sealed class Derived : IDerived { }
+    
+    public static class MyMethods
     {
-        var d = new Derived();
-        d.MethodA(); // Prints: "IDerived.MethodA()"
-
-        IBase b = d;
-        b.MethodA(); // Prints: "IBase.MethodA()"
-
-        Console.ReadKey();
+        public static void MethodA(this IBase @this) { Console.WriteLine("IBase.MethodA()"); }
+        public static void MethodA(this IDerived @this) { Console.WriteLine("IDerived.MethodA()"); }
     }
-}
+    
+    class Program
+    {
+        static void Main()
+        {
+            var d = new Derived();
+            d.MethodA(); // Prints: "IDerived.MethodA()"
+    
+            IBase b = d;
+            b.MethodA(); // Prints: "IBase.MethodA()"
+    
+            Console.ReadKey();
+        }
+    }
 
 For convenience, an "identity transformation method" is usually provided that restricts the type of a subexpression; this way, a separate variable is not necessary. By convention, the identity transformation method is named "As{I}". The following example shows how an "AsBase" method removes the need for the IBase variable:
 
-public interface IBase { }
-public interface IDerived : IBase { }
-public sealed class Derived : IDerived { }
-
-public static class MyMethods
-{
-    public static IBase AsBase(this IBase @this) { return @this; }
-    public static void MethodA(this IBase @this) { Console.WriteLine("IBase.MethodA()"); }
-    public static void MethodA(this IDerived @this) { Console.WriteLine("IDerived.MethodA()"); }
-}
-
-class Program
-{
-    static void Main()
+    public interface IBase { }
+    public interface IDerived : IBase { }
+    public sealed class Derived : IDerived { }
+    
+    public static class MyMethods
     {
-        var obj = new Derived().AsBase();
-        obj.MethodA(); // Prints: "IBase.MethodA()"
-
-        Console.ReadKey();
+        public static IBase AsBase(this IBase @this) { return @this; }
+        public static void MethodA(this IBase @this) { Console.WriteLine("IBase.MethodA()"); }
+        public static void MethodA(this IDerived @this) { Console.WriteLine("IDerived.MethodA()"); }
     }
-}
+    
+    class Program
+    {
+        static void Main()
+        {
+            var obj = new Derived().AsBase();
+            obj.MethodA(); // Prints: "IBase.MethodA()"
+    
+            Console.ReadKey();
+        }
+    }
 
 ## Overriding Inherited Methods: The Importance of Compile-Time Types
 
 It's important to note that the compile-time type of the expression is what's used for method overloading, so the EBT style of overriding inherited methods is _not_ like object-oriented virtual function overriding:
 
-public interface IBase { }
-public interface IDerived : IBase { }
-public sealed class Derived : IDerived { }
-
-public static class MyMethods
-{
-    public static IBase AsBase(this IBase @this) { return @this; }
-    public static void MethodA(this IBase @this) { Console.WriteLine("IBase.MethodA()"); }
-    public static void MethodA(this IDerived @this) { Console.WriteLine("IDerived.MethodA()"); }
-}
-
-class Program
-{
-    static void Main()
+    public interface IBase { }
+    public interface IDerived : IBase { }
+    public sealed class Derived : IDerived { }
+    
+    public static class MyMethods
     {
-        IBase obj = new Derived();
-        obj.MethodA(); // Prints: "IBase.MethodA()", NOT "IDervied.MethodA()"
-
-        Console.ReadKey();
+        public static IBase AsBase(this IBase @this) { return @this; }
+        public static void MethodA(this IBase @this) { Console.WriteLine("IBase.MethodA()"); }
+        public static void MethodA(this IDerived @this) { Console.WriteLine("IDerived.MethodA()"); }
     }
-}
+    
+    class Program
+    {
+        static void Main()
+        {
+            IBase obj = new Derived();
+            obj.MethodA(); // Prints: "IBase.MethodA()", NOT "IDervied.MethodA()"
+    
+            Console.ReadKey();
+        }
+    }
 
 In fact, even something as minor as missing a "using" statement could cause the wrong method to be called. Consider the case where "MethodA(this IDerived)" is defined in a class in a different namespace. It must be brought into scope via a "using" statement before it could be considered by method resolution.
 
@@ -178,86 +178,86 @@ In fact, even something as minor as missing a "using" statement could cause the 
 
 Multiple inheritance is supported for EBTs; any ambiguity causes a compiler error:
 
-public interface IBaseA { }
-public interface IBaseB { }
-public interface IDerived : IBaseA, IBaseB { }
-public sealed class Derived : IDerived { }
-
-public static class MyMethods
-{
-    public static void MethodA(this IBaseA @this) { Console.WriteLine("IBaseA.MethodA()"); }
-    public static void MethodA(this IBaseB @this) { Console.WriteLine("IBaseB.MethodA()"); }
-}
-
-class Program
-{
-    static void Main()
+    public interface IBaseA { }
+    public interface IBaseB { }
+    public interface IDerived : IBaseA, IBaseB { }
+    public sealed class Derived : IDerived { }
+    
+    public static class MyMethods
     {
-        var obj = new Derived();
-        obj.MethodA(); // Compiler error: ambiguous
-
-        Console.ReadKey();
+        public static void MethodA(this IBaseA @this) { Console.WriteLine("IBaseA.MethodA()"); }
+        public static void MethodA(this IBaseB @this) { Console.WriteLine("IBaseB.MethodA()"); }
     }
-}
+    
+    class Program
+    {
+        static void Main()
+        {
+            var obj = new Derived();
+            obj.MethodA(); // Compiler error: ambiguous
+    
+            Console.ReadKey();
+        }
+    }
 
 Ambiguity may be resolved by overriding the method in the derived EBT, or by constraining the compile-time type using the identity transformation method. The second approach is more flexible, since it allows any user-defined extensions. This example uses the second approach:
 
-public interface IBaseA { }
-public interface IBaseB { }
-public interface IDerived : IBaseA, IBaseB { }
-public sealed class Derived : IDerived { }
-
-public static class MyMethods
-{
-    public static IBaseA AsBaseA(this IBaseA @this) { return @this; }
-    public static void MethodA(this IBaseA @this) { Console.WriteLine("IBaseA.MethodA()"); }
-    public static IBaseB AsBaseB(this IBaseB @this) { return @this; }
-    public static void MethodA(this IBaseB @this) { Console.WriteLine("IBaseB.MethodA()"); }
-}
-
-class Program
-{
-    static void Main()
+    public interface IBaseA { }
+    public interface IBaseB { }
+    public interface IDerived : IBaseA, IBaseB { }
+    public sealed class Derived : IDerived { }
+    
+    public static class MyMethods
     {
-        var obj = new Derived();
-        obj.AsBaseA().MethodA(); // Prints: "IBaseA.MethodA()"
-        obj.AsBaseB().MethodA(); // Prints: "IBaseB.MethodA()"
-
-        Console.ReadKey();
+        public static IBaseA AsBaseA(this IBaseA @this) { return @this; }
+        public static void MethodA(this IBaseA @this) { Console.WriteLine("IBaseA.MethodA()"); }
+        public static IBaseB AsBaseB(this IBaseB @this) { return @this; }
+        public static void MethodA(this IBaseB @this) { Console.WriteLine("IBaseB.MethodA()"); }
     }
-}
+    
+    class Program
+    {
+        static void Main()
+        {
+            var obj = new Derived();
+            obj.AsBaseA().MethodA(); // Prints: "IBaseA.MethodA()"
+            obj.AsBaseB().MethodA(); // Prints: "IBaseB.MethodA()"
+    
+            Console.ReadKey();
+        }
+    }
 
 ## Properties
 
 Due to .NET limitations, properties may only be defined on interfaces (there's no such thing as an "extension property"). However, they may be simulated:
 
-public interface IBase { int Property { get; } }
-public interface IDerived : IBase { }
-public sealed class Derived : IDerived
-{
-    int IBase.Property
+    public interface IBase { int Property { get; } }
+    public interface IDerived : IBase { }
+    public sealed class Derived : IDerived
     {
-        get { return this.GetProperty(); }
+        int IBase.Property
+        {
+            get { return this.GetProperty(); }
+        }
     }
-}
-
-public static class MyMethods
-{
-    public static IBase AsBase(this IBase @this) { return @this; }
-    public static int GetProperty(this IDerived @this) { Console.WriteLine("IDerived.GetProperty()"); return 13; }
-}
-
-class Program
-{
-    static void Main()
+    
+    public static class MyMethods
     {
-        var obj = new Derived();
-        obj.GetProperty(); // Prints: "IDerived.GetProperty()"
-        int test = obj.AsBase().Property; // Prints: "IDerived.GetProperty()"
-
-        Console.ReadKey();
+        public static IBase AsBase(this IBase @this) { return @this; }
+        public static int GetProperty(this IDerived @this) { Console.WriteLine("IDerived.GetProperty()"); return 13; }
     }
-}
+    
+    class Program
+    {
+        static void Main()
+        {
+            var obj = new Derived();
+            obj.GetProperty(); // Prints: "IDerived.GetProperty()"
+            int test = obj.AsBase().Property; // Prints: "IDerived.GetProperty()"
+    
+            Console.ReadKey();
+        }
+    }
 
 One may think of this as the interface holding the property _declaration_ while the extension methods (derived EBT methods) hold the property _definition_.
 
@@ -267,33 +267,33 @@ Note that the property getter will always call the same derived method, regardle
 
 If a method is defined in the interface instead of as an extension method, then that method may never be overridden by a derived EBT type:
 
-public interface IBase { }
-public interface IDerived : IBase { void MethodA(); }
-public sealed class Derived : IDerived
-{
-    public void MethodA() { Console.WriteLine("Derived.MethodA()"); }
-}
-
-public static class MyMethods
-{
-    public static IBase AsBase(this IBase @this) { return @this; }
-    public static void MethodA(this IBase @this) { Console.WriteLine("IBase.MethodA()"); }
-    public static IDerived AsDerived(this IDerived @this) { return @this; }
-    public static void MethodA(this IDerived @this) { Console.WriteLine("IDerived.MethodA()"); }
-}
-
-class Program
-{
-    static void Main()
+    public interface IBase { }
+    public interface IDerived : IBase { void MethodA(); }
+    public sealed class Derived : IDerived
     {
-        var obj = new Derived();
-        obj.MethodA(); // Prints: "Derived.MethodA()"
-        obj.AsBase().MethodA(); // Prints: "IBase.MethodA()"
-        obj.AsDerived().MethodA(); // Prints: "Derived.MethodA()" (NOT "IDerived.MethodA")
-
-        Console.ReadKey();
+        public void MethodA() { Console.WriteLine("Derived.MethodA()"); }
     }
-}
+    
+    public static class MyMethods
+    {
+        public static IBase AsBase(this IBase @this) { return @this; }
+        public static void MethodA(this IBase @this) { Console.WriteLine("IBase.MethodA()"); }
+        public static IDerived AsDerived(this IDerived @this) { return @this; }
+        public static void MethodA(this IDerived @this) { Console.WriteLine("IDerived.MethodA()"); }
+    }
+    
+    class Program
+    {
+        static void Main()
+        {
+            var obj = new Derived();
+            obj.MethodA(); // Prints: "Derived.MethodA()"
+            obj.AsBase().MethodA(); // Prints: "IBase.MethodA()"
+            obj.AsDerived().MethodA(); // Prints: "Derived.MethodA()" (NOT "IDerived.MethodA")
+    
+            Console.ReadKey();
+        }
+    }
 
 For this reason, it is important to distill as many methods as possible out of the interface that defines the EBT.
 

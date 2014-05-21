@@ -63,20 +63,20 @@ class Program
 
 If you run this program, you'll see output like this:
 
-System.InvalidOperationException: I'm an asynchronous exception! Locate me if you can!
-   at Program.<>c__DisplayClass4.<MyMethodAsync>b__3() in e:\work_\projects\ConsoleApplication8\ConsoleApplication8\Program.cs:line 33
-   at System.Threading.Tasks.Task`1.InnerInvoke()
-   at System.Threading.Tasks.Task.Execute()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at System.Runtime.CompilerServices.TaskAwaiter.GetResult()
-   at Program.<MyMethodAsync>d__6.MoveNext() in e:\work_\projects\ConsoleApplication8\ConsoleApplication8\Program.cs:line 34
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at System.Runtime.CompilerServices.TaskAwaiter.GetResult()
-   at Program.<MainAsync>d__0.MoveNext() in e:\work_\projects\ConsoleApplication8\ConsoleApplication8\Program.cs:line 16
+    System.InvalidOperationException: I'm an asynchronous exception! Locate me if you can!
+       at Program.<>c__DisplayClass4.<MyMethodAsync>b__3() in e:\work_\projects\ConsoleApplication8\ConsoleApplication8\Program.cs:line 33
+       at System.Threading.Tasks.Task`1.InnerInvoke()
+       at System.Threading.Tasks.Task.Execute()
+    --- End of stack trace from previous location where exception was thrown ---
+       at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+       at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+       at System.Runtime.CompilerServices.TaskAwaiter.GetResult()
+       at Program.<MyMethodAsync>d__6.MoveNext() in e:\work_\projects\ConsoleApplication8\ConsoleApplication8\Program.cs:line 34
+    --- End of stack trace from previous location where exception was thrown ---
+       at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+       at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+       at System.Runtime.CompilerServices.TaskAwaiter.GetResult()
+       at Program.<MainAsync>d__0.MoveNext() in e:\work_\projects\ConsoleApplication8\ConsoleApplication8\Program.cs:line 16
 
 If you're familiar with mangled call stacks, you can see from the first entry that the exception was raised from a lambda expression in `MyMethodAsync`, and you even get the file name and line number. But the real question is: _how did the program get in this state?_ You can often answer that question by answering the closely related questions: _what called this method, and what called the calling method, etc?_ A regular call stack just isn't sufficient to answer those questions for asynchronous code. You need a causality stack.
 
@@ -132,25 +132,25 @@ class Program
 
 With these few changes, the new output is the same, except for some additional information printed at the end of the exception stack trace:
 
-System.InvalidOperationException: I'm an asynchronous exception! Locate me if you can!
-   at Program.<>c__DisplayClass4.<MyMethodAsync>b__3() in e:\work_\projects\ConsoleApplication8\ConsoleApplication8\Program.cs:line 36
-   at System.Threading.Tasks.Task`1.InnerInvoke()
-   at System.Threading.Tasks.Task.Execute()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at System.Runtime.CompilerServices.TaskAwaiter.GetResult()
-   at Program.<MyMethodAsync>d__6.<MoveNext>z__OriginalMethod() in e:\work_\projects\ConsoleApplication8\ConsoleApplication8\Program.cs:line 37
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at System.Runtime.CompilerServices.TaskAwaiter.GetResult()
-   at Program.<MainAsync>d__0.<MoveNext>z__OriginalMethod() in e:\work_\projects\ConsoleApplication8\ConsoleApplication8\Program.cs:line 19
-Logical stack:
-   async Program.MyMethodAsync(String message, CancellationToken token)
-   Program.MyMethodAsync(String message)
-   async Program.MainAsync(String[] args)
-   Program.Main(String[] args)
+    System.InvalidOperationException: I'm an asynchronous exception! Locate me if you can!
+       at Program.<>c__DisplayClass4.<MyMethodAsync>b__3() in e:\work_\projects\ConsoleApplication8\ConsoleApplication8\Program.cs:line 36
+       at System.Threading.Tasks.Task`1.InnerInvoke()
+       at System.Threading.Tasks.Task.Execute()
+    --- End of stack trace from previous location where exception was thrown ---
+       at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+       at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+       at System.Runtime.CompilerServices.TaskAwaiter.GetResult()
+       at Program.<MyMethodAsync>d__6.<MoveNext>z__OriginalMethod() in e:\work_\projects\ConsoleApplication8\ConsoleApplication8\Program.cs:line 37
+    --- End of stack trace from previous location where exception was thrown ---
+       at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+       at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+       at System.Runtime.CompilerServices.TaskAwaiter.GetResult()
+       at Program.<MainAsync>d__0.<MoveNext>z__OriginalMethod() in e:\work_\projects\ConsoleApplication8\ConsoleApplication8\Program.cs:line 19
+    Logical stack:
+       async Program.MyMethodAsync(String message, CancellationToken token)
+       Program.MyMethodAsync(String message)
+       async Program.MainAsync(String[] args)
+       Program.Main(String[] args)
 
 Now there's a nice "logical stack" stuck on the end of the exception dump. Unlike the exception call stack, the "logical stack" is actually a causality stack, which is much more useful when debugging asynchronous code. As you can see, the logical stack leads us directly to the location of the exception, and (more importantly) shows _how we got there_.
 
@@ -205,12 +205,12 @@ class Program
 
 And whatever string you give it gets included in the logical stack:
 
-Logical stack:
-   async Program.MyMethodAsync(String message, CancellationToken token)
-     My message is: I'm an asynchronous exception! Locate me if you can!
-   Program.MyMethodAsync(String message)
-   async Program.MainAsync(String[] args)
-   Program.Main(String[] args)
+    Logical stack:
+       async Program.MyMethodAsync(String message, CancellationToken token)
+         My message is: I'm an asynchronous exception! Locate me if you can!
+       Program.MyMethodAsync(String message)
+       async Program.MainAsync(String[] args)
+       Program.Main(String[] args)
 
 ## Limitations
 

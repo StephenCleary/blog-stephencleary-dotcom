@@ -18,24 +18,24 @@ The workaround is to use the "O:" prefix for such links (this prefix is unused b
 
 In my projects, I use the following XSLT transformation to automatically translate **see.cref** references starting with "O:" to have a prefix of "Overload:" instead:
 
-<?xml version='1.0'?>
-<xsl:stylesheet xmlns:xsl='http://www.w3.org/1999/XSL/Transform' version='1.0'>
- <xsl:output method="xml" indent="yes"/>
-
-   <!-- Copy all documentation as-is except for what matches other rules -->
-   <xsl:template match="@* | node()">
-    <xsl:copy>
-     <xsl:apply-templates select="@* | node()"/>
-    </xsl:copy>
-   </xsl:template>
-
-   <!-- Convert "cref" references that start with "O:" to starting with "Overload:". -->
-   <xsl:template match="@cref[starts-with(., 'O:')]">
-    <xsl:attribute name="cref">
-     <xsl:value-of select="concat('Overload:', substring-after(., 'O:'))"/>
-    </xsl:attribute>
-   </xsl:template>
-</xsl:stylesheet>
+    <?xml version='1.0'?>
+    <xsl:stylesheet xmlns:xsl='http://www.w3.org/1999/XSL/Transform' version='1.0'>
+     <xsl:output method="xml" indent="yes"/>
+    
+       <!-- Copy all documentation as-is except for what matches other rules -->
+       <xsl:template match="@* | node()">
+        <xsl:copy>
+         <xsl:apply-templates select="@* | node()"/>
+        </xsl:copy>
+       </xsl:template>
+    
+       <!-- Convert "cref" references that start with "O:" to starting with "Overload:". -->
+       <xsl:template match="@cref[starts-with(., 'O:')]">
+        <xsl:attribute name="cref">
+         <xsl:value-of select="concat('Overload:', substring-after(., 'O:'))"/>
+        </xsl:attribute>
+       </xsl:template>
+    </xsl:stylesheet>
 
 By the way, it's not difficult to include an XSLT transformation as part of an MSBuild project file (with the [MSBuild Extension Pack](http://msbuildextensionpack.codeplex.com/)). It's beyond the scope of this blog post, but you can check out the [Nito.Async main project build file](http://nitoasync.codeplex.com/SourceControl/changeset/view/40861#324550) for an example.
 

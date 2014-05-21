@@ -16,6 +16,8 @@ By default, a .NET 4.0 process will happily load a .NET 2.0-3.5 managed DLL, but
 
 SQLite has a simple "one database per file" concept that does not exist for all ADO.NET data sources. If you need to allow your application to access user-selected database files, it's possible to "redirect" an Entity Framework connection string to an alternative data file. The correct way to do this is to crack the Entity Framework connection string, extract the SQLite connection string, crack the SQLite connection string, replace the data file, rebuild the SQLite connection string, and finally rebuild the Entity Framework connection string:
 
+{% highlight csharp %}
+
 /// <summary>
 /// Redirects a SQLite Entity Framework connection string to an alternative database file, optionally encrypted with a password.
 /// </summary>
@@ -43,8 +45,11 @@ public static string RedirectedEntityFrameworkConnectionString(string originalCo
     connectionStringBuilder.ProviderConnectionString = providerConnectionStringBuilder.ConnectionString;
     return connectionStringBuilder.ConnectionString;
 }
+{% endhighlight %}
 
 The redirected Entity Framework connection string may be passed to the ObjectContext-derived class constructor (e.g., the "MyEntities" class that the Entity Framework creates for you):
+
+{% highlight csharp %}
 
 const string OriginalConnectionString = "..."; // (Copy out of app.config)
 var connectionString = RedirectedEntityFrameworkConnectionString(OriginalConnectionString, myFileName, null);
@@ -52,12 +57,15 @@ using (var context = new MyEntities(connectionString))
 {
     ...
 }
+{% endhighlight %}
 
 ## The Entity Framework's Database Connection
 
 The Entity Framework is actually an ADO.NET data provider that is itself wrapping an ADO.NET data provider (SQLite, to be specific). [Normally, the Entity Framework will open a database connection whenever it needs one; these automatically-opened connections are automatically closed when the Entity Framework is finished with it.](http://msdn.microsoft.com/en-us/library/bb896325.aspx) This default behavior works well with SQL Server due to its ADO.NET provider's connection pooling. However, it does not work well with SQLite, due to various "properties" existing on the SQLite connection itself. One example is "PRAGMA foreign_keys = ON", which enforces foreign keys only for that SQLite database connection. If the Entity Framework opens and closes its connections at will, then SQLite PRAGMAs such as these are lost.
 
 As a general rule, you should explicitly call "Connection.Open()" for any ObjectContext. You must also ensure that the ObjectContext is disposed, so that the database connection is cleanly closed. Once "Connection.Open()" has been called, the Entity Framework will no longer open and close its own transient connections.
+
+{% highlight csharp %}
 
 using (var myEntities = new MyEntities())
 {
@@ -68,10 +76,14 @@ using (var myEntities = new MyEntities())
 
     // Use Entity classes...
 }
+{% endhighlight %}
 
 It's often useful to get at the SQLiteConnection being used by the Entity Framework. This is available through the "EntityConnection.StoreConnection" property, as illustrated by this code sample:
 
+{% highlight csharp %}
+
 var connection = (myEntities.Connection as EntityConnection).StoreConnection as SQLiteConnection;
+{% endhighlight %}
 
 ## Directly Accessing the Database Using SQL
 
@@ -79,15 +91,21 @@ Even when using the Entity Framework, there are situations where one wishes to e
 
 This is possible one of two ways; once the SQLiteConnection has been acquired (see above), it's possible to create a SQLiteCommand and execute it:
 
+{% highlight csharp %}
+
 using (var command = connection.CreateCommand())
 {
     command.CommandText = "PRAGMA encoding = \"UTF-8\"";
     command.ExecuteNonQuery();
 }
+{% endhighlight %}
 
 However, there's an even easier way of doing this: Entity Framework exposes a method named "ExecuteStoreCommand":
 
+{% highlight csharp %}
+
 myEntities.ExecuteStoreCommand("PRAGMA encoding = \"UTF-8\"");
+{% endhighlight %}
 
 ## Entity Framework Transactions
 
@@ -97,12 +115,15 @@ However, it has a timeout scheme that is not very friendly (I [mentioned this]({
 
 Fortunately, SQLiteTransaction works perfectly well with the Entity Framework. My database schema upgrade code now looks like this (referencing the SQLiteConnection from above):
 
+{% highlight csharp %}
+
 using (var transaction = connection.BeginTransaction())
 {
     // lots of time-consuming stuff
 
     transaction.Commit();
 }
+{% endhighlight %}
 
 SQLiteTransaction does not have the same timeout restrictions that plague TransactionScope, et. al.
 
@@ -112,7 +133,10 @@ _Reminder:_ You _do_ want to use a SQLiteTransaction! The Entity Framework by de
 
 First, you need to enforce foreign keys on your database connection; see the [SQLite foreign keys documentation](http://www.sqlite.org/foreignkeys.html) for more information. This is done simply as such:
 
+{% highlight csharp %}
+
 myEntities.ExecuteStoreCommand("PRAGMA foreign_keys = ON");
+{% endhighlight %}
 
 The next step is to actually establish the Entity Framework relationships. Some SQLite databases work just fine; the EF designer is able to understand the foreign key relationships and adds them correctly. Other SQLite databases just import the entities themselves without the relationships; I'm not sure why this is the case.
 

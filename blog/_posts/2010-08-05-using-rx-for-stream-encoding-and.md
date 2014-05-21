@@ -8,6 +8,8 @@ The Rx team had a two-part series last month demonstrating one way to use Rx on 
 
 As it turns out, decoding (and encoding) are quite simple in Rx. The code below should be clear to anyone who's been following the Rx team blog posts:
 
+{% highlight csharp %}
+
 using System;
 using System.Linq;
 using System.Text;
@@ -119,8 +121,11 @@ public static class EncodingObservables
     });
   }
 }
+{% endhighlight %}
 
 This class defines two operators (Encode and Decode) which can be used like this:
+
+{% highlight csharp %}
 
 [TestClass]
 public class EncodingObservablesUnitTests
@@ -182,6 +187,7 @@ public class EncodingObservablesUnitTests
     Assert.IsTrue(result.SequenceEqual(new[] { '\u0020', '\u0023', '\u2623' }));
   }
 }
+{% endhighlight %}
 
 Note that I've defined the Encode and Decode operators as working on "chunks" of data. As such, they don't really "fit in" with most LINQ and Rx operators, which work on individual data elements. However, this approach makes sense any time there's buffered reading going on. The Encode and Decode operators here will work fine with the Rx team's example AsyncRead operator.
 

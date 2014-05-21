@@ -28,6 +28,8 @@ This is a rather complex example; it covers each background task scenario (succe
 
 The UI framework is the same regardless of whether a BackgroundWorker or Task object is used for the background task:
 
+{% highlight csharp %}
+
 using System;
 using System.Windows.Forms;
 
@@ -114,6 +116,7 @@ class Program
     Application.Run(new MainForm());
   }
 }
+{% endhighlight %}
 
 This defines a form called MainForm that has the UI described above. The two methods TaskIsRunning and TaskIsComplete handle the enabling and disabling of the buttons. There are also partial methods as placeholders for the button click events; these are used by the sample code below.
 
@@ -122,6 +125,8 @@ You can copy the code above by double-clicking it and then pressing Ctrl-C; then
 ## A BGW That Updates Progress Frequently
 
 Here's what the code looks like for a BGW that checks in frequently:
+
+{% highlight csharp %}
 
 using System;
 using System.ComponentModel;
@@ -215,12 +220,15 @@ partial class MainForm
     this.backgroundWorker.RunWorkerAsync();
   }
 }
+{% endhighlight %}
 
 You can copy and paste this code into a cs file in the Windows Forms solution, such as MainForm.cs. The solution should then build, and you can play with the buttons to test all three scenarios (successful completion, error condition, and cancellation).
 
 ## A Task That Updates Progress Frequently
 
 Using the ProgressReporter class (defined below), translating this BGW code to Task code is rather easy; no explicit continuation scheduling is needed:
+
+{% highlight csharp %}
 
 using System;
 using System.Threading;
@@ -309,6 +317,7 @@ partial class MainForm
     });
   }
 }
+{% endhighlight %}
 
 You can copy and paste this code into a cs file in the Windows Forms solution, such as MainForm.cs. The solution won't build until you add the code for the ProgressReporter class below.
 
@@ -323,6 +332,8 @@ The code starting the background Task can also use ProgressReporter to retrieve 
 In addition to the RegisterContinuation method, the ProgressReporter provides RegisterSucceededHandler, RegisterFaultedHandler, and RegisterCancelledHandler methods if it is easier to handle these situations separately.
 
 The code for this class is not very complex:
+
+{% highlight csharp %}
 
 using System;
 using System.Threading;
@@ -474,6 +485,7 @@ public sealed class ProgressReporter
     return task.ContinueWith(_ => action(), CancellationToken.None, TaskContinuationOptions.OnlyOnCanceled, this.Scheduler);
   }
 }
+{% endhighlight %}
 
 You can copy and paste this code into a cs file in the Windows Forms solution, such as ProgressReporter.cs. The solution should then build, and you can play with the buttons to test all three scenarios (successful completion, error condition, and cancellation).
 

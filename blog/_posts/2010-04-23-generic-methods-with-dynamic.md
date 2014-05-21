@@ -8,6 +8,8 @@ When a dynamic object performs method resolution at runtime, the result is cache
 
 We can use generics to turn one call site into many call sites, all cached independently, thereby improving performance when invoked later:
 
+{% highlight csharp %}
+
 static dynamic SingleCallSite(dynamic arg1, dynamic arg2)
 {
     return arg1 + arg2;
@@ -18,8 +20,11 @@ static T MultipleCallSites<T>(T arg1, T arg2)
     dynamic darg1 = arg1;
     return darg1 + arg2;
 }
+{% endhighlight %}
 
 Even though the **SingleCallSite** method only has one call site (for the **+** operator) and the **MultipleCallSites** method has two call sites (one for the **+** operator, and one for converting the dynamic result to **T**), **MultipleCallSites** reliably runs faster, as this remarkably unscientific test code demonstrates:
+
+{% highlight csharp %}
 
 static void Main(string[] args)
 {
@@ -52,6 +57,7 @@ static void Main(string[] args)
 
     Console.ReadKey();
 }
+{% endhighlight %}
 
 This idea came from Luca Bolognese's blog post [Simulating INumeric with dynamic in C# 4.0](http://blogs.msdn.com/lucabol/archive/2009/02/05/simulating-inumeric-with-dynamic-in-c-4-0.aspx), where he states that with a generic signature "you get a different call site with each combination of type arguments and, since they are separate, the binding caches should stay small."
 

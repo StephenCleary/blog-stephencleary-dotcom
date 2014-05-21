@@ -12,6 +12,8 @@ To keep things simple, I'm just going to expose a "Calculator" service that has 
 
 Let's tackle the server first. If we want to create an asynchronous WCF service method, we have to set OperationContract.AsyncPattern to true and follow the Asynchronous Programming Model (APM) pattern:
 
+{% highlight csharp %}
+
 [DataContract]
 public class CalculatorFault
 {
@@ -32,10 +34,13 @@ public interface ICalculator
   IAsyncResult BeginDivide(uint numerator, uint denominator, AsyncCallback callback, object state);
   uint EndDivide(IAsyncResult asyncResult);
 }
+{% endhighlight %}
 
 In WCF, the "asynchronicity" of the server is an implementation detail. If you look at the metadata that is published for ICalculator, it looks exactly like the synchronous equivalent; the ICalculator metadata just describes a single operation named "Divide".
 
 If we're going to have an asynchronous server, we're going to want to use the Task-based Asynchronous Pattern (TAP) to write it. So here's our implementation, error handling and all:
+
+{% highlight csharp %}
 
 public class Calculator : ICalculator
 {
@@ -53,10 +58,13 @@ public class Calculator : ICalculator
     }
   }
 }
+{% endhighlight %}
 
 > I'm using StartNew for example code; real code can use Task.Run (TaskEx.Run for Async CTP) if you want to run code on a background thread.
 
 OK, so we've got our implementation (using TAP), and our interface (using APM). Now we have to wire them together by writing Begin/End wrapper methods around our TAP method:
+
+{% highlight csharp %}
 
 public class Calculator : ICalculator
 {
@@ -94,10 +102,13 @@ public class Calculator : ICalculator
     }
   }
 }
+{% endhighlight %}
 
 The wrappers are straightforward. The only tricky part is in the End wrapper where we re-throw a FaultException.
 
 The wrappers are also tedious, especially if you have a lot of methods to wrap. My [AsyncEx library](http://nitoasyncex.codeplex.com/) includes AsyncFactory.ToBegin and AsyncFactory.ToEnd methods that handle the TAP-to-APM conversion cleanly. That's what I use:
+
+{% highlight csharp %}
 
 public class Calculator : ICalculator
 {
@@ -112,6 +123,7 @@ public class Calculator : ICalculator
     return AsyncFactory<uint>.ToEnd(asyncResult);
   }
 }
+{% endhighlight %}
 
 At this point, we have a working server that is implemented asynchronously.
 
@@ -121,6 +133,8 @@ Fortunately, this is pretty easy. Create a client proxy _enabling asynchronous m
 
 There are two ways to add TAP support. You can add it manually by implementing a TAP wrapper method around the APM methods:
 
+{% highlight csharp %}
+
 static class Program
 {
   // Wrap those Begin/End methods back into a Task-based API.
@@ -129,26 +143,29 @@ static class Program
     return Task<uint>.Factory.FromAsync(client.BeginDivide, client.EndDivide, numerator, denominator, null);
   }
 }
+{% endhighlight %}
 
 **Or,** you can build the sample project at "My Documents\Microsoft Visual Studio Async CTP\Samples\(C# WCF) Stock Quotes", copy the TaskWsdlImportExtension.dll into your solution, and modify your app.config to use it for building WCF proxies (as described in [this blog post](http://www.larswilhelmsen.com/2010/11/05/taskwsdlimportextensiona-hidden-gem-in-the-c-vnext-async-ctp-samples/)):
 
-<configuration>
- <system.serviceModel>
-  <client>
-   <metadata>
-    <wsdlImporters>
-     <extension type="TaskWsdlImportExtension.TaskAsyncWsdlImportExtension, TaskWsdlImportExtension" />
-    </wsdlImporters>
-   </metadata>
-  </client>
- </system.serviceModel>
-</configuration>
+    <configuration>
+     <system.serviceModel>
+      <client>
+       <metadata>
+        <wsdlImporters>
+         <extension type="TaskWsdlImportExtension.TaskAsyncWsdlImportExtension, TaskWsdlImportExtension" />
+        </wsdlImporters>
+       </metadata>
+      </client>
+     </system.serviceModel>
+    </configuration>
 
 This is more work to set up, but once it's done you don't have to write any TAP wrappers at all. TaskAsyncWsdlImportExtension does them for you. Unfortunately, this doesn't seem to be an option on VS2012 with the Async Targeting Pack.
 
 > Side note: TaskWsdlImportExtension will generate a method called "DivideAsync", while our manual wrapper uses "DivideAsyncTask" - why the difference? Well, we _would_ have used "DivideAsync", but the name was already taken by the EAP method. TaskWsdlImportExtension does not generate the EAP methods, so it can use the "DivideAsync" name.
 
 Now, we're ready to actually call the client. I have some TAP code that uses the WCF client proxy ("CallCalculator") as well as a simple Main:
+
+{% highlight csharp %}
 
 static class Program
 {
@@ -182,6 +199,7 @@ static class Program
     Console.ReadKey();
   }
 }
+{% endhighlight %}
 
 > In this sample code, Main is blocking on the Task returned from CallCalculator. This is not recommended for real-world code.
 
@@ -194,6 +212,8 @@ The good news is: in .NET 4.5, [this all gets easier](http://blogs.msdn.com/b/en
 A **lot** easier.
 
 Let's start over, this time targeting .NET 4.5 for both server and client. First, the service interface:
+
+{% highlight csharp %}
 
 [DataContract]
 public class CalculatorFault
@@ -214,10 +234,13 @@ public interface ICalculator
   [FaultContract(typeof(CalculatorFault))]
   Task<uint> DivideAsync(uint numerator, uint denominator);
 }
+{% endhighlight %}
 
 OK, it's a little simpler so far, because we can declare service methods returning Task instead of a Begin/End pair.
 
 The core implementation is _exactly the same:_
+
+{% highlight csharp %}
 
 public class Calculator : ICalculator
 {
@@ -235,6 +258,7 @@ public class Calculator : ICalculator
     }
   }
 }
+{% endhighlight %}
 
 And... wait for it... that's it! No need for any APM wrapper methods! The WCF runtime is intelligent enough to understand that this is an asynchronous implementation of a service method.
 
@@ -247,6 +271,8 @@ Create a WCF client proxy. Heh, that's it. :)
 Not only are TAP methods created, they are created _by default!_ Totally awesome!
 
 The client code is _exactly the same_ as if the TaskWsdlImportExtension was used:
+
+{% highlight csharp %}
 
 static class Program
 {
@@ -279,6 +305,7 @@ static class Program
     Console.ReadKey();
   }
 }
+{% endhighlight %}
 
 Unfortunately for me, all this wonderful WCF async goodness is coming out along with the ASP.NET Web API, and I'll be migrating away from WCF. Oh, well.
 

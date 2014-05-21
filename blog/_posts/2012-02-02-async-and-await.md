@@ -14,12 +14,15 @@ Let's dive right in. I'll use some concepts that I'll expound on later on - just
 
 Asynchronous methods look something like this:
 
+{% highlight csharp %}
+
 public async Task DoSomethingAsync()
 {
   // In the Real World, we would actually do something...
   // For this example, we're just going to (asynchronously) wait 100ms.
   await Task.Delay(100);
 }
+{% endhighlight %}
 
 The "async" keyword enables the "await" keyword in that method. _That's all the async keyword does!_ It does not run this method on a thread pool thread, or do any other kind of magic. The async keyword _only_ enables the await keyword.
 
@@ -43,6 +46,8 @@ That's all I'm going to say about making your own awaitables. I've only had to w
 
 One important point about awaitables is this: it is the _type_ that is awaitable, not the method returning the type. In other words, you can await the result of an async method that returns Task ... _because the method returns Task, not because it's async_. So you can also await the result of a _non-async_ method that returns Task:
 
+{% highlight csharp %}
+
 public async Task NewStuffAsync()
 {
   // Use await and have fun with the new stuff.
@@ -61,6 +66,7 @@ public async Task ComposeAsync()
   await NewStuffAsync();
   await MyOldTaskParallelLibraryCode();
 }
+{% endhighlight %}
 
 > Tip: If you have a very simple asynchronous method, you may be able to write it without using the await keyword (e.g., using Task.FromResult). If you _can_ write it without await, then you _should_ write it without await, and remove the async keyword from the method. A non-async method returning Task.FromResult is more efficient than an async method returning a value.
 
@@ -78,6 +84,8 @@ You have to return void when you have async event handlers.
 
 Async methods returning Task or void do not have a return value. Async methods returning Task<T> must return a value of type T:
 
+{% highlight csharp %}
+
 public async Task<int> CalculateAnswer()
 {
   await Task.Delay(100); // (Probably should be longer...)
@@ -85,6 +93,7 @@ public async Task<int> CalculateAnswer()
   // Return a type of "int", not "Task<int>"
   return 42;
 }
+{% endhighlight %}
 
 This is a bit odd to get used to, but there are [good reasons]({% post_url 2011-09-01-async-ctp-why-do-keywords-work-that-way %}) behind this design.
 
@@ -104,6 +113,8 @@ Complex answer:
  1. Otherwise, it's the current TaskScheduler (TaskScheduler.Default is the thread pool context).
 
 What does this mean in the real world? For one thing, capturing (and restoring) the UI/ASP.NET context is done transparently:
+
+{% highlight csharp %}
 
 // WinForms example (it works exactly the same for WPF).
 private async void DownloadFileButton_Click(object sender, EventArgs e)
@@ -126,12 +137,15 @@ protected async void MyButton_Click(object sender, EventArgs e)
   // We may actually be on another *thread*, but we have the same ASP.NET request context.
   Response.Write("File downloaded!");
 }
+{% endhighlight %}
 
 This is great for event handlers, but it turns out to not be what you want for most other code (which is, really, most of the async code you'll be writing).
 
 ## Avoiding Context
 
 Most of the time, you don't _need_ to sync back to the "main" context. Most async methods will be designed with composition in mind: they await other operations, and each one represents an asynchronous operation itself (which can be composed by others). In this case, you want to tell the awaiter to _not_ capture the current context by calling **ConfigureAwait** and passing false, e.g.:
+
+{% highlight csharp %}
 
 private async Task DownloadFileAsync(string fileName)
 {
@@ -156,6 +170,7 @@ private async void DownloadFileButton_Click(object sender, EventArgs e)
   // Since we resume on the UI context, we can directly access UI elements.
   resultTextBox.Text = "File downloaded!";
 }
+{% endhighlight %}
 
 The important thing to note with this example is that each "level" of async method calls has its own context. DownloadFileButton_Click started in the UI context, and called DownloadFileAsync. DownloadFileAsync also started in the UI context, but then stepped out of its context by calling ConfigureAwait(false). The rest of DownloadFileAsync runs in the thread pool context. However, when DownloadFileAsync completes and DownloadFileButton_Click resumes, it _does_ resume in the UI context.
 
@@ -165,30 +180,30 @@ A good rule of thumb is to use ConfigureAwait(false) unless you know you _do_ ne
 
 So far, we've only considered serial composition: an async method waits for one operation at a time. It's also possible to start several operations and await for one (or all) of them to complete. You can do this by starting the operations but not awaiting them until later:
 
-public async Task DoOperationsConcurrentlyAsync()
-{
-  Task[] tasks = new Task[3];
-  tasks[0] = DoOperation0Async();
-  tasks[1] = DoOperation1Async();
-  tasks[2] = DoOperation2Async();
-
-  // At this point, all three tasks are running at the same time.
-
-  // Now, we await them all.
-  await Task.WhenAll(tasks);
-}
-
-public async Task<int> GetFirstToRespondAsync()
-{
-  // Call two web services; take the first response.
-  Task<int>[] tasks = new[] { WebService1Async(), WebService2Async() };
-
-  // Await for the first one to respond.
-  Task<int> firstTask = await Task.WhenAny(tasks);
-
-  // Return the result.
-  return await firstTask;
-}
+    public async Task DoOperationsConcurrentlyAsync()
+    {
+      Task[] tasks = new Task[3];
+      tasks[0] = DoOperation0Async();
+      tasks[1] = DoOperation1Async();
+      tasks[2] = DoOperation2Async();
+    
+      // At this point, all three tasks are running at the same time.
+    
+      // Now, we await them all.
+      await Task.WhenAll(tasks);
+    }
+    
+    public async Task<int> GetFirstToRespondAsync()
+    {
+      // Call two web services; take the first response.
+      Task<int>[] tasks = new[] { WebService1Async(), WebService2Async() };
+    
+      // Await for the first one to respond.
+      Task<int> firstTask = await Task.WhenAny(tasks);
+    
+      // Return the result.
+      return await firstTask;
+    }
 
 By using concurrent composition (Task.WhenAll or Task.WhenAny), you can perform simple concurrent operations. You can also use these methods along with Task.Run to do simple parallel computation. However, this is not a substitute for the Task Parallel Library - any advanced CPU-intensive parallel operations should be done with the TPL.
 

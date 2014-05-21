@@ -18,6 +18,8 @@ We'll take advantage of these steps to handle several common scenarios.
 
 Default argument values are set in the default constructor:
 
+{% highlight csharp %}
+
 class Program
 {
   private sealed class Options : OptionArgumentsBase
@@ -58,22 +60,25 @@ class Program
     }
   }
 }
+{% endhighlight %}
 
-> CommandLineParsingTest.exe
-Level: 0
-Quality: 3
-
-> CommandLineParsingTest.exe /level 7
-Level: 7
-Quality: 3
-
-> CommandLineParsingTest.exe /quality 4
-Level: 0
-Quality: 4
+    > CommandLineParsingTest.exe
+    Level: 0
+    Quality: 3
+    
+    > CommandLineParsingTest.exe /level 7
+    Level: 7
+    Quality: 3
+    
+    > CommandLineParsingTest.exe /quality 4
+    Level: 0
+    Quality: 4
 
 ## Nullable Values
 
 There are some situations where a "default value" doesn't make sense for an option; you need to know whether there was a value passed, and what the value is (if it was passed). In this situation, you can use a nullable value type for your property:
+
+{% highlight csharp %}
 
 class Program
 {
@@ -115,23 +120,24 @@ class Program
     }
   }
 }
+{% endhighlight %}
 
-> CommandLineParsingTest.exe
-Level not specified.
-Name not specified.
-
-> CommandLineParsingTest.exe /level 3
-Level: 3
-Name not specified.
-
-> CommandLineParsingTest.exe /level 0
-Level: 0
-Name not specified.
-
-> CommandLineParsingTest.exe /name Bob
-Level not specified.
-Name: Bob
-
-> CommandLineParsingTest.exe /name ""
-Level not specified.
-Name: 
+    > CommandLineParsingTest.exe
+    Level not specified.
+    Name not specified.
+    
+    > CommandLineParsingTest.exe /level 3
+    Level: 3
+    Name not specified.
+    
+    > CommandLineParsingTest.exe /level 0
+    Level: 0
+    Name not specified.
+    
+    > CommandLineParsingTest.exe /name Bob
+    Level not specified.
+    Name: Bob
+    
+    > CommandLineParsingTest.exe /name ""
+    Level not specified.
+    Name:

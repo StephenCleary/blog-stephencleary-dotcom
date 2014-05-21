@@ -10,6 +10,8 @@ One can use the [DynamicObject](http://msdn.microsoft.com/en-us/library/system.d
 
 The general concept is to implement a DynamicObject type that uses reflection to access static members. This makes sense since _dynamic_ may be seen as a more user-friendly type of reflection (of course, this simple interpretation ignores a lot of other DLR benefits). Unfortunately, DynamicObject does not support the concept of ref/out parameters, even though they are fully supported by _dynamic_. There is a work-around for this: wrapping ref or out parameters, adding a layer of indirection. The RefOutArg class was invented for this purpose ([official source](http://nitokitchensink.codeplex.com/SourceControl/changeset/view/51391#1073961)):
 
+{% highlight csharp %}
+
 /// <summary>
 /// A wrapper around a "ref" or "out" argument invoked dynamically.
 /// </summary>
@@ -63,10 +65,13 @@ public sealed class RefOutArg
         return new RefOutArg { ValueAsObject = value };
     }
 }
+{% endhighlight %}
 
 RefOutArg is a very simple class that contains a single value (which can be accessed either as _object_ or _dynamic_).
 
 The DynamicStaticTypeMembers class enables dynamic access to static members. It is similar to David's StaticMembersDynamicWrapper, only this class allows setting static properties, invoking overloaded static methods, and ref/out parameters using RefOutArg ([official source](http://nitokitchensink.codeplex.com/SourceControl/changeset/view/51391#1073960)):
+
+{% highlight csharp %}
 
 using System;
 using System.Diagnostics;
@@ -217,28 +222,40 @@ public sealed class DynamicStaticTypeMembers : DynamicObject
         return new DynamicStaticTypeMembers(typeof(T));
     }
 }
+{% endhighlight %}
 
 An instance of DynamicStaticTypeMembers may be constructed by passing either a generic type or Type instance into the Create method:
+
+{% highlight csharp %}
 
 var mathClass = DynamicStaticTypeMembers.Create(typeof(Math));
 var intEqualityComparerClass = DynamicStaticTypeMembers.Create<EqualityComparer<int>>();
 var threadClass = DynamicStaticTypeMembers.Create<Thread>();
 var intClass = DynamicStaticTypeMembers.Create<int>();
+{% endhighlight %}
 
 Once created, any static property or method of that class may be invoked using instance syntax:
+
+{% highlight csharp %}
 
 int result0 = mathClass.Min(13, 15); // invokes Math.Min(int, int)
 var comparer = intEqualityComparerClass.Default; // gets EqualityComparer<int>.Default
 threadClass.CurrentPrincipal = new GenericPrincipal(new GenericIdentity("Bob"), new string[] { }); // sets Thread.CurrentPrincipal
+{% endhighlight %}
 
 Invoking methods with ref or out parameters is more awkward, but possible:
+
+{% highlight csharp %}
 
 int result1;
 var result1arg = RefOutArg.Create<int>(); // or: RefOutArg.Create(0);
 intClass.TryParse("13", result1arg); // invokes int.TryParse(string, out int)
 result1 = result1arg.Value;
+{% endhighlight %}
 
 This can be a powerful tool in some cases, allowing a higher form of "duck typing." For instance, the new [BigInteger](http://msdn.microsoft.com/en-us/library/system.numerics.biginteger.aspx) numeric type defines its own _DivRem_ method similar to the existing _DivRem_ methods defined on the [Math](http://msdn.microsoft.com/en-us/library/system.math.aspx) class for _int_ and _long_. Using DynamicStaticTypeMembers, it is possible to define a generic _DivRem_ that attempts to invoke _Math.DivRem_ but falls back on a _DivRem_ defined by the numeric type:
+
+{% highlight csharp %}
 
 public static T DivRem<T>(T dividend, T divisor, out T remainder)
 {
@@ -258,6 +275,7 @@ public static T DivRem<T>(T dividend, T divisor, out T remainder)
     remainder = remainderArg.Value;
     return ret;
 }
+{% endhighlight %}
 
 Our generic _DivRem_ can be invoked with T being _int_, _long_, _BigInteger_, or any other type as long as that type defines its own _DivRem_ with a compatible signature.
 

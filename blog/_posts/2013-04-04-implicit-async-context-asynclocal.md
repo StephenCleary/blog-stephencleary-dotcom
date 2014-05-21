@@ -177,21 +177,21 @@ Yeah, that was pretty easy.
 
 Our test code is going to be a bit more complex. First, I'm going to push a "Main" value onto the stack that will last for the entire program. Then, I'll start two separate (concurrent) pieces of work called "1" and "2". Each of those are going to log when they start and finish, and they'll each do some more work called "A" and "B" (sequentially). So we should end up with some interleaving of this output from "1":
 
-Main 1: <SomeWork>
-Main 1 A: <MoreWork>
-Main 1 A: </MoreWork>
-Main 1 B: <MoreWork>
-Main 1 B: </MoreWork>
-Main 1: </SomeWork>
+    Main 1: <SomeWork>
+    Main 1 A: <MoreWork>
+    Main 1 A: </MoreWork>
+    Main 1 B: <MoreWork>
+    Main 1 B: </MoreWork>
+    Main 1: </SomeWork>
 
 with this output from "2":
 
-Main 2: <SomeWork>
-Main 2 A: <MoreWork>
-Main 2 A: </MoreWork>
-Main 2 B: <MoreWork>
-Main 2 B: </MoreWork>
-Main 2: </SomeWork>
+    Main 2: <SomeWork>
+    Main 2 A: <MoreWork>
+    Main 2 A: </MoreWork>
+    Main 2 B: <MoreWork>
+    Main 2 B: </MoreWork>
+    Main 2: </SomeWork>
 
 Remember, "1" and "2" are concurrent, so there's no one right answer for the output. As long as all the messages above are present and in the correct (relative) order, it's acceptable.
 
@@ -235,18 +235,18 @@ partial class Program
 
 One sample run from my machine is:
 
-Main 1: <SomeWork>
-Main 1 A: <MoreWork>
-Main 2: <SomeWork>
-Main 2 A: <MoreWork>
-Main 2 A: </MoreWork>
-Main 1 A: </MoreWork>
-Main 1 B: <MoreWork>
-Main 2 B: <MoreWork>
-Main 2 B: </MoreWork>
-Main 2: </SomeWork>
-Main 1 B: </MoreWork>
-Main 1: </SomeWork>
+    Main 1: <SomeWork>
+    Main 1 A: <MoreWork>
+    Main 2: <SomeWork>
+    Main 2 A: <MoreWork>
+    Main 2 A: </MoreWork>
+    Main 1 A: </MoreWork>
+    Main 1 B: <MoreWork>
+    Main 2 B: <MoreWork>
+    Main 2 B: </MoreWork>
+    Main 2: </SomeWork>
+    Main 1 B: </MoreWork>
+    Main 1: </SomeWork>
 
 If you sort out the "1" and the "2" messages, you'll see that each set is in the correct order and that the stacks are nicely laid out as expected.
 

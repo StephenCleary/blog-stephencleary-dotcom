@@ -12,21 +12,24 @@ A [TraceSource](http://msdn.microsoft.com/en-us/library/system.diagnostics.trace
 
 You usually want to define the [TraceSource](http://msdn.microsoft.com/en-us/library/system.diagnostics.tracesource.aspx) as a **static** member of a class being traced. The example code below uses a **private static** [TraceSource](http://msdn.microsoft.com/en-us/library/system.diagnostics.tracesource.aspx), but if other classes use the same source, you may prefer **internal static**:
 
-public class MyComponentClass
-{
-  private readonly static TraceSource Tracer = new TraceSource("MyCompany.MyProduct.MyComponent");
-  ...
-}
+    public class MyComponentClass
+    {
+      private readonly static TraceSource Tracer = new TraceSource("MyCompany.MyProduct.MyComponent");
+      ...
+    }
 
 ## Use the TraceSource
 
 Add calls to [TraceSource](http://msdn.microsoft.com/en-us/library/system.diagnostics.tracesource.aspx) methods where you want tracing to take place:
+
+{% highlight csharp %}
 
 public void Frob(string arg)
 {
   Tracer.TraceInformation("Frobbing " + arg);
   ...
 }
+{% endhighlight %}
 
 The [TraceSource](http://msdn.microsoft.com/en-us/library/system.diagnostics.tracesource.aspx) class provides several tracing methods; the most common are [TraceInformation](http://msdn.microsoft.com/en-us/library/system.diagnostics.tracesource.traceinformation.aspx) (used for informational message) and [TraceEvent](http://msdn.microsoft.com/en-us/library/system.diagnostics.tracesource.traceevent.aspx) (used for any type of message).
 
@@ -38,13 +41,13 @@ Defining and using the TraceSource is all the changes that need to be made to th
 
 To enable the TraceSource, you'll need to merge the following with your app.config or web.config (and restart the application):
 
-<configuration>
-  <system.diagnostics>
-    <sources>
-      <source name="MyCompany.MyProduct.MyComponent" switchValue="All" />
-    </sources>
-  </system.diagnostics>
-</configuration>
+    <configuration>
+      <system.diagnostics>
+        <sources>
+          <source name="MyCompany.MyProduct.MyComponent" switchValue="All" />
+        </sources>
+      </system.diagnostics>
+    </configuration>
 
 The switchValue attribute [may be set to](http://msdn.microsoft.com/en-us/library/system.diagnostics.sourcelevels.aspx) Off, Critical, Error, Warning, Information, Verbose, or All. This setting interacts with the TraceEvent message types exactly as you'd expect:
 

@@ -54,6 +54,8 @@ Method-local variables (including parameters and the implicit "this" reference) 
 
 As described in [CLR via C#](http://www.amazon.com/gp/product/0735627045?ie=UTF8&tag=stepheclearys-20&linkCode=as2&camp=1789&creative=390957&creativeASIN=0735627045), the JIT compiler for a method will determine which native code blocks reference which variables by building a "root table" for the method. It's important to note that this table is quite accurate (though not 100% accurate - it _may_ "hold onto" references slightly longer than necessary if it simplifies the table). Examine the simple code below:
 
+{% highlight csharp %}
+
 static object CheckType(object a, Type b)
 {
   Type t = a.GetType();
@@ -69,6 +71,7 @@ static object CheckType(object a, Type b)
     return null;
   }
 }
+{% endhighlight %}
 
 The object referenced by "a" may be garbage collected as noted by the comments in this method (if it is not referenced elsewhere, of course). This is because the method's root table would declare that this method uses the "a" variable just for the code doing the "a.GetType()".
 

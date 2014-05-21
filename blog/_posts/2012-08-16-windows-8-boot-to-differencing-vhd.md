@@ -54,9 +54,9 @@ Once you have the VHD (which I placed at "C:\vhd\Win8-base.vhd"), you're ready t
 
 Creating a differencing VHD is not difficult, but it's not particularly easy, either. Just run the following [diskpart](http://technet.microsoft.com/en-us/library/cc770877) commands in an elevated command prompt (this can be done in Windows 7, too):
 
-> diskpart
-> create vdisk file=C:\vhd\Win8.vhd parent=C:\vhd\Win8-base.vhd
-> exit
+    > diskpart
+    > create vdisk file=C:\vhd\Win8.vhd parent=C:\vhd\Win8-base.vhd
+    > exit
 
 It should only take a few seconds to create the differencing VHD, because all it really needs to do is reference the parent VHD.
 
@@ -68,7 +68,7 @@ So the first thing we do (of course) is backup our current BCD so that we can re
 
 Back to the elevated command prompt, using [bcdedit](http://technet.microsoft.com/en-us/library/cc731662.aspx) (again, Windows 7 can do this part):
 
-> bcdedit /export C:\vhd\bcdbackup
+    > bcdedit /export C:\vhd\bcdbackup
 
 ## Step 5 - Add Boot Entry
 
@@ -76,7 +76,7 @@ First, mount the VHD you want to boot to. If you created a differencing VHD in S
 
 Then (assuming that it was mounted at drive K:), run bcdboot from an elevated command prompt (this also works on Windows 7):
 
-> bcdboot k:\windows
+    > bcdboot k:\windows
 
 Then you reboot. Crossing your fingers or saying a brief prayer would not hurt.
 
@@ -86,76 +86,76 @@ You can repeat steps 3 (creating a differencing VHD from an existing VHD) and 5 
 
 You may also want to customize the boot menu, which can be done by using bcdedit (in this example, I list all of my boot options and then change the description of my old Win8 DevPreview from "Windows 8" to "Old Win8":
 
-> bcdedit
-
-Windows Boot Manager
---------------------
-identifier              {bootmgr}
-device                  partition=\Device\HarddiskVolume1
-description             Windows Boot Manager
-locale                  en-US
-inherit                 {globalsettings}
-integrityservices       Enable
-default                 {current}
-resumeobject            {244905a5-985a-11de-8155-c187f01c6abe}
-displayorder            {current}
-                        {244905a2-985a-11de-8155-c187f01c6abe}
-                        {2449059d-985a-11de-8155-c187f01c6abe}
-toolsdisplayorder       {memdiag}
-timeout                 30
-
-Windows Boot Loader
--------------------
-identifier              {current}
-device                  partition=C:
-path                    \windows\system32\winload.exe
-description             Windows 8
-locale                  en-US
-inherit                 {bootloadersettings}
-recoverysequence        {244905a7-985a-11de-8155-c187f01c6abe}
-integrityservices       Enable
-recoveryenabled         Yes
-allowedinmemorysettings 0x15000075
-osdevice                partition=C:
-systemroot              \windows
-resumeobject            {244905a5-985a-11de-8155-c187f01c6abe}
-nx                      OptIn
-bootmenupolicy          Standard
-
-Windows Boot Loader
--------------------
-identifier              {244905a2-985a-11de-8155-c187f01c6abe}
-device                  vhd=[G:]\vhd\vs2012rc.vhd
-path                    \Windows\system32\winload.exe
-description             Windows 8
-locale                  en-US
-inherit                 {bootloadersettings}
-recoverysequence        {244905a3-985a-11de-8155-c187f01c6abe}
-integrityservices       Enable
-recoveryenabled         Yes
-allowedinmemorysettings 0x15000075
-osdevice                vhd=[G:]\vhd\vs2012rc.vhd
-systemroot              \Windows
-resumeobject            {244905a1-985a-11de-8155-c187f01c6abe}
-nx                      OptIn
-bootmenupolicy          Standard
-
-Windows Boot Loader
--------------------
-identifier              {2449059d-985a-11de-8155-c187f01c6abe}
-device                  partition=G:
-path                    \Windows\system32\winload.exe
-description             Windows Server 2008 R2
-locale                  en-US
-inherit                 {bootloadersettings}
-recoverysequence        {2449059e-985a-11de-8155-c187f01c6abe}
-recoveryenabled         Yes
-osdevice                partition=G:
-systemroot              \Windows
-resumeobject            {2449059c-985a-11de-8155-c187f01c6abe}
-nx                      OptOut
-
-> bcdedit /set {244905a2-985a-11de-8155-c187f01c6abe} description "Old Win8"
+    > bcdedit
+    
+    Windows Boot Manager
+    --------------------
+    identifier              {bootmgr}
+    device                  partition=\Device\HarddiskVolume1
+    description             Windows Boot Manager
+    locale                  en-US
+    inherit                 {globalsettings}
+    integrityservices       Enable
+    default                 {current}
+    resumeobject            {244905a5-985a-11de-8155-c187f01c6abe}
+    displayorder            {current}
+                            {244905a2-985a-11de-8155-c187f01c6abe}
+                            {2449059d-985a-11de-8155-c187f01c6abe}
+    toolsdisplayorder       {memdiag}
+    timeout                 30
+    
+    Windows Boot Loader
+    -------------------
+    identifier              {current}
+    device                  partition=C:
+    path                    \windows\system32\winload.exe
+    description             Windows 8
+    locale                  en-US
+    inherit                 {bootloadersettings}
+    recoverysequence        {244905a7-985a-11de-8155-c187f01c6abe}
+    integrityservices       Enable
+    recoveryenabled         Yes
+    allowedinmemorysettings 0x15000075
+    osdevice                partition=C:
+    systemroot              \windows
+    resumeobject            {244905a5-985a-11de-8155-c187f01c6abe}
+    nx                      OptIn
+    bootmenupolicy          Standard
+    
+    Windows Boot Loader
+    -------------------
+    identifier              {244905a2-985a-11de-8155-c187f01c6abe}
+    device                  vhd=[G:]\vhd\vs2012rc.vhd
+    path                    \Windows\system32\winload.exe
+    description             Windows 8
+    locale                  en-US
+    inherit                 {bootloadersettings}
+    recoverysequence        {244905a3-985a-11de-8155-c187f01c6abe}
+    integrityservices       Enable
+    recoveryenabled         Yes
+    allowedinmemorysettings 0x15000075
+    osdevice                vhd=[G:]\vhd\vs2012rc.vhd
+    systemroot              \Windows
+    resumeobject            {244905a1-985a-11de-8155-c187f01c6abe}
+    nx                      OptIn
+    bootmenupolicy          Standard
+    
+    Windows Boot Loader
+    -------------------
+    identifier              {2449059d-985a-11de-8155-c187f01c6abe}
+    device                  partition=G:
+    path                    \Windows\system32\winload.exe
+    description             Windows Server 2008 R2
+    locale                  en-US
+    inherit                 {bootloadersettings}
+    recoverysequence        {2449059e-985a-11de-8155-c187f01c6abe}
+    recoveryenabled         Yes
+    osdevice                partition=G:
+    systemroot              \Windows
+    resumeobject            {2449059c-985a-11de-8155-c187f01c6abe}
+    nx                      OptOut
+    
+    > bcdedit /set {244905a2-985a-11de-8155-c187f01c6abe} description "Old Win8"
 
 Enjoy!
 

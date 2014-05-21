@@ -43,15 +43,20 @@ If the consuming project suspects a bug in your library (i.e., their **Debug** b
 
 Preconditions require some condition at the beginning of a method. Common examples are requiring a parameter to be non-null, or to require the object to be in a particular state.
 
+{% highlight csharp %}
+
 public string GetObjectInfo(object obj)
 {
   Contract.Requires(obj != null);
   return obj.ToString();
 }
+{% endhighlight %}
 
 ## Postconditions (Contract.Ensures)
 
 Postconditions guarantee some condition at the end of a method. It is often used with Contract.Result to guarantee that a particular method won't return null.
+
+{% highlight csharp %}
 
 private string name; // never null
 public string Name
@@ -62,10 +67,13 @@ public string Name
     return this.name;
   }
 }
+{% endhighlight %}
 
 ## Preconditions and Postconditions on Interfaces
 
 Both preconditions and postconditions are commonly placed on interface members. Code Contracts includes the ContractClassAttribute and ContractClassForAttribute to facilitate this:
+
+{% highlight csharp %}
 
 [ContractClass(typeof(MyInterfaceContracts))]
 public interface IMyInterface
@@ -92,8 +100,11 @@ internal abstract class MyInterfaceContracts : IMyInterface
     }
   }
 }
+{% endhighlight %}
 
 With generic interfaces, the same idea holds:
+
+{% highlight csharp %}
 
 [ContractClass(typeof(MyInterfaceContracts<,>))]
 public interface IMyInterface<T, U>
@@ -120,10 +131,13 @@ internal abstract class MyInterfaceContracts<T, U> : IMyInterface<T, U>
     }
   }
 }
+{% endhighlight %}
 
 ## Invariants (ContractInvariantMethod, Contract.Invariant)
 
 Object invariants are expressed using the ContractInvariantMethod. If they are enabled by the build, then they are checked at the beginning of each method (except constructors) and at the end of each method (except Dispose and the finalizer).
+
+{% highlight csharp %}
 
 public class MyClass<T, U>: public IMyInterface<T, U>
 {
@@ -156,6 +170,7 @@ public class MyClass<T, U>: public IMyInterface<T, U>
     return obj.ToString();
   }
 }
+{% endhighlight %}
 
 ## Assertions and Assumptions (Contract.Assert, Contract.Assume)
 
@@ -165,6 +180,8 @@ Reminder: if you're using the **Release** build setup recommended above, then al
 
 In the example below, the static checker would complain because **Type.MakeGenericType** has preconditions that are difficult to prove. So we give it a little help by inserting some **Contract.Assume** calls, and the static checker is then pacified.
 
+{% highlight csharp %}
+
 public static IMyInterface<T, U> CreateUsingReflection()
 {
   var openGenericReturnType = typeof(MyClass<,>);
@@ -173,6 +190,7 @@ public static IMyInterface<T, U> CreateUsingReflection()
   var constructedGenericReturnType = openGenericReturnType.MakeGenericType(typeof(T), typeof(U));
   return (IMyInterface<T, U>)Activator.CreateInstance(constructedGenericReturnType);
 }
+{% endhighlight %}
 
 ## For More Information
 

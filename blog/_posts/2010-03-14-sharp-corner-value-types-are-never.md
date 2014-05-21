@@ -8,6 +8,8 @@ Conceptually, two objects are "reference equal" iff they are actually the same o
 
 Eventually, one hits a corner:
 
+{% highlight csharp %}
+
 [TestMethod]
 public void ValueTypes_AreNeverReferenceEqual()
 {
@@ -15,6 +17,7 @@ public void ValueTypes_AreNeverReferenceEqual()
     
     Assert.IsFalse(object.ReferenceEquals(num, num));
 }
+{% endhighlight %}
 
 Of course, people rarely wish to test value types for reference equality; this corner is more likely to be found while testing instances of a generic type for reference equality. This result is often surprising; if everything in C# is an object (including a value of type Int32, which derives from ValueType, which derives from object), then why can't they be compared for reference equality?
 
@@ -24,6 +27,8 @@ In the example above, the value instance is implicitly _converted_ to an object 
 
 Boxed value types are real objects (though they lose their compile-time type information). They may be compared for reference equality:
 
+{% highlight csharp %}
+
 [TestMethod]
 public void BoxedValueTypes_CanBeReferenceEqual()
 {
@@ -31,6 +36,7 @@ public void BoxedValueTypes_CanBeReferenceEqual()
 
     Assert.IsTrue(object.ReferenceEquals(num, num));
 }
+{% endhighlight %}
 
 Conclusion: contrary to popular opinion, not everything in C# is an object.
 

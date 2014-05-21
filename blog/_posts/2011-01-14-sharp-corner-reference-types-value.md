@@ -54,6 +54,8 @@ Void claims to be a value type (**IsValueType** is true) - which sort of makes s
 
 ## Test Code
 
+{% highlight csharp %}
+
 using System;
 using System.Text;
 using System.Collections.Generic;
@@ -291,3 +293,4 @@ namespace TypeSystemTests
         }
     }
 }
+{% endhighlight %}

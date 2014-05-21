@@ -12,25 +12,25 @@ The source code is currently available to play with. These classes are actually 
 
 To whet your appetite, here's a few things that one can do with Nito.Linq:
 
-int[] a = { 1, 2, 3 };
-int[] b = { 4, 5, 6 };
-IList<int> result = a.Concat(b);
+    int[] a = { 1, 2, 3 };
+    int[] b = { 4, 5, 6 };
+    IList<int> result = a.Concat(b);
 
 In the code above, _result_ is a list that contains { 1, 2, 3, 4, 5, 6 }. Nothing too surprising there, except that _result_ is actually a concatenated view of the original lists. In other words, _result_ uses delayed execution, just like LINQ.
 
-int[] a = { 1, 2, 3, 4, 5, 6 };
-IList<int> result = a.Skip(2);
+    int[] a = { 1, 2, 3, 4, 5, 6 };
+    IList<int> result = a.Skip(2);
 
 In the code above, _result_ contains the elements you'd expect from using the LINQ Skip operator. However, its type is not IEnumerable<T>; it is IList<T>, which means that it knows how many elements are in it and provides O(1) random-access element retrieval.
 
-int[] a = { 1, 2, 3 };
-int[] b = { 4, 5, 6 };
-IList<int> result = a.Zip(b, (x, y) => x + y);
+    int[] a = { 1, 2, 3 };
+    int[] b = { 4, 5, 6 };
+    IList<int> result = a.Zip(b, (x, y) => x + y);
 
 In the code above, _result_ contains the elements { 5, 7, 9 }. This is identical to how the Rx Zip operator works, except that Rx's Zip only performs on sequences; _result_ is an IList<T>. Not only does this provide efficient random access to the resulting elements, it also delays execution of the zip delegate until a resulting element is accessed.
 
-var a = new[] { 1, 2, 3 }.AsSorted();
-int i = a.IndexOf(2);
+    var a = new[] { 1, 2, 3 }.AsSorted();
+    int i = a.IndexOf(2);
 
 In the code above, _IndexOf_ is actually implemented using a binary search, rather than a simple linear search.
 

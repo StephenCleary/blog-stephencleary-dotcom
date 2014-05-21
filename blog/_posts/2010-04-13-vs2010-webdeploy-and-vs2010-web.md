@@ -20,7 +20,7 @@ It's possible to have the best of both worlds: web.config transformations from V
 
 Example:
 
-<SourceWebPhysicalPath>c:\staging\mywebsite</SourceWebPhysicalPath>
+    <SourceWebPhysicalPath>c:\staging\mywebsite</SourceWebPhysicalPath>
 
 This will work as long as you don't need the advanced IIS application setup options available through VS2010 deployment. If you do, then you're probably better off incorporating ASP.NET compilation and merging as a post-build event or within the MSBuild file.
 

@@ -10,6 +10,8 @@ Commonly-used options should have both a long name and a short name. The short n
 
 Less-common options should have just a long name; this avoids polluting the short name namespace.
 
+{% highlight csharp %}
+
 using System;
 using Nito.KitchenSink.OptionParsing;
 
@@ -47,25 +49,26 @@ class Program
     }
   }
 }
+{% endhighlight %}
 
-> CommandLineParsingTest.exe
-Level: 0
-Priority: 0
-
-> CommandLineParsingTest.exe /l 3
-Level: 3
-Priority: 0
-
-> CommandLineParsingTest.exe /level 3
-Level: 3
-Priority: 0
-
-> CommandLineParsingTest.exe /priority 1
-Level: 0
-Priority: 1
-
-> CommandLineParsingTest.exe /p 1
-Unknown option  p  in parameter  /p
+    > CommandLineParsingTest.exe
+    Level: 0
+    Priority: 0
+    
+    > CommandLineParsingTest.exe /l 3
+    Level: 3
+    Priority: 0
+    
+    > CommandLineParsingTest.exe /level 3
+    Level: 3
+    Priority: 0
+    
+    > CommandLineParsingTest.exe /priority 1
+    Level: 0
+    Priority: 1
+    
+    > CommandLineParsingTest.exe /p 1
+    Unknown option  p  in parameter  /p
 
 Normally, options do not have just a short name without a long name, but you _can_ do it if you want do.
 
@@ -74,6 +77,8 @@ Normally, options do not have just a short name without a long name, but you _ca
 Options may have "aliases" (multiple long and/or short names). The easiest way to add aliases is to have separate properties on your Option Arguments class that refer to the same underlying field.
 
 The following example shows one alias that is used to change an old option "level" into a more descriptive option "frob-level", marking the old option as obsolete. Another alias "frobbing-level" is also added, which is just a regular alias (without any options marked obsolete).
+
+{% highlight csharp %}
 
 class Program
 {
@@ -126,20 +131,21 @@ class Program
     }
   }
 }
+{% endhighlight %}
 
-> CommandLineParsingTest.exe /level 4
-Warning: The --level option is obsolete; use --frob-level instead.
-4
-
-> CommandLineParsingTest.exe /frob-level 4
-4
-
-> CommandLineParsingTest.exe /frobbing-level 6
-6
+    > CommandLineParsingTest.exe /level 4
+    Warning: The --level option is obsolete; use --frob-level instead.
+    4
+    
+    > CommandLineParsingTest.exe /frob-level 4
+    4
+    
+    > CommandLineParsingTest.exe /frobbing-level 6
+    6
 
 ## Abbreviated Option Names
 
 Some programs support abbreviated option names; for example, the option "pack" may be abbreviated as "pa" or "p" (assuming there is no other option that starts with "pa" or "p", respectively). However, this causes backwards compatibility issues; for example, an updated version of the program may introduce an option named "push", and any scripts that used the abbreviated option "p" then become ambiguous. For this reason, [Nito.KitchenSink.OptionParsing](http://www.nuget.org/List/Packages/Nito.KitchenSink.OptionParsing) does not include automatic support for abbreviated option names. If you need abbreviated option names, you may use explicit aliases to achieve the same effect.
 
-> CommandLineParsingTest.exe /frob 6
-Unknown option  frob  in parameter  /frob
+    > CommandLineParsingTest.exe /frob 6
+    Unknown option  frob  in parameter  /frob

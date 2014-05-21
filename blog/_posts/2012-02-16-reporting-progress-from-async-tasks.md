@@ -27,29 +27,29 @@ There is one built-in progress reporter: [Progress<T>](http://msdn.microsoft.com
 
 One important aspect of this class is that it invokes ProgressChanged (and the Action<T>) in the context in which it was constructed. So it's natural to write UI updates:
 
-public async void StartProcessingButton_Click(object sender, EventArgs e)
-{
-  // The Progress<T> constructor captures our UI context,
-  //  so the lambda will be run on the UI thread.
-  var progress = new Progress<int>(percent =>
-  {
-    textBox1.Text = percent + "%";
-  });
-
-  // DoProcessing is run on the thread pool.
-  await Task.Run(() => DoProcessing(progress));
-  textBox1.Text = "Done!";
-}
-
-public void DoProcessing(IProgress<int> progress)
-{
-  for (int i = 0; i != 100; ++i)
-  {
-    Thread.Sleep(100); // CPU-bound work
-    if (progress != null)
-      progress.Report(i);
-  }
-}
+    public async void StartProcessingButton_Click(object sender, EventArgs e)
+    {
+      // The Progress<T> constructor captures our UI context,
+      //  so the lambda will be run on the UI thread.
+      var progress = new Progress<int>(percent =>
+      {
+        textBox1.Text = percent + "%";
+      });
+    
+      // DoProcessing is run on the thread pool.
+      await Task.Run(() => DoProcessing(progress));
+      textBox1.Text = "Done!";
+    }
+    
+    public void DoProcessing(IProgress<int> progress)
+    {
+      for (int i = 0; i != 100; ++i)
+      {
+        Thread.Sleep(100); // CPU-bound work
+        if (progress != null)
+          progress.Report(i);
+      }
+    }
 
 The context keeps the updates nicely synchronized.
 
@@ -86,22 +86,22 @@ It's natural to think of a progress report as _cumulative_ - the canonical examp
 
 So an FTP file downloader would report the number of bytes transferred after each write to disk, not the entire number of bytes transferred so far:
 
-public async Task DownloadFileAsync(string fileName, IProgress<int> progress)
-{
-  using (var fileStream = ...) // Open local file for writing
-  using (var ftpStream = ...) // Open FTP stream
-  {
-    while (true)
+    public async Task DownloadFileAsync(string fileName, IProgress<int> progress)
     {
-      var bytesRead = await ftpStream.ReadAsync(...);
-      if (bytesRead == 0)
-        return;
-      await fileStream.WriteAsync(...);
-      if (progress != null)
-        progress.Report(bytesRead);
+      using (var fileStream = ...) // Open local file for writing
+      using (var ftpStream = ...) // Open FTP stream
+      {
+        while (true)
+        {
+          var bytesRead = await ftpStream.ReadAsync(...);
+          if (bytesRead == 0)
+            return;
+          await fileStream.WriteAsync(...);
+          if (progress != null)
+            progress.Report(bytesRead);
+        }
+      }
     }
-  }
-}
 
 Perhaps it's just me, but I find it easier to compose incremental updates like this rather than cumulative ones.
 

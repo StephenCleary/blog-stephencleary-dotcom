@@ -14,6 +14,8 @@ The idea behind this solution is to add a property to the entity type that point
 
 The modified **NorthwindEntities** uses **OnContextCreated** to hook into its constructor and set up event handlers to respond whenever an entity is added to or removed from this context. Each event handler uses dynamic duck typing to access an "ObjectContext" property on the entity; if no such property exists, the entity is ignored.
 
+{% highlight csharp %}
+
 using System.ComponentModel;
 using System.Data.Objects.DataClasses;
 using Microsoft.CSharp.RuntimeBinder;
@@ -80,8 +82,11 @@ namespace WindowsFormsApplication1
     }
   }
 }
+{% endhighlight %}
 
 The disadvantage to this approach is that you have to add an **ObjectContext** property to each entity type, like this:
+
+{% highlight csharp %}
 
 namespace WindowsFormsApplication1
 {
@@ -96,6 +101,7 @@ namespace WindowsFormsApplication1
     internal NorthwindEntities ObjectContext { get; set; }
   }
 }
+{% endhighlight %}
 
 Alternatively, you could modify the creation template. Either way, it's a fair amount of work.
 
@@ -104,6 +110,8 @@ Alternatively, you could modify the creation template. Either way, it's a fair a
 The [Connected Properties](http://www.nuget.org/List/Packages/ConnectedProperties) library may be used to "attach" properties to entity objects at run-time. This means it's no longer necessary to add the **ObjectContext** property on each entity type.
 
 This modified **NorthwindEntities** uses the same hooks as the one above, but it uses connected properties instead of dynamic duck typing:
+
+{% highlight csharp %}
 
 using System.ComponentModel;
 using System.Data.Objects.DataClasses;
@@ -162,6 +170,7 @@ namespace WindowsFormsApplication1
     }
   }
 }
+{% endhighlight %}
 
 The disadvantage of this approach is that you do need to take a dependency on the [Connected Properties](http://www.nuget.org/List/Packages/ConnectedProperties) library, but I think that's a reasonable tradeoff.
 

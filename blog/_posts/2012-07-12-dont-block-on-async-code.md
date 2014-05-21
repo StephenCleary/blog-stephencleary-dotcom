@@ -8,6 +8,8 @@ This is a problem that is brought up repeatedly on the forums and Stack Overflow
 
 Consider the example below. A button click will initiate a REST call and display the results in a text box (this sample is for Windows Forms, but the same principles apply to _any_ UI application).
 
+{% highlight csharp %}
+
 // My "library" method.
 public static async Task<JObject> GetJsonAsync(Uri uri)
 {
@@ -24,6 +26,7 @@ public void Button1_Click(...)
   var jsonTask = GetJsonAsync(...);
   textBox1.Text = jsonTask.Result;
 }
+{% endhighlight %}
 
 The "GetJson" helper method takes care of making the actual REST call and parsing it as JSON. The button click handler waits for the helper method to complete and then displays its results.
 
@@ -32,6 +35,8 @@ This code will deadlock.
 ## ASP.NET Example
 
 This example is very similar; we have a library method that performs a REST call, only this time it's used in an ASP.NET context (Web API in this case, but the same principles apply to _any_ ASP.NET application):
+
+{% highlight csharp %}
 
 // My "library" method.
 public static async Task<JObject> GetJsonAsync(Uri uri)
@@ -52,6 +57,7 @@ public class MyController : ApiController
     return jsonTask.Result.ToString();
   }
 }
+{% endhighlight %}
 
 This code will also deadlock. For the same reason.
 
@@ -85,6 +91,8 @@ There are two best practices (both covered in [my intro post]({% post_url 2012-0
 
 Consider the first best practice. The new "library" method looks like this:
 
+{% highlight csharp %}
+
 public static async Task<JObject> GetJsonAsync(Uri uri)
 {
   using (var client = new HttpClient())
@@ -93,10 +101,13 @@ public static async Task<JObject> GetJsonAsync(Uri uri)
     return JObject.Parse(jsonString);
   }
 }
+{% endhighlight %}
 
 This changes the continuation behavior of GetJsonAsync so that it does _not_ resume on the context. Instead, GetJsonAsync will resume on a thread pool thread. This enables GetJsonAsync to complete the Task it returned without having to re-enter the context.
 
 Consider the second best practice. The new "top-level" methods look like this:
+
+{% highlight csharp %}
 
 public async void Button1_Click(...)
 {
@@ -112,6 +123,7 @@ public class MyController : ApiController
     return json.ToString();
   }
 }
+{% endhighlight %}
 
 This changes the blocking behavior of the top-level methods so that the context is never actually blocked; all "waits" are "asynchronous waits".
 

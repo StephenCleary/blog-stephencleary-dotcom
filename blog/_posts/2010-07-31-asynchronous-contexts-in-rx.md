@@ -12,6 +12,8 @@ The one big difference is that the "matching" function will return its results i
 
 Here's the first brush of the code:
 
+{% highlight csharp %}
+
 // Listen for the user typing.
 var searchCommands = Observable.FromEvent<EventArgs>(this.textBoxSearch, "TextChanged")
   .Select(x => this.textBoxSearch.Text)
@@ -44,6 +46,7 @@ this.searchAction =
       }))
   .Switch() // Cancel existing searches when a new search starts.
   .Subscribe(response => this.listViewResults.Items.Add(this.toListViewItem(response)));
+{% endhighlight %}
 
 The first chunk of the code is almost identical to the first chunk of the Rx hands-on lab code. The only difference is that I use ObserveOn(this) and Do() to clear out any previous search results when a new search _starts_ (the hands-on lab clears previous search results when a search _completes_). I also do a Merge() with an empty string, which causes all results to be returned as soon as the form is loaded.
 
@@ -68,6 +71,8 @@ Note that asynchronous contexts in Rx need to be attached to _each element_ in t
 ## Using the Asynchronous Context
 
 This code uses an asynchronous context. The simplest context is just an Object instance, which can be easily compared for equality and is guaranteed unique from any other context.
+
+{% highlight csharp %}
 
 // Our asynchronous context.
 object context = null;
@@ -122,6 +127,7 @@ this.searchAction =
         this.listViewResults.Items.Add(this.toListViewItem(response.result));
       }
     });
+{% endhighlight %}
 
 The changes in this code all have to do with the asynchronous context. The local "context" variable always refers to the currently valid context (all other contexts are, by definition, invalid). When a new user search request is detected, we create a new context for the request, and we "bind" the context to the search request using an anonymous projection.
 

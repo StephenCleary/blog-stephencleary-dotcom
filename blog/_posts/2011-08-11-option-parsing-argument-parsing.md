@@ -10,13 +10,15 @@ This is going to be an in-depth post on how argument parsing works in the [Nito.
 
 First, a reminder about terminology; in this example, the "v" is the short option name, and the "3" is the option argument:
 
-> CommandLineTest.exe -v 3
+    > CommandLineTest.exe -v 3
 
 Also remember that an option argument may be _required_ for an option, or it may be _optional_. If you need a refresher, read the earlier post [options with optional arguments]({% post_url 2011-07-14-option-parsing-options-with-optional %}).
 
 Required option arguments are allowed to begin with a dash (**-**) or forward-slash (**/**), but optional option arguments are not. To start an optional option argument with these characters, specify the argument using a full-colon (**:**) or equals sign (**=**).
 
 Consider this example program, which just takes two string arguments, one required and one optional:
+
+{% highlight csharp %}
 
 class Program
 {
@@ -54,26 +56,27 @@ class Program
     }
   }
 }
+{% endhighlight %}
 
-> CommandLineParsingTest.exe -r a -o b
-Required Value: a
-Optional Value: b
-
-> CommandLineParsingTest.exe -r /a -o b
-Required Value: /a
-Optional Value: b
-
-> CommandLineParsingTest.exe -r a -o /b
-Unknown option  b  in parameter  /b
-
-> CommandLineParsingTest.exe -o "/b"
-Unknown option  b  in parameter  /b
-
-> CommandLineParsingTest.exe -o:/b
-Optional Value: /b
-
-> CommandLineParsingTest.exe -o=/b
-Optional Value: /b
+    > CommandLineParsingTest.exe -r a -o b
+    Required Value: a
+    Optional Value: b
+    
+    > CommandLineParsingTest.exe -r /a -o b
+    Required Value: /a
+    Optional Value: b
+    
+    > CommandLineParsingTest.exe -r a -o /b
+    Unknown option  b  in parameter  /b
+    
+    > CommandLineParsingTest.exe -o "/b"
+    Unknown option  b  in parameter  /b
+    
+    > CommandLineParsingTest.exe -o:/b
+    Optional Value: /b
+    
+    > CommandLineParsingTest.exe -o=/b
+    Optional Value: /b
 
 Note that placing the argument in double-quotes does _not_ allow the argument to start with a dash or forward-slash.
 
@@ -90,6 +93,8 @@ The option parsing library uses a collection of "simple parsers" to convert from
 Say, for example, we wanted to accept an argument of type [Complex](http://msdn.microsoft.com/en-us/library/system.numerics.complex.aspx). The Complex type is not included in the default simple parser collection (in fact, it does not even have a Parse or TryParse method!).
 
 If we try to add it to our program, then whatever we pass as the argument value will just fail to parse:
+
+{% highlight csharp %}
 
 class Program
 {
@@ -122,15 +127,18 @@ class Program
     }
   }
 }
+{% endhighlight %}
 
-> CommandLineParsingTest.exe -v (3,5)
-Could not parse  (3,5)  as Complex
+    > CommandLineParsingTest.exe -v (3,5)
+    Could not parse  (3,5)  as Complex
 
 We can create a parser for the **Complex** type by implementing **ISimpleParser**. This interface only has two members: the type of the result and a **TryParse** method.
 
 Once we've implemented our special parser, we need to pass it to the Parse method. To do this, we create a **SimpleParserCollection**, add our special parser, and pass the collection to the Parse method.
 
 Our solution now looks like this:
+
+{% highlight csharp %}
 
 class Program
 {
@@ -189,9 +197,10 @@ class Program
     }
   }
 }
+{% endhighlight %}
 
-> CommandLineParsingTest.exe -v (3,5)
-Value: (3, 5)
+    > CommandLineParsingTest.exe -v (3,5)
+    Value: (3, 5)
 
 We added a custom parser to the collection, and the option parsing library now understands how to parse a new type. We could add any number of **Complex** properties, and they would all use the new parser.
 
@@ -202,6 +211,8 @@ This is a powerful extension point, but what if we want to modify the way an ext
 The default parsers in a simple parser collection only use the basic **TryParse** methods, which may not be exactly what is needed. **SimpleParserCollection.Add** will actually _replace_ the parser for a given type if there is already a parser for that type.
 
 We'll use **uint** for our example. We want to allow either decimal numbers or hexadecimal numbers prefixed by "0x". **System.UInt32.TryParse(string)** does not accept hexadecimal numbers:
+
+{% highlight csharp %}
 
 class Program
 {
@@ -234,14 +245,17 @@ class Program
     }
   }
 }
+{% endhighlight %}
 
-> CommandLineParsingTest.exe -v 11
-Value: 11
-
-> CommandLineParsingTest.exe -v 0x11
-Could not parse  0x11  as UInt32
+    > CommandLineParsingTest.exe -v 11
+    Value: 11
+    
+    > CommandLineParsingTest.exe -v 0x11
+    Could not parse  0x11  as UInt32
 
 Just like the last example, we'll implement our own parser, and we'll add it to the parser collection (replacing the default parser).
+
+{% highlight csharp %}
 
 class Program
 {
@@ -299,12 +313,13 @@ class Program
     }
   }
 }
+{% endhighlight %}
 
-> CommandLineParsingTest.exe -v 11
-Value: 11
-
-> CommandLineParsingTest.exe -v 0x11
-Value: 17
+    > CommandLineParsingTest.exe -v 11
+    Value: 11
+    
+    > CommandLineParsingTest.exe -v 0x11
+    Value: 17
 
 Our program now allows decimal or hexadecimal values for all **uint** argument values.
 
@@ -315,6 +330,8 @@ These custom parsers can be written for any type, including types specific for y
 The examples so far have implemented a custom parser and added it to the parser collection. This changes the parsing behavior for _every_ property of that type. Sometimes we just want to apply a parser to a single property; this can be done by using the **SimpleParserAttribute**.
 
 This example defines a hex parser (without the "0x" prefix) and then uses it for only one of its properties:
+
+{% highlight csharp %}
 
 class Program
 {
@@ -369,14 +386,17 @@ class Program
     }
   }
 }
+{% endhighlight %}
 
-> CommandLineParsingTest.exe -h 11 -d 11
-HexValue: 17
-DecValue: 11
+    > CommandLineParsingTest.exe -h 11 -d 11
+    HexValue: 17
+    DecValue: 11
 
 ## Custom Parsers for Multiple Argument Values
 
 Revisiting the problem of [multiple argument values]({% post_url 2011-07-28-option-parsing-allowing-multiple %}), we can use a custom parser for a cleaner solution. This example "sequence parser" uses the default simple parser for **int** types, which is easier to deal with than **int.TryParse**:
+
+{% highlight csharp %}
 
 class Program
 {
@@ -428,17 +448,18 @@ class Program
     }
   }
 }
+{% endhighlight %}
 
-> CommandLineParsingTest.exe
-
-> CommandLineParsingTest.exe -v 2,3,5,7
-Values: 2 3 5 7
-
-> CommandLineParsingTest.exe -v 2,3a,5
-Could not parse  2,3a,5  as IEnumerable<Int32>
-
-> CommandLineParsingTest.exe -v 2,3 -v 5,7
-Values: 5 7
+    > CommandLineParsingTest.exe
+    
+    > CommandLineParsingTest.exe -v 2,3,5,7
+    Values: 2 3 5 7
+    
+    > CommandLineParsingTest.exe -v 2,3a,5
+    Could not parse  2,3a,5  as IEnumerable<Int32>
+    
+    > CommandLineParsingTest.exe -v 2,3 -v 5,7
+    Values: 5 7
 
 The last example above shows that the default behavior of the actual property setter is still _overwrite_, not _append_. If you want to allow appending sequences, you'll need to change the setter to append each sequence to an internal collection.
 

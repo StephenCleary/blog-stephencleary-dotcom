@@ -14,6 +14,8 @@ Positional arguments support the entire range of [parsing possibilities]({% post
 
 This example uses a regular **Level** option along with a **Name** positional parameter.
 
+{% highlight csharp %}
+
 class Program
 {
   private sealed class Options : OptionArgumentsBase
@@ -48,36 +50,37 @@ class Program
     }
   }
 }
+{% endhighlight %}
 
-> CommandLineParsingTest.exe
-Level:
-Name:
-
-> CommandLineParsingTest.exe Bob
-Level:
-Name: Bob
-
-> CommandLineParsingTest.exe -l 13
-Level: 13
-Name:
-
-> CommandLineParsingTest.exe -l 13 Bob
-Level: 13
-Name: Bob
-
-> CommandLineParsingTest.exe Bob -l 13
-Unknown parameter  -l
+    > CommandLineParsingTest.exe
+    Level:
+    Name:
+    
+    > CommandLineParsingTest.exe Bob
+    Level:
+    Name: Bob
+    
+    > CommandLineParsingTest.exe -l 13
+    Level: 13
+    Name:
+    
+    > CommandLineParsingTest.exe -l 13 Bob
+    Level: 13
+    Name: Bob
+    
+    > CommandLineParsingTest.exe Bob -l 13
+    Unknown parameter  -l
 
 The last test above shows that positional arguments must come after all regular options.
 
 If you need to pass a positional argument that starts with a dash (-) or forward slash (/), you can pass the special option "--", which forces all remaining command-line arguments to be interpreted as positional arguments:
 
-> CommandLineParsingTest.exe -Negative
-Unknown option  N  in parameter  -Negative
-
-> CommandLineParsingTest.exe -- -Negative
-Level:
-Name: -Negative
+    > CommandLineParsingTest.exe -Negative
+    Unknown option  N  in parameter  -Negative
+    
+    > CommandLineParsingTest.exe -- -Negative
+    Level:
+    Name: -Negative
 
 ## The Positional Argument Collection
 
@@ -86,6 +89,8 @@ Every options class must have one property that can receive "extra" positional a
 Most programs do not need this functionality, so the **OptionArgumentsBase** class provides a simple collection called **AdditionalArguments**. By default, **OptionArgumentsBase.Validate** will throw an **UnknownOptionException** if any positional arguments end up in that collection.
 
 A program may make use of the **AdditionalArguments** collection by overriding **Validate**:
+
+{% highlight csharp %}
 
 class Program
 {
@@ -122,26 +127,27 @@ class Program
     }
   }
 }
+{% endhighlight %}
 
-> CommandLineParsingTest.exe
-Name:
-ArgList:
-
-> CommandLineParsingTest.exe Bob
-Name: Bob
-ArgList:
-
-> CommandLineParsingTest.exe Bob 17
-Name: Bob
-ArgList: 17
-
-> CommandLineParsingTest.exe Bob -l 13
-Name: Bob
-ArgList: -l, 13
-
-> CommandLineParsingTest.exe -- Bob
-Name: Bob
-ArgList:
+    > CommandLineParsingTest.exe
+    Name:
+    ArgList:
+    
+    > CommandLineParsingTest.exe Bob
+    Name: Bob
+    ArgList:
+    
+    > CommandLineParsingTest.exe Bob 17
+    Name: Bob
+    ArgList: 17
+    
+    > CommandLineParsingTest.exe Bob -l 13
+    Name: Bob
+    ArgList: -l, 13
+    
+    > CommandLineParsingTest.exe -- Bob
+    Name: Bob
+    ArgList:
 
 Alternatively, an options class may provide its own collection, marked with the **PositionalArgumentsAttribute** (note the plural "Argument**s**"). When it does this, the options class may _not_ derive from **OptionArgumentsBase**; rather, it should implement the **IOptionArguments** interface.
 
@@ -150,6 +156,8 @@ The property does not have to be **List<string>** (which is used by **OptionArgu
 > This means that **PositionalArguments** can be placed on a property of dictionary type, as long as a matching parser is provided.
 
 Here's an example of a program taking any number of integer parameters:
+
+{% highlight csharp %}
 
 class Program
 {
@@ -190,15 +198,16 @@ class Program
     }
   }
 }
+{% endhighlight %}
 
-> CommandLineParsingTest.exe
-Integers:
-
-> CommandLineParsingTest.exe 13
-Integers: 13
-
-> CommandLineParsingTest.exe 13 7
-Integers: 13, 7
-
-> CommandLineParsingTest.exe 13 7 Bob
-Could not parse  Bob  as Int32
+    > CommandLineParsingTest.exe
+    Integers:
+    
+    > CommandLineParsingTest.exe 13
+    Integers: 13
+    
+    > CommandLineParsingTest.exe 13 7
+    Integers: 13, 7
+    
+    > CommandLineParsingTest.exe 13 7 Bob
+    Could not parse  Bob  as Int32

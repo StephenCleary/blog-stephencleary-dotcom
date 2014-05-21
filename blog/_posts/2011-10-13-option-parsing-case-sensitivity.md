@@ -6,6 +6,8 @@ seriesTitle: "Case Sensitivity"
 ---
 By default, all option parsing is case-sensitive:
 
+{% highlight csharp %}
+
 class Program
 {
   private sealed class Options : OptionArgumentsBase
@@ -34,14 +36,17 @@ class Program
     }
   }
 }
+{% endhighlight %}
 
-> CommandLineParsingTest.exe /name Bob
-Name: Bob
-
-> CommandLineParsingTest.exe /Name Bob
-Unknown option  Name  in parameter  /Name
+    > CommandLineParsingTest.exe /name Bob
+    Name: Bob
+    
+    > CommandLineParsingTest.exe /Name Bob
+    Unknown option  Name  in parameter  /Name
 
 This is normal for Unix users, but Windows users expect case-insensitivity. You can pass your own **StringComparer** to the **Parse** method to support case-insensitivity:
+
+{% highlight csharp %}
 
 class Program
 {
@@ -71,9 +76,10 @@ class Program
     }
   }
 }
+{% endhighlight %}
 
-> CommandLineParsingTest.exe /name Bob
-Name: Bob
-
-> CommandLineParsingTest.exe /Name Bob
-Name: Bob
+    > CommandLineParsingTest.exe /name Bob
+    Name: Bob
+    
+    > CommandLineParsingTest.exe /Name Bob
+    Name: Bob

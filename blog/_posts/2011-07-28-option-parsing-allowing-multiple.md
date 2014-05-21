@@ -10,6 +10,8 @@ Some options need to take a _sequence_ of argument values. There are several way
 
 If the option values are a series of enumerated flags, then the built-in enumeration parser will handle multiple values automatically:
 
+{% highlight csharp %}
+
 class Program
 {
   [Flags]
@@ -49,21 +51,22 @@ class Program
     }
   }
 }
+{% endhighlight %}
 
-> CommandLineParsingTest.exe
-None
-
-> CommandLineParsingTest.exe /favorite-things Mittens
-Mittens
-
-> CommandLineParsingTest.exe /favorite-things Mittens,Kittens
-Mittens, Kittens
-
-> CommandLineParsingTest.exe /favorite-things "Mittens, Snowflakes"
-Mittens, Snowflakes
-
-> CommandLineParsingTest.exe /favorite-things DogBites
-Could not parse  DogBites  as FavoriteThings
+    > CommandLineParsingTest.exe
+    None
+    
+    > CommandLineParsingTest.exe /favorite-things Mittens
+    Mittens
+    
+    > CommandLineParsingTest.exe /favorite-things Mittens,Kittens
+    Mittens, Kittens
+    
+    > CommandLineParsingTest.exe /favorite-things "Mittens, Snowflakes"
+    Mittens, Snowflakes
+    
+    > CommandLineParsingTest.exe /favorite-things DogBites
+    Could not parse  DogBites  as FavoriteThings
 
 ## Using a Property Setter for Individual Values
 
@@ -72,6 +75,8 @@ The example above works well enough for enumerations, but not all arguments are 
 The following example allows multiple individual values for an argument. As each argument value is set, it is saved into a collection of values.
 
 Note that using a property setter in this fashion is not a good OOP practice; however, the adverse design affects are contained within the options class.
+
+{% highlight csharp %}
 
 class Program
 {
@@ -116,17 +121,19 @@ class Program
     }
   }
 }
+{% endhighlight %}
 
-> CommandLineParsingTest.exe
-
-> CommandLineParsingTest.exe -n 3
-3
-
-> CommandLineParsingTest.exe -n 3 -n 6
-3, 6
-
-> CommandLineParsingTest.exe -n 3,6
-Could not parse  3,6  as Int32
+    > CommandLineParsingTest.exe
+    
+    
+    > CommandLineParsingTest.exe -n 3
+    3
+    
+    > CommandLineParsingTest.exe -n 3 -n 6
+    3, 6
+    
+    > CommandLineParsingTest.exe -n 3,6
+    Could not parse  3,6  as Int32
 
 Note that the last test failed; the options class above only allows multiple individual arguments, not a group of values.
 
@@ -135,6 +142,8 @@ Note that the last test failed; the options class above only allows multiple ind
 In this case, we want to be able to pass a sequence of values (delimited somehow) as a single argument, and have them interpreted as multiple individual values.
 
 We can again take advantage of the property setter hack, but we have to do our own parsing of the delimited value. We will use a property type of **string** to prevent automatic parsing.
+
+{% highlight csharp %}
 
 class Program
 {
@@ -181,12 +190,13 @@ class Program
     }
   }
 }
+{% endhighlight %}
 
-> CommandLineParsingTest.exe -n 3 -n 6
-3, 6
-
-> CommandLineParsingTest.exe -n 3;6
-3, 6
+    > CommandLineParsingTest.exe -n 3 -n 6
+    3, 6
+    
+    > CommandLineParsingTest.exe -n 3;6
+    3, 6
 
 This works, but still feels a bit "hackish". We're out of time for today, but in [a few weeks]({% post_url 2011-08-11-option-parsing-argument-parsing %}) we'll revisit this problem when we talk about _custom argument parsers_.
 

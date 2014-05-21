@@ -14,7 +14,10 @@ The **Lexing** phase deals with the escaping and quoting of special characters a
 
 The [Nito.KitchenSink.OptionParser](http://nuget.org/List/Packages/Nito.KitchenSink.OptionParsing) library does not have a _lexer_, but does have a _parser_ and hooks for _validation_. The easiest way to use the library is by calling a single method:
 
+{% highlight csharp %}
+
 var options = OptionParser.Parse<MyOptionArguments>();
+{% endhighlight %}
 
 This single method wraps all the phases of the option parsing pipeline:
 

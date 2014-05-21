@@ -6,6 +6,8 @@ seriesTitle: "Options with Optional Arguments"
 ---
 All of the examples so far have illustrated _options with required arguments_; that is, if the option is passed, it must be followed by an argument. It's also possible to define an option that takes an optional argument:
 
+{% highlight csharp %}
+
 class Program
 {
   private sealed class Options : OptionArgumentsBase
@@ -39,19 +41,22 @@ class Program
     }
   }
 }
+{% endhighlight %}
 
-> CommandLineParsingTest.exe
-Regular prejudice will do.
-
-> CommandLineParsingTest.exe -p 3
-Extreme Prejudice specified: 3
-
-> CommandLineParsingTest.exe -p
-Regular prejudice will do.
+    > CommandLineParsingTest.exe
+    Regular prejudice will do.
+    
+    > CommandLineParsingTest.exe -p 3
+    Extreme Prejudice specified: 3
+    
+    > CommandLineParsingTest.exe -p
+    Regular prejudice will do.
 
 The last example above illustrates the problem with options that take optional arguments: there isn't an easy way to determine whether the option _was passed without an argument_ or the option _was not passed at all_. In both of these cases, the property is left at the default value (**null** in this case).
 
 The solution is to use the **OptionPresent** attribute, as such:
+
+{% highlight csharp %}
 
 class Program
 {
@@ -91,15 +96,16 @@ class Program
     }
   }
 }
+{% endhighlight %}
 
-> CommandLineParsingTest.exe
-Regular prejudice will do.
-
-> CommandLineParsingTest.exe -p 3
-Extreme Prejudice specified: 3
-
-> CommandLineParsingTest.exe -p
-Extreme Prejudice specified.
+    > CommandLineParsingTest.exe
+    Regular prejudice will do.
+    
+    > CommandLineParsingTest.exe -p 3
+    Extreme Prejudice specified: 3
+    
+    > CommandLineParsingTest.exe -p
+    Extreme Prejudice specified.
 
 It is now possible to distinguish all possibilities. The **OptionPresent** example above uses the short option name, but this attribute also works with long names.
 

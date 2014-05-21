@@ -14,17 +14,17 @@ I hope we can all agree that unit testing is a fundamental skill in Modern Progr
 
 Let's start with a simple asynchronous method. So simple, in fact, that it will just pretend to work for a while and then do a single integer division:
 
-public static class MyClass
-{
-  public static async Task<int> Divide(int numerator, int denominator)
-  {
-    // Work for a while...
-    await Task.Delay(10); // (Use TaskEx.Delay on VS2010)
-
-    // Return the result
-    return numerator / denominator;
-  }
-}
+    public static class MyClass
+    {
+      public static async Task<int> Divide(int numerator, int denominator)
+      {
+        // Work for a while...
+        await Task.Delay(10); // (Use TaskEx.Delay on VS2010)
+    
+        // Return the result
+        return numerator / denominator;
+      }
+    }
 
 Boy, it doesn't seem that there _can_ be much wrong with that code! But as we'll see, there's a lot that can be wrong with the unit tests...
 
@@ -34,25 +34,25 @@ When developers write unit tests for async code, they usually take one of two mi
 
 This mistake is most common for people new to async: they decide to wait for the task to complete and then check its result. Well, that _seems_ logical enough, and some unit tests written this way actually work:
 
-[TestMethod]
-public void FourDividedByTwoIsTwo()
-{
-  Task<int> task = MyClass.Divide(4, 2);
-  task.Wait();
-  Assert.AreEqual(2, task.Result);
-}
+    [TestMethod]
+    public void FourDividedByTwoIsTwo()
+    {
+      Task<int> task = MyClass.Divide(4, 2);
+      task.Wait();
+      Assert.AreEqual(2, task.Result);
+    }
 
 ![]({{ site_url }}/assets/AsyncUnitTests1.png)  
 
 But one of the problems with this approach is unit tests that check error handling:
 
-[TestMethod]
-[ExpectedException(typeof(DivideByZeroException))]
-public void DenominatorIsZeroThrowsDivideByZero()
-{
-  Task<int> task = MyClass.Divide(4, 0);
-  task.Wait();
-}
+    [TestMethod]
+    [ExpectedException(typeof(DivideByZeroException))]
+    public void DenominatorIsZeroThrowsDivideByZero()
+    {
+      Task<int> task = MyClass.Divide(4, 0);
+      task.Wait();
+    }
 
 ![]({{ site_url }}/assets/AsyncUnitTests2.png)  
 
@@ -68,12 +68,12 @@ Well, we could await the task, which would unwrap the exception for us. This wou
 
 This mistake is more common for people who have used async in some real-world code. They've observed how async "grows" through the code base, and so it's natural to extend async to the test methods. This is what I consider the "obvious" solution:
 
-[TestMethod]
-public async Task FourDividedByTwoIsTwoAsync()
-{
-  int result = await MyClass.Divide(4, 2);
-  Assert.AreEqual(2, result);
-}
+    [TestMethod]
+    public async Task FourDividedByTwoIsTwoAsync()
+    {
+      int result = await MyClass.Divide(4, 2);
+      Assert.AreEqual(2, result);
+    }
 
 ![]({{ site_url }}/assets/AsyncUnitTests4.png)  
 
@@ -83,12 +83,12 @@ Yay! It works!
 
 Wait...
 
-[TestMethod]
-public async Task FourDividedByTwoIsThirteenAsync()
-{
-  int result = await MyClass.Divide(4, 2);
-  Assert.AreEqual(13, result);
-}
+    [TestMethod]
+    public async Task FourDividedByTwoIsThirteenAsync()
+    {
+      int result = await MyClass.Divide(4, 2);
+      Assert.AreEqual(13, result);
+    }
 
 ![]({{ site_url }}/assets/AsyncUnitTests5.png)  
 
