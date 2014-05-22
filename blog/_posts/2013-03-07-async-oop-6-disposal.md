@@ -18,7 +18,11 @@ For some situations this works out just fine (e.g., `HttpClient` uses this appro
 
 You can use this approach when you need asynchronous disposal; "dispose" becomes an asynchronous operation. You can't use `IDisposable.Dispose` for this, since `Dispose` must be a synchronous method (OK, technically you could block in `Dispose`, but that's a hack that will cause other problems). Once again, you can turn to Microsoft to see how they handled this situation. As usual, Stephen Toub has been there, done that, and designed the T-shirt.
 
-> Terminology note: I use the term "asynchronous disposal" for what should really be called "completion" (an asynchronous operation). "Asynchronous disposal" has _nothing_ to do with `IDisposable`. However, I'm sticking with the "asynchronous disposal" term to reduce confusion. E.g., I can say "when the disposal completes" rather than "when the completion completes".
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Terminology note: I use the term "asynchronous disposal" for what should really be called "completion" (an asynchronous operation). "Asynchronous disposal" has _nothing_ to do with `IDisposable`. However, I'm sticking with the "asynchronous disposal" term to reduce confusion. E.g., I can say "when the disposal completes" rather than "when the completion completes".
+</div>
 
 Consider [ConcurrentExclusiveSchedulerPair](http://msdn.microsoft.com/en-us/library/hh194868.aspx). This is a pair of `Task` schedulers; it's responsible for queueing tasks to run. The scheduler pair instance itself supports asynchronous "disposal"; the semantics are that once "disposal" is requested, no new tasks are accepted by the scheduler pair. However, the already-queued tasks are not canceled; the "disposal" is considered complete once those already-queued tasks have been run.
 
@@ -57,7 +61,11 @@ public interface IDataflowBlock
 }
 {% endhighlight %}
 
-> Aside: Interestingly, these are the _only_ members of `IDataflowBlock`. I [asked Stephen Toub](http://social.msdn.microsoft.com/Forums/en-US/tpldataflow/thread/102885d5-67c0-4287-b5d0-98b8bb5420d8) about this, and he said that they did consider naming this interface something like `IAsyncCompletable`, but that the `Complete` and `Fault` members don't always make sense for all types.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Aside: Interestingly, these are the _only_ members of `IDataflowBlock`. I [asked Stephen Toub](http://social.msdn.microsoft.com/Forums/en-US/tpldataflow/thread/102885d5-67c0-4287-b5d0-98b8bb5420d8){:.alert-link} about this, and he said that they did consider naming this interface something like `IAsyncCompletable`, but that the `Complete` and `Fault` members don't always make sense for all types.
+</div>
 
 So, if you need to support "asynchronous disposal", I recommend following this same pattern. Just like the [asynchronous initialization pattern]({% post_url 2013-01-17-async-oop-2-constructors %}), you may want to define your own marker interface if you have implementations that _might_ need asynchronous disposal.
 

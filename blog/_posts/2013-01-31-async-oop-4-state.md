@@ -14,7 +14,11 @@ One familiar example of this problem is `Stream.Position`, which represents the 
 
 Now, consider `ReadAsync` and `WriteAsync`: when is `Position` updated? When the reading/writing is complete, or before it actually happens? If it happens before, is it updated synchronously or could it happen after the actual `ReadAsync` or `WriteAsync` method returns?
 
-> As a side note, this problem affects all asynchronous code, not just `async` code. The same questions about `ReadAsync` can be asked about `BeginRead`.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+As a side note, this problem affects all asynchronous code, not just `async` code. The same questions about `ReadAsync` can be asked about `BeginRead`.
+</div>
 
 This is a great example of how a property that _exposes state_ has perfectly clear semantics for synchronous code, but no obviously correct semantics for asynchronous code. It's not the end of the world - you just need to think about your entire API when `async`-enabling your types, and _document the semantics you choose_.
 

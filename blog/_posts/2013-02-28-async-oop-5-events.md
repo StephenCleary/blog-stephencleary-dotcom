@@ -63,7 +63,11 @@ public sealed class DeferralManager
 }
 {% endhighlight %}
 
-> The [DeferralManager in the AsyncEx library](http://nitoasyncex.codeplex.com/wikipage?title=DeferralManager) is almost identical to this code, except that it lazy-creates the asynchronous countdown event. This minimizes overhead if all the handlers are synchronous.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+The [DeferralManager in the AsyncEx library](http://nitoasyncex.codeplex.com/wikipage?title=DeferralManager){:.alert-link} is almost identical to this code, except that it lazy-creates the asynchronous countdown event. This minimizes overhead if all the handlers are synchronous.
+</div>
 
 Once you have a `DeferralManager`, you can extend your "command-style" event arguments type as such:
 

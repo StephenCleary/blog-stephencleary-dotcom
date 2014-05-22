@@ -232,7 +232,11 @@ In my own experience, I've never needed them.
 
 Let's step back and reconsider the definition of recursive locks. At the beginning of this blog post, I stated:
 
-> A "recursive" lock is one that, when locked, will first determine _whether it is already held_
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+A "recursive" lock is one that, when locked, will first determine _whether it is already held_
+</div>
 
 Already held... _by what?_
 

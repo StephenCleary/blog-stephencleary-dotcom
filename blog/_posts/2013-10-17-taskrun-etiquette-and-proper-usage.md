@@ -15,7 +15,7 @@ That sounds so simple, but we've already eliminated a whole slew of poor example
 I've seen many, many intelligent developers fall into that same mistake.
 
 <div class="alert alert-info" markdown="1">
-<i class="fa fa-hand-o-right fa-3x pull-left"></i>
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
 Want a more detailed discussion? Read [Don't Use Task.Run for the Wrong Thing]({% post_url 2013-11-06-taskrun-etiquette-examples-using %}){:.alert-link}.
 </div>
@@ -32,7 +32,7 @@ One common mistake is to try to make asynchronous "wrappers" around existing syn
 So, any code that you want to be reusable should not use `Task.Run` in its implementation. Consider the developers (including yourself) who will need to consume that code.
 
 <div class="alert alert-info" markdown="1">
-<i class="fa fa-hand-o-right fa-3x pull-left"></i>
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
 Want a more detailed discussion? Read [Don't Use Task.Run in the Implementation]({% post_url 2013-11-07-taskrun-etiquette-examples-dont-use %}){:.alert-link}.
 </div>
@@ -44,7 +44,7 @@ The answer is still no.
 However, in this (uncommon) situation, you do end up with a bit of an awkward solution: an asynchronous method that also does CPU-bound work. In this case, you should document clearly that the method is not fully asynchronous, so that callers know to wrap it in a `Task.Run` if necessary. (Remember, it's necessary if it's being called from the UI thread, but not necessary if called from a background thread or ASP.NET).
 
 <div class="alert alert-info" markdown="1">
-<i class="fa fa-hand-o-right fa-3x pull-left"></i>
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
 Want a more detailed discussion? Read [Even in the Complex Case, Don't Use Task.Run in the Implementation]({% post_url 2013-11-08-taskrun-etiquette-examples-even-in %}){:.alert-link}.
 </div>

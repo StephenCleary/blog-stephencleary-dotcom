@@ -153,7 +153,11 @@ With these few changes, the new output is the same, except for some additional i
 
 Now there's a nice "logical stack" stuck on the end of the exception dump. Unlike the exception call stack, the "logical stack" is actually a causality stack, which is much more useful when debugging asynchronous code. As you can see, the logical stack leads us directly to the location of the exception, and (more importantly) shows _how we got there_.
 
-> Side note: the original exception details are included in `ToAsyncDiagnosticString` because it does contain some information that is _not_ tracked by the async diagnostic stack. For example, you can look at the top frame in the (synchronous) call stack (`Program.<>c__DisplayClass4.<MyMethodAsync>b__3()`) and infer that in fact the exception is thrown from a lambda expression and not directly from `MyMethodAsync`. The synchronous call stack also includes other information such as file names and line numbers that is not (currently) included in the logical stack.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Side note: the original exception details are included in `ToAsyncDiagnosticString` because it does contain some information that is _not_ tracked by the async diagnostic stack. For example, you can look at the top frame in the (synchronous) call stack (`Program.<>c__DisplayClass4.<MyMethodAsync>b__3()`) and infer that in fact the exception is thrown from a lambda expression and not directly from `MyMethodAsync`. The synchronous call stack also includes other information such as file names and line numbers that is not (currently) included in the logical stack.
+</div>
 
 Ready to go one step further? You can tie into the diagnostic stack and add whatever additional data you want:
 
@@ -221,7 +225,11 @@ Async Diagnostics requires full trust. There is no support for partial trust.
 
 There is a definite runtime impact. Your code will certainly run slower with async diagnostics active. Currently, there is no way to turn async diagnostics on or off at runtime; it is a compile-time-only option. However, you can reduce the runtime impact by only applying `AsyncDiagnosticAspect` to certain types or namespaces (either by placing the attribute only on the type(s) that need it or by using [PostSharp multicasting](http://doc.postsharp.net/postsharp-3.0/##PostSharp-3.0.chm/html/1B05CE59-61DE-4043-8E7C-12C130B1ACBB.htm)).
 
-> I do attempt to minimize the runtime impact of Async Diagnostics. I do as much processing as possible at compile time. At runtime, I use immutable collections exclusively to maximize memory sharing. However, the runtime impact is still non-trivial. It is _possible_ to leave Async Diagnostics on in production, but you'll want to do performance testing before making that decision.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+I do attempt to minimize the runtime impact of Async Diagnostics. I do as much processing as possible at compile time. At runtime, I use immutable collections exclusively to maximize memory sharing. However, the runtime impact is still non-trivial. It is _possible_ to leave Async Diagnostics on in production, but you'll want to do performance testing before making that decision.
+</div>
 
 `AsyncDiagnosticAspect` may be applied to assemblies or types. It does _not_ work correctly when multicast onto methods. I expect this will be fixed after PostSharp 3.1 is released.
 

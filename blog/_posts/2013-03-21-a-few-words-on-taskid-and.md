@@ -26,7 +26,11 @@ Identifiers have meaning only for a particular type. For example, the first assi
 
 The "identifiers" are not unique. They're pretty close (they'll repeat very rarely), but they're not actually _unique_.
 
-> The MSDN documentation states the identifiers are unique. The MSDN documentation is wrong.
+<div class="alert alert-danger" markdown="1">
+<i class="fa fa-exclamation-triangle fa-3x pull-left"></i>
+
+The MSDN documentation states the identifiers are unique. The MSDN documentation is wrong.
+</div>
 
 This can be easily proven with a simple test (also on [gist](https://gist.github.com/StephenCleary/5108676)) where we first create one `Task` and then repeatedly create additional `Task` instances until we find one where the identifiers are the same (though the task instances are different):
 
@@ -69,7 +73,11 @@ Probably no one will write a program that has four billion `Task` instances simu
 
 So, be aware that identifiers are not strictly unique. Some developers have attempted to "attach" data to a task using a concurrent dictionary with task identifiers as the key. But this will not work for most long-running programs.
 
-> When developers try to attach data to tasks, they're usually trying to figure out some kind of "ambient context" for asynchronous operations. We'll cover the correct way to do that in a few weeks. If you really, seriously do need to attach data to tasks and you can't derive from `Task` for whatever reason, you can use [Connected Properties](http://connectedproperties.codeplex.com/).
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+When developers try to attach data to tasks, they're usually trying to figure out some kind of "ambient context" for asynchronous operations. [I cover the correct way to do that in a separate post.]({% post_url 2013-04-04-implicit-async-context-asynclocal %}){:.alert-link} If you really, seriously do need to attach data to tasks and you can't derive from `Task` for whatever reason, you can use [Connected Properties](http://connectedproperties.codeplex.com/){:.alert-link}.
+</div>
 
 ## Identifiers in Nito.AsyncEx
 
