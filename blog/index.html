@@ -3,15 +3,10 @@ layout: default
 ---
 
 <div>
-
-  <h1>All Posts</h1>
-    
-  <ul class="nav nav-pills nav-stacked">
-    {% for post in site.posts %}
-      <li><a href="{{ post.url | prepend: site.baseurl }}">{{ post.title }} &bull; {{ post.date | date: "%b %-d, %Y" }}</a></li>
-    {% endfor %}
-  </ul>
-
-  <p class="rss-subscribe">subscribe <a href="{{ '/feed.xml' | prepend: site.baseurl }}">via RSS</a></p>
-
+    <h1>All Posts</h1>
+    <ul class="nav nav-pills nav-stacked">
+        {% for post in site.posts %}
+            <li><a href="{{ post.url | prepend: site.baseurl }}">{{ post.title }} <small>&bull; {{ post.date | date: "%b %-d, %Y" }}</small></a></li>
+        {% endfor %}
+    </ul>
 </div>
