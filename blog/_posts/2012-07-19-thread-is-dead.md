@@ -6,9 +6,8 @@ At this point, it should be clear that Tasks are far superior to BackgroundWorke
 
 This post (and most of my other [async posts]({% post_url 2009-01-24-announcing-release-of-nitoasync %})) are from a talk I gave in October 2011 called "Thread is Dead". Here's the punchline slide:
 
-<div style="text-align: center;">
-<img border="0" height="720" width="960" src="http://2.bp.blogspot.com/-rEe_nJtpBCo/TzQVTq-F2gI/AAAAAAAAGco/ZjVZyWAdPNE/s960/Thread%2Bis%2BDead.png" />
-</div>
+{:.center}
+![]({{ site_url }}/assets/Thread%20is%20Dead.png)
 
 Friends don't let friends use Thread. Or BackgroundWorker. It is time for these classes to go the way of "lock (this)" and "Application.DoEvents".
 

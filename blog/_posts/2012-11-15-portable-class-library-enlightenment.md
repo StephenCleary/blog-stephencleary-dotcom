@@ -23,9 +23,8 @@ There are several ways to do this. [Daniel Plaisted has a great blog post](http:
 
 The first three approaches depend on the _consumer_ of the library implementing the platform services (or at least instantiating them) and providing them to the portable library:
 
-<div style="text-align:center;">
-<img border="0" height="427" width="384" src="http://2.bp.blogspot.com/-3JWoBwx4RlQ/UJwzuTsWRVI/AAAAAAAAHm0/eCz3C3M6kF0/s1600/Blog.png" />
-</div>
+{:.center}
+![]({{ site_url }}/assets/Blog.jpg)
 
 This is fine if your PCL is just the core of a portable _application_, like Daniel's "Disentanglement" application, where the PCL contains the logic but its "entry points" are just a handful of ViewModels.
 
@@ -33,9 +32,8 @@ But I'm not a fan of this. When I distribute a library, I want users to just add
 
 AFAIK, the Rx team was the first to solve this problem. They describe their "Platform Enlightenment" approach well [on their blog (section "Intermezzo - The refactored API surface")](http://blogs.msdn.com/b/rxteam/archive/2012/08/15/reactive-extensions-v2-0-has-arrived.aspx). Members of the PCL team have referred to this technique as "Platform Adaptation".
 
-<div style="text-align:center;">
-<img border="0" height="395" width="484" src="http://3.bp.blogspot.com/-N-9KacyqmB8/UJw7vF_cs4I/AAAAAAAAHnU/ASLl4mL2ptg/s1600/Blog%2B3.png" />
-</div>
+{:.center}
+![]({{ site_url }}/assets/Blog%203.png)
 
 The "dashed arrow" in the diagram above means that the user application has a reference to the platform services library, but does not actually use it. The "magic arrow" does not exist at compile time (so there's no actual reference there); this will be explained later.
 
@@ -194,9 +192,8 @@ public sealed class EnlightenmentProvider : IEnlightenmentProvider
 
 Now, let's take a look at that `CreateProvider` method in the `Enlightenment` class. This is the "magic arrow" from my diagram:
 
-<div style="text-align:center;">
-<img border="0" height="395" width="484" src="http://3.bp.blogspot.com/-N-9KacyqmB8/UJw7vF_cs4I/AAAAAAAAHnU/ASLl4mL2ptg/s1600/Blog%2B3.png" />
-</div>
+{:.center}
+![]({{ site_url }}/assets/Blog%203.png)
 
 What we want to do is determine which assembly contains the platform-specific enlightenment provider, and create an instance of that type.
 

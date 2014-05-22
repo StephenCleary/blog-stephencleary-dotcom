@@ -4,9 +4,8 @@ title: "Announcement: C# MVP"
 ---
 On the "personal achievement" side of things, I'm pleased to announce that I've been given the Microsoft Most Valuable Professional award for C#.
 
-<div style="text-align:center;">
-<img border="0" src="http://3.bp.blogspot.com/-uPK1egp6leE/UY039RiXvqI/AAAAAAAAIqQ/_93jyeWqrp4/s320/P5101269+2.jpg" />
-</div>
+{:.center}
+![]({{ site_url }}/assets/P5101269%202.jpg)
 
 I've read about the MVP award before (both good and bad), and I thought I'd write out my own perspective of what it is and is not. (I'm just talking about the "programmer" MVPs here, e.g., C#, VB, etc., not the "user" MVPs, e.g., Excel).
 
@@ -46,17 +45,15 @@ I just have to include this point because I literally laughed out loud while unp
 
 The photo at the beginning of this post is my actual (physical) MVP award. The circular year part comes off, like so:
 
-<div style="text-align:center;">
-<img border="0" src="http://1.bp.blogspot.com/-Kp63LseBLng/UY04Kr2SyQI/AAAAAAAAIqY/vlsoTVhSjTg/s320/P5101271+2.jpg" />
-</div>
+{:.center}
+![]({{ site_url }}/assets/P5101271%202.jpg)
 
 I assume this is done so that the big, heavy part of the award is only given once and if you are still an MVP next year they only send you another little circular part.
 
 Just in case any MVPs couldn't figure out how to assemble the award, Microsoft was kind enough to include instructions:
 
-<div style="text-align:center;">
-<a href="http://2.bp.blogspot.com/-pT3mK8Tho7U/UY05C1kmOHI/AAAAAAAAIqk/ardy8Bk4cP0/s1600/MVP+Instructions.png" imageanchor="1"><img border="0" src="http://2.bp.blogspot.com/-pT3mK8Tho7U/UY05C1kmOHI/AAAAAAAAIqk/ardy8Bk4cP0/s320/MVP+Instructions.png" /></a>
-</div>
+{:.center}
+![]({{ site_url }}/assets/MVP%20Instructions.png)
 
 Apparently, the Microsoft MVP program ain't exactly Mensa. ;)
 

@@ -16,9 +16,8 @@ The year was 2000. I was a young programmer at that time: only three years of wo
 
 ## The Client
 
-<div style="float:right;">
-<img border="0" height="126" width="190" src="http://3.bp.blogspot.com/-RxuOHzFP7tA/T_oqOGyG45I/AAAAAAAAHPw/tiL2Kvvnc_c/s320/Building.jpg" />
-</div>
+{:.pull-right}
+![]({{ site_url }}/assets/Building.jpg)
 
 A certain large newspaper was expanding. They built a new press building and had plans to outfit it to the tune of $40 million. Their new Swiss printing press was 750 tons; and was capable of printing 70,000 pages per hour, moving the paper through at 30 mph. The paper was delivered at the bottom of the presses and traveled up through 27 feet of machinery. It was quite a sight!
 
@@ -56,9 +55,8 @@ Fortunately, the other vendors for the newsprint system were even later than we 
 
 ## The Storm
 
-<div style="float:right;">
-<img border="0" height="214" width="87" src="http://1.bp.blogspot.com/-0yRR_vK72q4/T_oq1CUcTFI/AAAAAAAAHP8/B1zTaPjBzDw/s320/Press.jpg" />
-</div>
+{:.pull-right}
+![]({{ site_url }}/assets/Press.jpg)
 
 Finally, some six weeks after the official contract deadline, the Rock Star delivered the code base. It was a steaming pile of useless nonsense. It did not even compile. I took a few hours to go through it, and it contained a ton of hard-coded logic for the Rock Star's newsprint project that would have to be changed to work for any other newsprint system. In short, it was a disaster, and almost completely useless for our new client.
 
@@ -96,9 +94,8 @@ The Event Demultiplexer, conceptually, was quite simple. It was a WaitForMultipl
 
 Of course, there were many external problems as well. The remote database driver had a nasty habit of crashing its host process every time the server was unreachable. The local database did not support asynchronous operations (and required regular offline compaction). The robot controlled via RS232 did not like commands sent too quickly (apparently, they only tested with slow-typing humans). The press communications used an underdocumented protocol over an unusual bus. Pretty much the only thing that worked perfectly was the PLC talking over OPC.
 
-<div style="text-align:center;">
-<img border="0" height="240" width="320" src="http://4.bp.blogspot.com/-QTztUJPGNoo/T_orKl0VLqI/AAAAAAAAHQI/9SYTNcKJzMU/s320/Operator.jpg" />
-</div>
+{:.center}
+![]({{ site_url }}/assets/Operator.jpg)
 
 Every problem was eventually solved. The remote database driver was encapsulated into its own child process and restarted whenever it crashed. The local database got its own dedicated thread which exposed an asynchronous API to the core system. I added delays to the RS232 interface, using the wonderful Waitable Timer (interestingly, not available in .NET). The press communications were developed "by observation."
 

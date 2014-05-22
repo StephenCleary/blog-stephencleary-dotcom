@@ -82,9 +82,8 @@ If you're familiar with mangled call stacks, you can see from the first entry th
 
 First, add the [Nito.AsyncEx.AsyncDiagnostics](https://nuget.org/packages/Nito.AsyncEx.AsyncDiagnostics/) package to the solution. Be sure to include Prerelease packages:
 
-<div style="text-align:center;">
-<img border="0" src="http://1.bp.blogspot.com/-qdxJAfQ1684/UY7aEPUd-xI/AAAAAAAAIq0/GPgoVuzi8TA/s1600/AsyncDiagnostics.NuGet.png" />
-</div>
+{:.center}
+![]({{ site_url }}/assets/AsyncDiagnostics.NuGet.png)
 
 Once it's installed, it'll bring up some installation/usage instructions. First, in one of your source files, apply the `AsyncDiagnosticAspect` to your assembly. Then, locate the place where you display or log your exceptions, and change `ToString` to `ToAsyncDiagnosticString`:
 
