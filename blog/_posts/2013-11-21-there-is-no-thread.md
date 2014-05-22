@@ -33,8 +33,7 @@ The OS then turns to the device driver and asks it to begin the write operation.
 The device driver receives the IRP and issues a command to the device to write out the data. If the device supports Direct Memory Access (DMA), this can be as simple as writing the buffer address to a device register. That's all the device driver can do; it marks the IRP as "pending" and returns to the OS.
 
 {:.center}
-[![]({{ site_url }}/assets/Os1.png)  
-]({{ site_url }}/assets/Os1.png)
+[![]({{ site_url }}/assets/Os1.png)]({{ site_url }}/assets/Os1.png)
 
 The core of the truth is found here: the device driver is not allowed to block while processing an IRP. This means that if the IRP cannot be completed _immediately_, then it **must** be processed _asynchronously_. This is true even for synchronous APIs! At the device driver level, all (non-trivial) requests are asynchronous.
 
@@ -69,8 +68,7 @@ The task has captured the UI context, so it does not resume the `async` method d
 So, we see that there was no thread while the request was in flight. When the request completed, various threads were "borrowed" or had work briefly queued to them. This work is usually on the order of a millisecond or so (e.g., the APC running on the thread pool) down to a microsecond or so (e.g., the ISR). But there is no thread that was blocked, just waiting for that request to complete.
 
 {:.center}
-[![]({{ site_url }}/assets/Os2.png)  
-]({{ site_url }}/assets/Os2.png)
+[![]({{ site_url }}/assets/Os2.png)]({{ site_url }}/assets/Os2.png)
 
 Now, the path that we followed was the "standard" path, somewhat simplified. There are countless variations, but the core truth remains the same.
 
@@ -79,4 +77,3 @@ The idea that "there must be a thread somewhere _processing_ the asynchronous op
 Free your mind. Do not try to find this "async thread" — that's impossible. Instead, only try to realize the truth:
 
 **There is no thread.**
-

@@ -19,102 +19,101 @@ I hope that this series is sufficient to convince you that `BackgroundWorker` is
 
 I'll leave you with a "combined" example. The code below starts a cancelable background operation that reports progress, and will either throw an exception or return a value. These are all the basic operations of `BackgroundWorker`. One of these uses `BackgroundWorker` and the other uses `Task.Run`. Don't just look at the length of the code; consider all the little nuances of how it works (type safety, how easily the API can be misused, etc). Then ask yourself: which code would I rather maintain?
 
-<div style="float:left;">
-<pre><code class="csharp" style="max-height:none;overflow:visible;"><span class="keyword">private</span> BackgroundWorker _bgw;
-<span class="keyword">private</span> <span class="keyword">void</span> button1_Click(<span class="keyword">object</span> sender, EventArgs e)
+{% highlight csharp %}
+private BackgroundWorker _bgw;
+private void button1_Click(object sender, EventArgs e)
 {
-    <span class="keyword">var</span> fail = checkBox1.Checked;
-    _bgw = <span class="keyword">new</span> BackgroundWorker();
-    <span class="keyword">var</span> bgw = _bgw;
-    bgw.WorkerSupportsCancellation = <span class="keyword">true</span>;
-    bgw.WorkerReportsProgress = <span class="keyword">true</span>;
-    bgw.DoWork += (_, args) =&gt;
+  var fail = checkBox1.Checked;
+  _bgw = new BackgroundWorker();
+  var bgw = _bgw;
+  bgw.WorkerSupportsCancellation = true;
+  bgw.WorkerReportsProgress = true;
+  bgw.DoWork += (_, args) =>
+  {
+    for (int i = 0; i != 100; ++i)
     {
-        <span class="keyword">for</span> (<span class="keyword">int</span> i = 0; i != 100; ++i)
-        {
-            bgw.ReportProgress(0, i + <span class="string">"%"</span>);
-            <span class="keyword">if</span> (bgw.CancellationPending)
-            {
-                args.Cancel = <span class="keyword">true</span>;
-                <span class="keyword">return</span>;
-            }
-            Thread.Sleep(100);
-        }
-        <span class="keyword">if</span> (fail)
-            <span class="keyword">throw</span> <span class="keyword">new</span> InvalidOperationException(<span class="string">"Requested to fail."</span>);
-        args.Result = 13;
-    };
-    bgw.ProgressChanged += (_, args) =&gt;
+      bgw.ReportProgress(0, i + "%");
+      if (bgw.CancellationPending)
+      {
+        args.Cancel = true;
+        return;
+      }
+      Thread.Sleep(100);
+    }
+    if (fail)
+      throw new InvalidOperationException("Requested to fail.");
+    args.Result = 13;
+  };
+  bgw.ProgressChanged += (_, args) =>
+  {
+    label1.Text = (string)args.UserState;
+  };
+  bgw.RunWorkerCompleted += (_, args) =>
+  {
+    if (args.Cancelled)
     {
-        label1.Text = (<span class="keyword">string</span>)args.UserState;
-    };
-    bgw.RunWorkerCompleted += (_, args) =&gt;
+      label1.Text = "Cancelled.";
+    }
+    else if (args.Error == null)
     {
-        <span class="keyword">if</span> (args.Cancelled)
-        {
-            label1.Text = <span class="string">"Cancelled."</span>;
-        }
-        <span class="keyword">else</span> <span class="keyword">if</span> (args.Error == <span class="keyword">null</span>)
-        {
-            <span class="keyword">var</span> result = (<span class="keyword">int</span>)args.Result;
-            label1.Text = <span class="string">"Completed: "</span> + result;
-        }
-        <span class="keyword">else</span>
-        {
-            label1.Text = args.Error.GetType().Name + <span class="string">": "</span> + args.Error.Message;
-        }
-    };
-    bgw.RunWorkerAsync();
+      var result = (int)args.Result;
+      label1.Text = "Completed: " + result;
+    }
+    else
+    {
+      label1.Text = args.Error.GetType().Name + ": " + args.Error.Message;
+    }
+  };
+  bgw.RunWorkerAsync();
 }
-<span class="keyword">private</span> <span class="keyword">void</span> cancelButton1_Click(<span class="keyword">object</span> sender, EventArgs e)
+private void cancelButton1_Click(object sender, EventArgs e)
 {
-    <span class="keyword">if</span> (_bgw != <span class="keyword">null</span>)
-        _bgw.CancelAsync();
+  if (_bgw != null)
+    _bgw.CancelAsync();
 }
-</code></pre>
-</div>
-<div style="float:right;">
-<pre><code class="csharp" style="max-height:none;overflow:visible;"><span class="keyword">private</span> CancellationTokenSource _cts;
-<span class="keyword">private</span> <span class="keyword">async</span> <span class="keyword">void</span> button2_Click(<span class="keyword">object</span> sender, EventArgs e)
+{% endhighlight %}
+
+{% highlight csharp %}
+private CancellationTokenSource _cts;
+private async void button2_Click(object sender, EventArgs e)
 {
-    <span class="keyword">var</span> fail = checkBox1.Checked;
-    _cts = <span class="keyword">new</span> CancellationTokenSource();
-    <span class="keyword">var</span> token = _cts.Token;
-    <span class="keyword">var</span> progressHandler = <span class="keyword">new</span> Progress&lt;<span class="keyword">string</span>&gt;(<span class="keyword">value</span> =&gt;
+  var fail = checkBox1.Checked;
+  _cts = new CancellationTokenSource();
+  var token = _cts.Token;
+  var progressHandler = new Progress<string>(value =>
+  {
+    label2.Text = value;
+  });
+  var progress = progressHandler as IProgress<string>;
+  try
+  {
+    var result = await Task.Run(() =>
     {
-        label2.Text = <span class="keyword">value</span>;
+      for (int i = 0; i != 100; ++i)
+      {
+        if (progress != null)
+          progress.Report(i + "%");
+        token.ThrowIfCancellationRequested();
+        Thread.Sleep(100);
+      }
+      if (fail)
+        throw new InvalidOperationException("Requested to fail.");
+      return 13;
     });
-    <span class="keyword">var</span> progress = progressHandler <span class="keyword">as</span> IProgress&lt;<span class="keyword">string</span>&gt;;
-    <span class="keyword">try</span>
-    {
-        <span class="keyword">var</span> result = <span class="keyword">await</span> Task.Run(() =&gt;
-        {
-            <span class="keyword">for</span> (<span class="keyword">int</span> i = 0; i != 100; ++i)
-            {
-                <span class="keyword">if</span> (progress != <span class="keyword">null</span>)
-                    progress.Report(i + <span class="string">"%"</span>);
-                token.ThrowIfCancellationRequested();
-                Thread.Sleep(100);
-            }
-            <span class="keyword">if</span> (fail)
-                <span class="keyword">throw</span> <span class="keyword">new</span> InvalidOperationException(<span class="string">"Requested to fail."</span>);
-            <span class="keyword">return</span> 13;
-        });
-        label2.Text = <span class="string">"Completed: "</span> + result;
-    }
-    <span class="keyword">catch</span> (OperationCanceledException)
-    {
-        label2.Text = <span class="string">"Cancelled."</span>;
-    }
-    <span class="keyword">catch</span> (Exception ex)
-    {
-        label2.Text = ex.GetType().Name + <span class="string">": "</span> + ex.Message;
-    }
+    label2.Text = "Completed: " + result;
+  }
+  catch (OperationCanceledException)
+  {
+    label2.Text = "Cancelled.";
+  }
+  catch (Exception ex)
+  {
+    label2.Text = ex.GetType().Name + ": " + ex.Message;
+  }
 }
-<span class="keyword">private</span> <span class="keyword">void</span> cancelButton2_Click(<span class="keyword">object</span> sender, EventArgs e)
+private void cancelButton2_Click(object sender, EventArgs e)
 {
-    <span class="keyword">if</span> (_cts != <span class="keyword">null</span>)
-        _cts.Cancel();
+  if (_cts != null)
+    _cts.Cancel();
 }
-</code></pre>
-</div>
+{% endhighlight %}
