@@ -72,17 +72,6 @@ layout: default
             {% if page.next %}<li class="next"><a href="{{ page.next.url }}" title="{{ page.next.title | escape }}">Next Post &rarr;</a></li>{% endif %}
         </ul>
 
-        <div class="panel panel-default">
-            <div class="panel-heading">(Possibly) Related Posts</div>
-            <div class="panel-body">
-                <ul class="nav nav-pills nav-stacked">
-                    {% for post in site.related_posts limit: 3 %}
-                        <li><a href="{{ post.url | prepend: site.baseurl }}">{{ post.title }} &bull; {{ post.date | date: "%b %-d, %Y" }}</a></li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
-
         <div id="disqus_thread"></div>
         <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
         <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
