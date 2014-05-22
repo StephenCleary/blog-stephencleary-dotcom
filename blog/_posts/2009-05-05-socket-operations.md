@@ -1,9 +1,9 @@
 ---
 layout: post
 title: "Socket Operations"
+series: "TCP/IP .NET Sockets FAQ"
+seriesTitle: "Socket Operations"
 ---
-(This post is part of the [TCP/IP .NET Sockets FAQ]({% post_url 2009-04-30-tcpip-net-sockets-faq %}))
-
 There are a few logical operations that may be performed on a TCP/IP socket, regardless of whether the socket is synchronous or asynchronous. Each of the operations below is marked "immediate" (meaning it is completed immediately) or "delayed" (meaning it depends on the network for completion).
 
  
@@ -53,6 +53,3 @@ MSDN links: [Shutdown](http://msdn.microsoft.com/en-us/library/system.net.socket
 **Closing** (immediate or delayed) - The actual socket resources are reclaimed when the socket is disposed (or closed). Normally, this acts immediate but is actually delayed, performing a graceful disconnect in the background and then actually reclaiming the socket resources when the disconnect completes. Socket.LingerState may be set to change Close to be a synchronous disconnect (delayed, but always synchronous), or an immediate shutdown (always immediate).  
 
 MSDN links: [Close](http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.close.aspx), [LingerState](http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.lingerstate.aspx)
-
-(This post is part of the [TCP/IP .NET Sockets FAQ]({% post_url 2009-04-30-tcpip-net-sockets-faq %}))
-

@@ -1,9 +1,9 @@
 ---
 layout: post
 title: "The Second Rule of Implementing IDisposable and Finalizers"
+series: "IDisposable and Finalizers"
+seriesTitle: "Rule 2: Managed Resources"
 ---
-This post is part of [How to Implement IDisposable and Finalizers: 3 Easy Rules]({% post_url 2009-08-27-how-to-implement-idisposable-and %}).
-
 ## For a class owning managed resources, implement IDisposable (but not a finalizer)
 
 IDisposable only has one method: Dispose. This method has one important guarantee: it must be safe to call multiple times.
@@ -99,6 +99,3 @@ public sealed class SingleApplicationInstance : IDisposable
 {% endhighlight %}
 
 This IDisposable.Dispose implementation is perfectly safe. It can be safely called multiple times, because each of the IDisposable implementations it invokes can be safely called multiple times. This _transitive property_ of IDisposable should be used to write simple Dispose implementations like this one.
-
-This post is part of [How to Implement IDisposable and Finalizers: 3 Easy Rules]({% post_url 2009-08-27-how-to-implement-idisposable-and %}).
-

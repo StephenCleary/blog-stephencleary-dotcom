@@ -1,14 +1,16 @@
 ---
 layout: post
 title: "Q&A: Can GC.SuppressFinalize(this) be called at any time?"
+series: "IDisposable and Finalizers"
+seriesTitle: "Q&A: When to Call SuppressFinalize?"
 ---
 Today I was asked by a colleague about some of my blog posts yesterday regarding IDisposable and Finalize. So here's the first post in a series of Q&A regarding finalizers. Enjoy!
 
-### Question: Does GC.SuppressFinalize(this) work if the object is not already on the finalize queue?
+## Question: Does GC.SuppressFinalize(this) work if the object is not already on the finalize queue?
 
-### Answer: Yes, it does.
+## Answer: Yes, it does.
 
-## Additional Information
+### Additional Information
 
 There's some confusion on what exactly GC.SuppressFinalize does, because the [.NET 1.1 docs](http://www.webcitation.org/5wPLddgo3) state "The method removes _obj_ from the set of objects that require finalization." However, since .NET 2.0, the [docs](http://www.webcitation.org/5wPLgw9IJ) have been updated to read "This method sets a bit in the object header, which the system checks when calling finalizers." This clarifies GC.SuppressFinalize semantics nicely.
 
@@ -16,7 +18,7 @@ Because of the old docs, there is some FUD regarding GC.SuppressFinalize floatin
 
 There is an argument that [can be made](http://www.webcitation.org/5wPLnd2En) for calling GC.SuppressFinalize as the last statement in a Dispose method: it ensures that the finalizer is only suppressed if Dispose does not throw. However, it is very poor practice to have a Dispose method that throws, so this argument has little merit.
 
-## Test Code:
+### Test Code:
 
 {% highlight csharp %}
 // Do not run these tests from a Debug build or under the debugger. A standalone release build is required.
@@ -60,7 +62,7 @@ public class Test : IDisposable
 }
 {% endhighlight %}
 
-## Output of Test Code:
+### Output of Test Code:
 
     Test object is still alive!
     Returning from Main

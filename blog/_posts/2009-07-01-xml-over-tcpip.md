@@ -1,9 +1,9 @@
 ---
 layout: post
 title: "XML over TCP/IP"
+series: "TCP/IP .NET Sockets FAQ"
+seriesTitle: "XML"
 ---
-(This post is part of the [TCP/IP .NET Sockets FAQ]({% post_url 2009-04-30-tcpip-net-sockets-faq %}))
-
 XML is a popular choice when designing communications protocols, since XML parsers are ubiquitous. The phrase "XML over TCP" makes a good executive summary, but this FAQ entry is concerned with how to actually make it work. One should always write an application protocol specification document to clearly define the actual communication.
 
 Anyone designing an XML protocol should have a good understanding of the terms. Familiarization with the [XML standard](http://www.w3.org/TR/2008/REC-xml-20081126/) is a bonus; this FAQ entry will define most terms along the way, but the official definitions are in the relevant standards.
@@ -133,6 +133,3 @@ A choice must be made for encoding, message framing, and keepalives.
  - Since most XML protocols use length prefixing, most of them also choose "length prefix of 0 with no message" for keepalives.
 
 One final note: nothing helps track down interfacing errors like verbose logging. It's recommended to log the byte arrays sent and received as well as the actual XML messages. Logging is your friend. :)
-
-(This post is part of the [TCP/IP .NET Sockets FAQ]({% post_url 2009-04-30-tcpip-net-sockets-faq %}))
-

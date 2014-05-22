@@ -1,6 +1,8 @@
 ---
 layout: post
 title: "Task.Run Etiquette Examples: Don't Use Task.Run for the Wrong Thing"
+series: "Task.Run Etiquette"
+seriesTitle: "Task.Run and Blocking"
 ---
 I had quite a few comments on [my last post]({% post_url 2013-10-17-taskrun-etiquette-and-proper-usage %}) asking for more explicit examples of Correct vs. Incorrect `Task.Run` usage.
 

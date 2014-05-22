@@ -1,9 +1,9 @@
 ---
 layout: post
 title: "Using Socket as a Connected Socket"
+series: "TCP/IP .NET Sockets FAQ"
+seriesTitle: "Connected Sockets"
 ---
-(This post is part of the [TCP/IP .NET Sockets FAQ]({% post_url 2009-04-30-tcpip-net-sockets-faq %}))
-
 A connected socket is one which has a connection to the remote side. When a client socket connects to a listening server socket, the result is two connected sockets: the client socket becomes connected, and the listening server creates a new socket that is connected. For more details about establishing or listening for socket connections, see [Using Socket as a Client Socket]({% post_url 2009-05-23-using-socket-as-client-socket %}) and [Using Socket as a Server (Listening) Socket]({% post_url 2009-05-27-using-socket-as-server-listening-socket %}).
 
 <div class="alert alert-danger" markdown="1">
@@ -61,6 +61,3 @@ The zero-length read _must_ be treated as a special case; if it is not, the rece
 ## Disconnecting
 
 Either side of a socket connection may initiate a Disconnect operation or Close the socket. Once one side of the connection starts disconnecting, the socket is no longer fully connected. It is possible for it to be partially connected for some time; this state is called "half-closed". Disconnecting socket connections (including the half-closed state) will be covered in a future FAQ entry.
-
-(This post is part of the [TCP/IP .NET Sockets FAQ]({% post_url 2009-04-30-tcpip-net-sockets-faq %}))
-

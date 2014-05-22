@@ -1,12 +1,14 @@
 ---
 layout: post
 title: "Q&A: Is a call to GC.KeepAlive(this) required in Dispose?"
+series: "IDisposable and Finalizers"
+seriesTitle: "Q&A: Is KeepAlive Required in Dispose?"
 ---
-### Question: Is a call to GC.KeepAlive(this) required in Dispose?
+## Question: Is a call to GC.KeepAlive(this) required in Dispose?
 
-### Answer: Only in pathological cases.
+## Answer: Only in pathological cases.
 
-## Rationale:
+### Rationale:
 
 - Dispose() must be safe to call multiple times.
 - To prevent multiple disposal of unmanaged resources, there must exist some kind of object-level flag (e.g., "bool disposed") or state (e.g., an invalid handle value) to detect if the object has been disposed.
@@ -19,7 +21,7 @@ title: "Q&A: Is a call to GC.KeepAlive(this) required in Dispose?"
 
 This reasoning concludes that for 99% of handle objects, a call to GC.KeepAlive(this) is not required. Furthermore, for 99% of the remaining objects, [a call to GC.SuppressFinalize should be used instead of a call to GC.KeepAlive]({% post_url 2009-08-28-q-if-dispose-calls-suppressfinalize-is %}).
 
-## Example 1 not requiring GC.KeepAlive(this)
+### Example 1 not requiring GC.KeepAlive(this)
 
 This example uses a "bool disposed" flag, set _before_ disposing the unmanaged resource:
 
@@ -51,7 +53,7 @@ public void Dispose()
 }
 {% endhighlight %}
 
-## Example 2 not requiring GC.KeepAlive(this)
+### Example 2 not requiring GC.KeepAlive(this)
 
 This example uses a "bool disposed" flag, set _after_ disposing the unmanaged resource:
 
@@ -83,7 +85,7 @@ public void Dispose()
 }
 {% endhighlight %}
 
-## Example 3 not requiring GC.KeepAlive(this)
+### Example 3 not requiring GC.KeepAlive(this)
 
 This example uses an "invalid handle" flag:
 
@@ -115,7 +117,7 @@ public void Dispose()
 }
 {% endhighlight %}
 
-## Example 4 - requiring GC.KeepAlive(this)
+### Example 4 - requiring GC.KeepAlive(this)
 
 It is possible to create a more pathological case where GC.KeepAlive(this) is required; the code below requires GC.KeepAlive because it holds its actual handle value inside of another class:
 
@@ -240,7 +242,7 @@ public class Test : IDisposable
 }
 {% endhighlight %}
 
-## Output with [2] commented out (as written above):
+### Output with [2] commented out (as written above):
 
     Thread 1: CloseHandle starting
     Thread 1: Garbage collection in CloseHandle!
@@ -254,7 +256,7 @@ public class Test : IDisposable
     Thread 1: Returning from Main
     Thread 2: CloseHandle ending
 
-## Output with [1] and [2] commented out:
+### Output with [1] and [2] commented out:
 
     Thread 1: CloseHandle starting
     Thread 1: Garbage collection in CloseHandle!
@@ -268,7 +270,7 @@ public class Test : IDisposable
     Thread 1: CloseHandle ending
     Thread 1: Returning from Main
 
-## Output with neither line commented out, OR with just [1] commented out:
+### Output with neither line commented out, OR with just [1] commented out:
 
     Thread 1: CloseHandle starting
     Thread 1: Garbage collection in CloseHandle!
@@ -279,7 +281,7 @@ public class Test : IDisposable
     Thread 2: Finalizer called
     Thread 2: CloseHandle starting
 
-## Closing Notes
+### Closing Notes
 
 It is cleaner and more efficient to [include a call to GC.SuppressFinalize(this) instead of a call to GC.KeepAlive(this)]({% post_url 2009-08-28-q-if-dispose-calls-suppressfinalize-is %}). The only true reason a call to GC.KeepAlive should be required is if the disposed flag is of an unusual type (like Double).
 

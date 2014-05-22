@@ -1,6 +1,8 @@
 ---
 layout: post
 title: "Task.Run Etiquette Examples: Don't Use Task.Run in the Implementation"
+series: "Task.Run Etiquette"
+seriesTitle: "Task.Run in the Implementation"
 ---
 Last time we looked at [using `Task.Run` for the wrong thing]({% post_url 2013-11-06-taskrun-etiquette-examples-using %}) (code that is not CPU-bound). So let's move on to the proper use case of `Task.Run`: CPU-bound code. We start off with some existing code, which synchronously does some heavy calculations.
 

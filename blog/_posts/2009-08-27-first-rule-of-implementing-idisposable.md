@@ -1,9 +1,9 @@
 ---
 layout: post
 title: "The First Rule of Implementing IDisposable and Finalizers"
+series: "IDisposable and Finalizers"
+seriesTitle: "Rule 1: Don't"
 ---
-This post is part of [How to Implement IDisposable and Finalizers: 3 Easy Rules]({% post_url 2009-08-27-how-to-implement-idisposable-and %}).
-
 ## Don't do it (unless you need to).
 
 IDisposable is not a destructor. Remember that .NET has a garbage collector that works just fine without requiring you to set member variables to null.
@@ -109,6 +109,3 @@ Remember the two tests to determine if IDisposable is needed (owning unmanaged r
   1. Since none of the owned members implement IDisposable, the ErrorList class does not own any managed resources.
 
   1. Since there are no unmanaged resources and no managed resources owned by ErrorList, it does not need to implement IDisposable.
-
-This post is part of [How to Implement IDisposable and Finalizers: 3 Easy Rules]({% post_url 2009-08-27-how-to-implement-idisposable-and %}).
-

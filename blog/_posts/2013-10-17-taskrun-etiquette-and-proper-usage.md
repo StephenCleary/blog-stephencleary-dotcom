@@ -1,6 +1,8 @@
 ---
 layout: post
 title: "Task.Run Etiquette and Proper Usage"
+series: "Task.Run Etiquette"
+seriesTitle: "Overview"
 ---
 I have a confession to make: I enjoy etiquette. My wife and I own a good dozen or two etiquette books, ranging from the classic [Post](http://www.amazon.com/gp/product/0061740233/ref=as_li_ss_tl?ie=UTF8&camp=1789&creative=390957&creativeASIN=0061740233&linkCode=as2&tag=stepheclearys-20) to a [more playful Austen-themed guide](http://www.amazon.com/gp/product/159691274X/ref=as_li_ss_tl?ie=UTF8&camp=1789&creative=390957&creativeASIN=159691274X&linkCode=as2&tag=stepheclearys-20) as well as several historical books (including an uncut copy of [Social Life of Virginia in the Seventeenth Century](http://www.amazon.com/gp/product/1163408735/ref=as_li_ss_tl?ie=UTF8&camp=1789&creative=390957&creativeASIN=1163408735&linkCode=as2&tag=stepheclearys-20)). There's a certain nerdy appreciation of knowing how to act (at least, according to _somebody..._).
 

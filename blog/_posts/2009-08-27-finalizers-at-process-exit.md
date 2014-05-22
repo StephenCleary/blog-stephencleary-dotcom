@@ -1,6 +1,8 @@
 ---
 layout: post
 title: "Finalizers at Process Exit"
+series: "IDisposable and Finalizers"
+seriesTitle: "Finalizers During Shutdown"
 ---
 I spent too long investigating a problem in a colleague's code today; the bug was something I knew about but had forgotten:
 

@@ -1,9 +1,9 @@
 ---
 layout: post
 title: "Application Protocol Specifications"
+series: "TCP/IP .NET Sockets FAQ"
+seriesTitle: "Application Protocol Specifications"
 ---
-(This post is part of the [TCP/IP .NET Sockets FAQ]({% post_url 2009-04-30-tcpip-net-sockets-faq %}))
-
 When designing an application protocol, one should publish an application protocol specification document. Having a clearly-defined specification helps prevent errors on both sides.
 
 ## Versioning
@@ -43,6 +43,3 @@ In short, private Windows protocols (used only within a certain network) may pic
 Public (published) protocols should be registered with IANA and use the assigned port in the 1024-49151 range. As of this writing, both Windows' and Linux's ephemeral port ranges overlap with this reserved range, so some extra action may need to be taken to prevent any possibility of conflicts (i.e., Windows' ReservedPorts registry key; see [KB812873](http://support.microsoft.com/default.aspx/kb/812873) or [The Cable Guy, Dec 2005](http://technet.microsoft.com/en-us/library/bb878133.aspx)).
 
 Note: It is highly recommended that the port be configurable by the end user or administrator. Currently, there are not many "well-behaved" programs when it comes to choosing ports, so it is greatly beneficial to give the network admin the ability to change the port.
-
-(This post is part of the [TCP/IP .NET Sockets FAQ]({% post_url 2009-04-30-tcpip-net-sockets-faq %}))
-

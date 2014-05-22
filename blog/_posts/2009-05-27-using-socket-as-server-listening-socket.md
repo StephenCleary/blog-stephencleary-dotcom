@@ -1,9 +1,9 @@
 ---
 layout: post
 title: "Using Socket as a Server (Listening) Socket"
+series: "TCP/IP .NET Sockets FAQ"
+seriesTitle: "Server Sockets"
 ---
-(This post is part of the [TCP/IP .NET Sockets FAQ]({% post_url 2009-04-30-tcpip-net-sockets-faq %}))
-
 Normally, server sockets may accept multiple client connections. Conceptually, a server socket listens on a known port. When an incoming connection arrives, the listening socket _creates a new socket_ (the "child" socket), and establishes the connection on the child socket. The listening socket is then free to resume listening on the same port, while the child socket has an established connection with the client that is independent from its parent.
 
 One result of this architecture is that the listening socket never actually performs a read or write operation. It is only used to create connected sockets.
@@ -24,6 +24,3 @@ There are a few common variations on the above theme:
 
  1. A listening socket may choose to bind to an actual IP address in addition to a port. This is normally done for security reasons. If this is done, then the Bind operation may fail if the network cable is unplugged or wireless router is down.
  1. A listening socket may choose not to bind (actually, the socket is still bound; it is just bound to an OS-chosen port). This is extremely rare, and only found in very old protocols such as non-PASV FTP. This requires an application protocol that can notify the other side of the port that the OS chose to bind, and this tight coupling of the application protocol (e.g., FTP) with the transport mechanism (e.g., TCP) is not recommended. One reason is that it requires any NAT'ing (network address translating) devices to monitor the protocol and dynamically predict the necessary port forwarding.
-
-(This post is part of the [TCP/IP .NET Sockets FAQ]({% post_url 2009-04-30-tcpip-net-sockets-faq %}))
-

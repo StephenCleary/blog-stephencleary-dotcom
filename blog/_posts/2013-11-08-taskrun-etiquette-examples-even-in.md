@@ -1,6 +1,8 @@
 ---
 layout: post
 title: "Task.Run Etiquette Examples: Even in the Complex Case, Don't Use Task.Run in the Implementation"
+series: "Task.Run Etiquette"
+seriesTitle: "The Complex Case"
 ---
 Last time, we looked at CPU-bound methods and learned [why we shouldn't use `Task.Run` in the implementation]({% post_url 2013-11-07-taskrun-etiquette-examples-dont-use %}). Rather, we should use it at the point of the call.
 

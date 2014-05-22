@@ -1,9 +1,9 @@
 ---
 layout: post
 title: "The Third Rule of Implementing IDisposable and Finalizers"
+series: "IDisposable and Finalizers"
+seriesTitle: "Rule 3: Unmanaged Resource"
 ---
-This post is part of [How to Implement IDisposable and Finalizers: 3 Easy Rules]({% post_url 2009-08-27-how-to-implement-idisposable-and %}).
-
 ## For a class owning a single unmanaged resource, implement IDisposable and a finalizer
 
 A class that owns a single unmanaged resource should not be responsible for anything else. It should _only_ be responsible for _closing_ that resource.
@@ -91,6 +91,3 @@ The only reason that SuppressFinalize is called _after_ CloseHandle is because t
 **Important!** The WindowStationHandle class does _not_ obtain a window station handle; it knows nothing of creating or opening window stations. That responsibility (along with all the other window station-related methods) belongs in another class (presumably named "WindowStation"). This helps create a correct implementation, because every finalizer must be able to execute without error on a partially-constructed object if the constructor throws; in practice, this is very difficult, and this is another reason why a wrapper class should be split into a "handle closer" class and a "proper wrapper" class.
 
 Note: this is the simplest possible solution, and it does have some very obscure resource leaks (e.g., if a thread is aborted immediately after returning from a resource allocation function). If you're developing on the full framework, and are wrapping an IntPtr handle (such as the window station example above), then it is better to derive from [SafeHandle](http://msdn.microsoft.com/en-us/library/system.runtime.interopservices.safehandle.aspx). If you need to go a step further and support reliable resource deallocation, things get [very complex very quickly!](http://www.codeproject.com/KB/dotnet/idisposable.aspx)
-
-This post is part of [How to Implement IDisposable and Finalizers: 3 Easy Rules]({% post_url 2009-08-27-how-to-implement-idisposable-and %}).
-

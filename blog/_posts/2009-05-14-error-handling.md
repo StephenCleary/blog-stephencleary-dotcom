@@ -1,9 +1,9 @@
 ---
 layout: post
 title: "Error Handling"
+series: "TCP/IP .NET Sockets FAQ"
+seriesTitle: "Error Handling"
 ---
-(This post is part of the [TCP/IP .NET Sockets FAQ]({% post_url 2009-04-30-tcpip-net-sockets-faq %}))
-
 Generally speaking, one should expect any socket operation to have a possibility of failure. Even the immediate operations (see [Socket Operations]({% post_url 2009-05-05-socket-operations %})) may fail. A socket operation error is uniquely identified by its error code (MSDN: [Windows Sockets Error Codes](http://msdn.microsoft.com/en-us/library/ms740668.aspx)).
 
  
@@ -55,6 +55,3 @@ There are a lot of possible WinSock errors, but it's not clear from the MSDN doc
 
  
 Other errors may be seen occasionally, especially when a network is in the process of coming online or going offline (e.g., the computer is in the process of connecting to a wireless network).
-
-(This post is part of the [TCP/IP .NET Sockets FAQ]({% post_url 2009-04-30-tcpip-net-sockets-faq %}))
-

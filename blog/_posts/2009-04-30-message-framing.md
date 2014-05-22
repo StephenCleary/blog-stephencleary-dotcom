@@ -1,9 +1,9 @@
 ---
 layout: post
 title: "Message Framing"
+series: "TCP/IP .NET Sockets FAQ"
+seriesTitle: "Message Framing"
 ---
-(This post is part of the [TCP/IP .NET Sockets FAQ]({% post_url 2009-04-30-tcpip-net-sockets-faq %}))
-
 ## The Problem
 
 One of the most common beginner mistakes for people designing protocols for TCP/IP is that they assume that message boundaries are preserved. For example, they assume a single "Send" will result in a single "Receive".
@@ -51,6 +51,4 @@ A code sample for using length-prefixing is in its own blog post at [http://blog
 Another decent code example of length prefixing is on [Jon Cole's blog](http://blogs.msdn.com/joncole/archive/2006/04/25/simple-message-framing-sample-for-tcp-socket-part-2-asynchronous.aspx), although he assumes all the messages are just ASCII strings.
 
 Yet another example of length prefixing is in the [Nito.Async](http://www.codeplex.com/NitoAsync) library: the Nito.Async.Sockets.SocketPacketProtocol class can be used to send or receive length-prefixed binary messages. It is written to use the Nito.Async socket classes, but the same code concepts translate well to the .NET Socket class.
-
-(This post is part of the [TCP/IP .NET Sockets FAQ]({% post_url 2009-04-30-tcpip-net-sockets-faq %}))
 

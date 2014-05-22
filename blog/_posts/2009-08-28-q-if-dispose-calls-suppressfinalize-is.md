@@ -1,19 +1,21 @@
 ---
 layout: post
 title: "Q&A: If Dispose calls SuppressFinalize, is KeepAlive required?"
+series: "IDisposable and Finalizers"
+seriesTitle: "Q&A: Is KeepAlive Required with SuppressFinalize?"
 ---
-### Question: If we include a call to GC.SuppressFinalize(this) in Dispose, is the the call to GC.KeepAlive(this) still required?
+## Question: If we include a call to GC.SuppressFinalize(this) in Dispose, is the the call to GC.KeepAlive(this) still required?
 
-### Answer: No.
+## Answer: No.
 
-## Rationale:
+### Rationale:
 
 - As [has been established]({% post_url 2009-08-28-q-can-gcsuppressfinalizethis-be-called %}), a call to GC.SuppressFinalize anywhere will suppress the finalizer.
 - The object must be live at the point GC.SuppressFinalize is called because it must be passed as an argument to that method.
 - The call to GC.KeepAlive(this) was only put in Dispose to prevent the finalizer from being invoked while Dispose was still running.
 - The GC.KeepAlive(this) call is not necessary because the object will be reachable until its finalizer is suppressed.
 
-## Example requiring GC.SuppressFinalize(this)
+### Example requiring GC.SuppressFinalize(this)
 
 This is almost identical to the test code used in [my last Q&A: "Is a call to GC.KeepAlive(this) required in Dispose?"]({% post_url 2009-08-28-q-is-call-to-gckeepalivethis-required %})
 
@@ -137,7 +139,7 @@ public class Test : IDisposable
 }
 {% endhighlight %}
 
-## Output with [2] commented out (as written above):
+### Output with [2] commented out (as written above):
 
     Thread 1: CloseHandle starting
     Thread 1: Garbage collection in CloseHandle!
@@ -151,7 +153,7 @@ public class Test : IDisposable
     Thread 1: Returning from Main
     Thread 2: CloseHandle ending
 
-## Output with [1] and [2] commented out:
+### Output with [1] and [2] commented out:
 
     Thread 1: CloseHandle starting
     Thread 1: Garbage collection in CloseHandle!
@@ -165,7 +167,7 @@ public class Test : IDisposable
     Thread 1: CloseHandle ending
     Thread 1: Returning from Main
 
-## Output with neither line commented out, OR with just [1] commented out:
+### Output with neither line commented out, OR with just [1] commented out:
 
     Thread 1: CloseHandle starting
     Thread 1: Garbage collection in CloseHandle!

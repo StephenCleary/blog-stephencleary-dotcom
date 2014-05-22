@@ -1,9 +1,9 @@
 ---
 layout: post
 title: "Detection of Half-Open (Dropped) Connections"
+series: "TCP/IP .NET Sockets FAQ"
+seriesTitle: "Half-Open Connections"
 ---
-(This post is part of the [TCP/IP .NET Sockets FAQ]({% post_url 2009-04-30-tcpip-net-sockets-faq %}))
-
 There is a three-way handshake to open a TCP/IP connection, and a four-way handshake to close it. However, once the connection has been established, if neither side sends any data, then no packets are sent over the connection. TCP is an "idle" protocol, happy to assume that the connection is active until proven otherwise.
  
 TCP was designed this way for resiliency and efficiency. This design enables a graceful recovery from unplugged network cables and router crashes. e.g., a client may connect to a server, an intermediate router may be rebooted, and after the router comes back up, the original connection still exists (this is true unless data is sent across the connection while the router was down). This design is also efficient, since no "polling" packets are sent across the network just to check if the connection is still OK (reduces unnecessary network traffic).
@@ -88,6 +88,3 @@ _Disadvantages._ RFC 1122, section 4.2.3.6 indicates that acknowledgements for T
 Each side of the application protocol may employ different keepalive solutions, and even different keepalive solutions at different states in the protocol. For example, the client side of a request/response style protocol may choose to send "null" requests when there is not a request pending, and switch to a timeout solution while waiting for a response.
 
 However, when designing a new protocol, it is best to employ one of the solutions consistently.
-
-(This post is part of the [TCP/IP .NET Sockets FAQ]({% post_url 2009-04-30-tcpip-net-sockets-faq %}))
-
