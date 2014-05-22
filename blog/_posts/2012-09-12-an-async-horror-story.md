@@ -17,7 +17,7 @@ The year was 2000. I was a young programmer at that time: only three years of wo
 ## The Client
 
 {:.pull-right}
-![]({{ site_url }}/assets/Building.jpg)
+![]({{ site_url }}/assets/Building.jpg){:style="width:380px;height=252px;"}
 
 A certain large newspaper was expanding. They built a new press building and had plans to outfit it to the tune of $40 million. Their new Swiss printing press was 750 tons; and was capable of printing 70,000 pages per hour, moving the paper through at 30 mph. The paper was delivered at the bottom of the presses and traveled up through 27 feet of machinery. It was quite a sight!
 
@@ -56,7 +56,7 @@ Fortunately, the other vendors for the newsprint system were even later than we 
 ## The Storm
 
 {:.pull-right}
-![]({{ site_url }}/assets/Press.jpg)
+![]({{ site_url }}/assets/Press.jpg){:style="width:174px;height=428px;"}
 
 Finally, some six weeks after the official contract deadline, the Rock Star delivered the code base. It was a steaming pile of useless nonsense. It did not even compile. I took a few hours to go through it, and it contained a ton of hard-coded logic for the Rock Star's newsprint project that would have to be changed to work for any other newsprint system. In short, it was a disaster, and almost completely useless for our new client.
 
