@@ -12,7 +12,7 @@ Usually, when someone asks this question, the correct solution is to change the 
 
 Unfortunately, some people try to push forward with the "service with a UI" approach. This is doomed to fail.
 
-### Inevitable Failure
+## Inevitable Failure
 
 There are two hurdles to displaying a UI from a service; the first is architectural, and the second is technical.
 
@@ -53,11 +53,13 @@ Remember that the Interactive Service flag is a _backwards_ compatibility hack t
 
 So - while it is _possible_ to hack together a service with a UI today - you'd only be setting yourself up for failure in the future.
 
-## Update (2013-09-19):
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
-Windows 8 (and Server 2012) [no longer allow interactive services by default](http://blogs.technet.com/b/home_is_where_i_lay_my_head/archive/2012/10/09/windows-8-interactive-services-detection-error-1-incorrect-function.aspx). So any service with a UI will fail.
+**Update (2013-09-19):** Windows 8 (and Server 2012) [no longer allow interactive services by default](http://blogs.technet.com/b/home_is_where_i_lay_my_head/archive/2012/10/09/windows-8-interactive-services-detection-error-1-incorrect-function.aspx){:.alert-link}. So any service with a UI will fail.
 
 Currently, you are allowed to hack the OS to re-enable interactive services by setting `HKLM\SYSTEM\CurrentControlSet\Control\Windows\NoInteractiveServices` to `0`. This is an OS-level hack that you must apply _in addition to_ the service-level Interactive Service flag hack.
 
 As predicted, Microsoft is moving further and further away from interactive services. I _strongly_ recommend not using these hacks in production.
+</div>
 
