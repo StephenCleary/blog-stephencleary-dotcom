@@ -14,6 +14,9 @@ This is excellent, but there is one little part left out: the T4 template must b
 
 Of course, this is a non-trivial change to make to the build system. But if we ever get there, then C# will become a language with complete metaprogramming support. As it currently stands, there's a small hole remaining.
 
-> Example: I recently wrote CRC16 and CRC32 classes, but they're based off a generic CRC algorithm that is valid for any bit length. They are currently independent classes, but they can be fairly easily changed to a single T4 template that can generate CRC classes for different bit lengths.  
-> 
-> The problem: any code that needed a different bit length would have to [modify the template parameters](http://www.olegsych.com/2008/04/t4-template-design/) in order to generate another CRC class, instead of letting the class name itself act as an implicit template usage.
+<div class="alert alert-info" markdown="1">
+
+Example: I recently wrote CRC16 and CRC32 classes, but they're based off a generic CRC algorithm that is valid for any bit length. They are currently independent classes, but they can be fairly easily changed to a single T4 template that can generate CRC classes for different bit lengths.  
+ 
+The problem: any code that needed a different bit length would have to [modify the template parameters](http://www.olegsych.com/2008/04/t4-template-design/){:.alert-link} in order to generate another CRC class, instead of letting the class name itself act as an implicit template usage.
+</div>

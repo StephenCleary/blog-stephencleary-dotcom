@@ -20,7 +20,11 @@ When you use async on the server side (e.g., with ApiController), then you can t
 
 Now, you can _use_ async to create higher-level abstractions. For example, you can invent the notion of a "workflow" on the server: a POST call could create the workflow and return a unique identifier, and a GET call could return the current status of the workflow item (e.g., percent complete). Once this is implemented on the server, you could wrap multiple HTTP calls and responses into a single async method on the client. This higher-level async abstraction could support progress notification via IProgress.
 
-> Frameworks such as SignalR can make implementation easier.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Frameworks such as SignalR can make implementation easier.
+</div>
 
 There aren't too many examples of doing that these days; async is still pretty new. But I'm sure that higher-level async abstractions will become a common approach in the future.
 

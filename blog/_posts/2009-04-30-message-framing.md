@@ -14,7 +14,11 @@ Local machine (loopback) testing confirms this misunderstanding, because usually
 
 This problem usually manifests itself when attempting to deploy a solution to the Internet (increasing latency between client and server) or when trying to send larger amounts of data (requiring fragmentation). Unfortunately, at this point, the project is usually in its final stages, and sometimes the application protocol has even been published!
 
-> True story: I once worked for a company that developed custom client/server software. The original communications code had made this common mistake. However, they were all on dedicated networks with high-end hardware, so the underlying problem only happened very rarely. When it did, the operators would just chalk it up to "that buggy Windows OS" or "another network glitch" and reboot. One of my tasks at this company was to change the communication to include a lot more information; of course, this caused the problem to manifest regularly, and the entire application protocol had to be changed to fix it. The truly amazing thing is that this software had been used in countless 24x7 automation systems for 20 years; it was fundamentally broken and no one noticed.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+True story: I once worked for a company that developed custom client/server software. The original communications code had made this common mistake. However, they were all on dedicated networks with high-end hardware, so the underlying problem only happened very rarely. When it did, the operators would just chalk it up to "that buggy Windows OS" or "another network glitch" and reboot. One of my tasks at this company was to change the communication to include a lot more information; of course, this caused the problem to manifest regularly, and the entire application protocol had to be changed to fix it. The truly amazing thing is that this software had been used in countless 24x7 automation systems for 20 years; it was fundamentally broken and no one noticed.
+</div>
 
 ## The Solution, Part 1 - Understanding
 

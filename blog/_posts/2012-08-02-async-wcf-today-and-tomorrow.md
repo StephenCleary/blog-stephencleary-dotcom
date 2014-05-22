@@ -60,7 +60,11 @@ public class Calculator : ICalculator
 }
 {% endhighlight %}
 
-> I'm using StartNew for example code; real code can use Task.Run (TaskEx.Run for Async CTP) if you want to run code on a background thread.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+I'm using StartNew for example code; real code can use Task.Run (TaskEx.Run for Async CTP) if you want to run code on a background thread.
+</div>
 
 OK, so we've got our implementation (using TAP), and our interface (using APM). Now we have to wire them together by writing Begin/End wrapper methods around our TAP method:
 
@@ -161,7 +165,11 @@ static class Program
 
 This is more work to set up, but once it's done you don't have to write any TAP wrappers at all. TaskAsyncWsdlImportExtension does them for you. Unfortunately, this doesn't seem to be an option on VS2012 with the Async Targeting Pack.
 
-> Side note: TaskWsdlImportExtension will generate a method called "DivideAsync", while our manual wrapper uses "DivideAsyncTask" - why the difference? Well, we _would_ have used "DivideAsync", but the name was already taken by the EAP method. TaskWsdlImportExtension does not generate the EAP methods, so it can use the "DivideAsync" name.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Side note: TaskWsdlImportExtension will generate a method called "DivideAsync", while our manual wrapper uses "DivideAsyncTask" - why the difference? Well, we _would_ have used "DivideAsync", but the name was already taken by the EAP method. TaskWsdlImportExtension does not generate the EAP methods, so it can use the "DivideAsync" name.
+</div>
 
 Now, we're ready to actually call the client. I have some TAP code that uses the WCF client proxy ("CallCalculator") as well as a simple Main:
 
@@ -201,7 +209,11 @@ static class Program
 }
 {% endhighlight %}
 
-> In this sample code, Main is blocking on the Task returned from CallCalculator. This is not recommended for real-world code.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+In this sample code, Main is blocking on the Task returned from CallCalculator. This is not recommended for real-world code.
+</div>
 
 ## Tomorrow
 
@@ -264,7 +276,11 @@ And... wait for it... that's it! No need for any APM wrapper methods! The WCF ru
 
 Now let's turn our attention to the client. There's another nice surprise awaiting us there.
 
-> I reiterate: the "asynchronicity" of a WCF service is independent from the "asynchronicity" of a WCF client. So if you only control one half of the connection, you can still make your half asynchronous.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+I reiterate: the "asynchronicity" of a WCF service is independent from the "asynchronicity" of a WCF client. So if you only control one half of the connection, you can still make your half asynchronous.
+</div>
 
 Create a WCF client proxy. Heh, that's it. :)
 

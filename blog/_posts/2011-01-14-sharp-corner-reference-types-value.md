@@ -32,25 +32,41 @@ The table below includes tests on a variety of types, grouped into "mostly refer
 
 Interfaces return false for both **IsClass** and **IsValueType**. This makes sense, since either reference types or value types may inherit from an interface. However, interface variables may be declared and act like reference types (boxing value types as necessary), so interfaces do satisfy generic **class** constraints.
 
-> Take-home point: If **IsClass** is false but **IsInterface** is true, the type will still satisfy a generic **class** constraint.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Take-home point: If **IsClass** is false but **IsInterface** is true, the type will still satisfy a generic **class** constraint.
+</div>
 
 ## Nullable Value Types are a Bit Weird
 
 Nullable types return true for **IsValueType**, but do not satisfy generic **struct** constraints (nor **class** constraints). They can only be used as generic parameters without **class** or **struct** constraints.
 
-> Take-home point: Nullable types **(type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))** will not satisfy a generic **struct** constraint, even though **IsValueType** is true.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Take-home point: Nullable types **(type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))** will not satisfy a generic **struct** constraint, even though **IsValueType** is true.
+</div>
 
 ## Pointers are Definitely Weird
 
 To be honest, I don't know [why IsClass is true for pointers](http://stackoverflow.com/questions/3317587/why-are-pointers-reference-types) (the spec says they are, but without any reason given). They act exactly like value types, and they can't satisfy a generic **class** constraint. In fact, they can't be used as any kind of generic argument. This makes pointer types a corner case: they only have to be dealt with if the user is passing a Type instance rather than a generic type argument.
 
-> Take-home point: If **IsPointer** is true, then the type cannot be used as a generic type parameter at all (and therefore cannot satisfy a **class** constraint, even though **IsClass** is true).
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Take-home point: If **IsPointer** is true, then the type cannot be used as a generic type parameter at all (and therefore cannot satisfy a **class** constraint, even though **IsClass** is true).
+</div>
 
 ## Void is Definitely Weird
 
 Void claims to be a value type (**IsValueType** is true) - which sort of makes sense, if we think of it as a value type that cannot have a value - but it cannot satisfy a **struct** constraint. In fact, like pointers, **void** cannot be used as a generic type argument at all. This makes **void** another corner case: they only have to be dealt with if the user is passing a Type instance rather than a generic type argument.
 
-> Take-home point: The **void** type **(type == typeof(void))** cannot be used as a generic type parameter at all (and therefore cannot satisfy a **struct** constraint, even though **IsValueType** is true).
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Take-home point: The **void** type **(type == typeof(void))** cannot be used as a generic type parameter at all (and therefore cannot satisfy a **struct** constraint, even though **IsValueType** is true).
+</div>
 
 ## Test Code
 

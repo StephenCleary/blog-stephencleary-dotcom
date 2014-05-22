@@ -73,15 +73,15 @@ To demonstrate, I wrote this program, which uses MSBuild to recursively calculat
 
 **msbuild factorial.proj /nologo /clp:v=minimal /p:Input=5**
 
-> Default:  
-> 
-> &nbsp; Result: 120
+    Default:  
+    
+      Result: 120
 
 **msbuild factorial.proj /nologo /clp:v=minimal /p:Input=7**
 
-> Default:  
-> 
-> &nbsp; Result: 5040
+    Default:  
+    
+      Result: 5040
 
 Useless, but cool nonetheless.
 

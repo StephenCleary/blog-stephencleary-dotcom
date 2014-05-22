@@ -17,7 +17,11 @@ That second rule can trip people up - it means _you can't modify the progress ob
 
 To avoid this problem, you should create a new progress object each time you call Report. This is easy if your progress type is a value type (the compiler makes a copy of it for you). Alternatively, you could make your progress type immutable and make your own copies.
 
-> This is one small step towards a functional mindset. Async/await will gently nudge you away from OOP and towards functional programming. This is natural and should be embraced.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+This is one small step towards a functional mindset. Async/await will gently nudge you away from OOP and towards functional programming. This is natural and should be embraced.
+</div>
 
 ## Progress Reporter Implementation
 
@@ -80,7 +84,11 @@ The callback-based Progress<T> is great for general use, but there's no reason y
 
 We've covered a lot about progress reporting without actually saying much about the progress update itself (other than it must be passed by value - so either a value type, or an immutable reference type works best).
 
-> The information in this section is not Gospel. It's just a tip from my own (limited) experience dealing with progress updates from async methods. YMMV.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+The information in this section is not Gospel. It's just a tip from my own (limited) experience dealing with progress updates from async methods. YMMV.
+</div>
 
 It's natural to think of a progress report as _cumulative_ - the canonical example being "percent complete." However, I recommend a different approach: have _incremental_ progress reports for all reusable code and only convert it to _cumulative_ just before it is displayed to the user.
 

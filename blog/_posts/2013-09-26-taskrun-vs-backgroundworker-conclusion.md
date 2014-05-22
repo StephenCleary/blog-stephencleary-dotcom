@@ -4,7 +4,7 @@ title: "Task.Run vs BackgroundWorker: Conclusion"
 series: "Task.Run vs. BackgroundWorker"
 seriesTitle: "Conclusion"
 ---
-In this [series on Task.Run vs BackgroundWorker]({ % post_url TODO % }), we've looked at the most common aspects of running background tasks. As a recap, here's the full list of posts in chronological order:
+In this [series on Task.Run vs BackgroundWorker]({% post_url 2013-05-02-taskrun-vs-backgroundworker-intro %}), we've looked at the most common aspects of running background tasks. As a recap, here's the full list of posts in chronological order:
 
 - [Introduction]({% post_url 2013-05-02-taskrun-vs-backgroundworker-intro %}) - we're only contrasting `Task.Run` with `BackgroundWorker` for situations that `BackgroundWorker` was designed for.
 - [Round 1: Basics]({% post_url 2013-05-09-taskrun-vs-backgroundworker-round-1 %}) - how to run code on a background thread and receive a completion notification marshaled back to the UI thread. The `Task.Run` code is shorter and simpler with less "ceremony code".

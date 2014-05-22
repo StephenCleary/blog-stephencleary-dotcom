@@ -87,7 +87,11 @@ There is no way to pass an argument to an option in a short option run.
     > CommandLineParsingTest.exe -ac=true
     Invalid parameter  -ac=true
 
-> This is a deliberate departure from the behavior of GNU's getopt. Short option runs with arguments are not readable and may cause compatibility problems when the options change.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+This is a deliberate departure from the behavior of GNU's getopt. Short option runs with arguments are not readable and may cause compatibility problems when the options change.
+</div>
 
 ## Inverse Aliases
 

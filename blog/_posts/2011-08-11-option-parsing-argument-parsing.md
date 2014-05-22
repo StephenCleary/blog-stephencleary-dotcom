@@ -86,7 +86,11 @@ Reminder: the command shell has its own set of reserved characters (**&**, **|**
 
 Parsing an argument option is done in two steps. The first step is to parse that portion of the command line as a string, using the rules above. The second step is to parse the string into an instance of the corresponding property type on the option arguments class. Since the examples above used a property type of string, there was no processing during the second step.
 
-> It is possible to use only a part of the [option parsing pipeline]({% post_url 2011-06-09-option-parsing-option-parsing-pipeline %}) to get options and their arguments as strings. Pass a sequence of **OptionDefinition** instancess and a command line into the parser; the result is a sequence of **Option** instances (where each argument is typed as **string**). Details of these types will be covered in a future blog post.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+It is possible to use only a part of the [option parsing pipeline]({% post_url 2011-06-09-option-parsing-option-parsing-pipeline %}){:.alert-link} to get options and their arguments as strings. Pass a sequence of **OptionDefinition** instancess and a command line into the parser; the result is a sequence of **Option** instances (where each argument is typed as **string**). Details of these types will be covered in a future blog post.
+</div>
 
 The option parsing library uses a collection of "simple parsers" to convert from a string to a known type. By default, the simple parser collection understands how to parse **bool**; signed and unsigned 8-bit, 16-bit, 32-bit, and 64-bit integers; **BigInteger**; single and double-precision floating point; **decimal**; **Guid**; **TimeSpan**; **DateTime**; and **DateTimeOffset**. Strings, enumerations and nullable types are treated specially: strings are never parsed, enumerations use **Enum.Parse**, and nullable types are supported if their corresponding non-nullable types are supported. The built-in parsers all use the standard **TryParse** methods.
 

@@ -55,8 +55,8 @@ Given one ItemGroup (including metadata), how can one choose a subset of the ite
 </Project>  
 {% endhighlight %}
 
-> Projects to build: First;Third (arguments: 1;3)
+    Projects to build: First;Third (arguments: 1;3)
 
 By default, this example decides to build the first and third projects. However, passing _/p:Projects="First;Second"_ will change to the first and second projects (shown below). The metadata is preserved, as shown by displaying the arguments.
 
-> Projects to build: First;Second (arguments: 1;2)
+    Projects to build: First;Second (arguments: 1;2)

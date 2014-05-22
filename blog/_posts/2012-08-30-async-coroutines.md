@@ -6,7 +6,11 @@ We've been [introduced to scheduled concurrency]({% post_url 2012-08-23-async-an
 
 Today we're going to use the exclusive scheduler to create a simplistic kind of round-robin co-routine, similar to [Jon Skeet's EduAsync Coroutines](http://msmvps.com/blogs/jon_skeet/archive/2011/06/22/eduasync-part-13-first-look-at-coroutines-with-async.aspx).
 
-> Please note: this is only "playing around" code. Do not use this in production!
+<div class="alert alert-danger" markdown="1">
+<i class="fa fa-exclamation-triangle fa-3x pull-left"></i>
+
+Please note: this is only "playing around" code. Do not use this in production!
+</div>
 
 There isn't that much to it. We define three co-routines with slightly different behavior to make it a little interesting: FirstCoroutine yields twice, SecondCoroutine yields three times, and ThirdCoroutine yields once.
 

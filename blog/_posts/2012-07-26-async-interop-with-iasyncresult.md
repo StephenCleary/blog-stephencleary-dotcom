@@ -45,7 +45,11 @@ One drawback to TaskFactory.FromAsync is that it is somewhat limited in its numb
 
 Another alternative is AsyncFactory.FromApm in [my AsyncEx library](http://nitoasyncex.codeplex.com/). FromApm supports many more parameters. However, if Begin throws, then FromApm will place the exception on the Task rather than throwing it directly (changing the synchronous exception to an asynchronous exception).
 
-> Actually, the entire AsyncEx library got it start with FromApm. TaskFactory.FromAsync did not have enough parameters to support a lot of the Azure SDK APM methods.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Actually, the entire AsyncEx library got its start with FromApm. TaskFactory.FromAsync did not have enough parameters to support a lot of the Azure SDK APM methods.
+</div>
 
 So, TAP wrappers for existing APM methods are pretty easy.
 

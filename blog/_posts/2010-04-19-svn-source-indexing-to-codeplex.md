@@ -32,7 +32,11 @@ _"c:\Program Files\Debugging Tools for Windows (x86)\srcsrv\ssindex.cmd" /SYSTEM
 
 All the PDBs in "..\Binaries" are updated in-place to point to the current source in source control. They are now ready to be released (note that the PDBs should be included in every release along with DLLs and XML documentation files).
 
-> Note that the "/Debug" switch is just an output verbosity option for SSIndex.cmd. The output from SSIndex should include a "wrote stream" message for each PDB. If there is anything in the output that looks like "[ERROR]", "zero source files found", or if no PDB files were found, then the source indexing was **not** successful for those PDB files.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Note that the "/Debug" switch is just an output verbosity option for SSIndex.cmd. The output from SSIndex should include a "wrote stream" message for each PDB. If there is anything in the output that looks like "[ERROR]", "zero source files found", or if no PDB files were found, then the source indexing was **not** successful for those PDB files.
+</div>
 
 The following command can be used to verify that the PDB was correctly source indexed:  
 

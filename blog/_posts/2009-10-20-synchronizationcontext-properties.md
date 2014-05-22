@@ -5,7 +5,7 @@ title: "SynchronizationContext Properties Summary"
 A few of my posts recently have dealt with surprises that I've found when interacting with different implementations of [SynchronizationContext](http://msdn.microsoft.com/en-us/library/system.threading.synchronizationcontext.aspx). This post is a summary of my findings.
 
 <div class="panel panel-default" markdown="1">
-  <div class="panel-heading" markdown="1">SynchronizationContext Implementation Properties</div>
+  <div class="panel-heading">SynchronizationContext Implementation Properties</div>
 
 {:.table .table-striped}
 ||Specific Associated Thread|Synchronized Execution|Sequential Execution|Reentrant Send|Reentrant Post|Supports Equality Comparision|

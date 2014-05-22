@@ -59,7 +59,11 @@ class Program
 
 First, the **Options** class is declared, which defines the options our program takes. It also exposes a **Usage** method, which displays command-line usage information. **Usage** writes its information to **Console.Error** and returns an error code.
 
-> The Nito.KitchenSink.OptionParsing library does not attempt to write the **Usage** method for you automatically. Other option parsing libraries have attempted this, but the results are (IMHO) less than ideal.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+The Nito.KitchenSink.OptionParsing library does not attempt to write the **Usage** method for you automatically. Other option parsing libraries have attempted this, but the results are (IMHO) less than ideal.
+</div>
 
 The program's **Main** method returns an **int**, and contains a top-level try/catch. The try block parses the options, performs its requested task (in this case, the program just writes the Level option to the console), and then returns 0 (meaning "success").
 

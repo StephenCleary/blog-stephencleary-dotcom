@@ -2,10 +2,6 @@
 layout: post
 title: "Framework Profiles in .NET"
 ---
-**Updated 2012-10-31 with the newest framework identifiers.  
-Updated 2013-11-02 with the VS2013 framework identifiers.  
-Updated 2014-02-03 to move the portable profiles to [a separate page](http://embed.plnkr.co/03ck2dCtnJogBKHJ9EjY)**
-
 There are a lot of different .NET runtimes. There's the desktop framework, Windows Phone, Silverlight, and Windows Store. There's also a number of lesser-known frameworks. You can download [targeting packs](http://msdn.microsoft.com/en-US/hh454951.aspx) to target different frameworks.
 
 Every once in a while (usually while [working with NuGet](http://docs.nuget.org/docs/creating-packages/creating-and-publishing-a-package)), I find myself needing a refresher on the frameworks and profiles. It's a pain to look all this up again, so I'm collecting it here for future reference.
@@ -35,7 +31,11 @@ If there is no profile specified, the framework refers to the full profile.
 
 **Client** specifies the client profile; e.g., ".NETFramework,Version=v4.0,Profile=Client" refers to the .NET 4.0 Client Profile. Note that the client profile is not supported in .NET 4.5.
 
-> Historical note: The **CompactFramework** profile specifies the .NET Compact Framework. This probably should have been its own identifier, but doesn't really matter anymore since Visual Studio 2008 was the last version to support CF directly.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Historical note: The **CompactFramework** profile specifies the .NET Compact Framework. This probably should have been its own identifier, but doesn't really matter anymore since Visual Studio 2008 was the last version to support CF directly.
+</div>
 
 ### Silverlight
 
@@ -47,7 +47,11 @@ If there is no profile specified, the framework refers to the desktop Silverligh
 
 **WindowsPhone71** specifies the newer Windows Phone profile; e.g., "Silverlight,Version=v4.0,Profile=WindowsPhone71" refers to Windows Phone 7.5 (Mango). That's not a typo: "7.5" came from marketing; the internal version numbers are all "7.1". However, some (all?) Microsoft tools <!-- like Portable Libraries --> will treat **WindowsPhone75** just like **WindowsPhone71**, so you may be able to get away with that. I believe this profile is only applicable to Silverlight version 4.0.
 
-> The "Windows Phone" profiles of Silverlight are a historical oddity; starting with Windows Phone 8, Microsoft correctly gave Windows Phone its own identifier (see below).
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+The "Windows Phone" profiles of Silverlight are a historical oddity; starting with Windows Phone 8, Microsoft correctly gave Windows Phone its own identifier (see below).
+</div>
 
 ### .NETCore
 

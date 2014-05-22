@@ -2,7 +2,11 @@
 layout: post
 title: "Async Unit Tests, Part 2: The Right Way"
 ---
+<div class="alert alert-danger" markdown="1">
+<i class="fa fa-exclamation-triangle fa-3x pull-left"></i>
+
 **Update:** The information in this blog post _only applies to Visual Studio 2010_. Visual Studio 2012 _will_ support asynchronous unit tests, **as long as those tests are "async Task" tests, not "async void" tests**.
+</div>
 
 Last time, we looked at [incorrect approaches to async unit testing]({% post_url 2012-02-06-async-unit-tests-part-1-wrong-way %}). We also identified the underlying problem: that unit tests do not have an appropriate async context.
 
@@ -109,7 +113,11 @@ _Sniff..._ It's... so... beautiful...
 
 But not quite perfect. You still have to add a NuGet package _and_ remember to change [TestClass] to [AsyncTestClass].
 
-> Tip: You can download an [Async Unit Test item type](http://asyncunittests.codeplex.com/wikipage?title=Optional%20Component) which uses [AsyncTestClass] instead of [TestClass]. This makes writing new async tests just a little bit easier, but not entirely foolproof.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Tip: You can download an [Async Unit Test item type](http://asyncunittests.codeplex.com/wikipage?title=Optional%20Component){:.alert-text} which uses [AsyncTestClass] instead of [TestClass]. This makes writing new async tests just a little bit easier, but not entirely foolproof.
+</div>
 
 ## Future Directions
 

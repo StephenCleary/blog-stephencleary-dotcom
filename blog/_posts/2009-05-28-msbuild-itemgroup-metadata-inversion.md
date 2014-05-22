@@ -33,7 +33,7 @@ MSBuild does not support metadata having metadata. However, an "inversion" can b
 </Project>  
 {% endhighlight %}
 
-> Project files: one.sln;two.sln;three.sln (definitions: First;Second;Third)
+    Project files: one.sln;two.sln;three.sln (definitions: First;Second;Third)
 
 Note that you do have to watch your grouping; if the metadata being inverted is not unique for all entries in the original ItemGroup, then some entries in the resulting ItemGroup will have multi-valued metadata for their "original Identity" values.
 

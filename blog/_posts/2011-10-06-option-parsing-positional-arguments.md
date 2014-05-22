@@ -153,7 +153,11 @@ Alternatively, an options class may provide its own collection, marked with the 
 
 The property does not have to be **List<string>** (which is used by **OptionArgumentsBase**). The only requirements on the collection is that it only have one method named **Add** which takes a single parameter. The parameter does not have to be **string**; it can be any type, and the [standard parsing rules]({% post_url 2011-08-11-option-parsing-argument-parsing %}) apply.
 
-> This means that **PositionalArguments** can be placed on a property of dictionary type, as long as a matching parser is provided.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+This means that **PositionalArguments** can be placed on a property of dictionary type, as long as a matching parser is provided.
+</div>
 
 Here's an example of a program taking any number of integer parameters:
 

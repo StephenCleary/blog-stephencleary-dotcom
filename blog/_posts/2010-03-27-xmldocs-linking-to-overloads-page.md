@@ -2,15 +2,15 @@
 layout: post
 title: "XmlDocs: Linking to the Overloads Page"
 ---
-XML documentation has a natural "link to code" element: the [<see> tag](http://msdn.microsoft.com/en-us/library/acd0tfbe.aspx). When a function is overloaded, the resulting help file contains an "overloads" page [like this](http://msdn.microsoft.com/en-us/library/system.text.encoding.getstring.aspx), but getting the **see** element to link to the overloads page is not exactly straightforward.
+XML documentation has a natural "link to code" element: the [\<see> tag](http://msdn.microsoft.com/en-us/library/acd0tfbe.aspx). When a function is overloaded, the resulting help file contains an "overloads" page [like this](http://msdn.microsoft.com/en-us/library/system.text.encoding.getstring.aspx), but getting the **see** element to link to the overloads page is not exactly straightforward.
 
-The <see> tag is one of the tags that is verified by the compiler, so it's not possible to just stick anything in there. The **see.cref** attribute must be a resolvable code element. The compiler doesn't allow you to resolve to a method group; it wants a single, unambiguous member reference.
+The \<see> tag is one of the tags that is verified by the compiler, so it's not possible to just stick anything in there. The **see.cref** attribute must be a resolvable code element. The compiler doesn't allow you to resolve to a method group; it wants a single, unambiguous member reference.
 
-> **Example warning/error message when attempting to link to an overload group:**  
-> 
-> Warning as Error: Ambiguous reference in cref attribute: 'FindFiles'. Assuming 'Nito.KitchenSink.WinInet.FtpHandle.FindFiles(string, Nito.KitchenSink.WinInet.FtpHandle.FindFilesFlags)', but could have also matched other overloads including 'Nito.KitchenSink.WinInet.FtpHandle.FindFiles()'.
+Here's an example of a warning/error message when attempting to link to an overload group:
 
-Here's a little-known fact about the <see> tag: it will _not_ verify any **see.cref** values that start with a single character followed by a colon. This enables specifying full DocumentationId links such as "T:Nito.Async.ActionDispatcher".
+    Warning as Error: Ambiguous reference in cref attribute: 'FindFiles'. Assuming 'Nito.KitchenSink.WinInet.FtpHandle.FindFiles(string, Nito.KitchenSink.WinInet.FtpHandle.FindFilesFlags)', but could have also matched other overloads including 'Nito.KitchenSink.WinInet.FtpHandle.FindFiles()'.
+
+Here's a little-known fact about the \<see> tag: it will _not_ verify any **see.cref** values that start with a single character followed by a colon. This enables specifying full DocumentationId links such as "T:Nito.Async.ActionDispatcher".
 
 There is a standard extension of the DocumentationId format for overloads that is understood by Sandcastle: it uses the "Overload:" prefix as such: "Overload:System.Windows.Threading.Dispatcher.Invoke". Unfortunately, Visual Studio (as of 2008) will attempt to resolve a link like this, and will fail.
 

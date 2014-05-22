@@ -4,7 +4,7 @@ title: "MS Bug: MvcBuildViews with One-Click Publish"
 ---
 If you set MvcBuildViews to true in your web application project file, one-click publishing (at least to the local file system) will fail with a rather obscure error message:
 
-> It is an error to use a section registered as allowDefinition='MachineToApplication' beyond application level.  This error can be caused by a virtual directory not being configured as an application in IIS.
+    It is an error to use a section registered as allowDefinition='MachineToApplication' beyond application level.  This error can be caused by a virtual directory not being configured as an application in IIS.
 
 The steps to reproduce this situation (in VS2010) are as follows:
 

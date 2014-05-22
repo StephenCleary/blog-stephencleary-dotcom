@@ -68,7 +68,11 @@ public async Task ComposeAsync()
 }
 {% endhighlight %}
 
-> Tip: If you have a very simple asynchronous method, you may be able to write it without using the await keyword (e.g., using Task.FromResult). If you _can_ write it without await, then you _should_ write it without await, and remove the async keyword from the method. A non-async method returning Task.FromResult is more efficient than an async method returning a value.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Tip: If you have a very simple asynchronous method, you may be able to write it without using the await keyword (e.g., using Task.FromResult). If you _can_ write it without await, then you _should_ write it without await, and remove the async keyword from the method. A non-async method returning Task.FromResult is more efficient than an async method returning a value.
+</div>
 
 ## Return Types
 
@@ -78,7 +82,11 @@ Why return Task<T> or Task? Because they're awaitable, and void is not. So if yo
 
 You have to return void when you have async event handlers.
 
-> You can also use async void for other "top-level" kinds of actions - e.g., a single "static async void MainAsync()" for Console programs. However, this use of async void has its own problem; see [Async Console Programs]({% post_url 2012-02-03-async-console-programs %}). The primary use case for async void methods is event handlers.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+You can also use async void for other "top-level" kinds of actions - e.g., a single "static async void MainAsync()" for Console programs. However, this use of async void has its own problem; see [Async Console Programs]({% post_url 2012-02-03-async-console-programs %}){:.alert-link}. The primary use case for async void methods is event handlers.
+</div>
 
 ## Returning Values
 

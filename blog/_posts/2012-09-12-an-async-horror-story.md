@@ -25,15 +25,14 @@ But the press was only $25 million of the story. Besides the building and all of
 
 My company had recently hired a "rock star" developer, who had already been assigned another newsprint project. He assured the software department heads that this new newsprint project would only require minor tweaks and configuration changes to the software he was developing for the other client (which was his first project for our company). Unlike our traditional procedural design, the Rock Star's code reveled in "abstraction" and "OOP." As the only other programmer in the company who had "done OOP," I was slated to work as the Rock Star's assistant programmer.
 
-> In one conversation around this time, I was opposing what I saw as unnecessary complexity in the system (I had been asked to abstract the IoC component by using DI). The Rock Star responded by giving me an additional assignment: a module which would continuously check memory for errors while the system was running. At that point, the conversation had just gotten too ridiculous; I walked away without saying a word.
-> 
-> 
-> 
-> The software was sufficiently complex to require its own program for modifying the configuration (called, unsurprisingly, "The Configurator").
-> 
-> 
-> 
-> Long-time readers of [The Daily WTF](http://thedailywtf.com) will immediately realize what will happen to these projects.
+<div class="alert alert-info" markdown="1">
+
+In one conversation around this time, I was opposing what I saw as unnecessary complexity in the system (I had been asked to abstract the IoC component by using DI). The Rock Star responded by giving me an additional assignment: a module which would continuously check memory for errors while the system was running. At that point, the conversation had just gotten too ridiculous; I walked away without saying a word.
+
+The software was sufficiently complex to require its own program for modifying the configuration (called, unsurprisingly, "The Configurator").
+
+Long-time readers of [The Daily WTF](http://thedailywtf.com){:.alert-link} will immediately realize what will happen to these projects.
+</div>
 
 I was nominally assigned to the new newspaper project (in addition to my other tasks). The Rock Star assured me that the project would be easy, once he actually gave me the holy grail code base.
 
@@ -78,11 +77,19 @@ Please do keep in mind that this was written in unmanaged C++ with the NT4 API: 
 
 In the unmanaged world at that time, the most common type of asynchronous operation was overlapped I/O. My early experiment used overlapped I/O exclusively, with some APCs thrown in for good measure, but I quickly discovered how difficult it was to _extend_. I shifted to using HANDLEs.
 
-> For my .NET-only readers, you can think of a HANDLE as like a Task.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+For my .NET-only readers, you can think of a HANDLE as like a Task.
+</div>
 
 The entire system was conceptually built around a single thread. The main loop of this thread essentially just called WaitForMultipleObjects on a dynamic array of HANDLEs and executed completion callbacks. Completion callbacks would add and remove HANDLEs from the main array as necessary. This approach was fully extensible using the monkey wrench of synchronization primitives: the Manual Reset Event.
 
-> For my .NET-only readers: A Manual Reset Event is analogous to a TaskCompletionSource. There was no thread pool, so I used WaitForMultipleObjects to make a "thread pool" that would only ever have one thread.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+For my .NET-only readers: A Manual Reset Event is analogous to a TaskCompletionSource. There was no thread pool, so I used WaitForMultipleObjects to make a "thread pool" that would only ever have one thread.
+</div>
 
 There is one major limitation with this approach: everything **must** be asynchronous. I was fairly sure, however, that I could _make_ everything asynchronous, one way or another.
 
@@ -90,7 +97,11 @@ As the system grew, I encountered the 64-HANDLE limit: WaitForMultipleObjects co
 
 The Event Demultiplexer, conceptually, was quite simple. It was a WaitForMultipleObjects loop that was unlimited in its number of HANDLEs. That's it. When it came to implementation, however, it was considerably difficult. It had to manage its own threads (no thread pool, remember?), and doing all of that in a thread-safe way was not trivial.
 
-> Curiously, the 64-handle limitation still exists in .NET (in WaitHandle.WaitAll/WaitAny). I had thought they would abstract it away! It's not so important anymore, though: Task's WaitAll/WhenAll/WaitAny/WhenAny do not use the same mechanism and are not subject to a 64-task limit.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Curiously, the 64-handle limitation still exists in .NET (in WaitHandle.WaitAll/WaitAny). I had thought they would abstract it away! It's not so important anymore, though: Task's WaitAll/WhenAll/WaitAny/WhenAny do not use the same mechanism and are not subject to a 64-task limit.
+</div>
 
 Of course, there were many external problems as well. The remote database driver had a nasty habit of crashing its host process every time the server was unreachable. The local database did not support asynchronous operations (and required regular offline compaction). The robot controlled via RS232 did not like commands sent too quickly (apparently, they only tested with slow-typing humans). The press communications used an underdocumented protocol over an unusual bus. Pretty much the only thing that worked perfectly was the PLC talking over OPC.
 
@@ -107,7 +118,11 @@ I was proud of my creation.
 
 For many years, I was proud of my accomplishment. The client _did_ discover that I essentially wrote the entire system on-site, but we were not responsible for any major delays, so we didn't get nailed. Also, I learned a _lot_ about asynchronous programming: you have to turn your code "inside out" to do it right. This valuable experience enabled me to create a fully-asynchronous component a couple of years later when our communications system changed from serial to TCP/IP.
 
-> Note: Only old-school async requires you to write your code "inside out." The new async/await support in .NET does the rewriting for you, so you can write asynchronous code _so much easier!_
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Note: Only old-school async requires you to write your code "inside out." The new async/await support in .NET does the rewriting for you, so you can write asynchronous code _so much easier!_
+</div>
 
 However, it gradually became apparent that I was too proud of my creation. Being a fully asynchronous system (and therefore completely different than any of our other systems), it was difficult for me to maintain. And, as difficult as it was for me to maintain it, it was near-impossible for anyone else to maintain it!
 

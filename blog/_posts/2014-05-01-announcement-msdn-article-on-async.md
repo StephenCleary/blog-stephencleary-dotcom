@@ -7,5 +7,5 @@ My latest MSDN article [Patterns for Asynchronous MVVM Applications: Services](h
 {:.center}
 ![]({{ site_url }}/assets/dd799403.cover_lrg(en-us,MSDN.10).jpg)  
 
-I cover a pretty wide range of topics in a single article. It's kind of like a trimmed-down version of my [async OOP series]({ % post_url TODO % }) from a while ago. Today's MSDN article considers how `async` interacts with inheritance, unit testing, factories, lazy initialization, and constructors.
+I cover a pretty wide range of topics in a single article. It's kind of like a trimmed-down version of my [async OOP series]({% post_url 2013-01-03-async-oop-0-introduction %}) from a while ago. Today's MSDN article considers how `async` interacts with inheritance, unit testing, factories, lazy initialization, and constructors.
 

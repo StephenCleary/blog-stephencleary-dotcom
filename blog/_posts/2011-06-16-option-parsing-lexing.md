@@ -8,7 +8,11 @@ The first step in parsing a command line is _lexing_, which converts a single st
 
 ## Command Shell Escaping and Quoting
 
-> The information in this section is derived from the TechNet articles [Command shell overview](http://technet.microsoft.com/en-us/library/bb490954.aspx) ([webcite](http://www.webcitation.org/5ytzcAcrB)) and [The Windows NT Command Shell](http://technet.microsoft.com/en-us/library/cc723564.aspx) ([webcite](http://www.webcitation.org/5ytzuqd4h)).
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+The information in this section is derived from the TechNet articles [Command shell overview](http://technet.microsoft.com/en-us/library/bb490954.aspx){:.alert-link} ([webcite](http://www.webcitation.org/5ytzcAcrB){:.alert-link}) and [The Windows NT Command Shell](http://technet.microsoft.com/en-us/library/cc723564.aspx){:.alert-link} ([webcite](http://www.webcitation.org/5ytzuqd4h){:.alert-link}).
+</div>
 
 The command shell has these special characters: **&**, **|**, **(**, **)**, **<**, **>**, and **^**. There are two ways to pass these special characters on the command line: _escaping_ and _quoting_.
 

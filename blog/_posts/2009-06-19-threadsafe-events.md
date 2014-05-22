@@ -40,7 +40,11 @@ public event MyEventHandler MyEvent
 
 Chris Burrows, a Microsoft developer on the C# compiler team, explains why this is bad in his blog post [Field-like Events Considered Harmful](http://blogs.msdn.com/cburrows/archive/2008/02/18/field-like-events-considered-harmful.aspx). His blog post covers the reasoning thoroughly, so it won't be repeated here.
 
-> **Minor rant:** The Java language fell into the same trap; see [Practical API Design's Java Monitor page](http://wiki.apidesign.org/wiki/Java_Monitor). Why is it that some language designers believe they can declaratively solve multithreading problems? If the solution was really as simple as that, then why haven't other people already figured it out? Multithreaded programming has consumed some of the brightest minds for decades, and it's _hard_. Language designers can't make multithreading complexities go away by sprinkling some magical fairy powder, even if they name the powder `MethodImplOptions.Synchronized`. In fact, most of the time they're just making it worse.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+**Minor rant:** The Java language fell into the same trap; see [Practical API Design's Java Monitor page](http://wiki.apidesign.org/wiki/Java_Monitor){:.alert-link}. Why is it that some language designers believe they can declaratively solve multithreading problems? If the solution was really as simple as that, then why haven't other people already figured it out? Multithreaded programming has consumed some of the brightest minds for decades, and it's _hard_. Language designers can't make multithreading complexities go away by sprinkling some magical fairy powder, even if they name the powder `MethodImplOptions.Synchronized`. In fact, most of the time they're just making it worse.
+</div>
 
 Pretend for a minute that locking on `this` is OK. It actually _would_ work, after all; it just raises the likelihood of unexpected deadlocks. It's also possible that a future C# compiler may lock on a super-secret private field instead of `this`. However, even if the _implementation_ is OK, the _design_ is still flawed. The problem becomes clear when one ponders how to raise the event in a threadsafe manner.
 

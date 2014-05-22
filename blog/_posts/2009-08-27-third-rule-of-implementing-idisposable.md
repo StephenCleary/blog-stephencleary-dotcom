@@ -12,7 +12,11 @@ No classes should be responsible for multiple unmanaged resources. It's hard eno
 
 No classes should be responsible for both managed and unmanaged resources. It's _possible_ to write a class that handles both unmanaged and managed resource, but this is extremely difficult to code correctly. Trust me; don't go there. Even if the class is bug-free, it's a maintenance nightmare. Microsoft re-wrote a _lot_ of core classes in the BCL when .NET 2.0 came out, specifically so they could divide the classes with unmanaged resources from the classes with managed resources.
 
-> Note: a lot of the really overly-complex Microsoft IDisposable documentation is because they assume your class will want to handle both managed and unmanaged resources. This is a holdover from .NET 1.0, and it's kept only for backwards compatibility. Take a clue from Microsoft: their own classes don't even follow that old pattern (they were changed in .NET 2.0 to follow the pattern described in this blog post). FxCop will yell at you because you need to [implement IDisposable "correctly"](http://msdn.microsoft.com/en-us/library/ms244737.aspx) (i.e., using the old pattern); ignore it - FxCop is wrong.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Note: a lot of the really overly-complex Microsoft IDisposable documentation is because they assume your class will want to handle both managed and unmanaged resources. This is a holdover from .NET 1.0, and it's kept only for backwards compatibility. Take a clue from Microsoft: their own classes don't even follow that old pattern (they were changed in .NET 2.0 to follow the pattern described in this blog post). FxCop will yell at you because you need to [implement IDisposable "correctly"](http://msdn.microsoft.com/en-us/library/ms244737.aspx){:.alert-link} (i.e., using the old pattern); ignore it - FxCop is wrong.
+</div>
 
 The class should look something like this:
 

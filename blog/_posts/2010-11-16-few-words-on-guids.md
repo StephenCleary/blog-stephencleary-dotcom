@@ -40,7 +40,11 @@ Time-based GUIDs are Variant 2, Version 1 RFC 4122 GUIDs, also known as "sequent
 
 The Node Identifier is normally the MAC address of the computer generating the time-based GUID (which is guaranteed to be unique, since MAC addresses use a registration system). However, it may also be a 47-bit random value (with the broadcast bit set). In this case, there is no danger of collision with real MAC addresses because the broadcast bit of a physical MAC address is always 0. There is a danger of collision with other random node identifiers, though; specifically, there is a 50% chance of collision once 13.97 million random nodes enter the network.
 
-> Note: using a random value instead of the MAC address is not currently supported by Microsoft's Win32 API. This means that any GUID generation done using [UuidCreateSequential](http://msdn.microsoft.com/en-us/library/aa379322(VS.85).aspx) _will_ expose the MAC address.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Note: using a random value instead of the MAC address is not currently supported by Microsoft's Win32 API. This means that any GUID generation done using [UuidCreateSequential](http://msdn.microsoft.com/en-us/library/aa379322(VS.85).aspx){:.alert-link} _will_ expose the MAC address.
+</div>
 
 The Clock Sequence field is initialized to a random value and incremented whenever the system clock has moved backward since the last generated GUID (e.g., if the computer corrects its time with a time server, or if it lost its date and thinks it's 1980). This allows 16,384 clock resets without any danger of a collision. If the GUIDs are being generated so quickly that the system clock has not moved _forward_ since the last GUID's timestamp, then the GUID generation algorithm will generally stall until the system clock increments the timestamp.
 

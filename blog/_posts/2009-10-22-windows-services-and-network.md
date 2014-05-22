@@ -1,6 +1,8 @@
 ---
 layout: post
 title: "Windows Services and the Network"
+series: "Managed Services"
+seriesTitle: "Network Drives"
 ---
 Let's make this very clear: **a service should not use or change drive mappings _at all_**. See [KB180362 (INFO: Services and Redirected Drives)](http://support.microsoft.com/kb/180362) [(webcite)](http://www.webcitation.org/5wvCVoiMW) and [Services and Redirected Drives (MSDN)](http://msdn.microsoft.com/en-us/library/ms685143.aspx) [(webcite)](http://www.webcitation.org/5wvCgBLpy) for more information. If a service needs to use network resources, it should use UNC paths.
 

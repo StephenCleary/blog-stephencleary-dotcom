@@ -16,15 +16,27 @@ This FAQ entry is laid out in a sequence of steps, but they do not necessarily h
 
 XML documents are just a sequence of Unicode characters. However, TCP/IP works with streams of bytes. A translation must be made between Unicode characters and byte sequences, and this translation is called the _encoding_.
 
-> **Encoding:** The translation used when converting a Unicode string to or from a byte sequence. The most common encodings are UTF-16 (which uses 2 bytes for most characters; it is recognizable because every other byte is "00" for normal English text) and UTF-8 (which uses 1 byte for normal English characters, but most characters take 2 or more bytes).
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+**Encoding:** The translation used when converting a Unicode string to or from a byte sequence. The most common encodings are UTF-16 (which uses 2 bytes for most characters; it is recognizable because every other byte is "00" for normal English text) and UTF-8 (which uses 1 byte for normal English characters, but most characters take 2 or more bytes).
+</div>
 
 The encoding may be detected one of several ways (if it is not specified in the application protocol document). A byte order mark may be used to detect the encoding in some situations.
 
-> **Byte Order Mark (BOM):** A special Unicode character that is sometimes inserted at the beginning of a document as it is encoded. The UTF-16 encoding has little-endian and big-endian versions, so it requires a BOM. UTF-8, however, does not require a BOM.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+**Byte Order Mark (BOM):** A special Unicode character that is sometimes inserted at the beginning of a document as it is encoded. The UTF-16 encoding has little-endian and big-endian versions, so it requires a BOM. UTF-8, however, does not require a BOM.
+</div>
 
 The XML file itself may include a prolog, which may specify the encoding being used. This is more difficult to work with, since the prolog itself must be interpreted heuristically by guessing at the encoding. Note that if an XML prolog exists that specifies an incorrect encoding, Microsoft's XML parsers may get confused (this often happens when reading XML from a string or writing XML to a string).
 
-> **XML Prolog:** The "<?xml ... ?>" element at the beginning of some XML files, specifying the XML version and (optionally) the encoding used.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+**XML Prolog:** The "<?xml ... ?>" element at the beginning of some XML files, specifying the XML version and (optionally) the encoding used.
+</div>
 
 Normally, the application protocol document specifies the encoding; this is simpler than dealing with automatically detecting the encoding. If it does specify the encoding, it should also specify whether a BOM should be present, or if a prolog is allowed to specify the encoding. A common choice is "UTF-8 without BOM or prolog", which makes the encoding always UTF-8 without a byte order mark or XML prolog.
 

@@ -43,7 +43,11 @@ A lot of my dataflow "meshes" end up being "pipelines", so one option I use more
 
 Eventually, you're going to finish sending data to your dataflow mesh, and you're going to want to know when the mesh is done processing it. Each block supports an asynchronous form of completion: you call [`Complete`](http://msdn.microsoft.com/en-us/library/system.threading.tasks.dataflow.idataflowblock.complete.aspx) and some time later, the block's [`Completion`](http://msdn.microsoft.com/en-us/library/system.threading.tasks.dataflow.idataflowblock.completion.aspx) task will complete.
 
-> Side note: you should _always_ assume that `Completion` might be signaled asynchronously, even if there are no data items to process.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Side note: you should _always_ assume that `Completion` might be signaled asynchronously, even if there are no data items to process.
+</div>
 
 If you have a simple dataflow mesh (like a pipeline), then you can tell the blocks to propagate their completion when you link them together. Then when you're finished, you can just complete the first block and await the completion of the last block.
 

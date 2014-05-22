@@ -4,7 +4,7 @@ title: "Async OOP 7: Design"
 series: "Async OOP"
 seriesTitle: "Design"
 ---
-I'd like to conclude this [little Async/OOP series]({ % post_url TODO % }) by circling back around to _design_. Most of the Async/OOP series has been looking at best practices in real-world situations; today's post is a bit more theoretical and definitely more controversial. :)
+I'd like to conclude this [little Async/OOP series]({% post_url 2013-01-03-async-oop-0-introduction %}) by circling back around to _design_. Most of the Async/OOP series has been looking at best practices in real-world situations; today's post is a bit more theoretical and definitely more controversial. :)
 
 I started out the [introductory post]({% post_url 2013-01-03-async-oop-0-introduction %}) talking about functional programming. All of the problems that we've had to solve in the Async/OOP series are due to asynchronous code being naturally functional, and how to get that to play well with OOP design (and in a mostly-OOP language). Today I'm going to step away from OOP and think about how `async` C# code would look if we embraced the functional nature of asynchronous code.
 

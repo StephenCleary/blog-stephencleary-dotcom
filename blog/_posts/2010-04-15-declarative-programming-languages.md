@@ -13,7 +13,11 @@ And all of this is true, **but only to a point.** That point is at a very specif
 
 Neither solution is maintainable in the long term.
 
-> Note that I'm only addressing declarative _programming_ here; declarative languages are perfectly well-suited for _declaring_ things, such as file structure or GUI layouts. But why do we take a perfectly good declarative language and try to shove programs into it?
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Note that I'm only addressing declarative _programming_ here; declarative languages are perfectly well-suited for _declaring_ things, such as file structure or GUI layouts. But why do we take a perfectly good declarative language and try to shove programs into it?
+</div>
 
 ## Blast from the Past
 
@@ -45,8 +49,12 @@ If a programmer can stay within the existing boundaries of a declarative languag
 
 Microsoft made a genius decision with regards to LINQ in particular: they allow a programmer to "step out" of the declarative language when the language falls short. They did this by including LINQ to Objects, which is _functional_ and not _declarative,_ technically speaking. Every LINQ provider has its own limitations (that "point" where the implementors stopped adding features), and at that point one can use "AsEnumerable" to transfer from the declarative system to a functional one.
 
-> Example: LINQ to Entities cannot select new object instances like this: "db.ServiceSet.Select(x => new SelectListItem { Text = x.Name, Value = x.Id.ToString(), Selected = x.Id == serviceId });"  
-> However, one can use LINQ to Entities to retrieve the entity set and then switch to LINQ to Objects to complete the transformation: "db.ServiceSet.AsEnumerable().Select(x => new SelectListItem { Text = x.Name, Value = x.Id.ToString(), Selected = x.Id == serviceId });"
+<div class="alert alert-info" markdown="1">
+
+Example: LINQ to Entities cannot select new object instances like this: "db.ServiceSet.Select(x => new SelectListItem { Text = x.Name, Value = x.Id.ToString(), Selected = x.Id == serviceId });"  
+
+However, one can use LINQ to Entities to retrieve the entity set and then switch to LINQ to Objects to complete the transformation: "db.ServiceSet.AsEnumerable().Select(x => new SelectListItem { Text = x.Name, Value = x.Id.ToString(), Selected = x.Id == serviceId });"
+</div>
 
 ## Final Rant: Declarative Code Is Still Code
 

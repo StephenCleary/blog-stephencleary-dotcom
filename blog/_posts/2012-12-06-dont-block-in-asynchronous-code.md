@@ -6,7 +6,11 @@ One of my most famous blog posts is [Don't Block on Asynchronous Code]({% post_u
 
 Recently, I came across another deadlock situation: in some cases, an `async` method may deadlock if it blocks on a `Task`. I found this behavior surprising and [reported it as a bug](https://connect.microsoft.com/VisualStudio/feedback/details/769322/waiting-on-task-can-deadlock-in-free-threaded-context). I suspect it won't be fixed because it's a very uncommon situation and the easiest fix would have a negative impact on performance for _all_ `async` code.
 
-> This deadlock scenario is due to an undocumented implementation detail. This post is accurate as of the initial release of .NET 4.5 in 2012. Microsoft may change this behavior in the future.
+<div class="alert alert-danger" markdown="1">
+<i class="fa fa-exclamation-triangle fa-3x pull-left"></i>
+
+This deadlock scenario is due to an undocumented implementation detail. This post is accurate as of the initial release of .NET 4.5 in 2012. Microsoft may change this behavior in the future.
+</div>
 
 This code will deadlock in a free-threaded context (e.g., a Console application, unit test, or `Task.Run`):
 
@@ -88,7 +92,6 @@ static async Task Test()
 Most people would not write code like this. It's very unnatural to call `Task.Wait` in an `async` method; the natural code would use `await` instead. I only came across this behavior while writing unit tests for my [AsyncEx](http://nitoasyncex.codeplex.com/) library; these unit tests can get pretty complex and can involve a mixture of synchronous and asynchronous code.
 
 {:.center}
-
 ![]({{ site_url }}/assets/Method%2Bno%2BBlocking.png)  
 
 In conclusion, we already knew [not to block **on** asynchronous code]({% post_url 2012-07-12-dont-block-on-async-code %}); now we know not to block **in** asynchronous code either!

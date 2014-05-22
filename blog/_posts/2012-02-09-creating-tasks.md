@@ -36,7 +36,11 @@ Remember that Task<T> and Task are awaitable, so you can await the result of MyI
 
 You _probably_ won't have to use TaskCompletionSource<TResult> directly; you can use **TaskFactory.FromAsync** to wrap any operation that uses IAsyncResult (and most existing asynchronous I/O methods do use IAsyncResult). Internally, FromAsync does use TaskCompletionSource<TResult>.
 
-> [Nito.AsyncEx](http://nuget.org/packages/Nito.AsyncEx) includes an **AsyncFactory** type which works like TaskFactory.FromAsync but is slightly easier to use and supports more arguments. It also includes a (non-generic) **TaskCompletionSource**, which is easier to use when creating (non-generic) Tasks.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+[Nito.AsyncEx](http://nuget.org/packages/Nito.AsyncEx){:.alert-link} includes an **AsyncFactory** type which works like TaskFactory.FromAsync but is slightly easier to use and supports more arguments. It also includes a (non-generic) **TaskCompletionSource**, which is easier to use when creating (non-generic) Tasks.
+</div>
 
 ## Tasks as Code
 
@@ -62,11 +66,19 @@ If you have a particular context in which you want to run your code, you can use
 
 It's possible to capture the current synchronization context into a TaskScheduler by calling **TaskScheduler.FromCurrentSynchronizationContext**, and then use it later (e.g., from a background thread) to run code within that context. _Normally there are better ways to do this,_ but it is an option.
 
-> Before async/await, this was [a good way to send progress reports from a background task to the UI]({% post_url 2010-06-18-reporting-progress-from-tasks %}). With async/await, there is now [a better way]({% post_url 2012-02-16-reporting-progress-from-async-tasks %}).
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Before async/await, this was [a good way to send progress reports from a background task to the UI]({% post_url 2010-06-18-reporting-progress-from-tasks %}){:.alert-link}. With async/await, there is now [a better way]({% post_url 2012-02-16-reporting-progress-from-async-tasks %}){:.alert-link}.
+</div>
 
 Writing your own TaskScheduler is possible, but frustrating due to the lack of MSDN documentation. Fortunately, it's almost never necessary.
 
-> If you need a specific thread (e.g., an STA thread) that supports TaskScheduler, you can use the [**AsyncContextThread** type](http://nitoasyncex.codeplex.com/wikipage?title=AsyncContextThread) in the [Nito.AsyncEx library](http://nuget.org/packages/Nito.AsyncEx).
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+If you need a specific thread (e.g., an STA thread) that supports TaskScheduler, you can use the [**AsyncContextThread** type](http://nitoasyncex.codeplex.com/wikipage?title=AsyncContextThread){:.alert-link} in the [Nito.AsyncEx library](http://nuget.org/packages/Nito.AsyncEx){:.alert-link}.
+</div>
 
 There are some pretty cool tricks we can pull off using the built-in TaskScheduler/TaskFactory types. We'll look at more advanced TaskScheduler situations in later posts.
 

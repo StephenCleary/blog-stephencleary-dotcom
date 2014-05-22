@@ -10,7 +10,7 @@ I'm doing some testing on a Win32 resource manager written purely in managed cod
 
 Anyway, an unexpected message was found in Vista x64's "autochk.exe" (that thing that runs at bootup if your hard drive needs repairing). It's in the MessageTable resource, with message ID 0x427:
 
-> This never gets printed.
+    This never gets printed.
 
 How interesting.
 

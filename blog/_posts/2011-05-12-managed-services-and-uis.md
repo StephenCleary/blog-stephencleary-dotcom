@@ -1,6 +1,8 @@
 ---
 layout: post
 title: "Managed Services and UIs"
+series: "Managed Services"
+seriesTitle: "User Interfaces"
 ---
 One common question that I've seen is how to display a UI from a service.
 
@@ -20,7 +22,10 @@ The technical hurdle is a bit more complex. To summarize: services which display
 
 The Win32 windows messaging system was designed without security in mind. Before you get too mad at Microsoft, remember that the Internet (including email, TCP/IP, and HTTP) were designed without security, too. Back then, it was hard enough just to get it working, without worrying about someone deliberately trying to destroy it. Most security on the Internet today is due to wrapping the original insecure protocols in an encrypted, authenticated stream (SSL/TLS).
 
-> In fact, when I first got on the Internet, the common instructions for setting up an email server explicitly stated that it should be set up as an open relay so that anyone could send email through it. Then someone invented spam. The instructions have since been revised.
+<div class="alert alert-info" markdown="1">
+
+In fact, when I first got on the Internet, the common instructions for setting up an email server explicitly stated that it should be set up as an open relay so that anyone could send email through it. Then someone invented spam. The instructions have since been revised.
+</div>
 
 Similarly, in the early days, Windows had no need for security. In early versions of Windows, multitasking was non-preemptive, so any program could effortlessly cause a denial-of-service attack. Furthermore, each program had direct access to hardware, and causing a complete system crash was trivial.
 

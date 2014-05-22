@@ -28,7 +28,11 @@ A few days ago, I posted [an interesting message I found in a Windows executable
 
 With a few modifications of this very, very pre-release code, I created a small console program that could change the version number of a PE/PE+ file ("PE/PE+" means EXEs, DLLs, OCXs, etc., either x86/AnyCPU or x64). They included it into their build process, and it worked quite nicely.
 
-> Note: what they ended up doing is unconventional and not recommended, but it is a useful workaround for WiX upgrade scenarios. They do plan to change this in a future version of the installer.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Note: what they ended up doing is unconventional and not recommended, but it is a useful workaround for WiX upgrade scenarios. They do plan to change this in a future version of the installer.
+</div>
 
 The reason this works is because Windows Installer will only consider the version information on disk (for the original file) and in the installer database (for the updated file). In contrast, the .NET loader will verify the strong name signature against the .NET assembly version (AssemblyVersionAttribute) and ignores the file version (AssemblyFileVersionAttribute).
 

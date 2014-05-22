@@ -2,7 +2,7 @@
 layout: post
 title: "Async Unit Tests, Part 1: The Wrong Way"
 ---
-> <div style="margin-left:30%; margin-right:30%">"Code without tests does not exist."<br /><p style="text-align:right;"><i>(Overheard at <a href="http://codemash.org/">CodeMash</a>)</i></p></div>
+> "Code without tests does not exist."<footer>(Overheard at <a href="http://codemash.org/">CodeMash</a>)</footer>
 
 The core meaning of this quote is that code without unit tests is not as useful as code with unit tests. The speaker even goes so far as to say he _won't_ use code without tests.
 
@@ -104,7 +104,11 @@ Clicking on the link shows that the Assertion is indeed failing on the thread po
 
 ![]({{ site_url }}/assets/AsyncUnitTests7.png)  
 
-**Update:** Visual Studio 2012 will correctly support "async _Task_" unit tests, but doesn't appear to support "async void" unit tests.
+<div class="alert alert-danger" markdown="1">
+<i class="fa fa-exclamation-triangle fa-3x pull-left"></i>
+
+**Update:** Visual Studio 2012 will correctly support "async _Task_" unit tests, but doesn't support "async void" unit tests.
+</div>
 
 ## Next Time: The Right Way
 

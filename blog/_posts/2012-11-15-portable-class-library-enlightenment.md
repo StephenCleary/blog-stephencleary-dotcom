@@ -2,11 +2,19 @@
 layout: post
 title: "Portable Class Library Enlightenment / Adaptation"
 ---
-> **Update, 2014-05-07: **I have been giving it a lot of thought, and I have decided that the [Bait-and-Switch approach](http://log.paulbetts.org/the-bait-and-switch-pcl-trick/) described by Paul Betts is a better solution than the one described below. This blog post is retained for historical purposes.
+<div class="alert alert-danger" markdown="1">
+<i class="fa fa-exclamation-triangle fa-3x pull-left"></i>
+
+**Update, 2014-05-07:** I have been giving it a lot of thought, and I have decided that the [Bait-and-Switch approach](http://log.paulbetts.org/the-bait-and-switch-pcl-trick/){:.alert-link} described by Paul Betts is a better solution than the one described below. This blog post is retained for historical purposes.
+</div>
 
 I have a long-standing interest in [portable class libraries (PCL)](http://msdn.microsoft.com/en-us/library/gg597391.aspx), because most of my open-source contributions are widely-applicable libraries (including [Comparers](http://comparers.codeplex.com/), [ArraySegments](http://arraysegments.codeplex.com/), and of course [AsyncEx](http://nitoasyncex.codeplex.com/)). This post is an explanation of a technique that I learned from Rx; it's useful for any PCL that is actually a _library_ (i.e., not a portable _application_).
 
-> Portable class libraries are awesome. Now that NuGet supports them, every library writer should join in!
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Portable class libraries are awesome. Now that NuGet supports them, every library writer should join in!
+</div>
 
 ## The Problem
 
@@ -52,7 +60,11 @@ public interface IBobEnlightenment
 }
 {% endhighlight %}
 
-> As an aside, my enlightenment-related types are mostly `public`, but they are within a special namespace, which indicates to end-users that they are not part of the normal API.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+As an aside, my enlightenment-related types are mostly `public`, but they are within a special namespace, which indicates to end-users that they are not part of the normal API.
+</div>
 
 Multiple enlightenment types means that it's useful to have an "enlightenment provider" (also platform-specific, with a default backup), which just creates instances of the enlightenments. The `IEnlightenmentProvider` type is defined in the Portable Core:
 
