@@ -59,7 +59,7 @@ ConcurrentExclusiveSchedulerPair actually handles any mixture of these scenarios
 It's also possible to define your own special TaskScheduler, if you really need one. E.g., a UI scheduler that gave its tasks a low dispatcher priority, or an STA scheduler for COM interop.
 
 <div class="alert alert-danger" markdown="1">
-<i class="fa fa-exclamation-triangle fa-3x pull-left"></i>
+<i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
 
 **Note:** When an asynchronous method awaits, it returns back to its context. This means that ExclusiveScheduler is perfectly happy to run one task _at a time_, not one task _until it completes_. As soon as an asynchronous method awaits, it's no longer the "owner" of the ExclusiveScheduler. Stephen Toub's async-friendly primitives like [AsyncLock](http://blogs.msdn.com/b/pfxteam/archive/2012/02/12/10266988.aspx){:.alert-link} use a different strategy, allowing an asynchronous method to hold the lock while it awaits.
 </div>

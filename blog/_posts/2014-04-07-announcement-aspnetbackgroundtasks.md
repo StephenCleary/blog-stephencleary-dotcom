@@ -3,7 +3,7 @@ layout: post
 title: "Announcement: AspNetBackgroundTasks NuGet library"
 ---
 <div class="alert alert-danger" markdown="1">
-<i class="fa fa-exclamation-triangle fa-3x pull-left"></i>
+<i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
 
 **Update, 2014-05-07:** This library just won the "shortest lifetime" award. One month after I released this library, [.NET Framework 4.5.2 introduced `HostingEnvironment.QueueBackgroundWorkItem`](http://msdn.microsoft.com/en-us/library/ms171868(v=vs.110).aspx#v452){:.alert-link}, which effectively rendered this library obsolete. On .NET 4.5.2, you can use the new API instead of the `BackgroundTaskManager.Run` in the AspNetBackgroundTasks library. However, it's still almost always the wrong solution.
 </div>

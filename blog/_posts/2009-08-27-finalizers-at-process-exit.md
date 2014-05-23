@@ -7,7 +7,7 @@ seriesTitle: "Finalizers During Shutdown"
 I spent too long investigating a problem in a colleague's code today; the bug was something I knew about but had forgotten:
 
 <div class="alert alert-danger" markdown="1">
-<i class="fa fa-exclamation-triangle fa-3x pull-left"></i>
+<i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
 
 During process shutdown, finalizers are given a strict timeout. If they overrun their timeout, the process is terminated.
 </div>

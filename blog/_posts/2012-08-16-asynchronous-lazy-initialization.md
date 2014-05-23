@@ -2,7 +2,7 @@
 layout: post
 title: "Asynchronous Lazy Initialization"
 ---
-When you have a lazy-created value, it's often useful to lazy-create it in an asynchronous fashion. A simple Lazy<T> provides lazy initialization, but the initialization executes synchronously when the value is created.
+When you have a lazy-created value, it's often useful to lazy-create it in an asynchronous fashion. A simple Lazy\<T> provides lazy initialization, but the initialization executes synchronously when the value is created.
 
 Stephen Toub first introduced this approach [in a blog post way back in January, 2011](http://blogs.msdn.com/b/pfxteam/archive/2011/01/15/10116210.aspx). This is his code, which I've updated, documented, and tweaked slightly:
 
@@ -57,9 +57,9 @@ public sealed class AsyncLazy<T>
 
 The idea is to have a lazy-initialized task, which represents the initialization of the resource.
 
-The factory delegate passed to the constructor can be either synchronous (Func<T>) or asynchronous (Func<Task<T>>); either way, it will be run on a thread pool thread. It will not be executed more than once, even when multiple threads attempt to start it simultaneously (this is guaranteed by the Lazy type).
+The factory delegate passed to the constructor can be either synchronous (Func\<T>) or asynchronous (Func\<Task<T>>); either way, it will be run on a thread pool thread. It will not be executed more than once, even when multiple threads attempt to start it simultaneously (this is guaranteed by the Lazy type).
 
-There are two "triggers" which can start the initialization: awaiting an AsyncLazy<T> instance or explicitly calling Start. When the factory delegate completes, the value is available, and any methods awaiting the AsyncLazy<T> instance receive the value.
+There are two "triggers" which can start the initialization: awaiting an AsyncLazy\<T> instance or explicitly calling Start. When the factory delegate completes, the value is available, and any methods awaiting the AsyncLazy\<T> instance receive the value.
 
 It takes a few minutes to wrap your head around the theory, but it's really easy in practice:
 
@@ -82,5 +82,5 @@ public async Task UseResource()
 
 ## Update, 2012-09-30
 
-The AsyncLazy<T> type is now part of [Nito.AsyncEx](http://nitoasyncex.codeplex.com/), which you can get via NuGet.
+The AsyncLazy\<T> type is now part of [Nito.AsyncEx](http://nitoasyncex.codeplex.com/), which you can get via NuGet.
 

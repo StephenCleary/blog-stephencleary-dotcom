@@ -3,7 +3,7 @@ layout: post
 title: "Returning Early from ASP.NET Requests"
 ---
 <div class="alert alert-danger" markdown="1">
-<i class="fa fa-exclamation-triangle fa-3x pull-left"></i>
+<i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
 
 **Update, 2014-05-07:** The [.NET Framework 4.5.2 introduced `HostingEnvironment.QueueBackgroundWorkItem`](http://msdn.microsoft.com/en-us/library/ms171868(v=vs.110).aspx#v452){.alert-text}, which effectively rendered the code below obsolete. On .NET 4.5.2, you can use the new API instead of the `BackgroundTaskManager.Run` described below. However, the same safety warnings apply.
 </div>

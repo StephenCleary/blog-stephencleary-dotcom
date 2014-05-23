@@ -7,7 +7,7 @@ seriesTitle: "Connected Sockets"
 A connected socket is one which has a connection to the remote side. When a client socket connects to a listening server socket, the result is two connected sockets: the client socket becomes connected, and the listening server creates a new socket that is connected. For more details about establishing or listening for socket connections, see [Using Socket as a Client Socket]({% post_url 2009-05-23-using-socket-as-client-socket %}) and [Using Socket as a Server (Listening) Socket]({% post_url 2009-05-27-using-socket-as-server-listening-socket %}).
 
 <div class="alert alert-danger" markdown="1">
-<i class="fa fa-exclamation-triangle fa-3x pull-left"></i>
+<i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
 
 **Important note: ** A socket only _believes_ it is currently connected; it can never know for sure. It is possible for one side of a connection to realize it is no longer connected, while the other side continues believing it is connected. This is called the "half-open problem", and is covered in detail in [Detection of Half-Open (Dropped) Connections]({% post_url 2009-05-16-detection-of-half-open-dropped %}){:.alert-link}.
 </div>
@@ -19,7 +19,7 @@ There are two primary operations performed on connected sockets: Read and Write.
 A socket may be written to at any time. A Write operation places bytes into the outgoing stream. If using asynchronous Write operations, multiple Write operations may be started, and the bytes will be placed into the outgoing stream in the correct order.
 
 <div class="alert alert-danger" markdown="1">
-<i class="fa fa-exclamation-triangle fa-3x pull-left"></i>
+<i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
 
 **Important note: ** The completion of a Write operation does _not_ mean that the remote side has received the data.
 </div>
@@ -53,7 +53,7 @@ Many stream-oriented objects (including sockets) will signal the end of the stre
 The zero-length read _must_ be treated as a special case; if it is not, the receiving code usually enters an infinite loop attempting to read more data. A zero-length read is not an error condition; it merely means that the socket has been disconnected.
 
 <div class="alert alert-danger" markdown="1">
-<i class="fa fa-exclamation-triangle fa-3x pull-left"></i>
+<i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
 
 **Important note: ** Most of the MSDN .NET socket examples do _not_ handle this correctly! They will enter an infinite loop if the socket is closed by the remote side.
 </div>

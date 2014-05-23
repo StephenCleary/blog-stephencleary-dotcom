@@ -19,7 +19,7 @@ Somehow I missed that class when the .NET 4.0 changes were announced, but Jeffre
 This is a powerful concept, and it was the primary motivation behind my (pre-release) [Nito.Weakness](http://nitoweakness.codeplex.com/) library. According to Mr. Richter, ConditionalWeakTable is notified of object collection by the garbage collector rather than using a polling thread, which is good. There are a couple of caveats, though, when using CWT.
 
 <div class="alert alert-danger" markdown="1">
-<i class="fa fa-exclamation-triangle fa-3x pull-left"></i>
+<i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
 
 **Update 2011-01-22:** The Nito.Weakness library has been postponed indefinitely. Instead, I've released the ConnectedProperties library on both [CodePlex](http://connectedproperties.codeplex.com/){:.alert-link} and [NuGet](http://nuget.org/Packages/Packages/Details/Connected-Properties-(by-Nito-Programs)-1-0-0){:.alert-link}. ConnectedProperties is a straightforward wrapper for ConditionalWeakTable.
 </div>

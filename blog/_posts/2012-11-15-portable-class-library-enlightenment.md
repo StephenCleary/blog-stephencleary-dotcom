@@ -3,7 +3,7 @@ layout: post
 title: "Portable Class Library Enlightenment / Adaptation"
 ---
 <div class="alert alert-danger" markdown="1">
-<i class="fa fa-exclamation-triangle fa-3x pull-left"></i>
+<i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
 
 **Update, 2014-05-07:** I have been giving it a lot of thought, and I have decided that the [Bait-and-Switch approach](http://log.paulbetts.org/the-bait-and-switch-pcl-trick/){:.alert-link} described by Paul Betts is a better solution than the one described below. This blog post is retained for historical purposes.
 </div>
@@ -32,7 +32,7 @@ There are several ways to do this. [Daniel Plaisted has a great blog post](http:
 The first three approaches depend on the _consumer_ of the library implementing the platform services (or at least instantiating them) and providing them to the portable library:
 
 {:.center}
-![]({{ site_url }}/assets/Blog.jpg)
+![]({{ site_url }}/assets/Blog.png)
 
 This is fine if your PCL is just the core of a portable _application_, like Daniel's "Disentanglement" application, where the PCL contains the logic but its "entry points" are just a handful of ViewModels.
 

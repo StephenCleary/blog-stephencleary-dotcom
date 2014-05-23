@@ -3,7 +3,7 @@ layout: post
 title: "Async Unit Tests, Part 2: The Right Way"
 ---
 <div class="alert alert-danger" markdown="1">
-<i class="fa fa-exclamation-triangle fa-3x pull-left"></i>
+<i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
 
 **Update:** The information in this blog post _only applies to Visual Studio 2010_. Visual Studio 2012 _will_ support asynchronous unit tests, **as long as those tests are "async Task" tests, not "async void" tests**.
 </div>

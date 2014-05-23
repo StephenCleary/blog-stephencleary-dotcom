@@ -13,7 +13,7 @@ TCP does have acknowledgments for data, so when one side sends data to the other
 This leads to a scenario known as a "half-open connection". At any given point in most protocols, one side is expected to send a message and the other side is expecting to receive it. Consider what happens if an intermediate router is suddenly rebooted at that point: the receiving side will continue waiting for the message to arrive; the sending side will send its data, and receive an error indicating the connection was lost. Since broken connections can only be detected by _sending_ data, the receiving side will wait forever. This scenario is called a "half-open connection" because one side realizes the connection was lost but the other side believes it is still active.
  
 <div class="alert alert-danger" markdown="1">
-<i class="fa fa-exclamation-triangle fa-3x pull-left"></i>
+<i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
 
 Terminology alert: "half-open" is completely different than "half-closed". Half-closed connections are when one side performs a Shutdown operation on its socket, shutting down only the sending (outgoing) stream. See [Socket Operations]({% post_url 2009-05-05-socket-operations %}){:.alert-link} for more details on the Shutdown operation.
 </div>

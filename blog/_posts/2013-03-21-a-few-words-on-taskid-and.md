@@ -27,7 +27,7 @@ Identifiers have meaning only for a particular type. For example, the first assi
 The "identifiers" are not unique. They're pretty close (they'll repeat very rarely), but they're not actually _unique_.
 
 <div class="alert alert-danger" markdown="1">
-<i class="fa fa-exclamation-triangle fa-3x pull-left"></i>
+<i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
 
 The MSDN documentation states the identifiers are unique. The MSDN documentation is wrong.
 </div>

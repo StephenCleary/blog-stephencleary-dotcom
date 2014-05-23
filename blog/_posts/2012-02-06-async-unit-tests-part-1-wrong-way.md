@@ -105,7 +105,7 @@ Clicking on the link shows that the Assertion is indeed failing on the thread po
 ![]({{ site_url }}/assets/AsyncUnitTests7.png)  
 
 <div class="alert alert-danger" markdown="1">
-<i class="fa fa-exclamation-triangle fa-3x pull-left"></i>
+<i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
 
 **Update:** Visual Studio 2012 will correctly support "async _Task_" unit tests, but doesn't support "async void" unit tests.
 </div>

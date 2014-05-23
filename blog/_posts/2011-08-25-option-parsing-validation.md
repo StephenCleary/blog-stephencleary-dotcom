@@ -85,7 +85,7 @@ Other option parsing libraries do validation using various attributes (e.g., the
 It's possible to use validation to _require_ an option.
 
 <div class="alert alert-danger" markdown="1">
-<i class="fa fa-exclamation-triangle fa-3x pull-left"></i>
+<i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
 
 **Please note:** The technique described here is controversial! In general, people who have designed many command-line interfaces do not recommend _required options_ (at the very least, the terminology is confusing: it's a required optional parameter). Usually, a required option is better represented as a positional argument or a subcommand (both of which will be covered in later blog posts). Consider carefully before using required options.
 </div>

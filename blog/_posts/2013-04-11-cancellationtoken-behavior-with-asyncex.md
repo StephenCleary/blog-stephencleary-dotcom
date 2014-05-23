@@ -10,11 +10,11 @@ The only built-in .NET asynchronous-compatible coordination primitive (as of .NE
 
 First, there's the obvious [Task WaitAsync()](http://msdn.microsoft.com/en-us/library/hh462805.aspx) method for an **unconditional wait**. This is the most commonly-used type of wait: the code knows it needs to acquire the semaphore and it will wait however long it takes until the semaphore is available.
 
-Next, there's a couple of overloads for timeouts. [Task<bool> WaitAsync(int)](http://msdn.microsoft.com/en-us/library/hh462740.aspx) and [Task<bool> WaitAsync(TimeSpan)](http://msdn.microsoft.com/en-us/library/hh462723.aspx) both do an (asynchronous) **timed wait**, which will return `false` if the wait ran out of time before it was granted access.
+Next, there's a couple of overloads for timeouts. [Task\<bool> WaitAsync(int)](http://msdn.microsoft.com/en-us/library/hh462740.aspx) and [Task\<bool> WaitAsync(TimeSpan)](http://msdn.microsoft.com/en-us/library/hh462723.aspx) both do an (asynchronous) **timed wait**, which will return `false` if the wait ran out of time before it was granted access.
 
 There's an overload taking a cancellation token, [Task WaitAsync(CancellationToken)](http://msdn.microsoft.com/en-us/library/hh462773.aspx). This performs a **cancelable wait**, where some event can interrupt the wait if it determines that the code doesn't need that semaphore anymore. If a wait is canceled, the wait task is canceled (instead of returning `false`).
 
-You can also have cancelable timed waits, via the [Task<bool> WaitAsync(int, CancellationToken)](http://msdn.microsoft.com/en-us/library/hh462846.aspx) and [Task<bool> WaitAsync(TimeSpan, CancellationToken)](http://msdn.microsoft.com/en-us/library/hh462788.aspx). These overloads will cancel their tasks if the cancellation token fires, and return `false` if they hit the timeout.
+You can also have cancelable timed waits, via the [Task\<bool> WaitAsync(int, CancellationToken)](http://msdn.microsoft.com/en-us/library/hh462846.aspx) and [Task\<bool> WaitAsync(TimeSpan, CancellationToken)](http://msdn.microsoft.com/en-us/library/hh462788.aspx). These overloads will cancel their tasks if the cancellation token fires, and return `false` if they hit the timeout.
 
 Finally, there's one other important kind of wait you can do: an **atomic wait**, where you immediately (synchronously) acquire the semaphore if it is available. Asynchronous code can use [bool Wait(int)](http://msdn.microsoft.com/en-us/library/dd289488.aspx) and pass zero to perform an atomic wait. This is logically similar to `Monitor.TryEnter`.
 

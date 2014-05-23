@@ -3,7 +3,7 @@ layout: post
 title: "Reporting Progress from Tasks"
 ---
 <div class="alert alert-danger" markdown="1">
-<i class="fa fa-exclamation-triangle fa-3x pull-left"></i>
+<i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
 
 **Update, 2012-02-16:** The information in this post is old. See the new post [Reporting Progress from Async Tasks]({{ post-url 2012-02-16-reporting-progress-from-async-tasks }}){:.alert-link} for a better solution.
 </div>

@@ -19,7 +19,7 @@ Everyone's needs are different, so choose wisely.
 VHD stands for Virtual Hard Disk, and that's just what it is: a disk file that contains a full hard disk. Usually, you'll want to create a "dynamic VHD", which only takes up as much physical disk space as it needs to; empty parts of the VHD are not actually saved to disk.
 
 <div class="alert alert-danger" markdown="1">
-<i class="fa fa-exclamation-triangle fa-3x pull-left"></i>
+<i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
 
 Terminology alert: "dynamic VHD" is completely different than "dynamic disk".
 </div>
