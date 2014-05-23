@@ -7,9 +7,7 @@ Like several other people, I collect tricky code snippets for fun. Today's image
 Interestingly, the current version of ReSharper recommended a code transformation that is wrong.
 
 {:.center}
-
-[![]({{ site_url }}/assets/ReSharper_doubleNaN.PNG)  
-]({{ site_url }}/assets/ReSharper_doubleNaN.PNG)
+[![]({{ site_url }}/assets/ReSharper_doubleNaN.PNG)]({{ site_url }}/assets/ReSharper_doubleNaN.PNG)
 
 Don't get me wrong; ReSharper is a great tool. This is the first time I've seen it make a mistake, and it's an obscure corner case. ReSharper did make another questionable recommendation a few weeks ago, and I felt the C# standard wasn't clear on the subject. However, Eric Lippert did confirm that ReSharper's refactoring was correct that time.
 

@@ -103,7 +103,7 @@ Once the service is running on the remote computer, it is simple matter to commu
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
-Also remember that - as a service - you [are limited]({ % post_url TODO % }){:.alert-link} in what you can do.
+Also remember that - as a service - you [are limited]({% post_url 2009-10-22-windows-services-and-network %}){:.alert-link} in what you can do.
 </div>
 
 ## Enjoy!

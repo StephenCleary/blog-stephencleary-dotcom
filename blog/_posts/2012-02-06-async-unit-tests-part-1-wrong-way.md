@@ -2,7 +2,7 @@
 layout: post
 title: "Async Unit Tests, Part 1: The Wrong Way"
 ---
-> "Code without tests does not exist."<footer>(Overheard at <a href="http://codemash.org/">CodeMash</a>)</footer>
+<blockquote>Code without tests does not exist.<footer>(Overheard at <a href="http://codemash.org/">CodeMash</a>)</footer></blockquote>
 
 The core meaning of this quote is that code without unit tests is not as useful as code with unit tests. The speaker even goes so far as to say he _won't_ use code without tests.
 

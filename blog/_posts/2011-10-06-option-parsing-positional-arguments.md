@@ -1,8 +1,8 @@
 ---
 layout: post
-title: "Option Parsing; Positional Arguments"
+title: "Option Parsing: Positional Arguments"
 series: "Option Parsing"
-seriesTitle: "Option Parsing; Positional Arguments"
+seriesTitle: "Positional Arguments"
 ---
 "Positional arguments" are any arguments not associated with an option. When using the [Nito.KitchenSink option parsing library](http://nuget.org/List/Packages/Nito.KitchenSink.OptionParsing), positional arguments must come after any options and their arguments.
 

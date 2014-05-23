@@ -2,7 +2,7 @@
 layout: post
 title: "Introduction to Dataflow, Part 1"
 ---
-So far, we've been learning quite a bit about the core `async` / `await` support that was added to C# in VS2012. Today, we'll start with a conceptual overview of the first large, useful library built with `async` in mind: [TPL Dataflow]( http://msdn.microsoft.com/en-us/devlabs/gg585582.aspx).
+So far, we've been learning quite a bit about the core `async` / `await` support that was added to C# in VS2012. Today, we'll start with a conceptual overview of the first large, useful library built with `async` in mind: [TPL Dataflow](http://msdn.microsoft.com/en-us/devlabs/gg585582.aspx).
 
 TPL Dataflow allows you to easily create a _mesh_ through which your data flows. The simplest meshes are pipelines (very similar to pipelines in PowerShell). More complex meshes can split and join the data flows, and even contain data flow loops!
 

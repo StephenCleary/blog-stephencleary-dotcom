@@ -237,7 +237,6 @@ Both the portable core assembly and the appropriate platform enlightenment assem
 Here's a very simple example, if MyLibrary had a portable core supporting .NET 4.5 and Windows Store, with different enlightenment assemblies for each:
 
 {% highlight xml %}
-
 <?xml version="1.0" encoding="utf-8"?>
 <package>
  <metadata>

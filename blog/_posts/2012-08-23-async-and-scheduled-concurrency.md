@@ -2,7 +2,7 @@
 layout: post
 title: "Async and Scheduled Concurrency"
 ---
-Async doesn't play well with traditional synchronization primitives. For example, [think about what happens when you await while holding a lock]( http://stackoverflow.com/questions/7612602/why-cant-i-use-the-await-operator-within-the-body-of-a-lock-statement): the async method will _return_ to its caller, allowing other code to run on that thread while the lock is held. If the method later resumes on the same thread (e.g., a UI context), and the "other code" attempts to take the lock, then you have a deadlock. Another case is if the method resumes on a different thread (e.g.,  ConfigureAwait(false)); in that case the new thread will attempt to release a lock it doesn't have.
+Async doesn't play well with traditional synchronization primitives. For example, [think about what happens when you await while holding a lock](http://stackoverflow.com/questions/7612602/why-cant-i-use-the-await-operator-within-the-body-of-a-lock-statement): the async method will _return_ to its caller, allowing other code to run on that thread while the lock is held. If the method later resumes on the same thread (e.g., a UI context), and the "other code" attempts to take the lock, then you have a deadlock. Another case is if the method resumes on a different thread (e.g.,  ConfigureAwait(false)); in that case the new thread will attempt to release a lock it doesn't have.
 
 The compiler will prevent await from within a lock{}, but it's not omnipotent; async code has similar problems with Semaphore, ManualResetEvent, or really any other kind of traditional synchronization primitive that assumes thread affinity and works by blocking.
 
