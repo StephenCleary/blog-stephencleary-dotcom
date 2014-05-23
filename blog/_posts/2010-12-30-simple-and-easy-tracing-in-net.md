@@ -56,13 +56,13 @@ The switchValue attribute [may be set to](http://msdn.microsoft.com/en-us/librar
 {:.table .table-striped}
 ||Verbose|Information|Warning|Error|Critical|
 |-
-|Off||||||
-|Critical|||||+|
-|Error||||+|+|
-|Warning|||+|+|+|
-|Information||+|+|+|+|
-|Verbose|+|+|+|+|+|
-|All|+|+|+|+|+|
+|Off|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-times fa-lg no"></i>|
+|Critical|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-check fa-lg yes"></i>|
+|Error|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-check fa-lg yes"></i>|<i class="fa fa-check fa-lg yes"></i>|
+|Warning|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-check fa-lg yes"></i>|<i class="fa fa-check fa-lg yes"></i>|<i class="fa fa-check fa-lg yes"></i>|
+|Information|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-check fa-lg yes"></i>|<i class="fa fa-check fa-lg yes"></i>|<i class="fa fa-check fa-lg yes"></i>|<i class="fa fa-check fa-lg yes"></i>|
+|Verbose|<i class="fa fa-check fa-lg yes"></i>|<i class="fa fa-check fa-lg yes"></i>|<i class="fa fa-check fa-lg yes"></i>|<i class="fa fa-check fa-lg yes"></i>|<i class="fa fa-check fa-lg yes"></i>|
+|All|<i class="fa fa-check fa-lg yes"></i>|<i class="fa fa-check fa-lg yes"></i>|<i class="fa fa-check fa-lg yes"></i>|<i class="fa fa-check fa-lg yes"></i>|<i class="fa fa-check fa-lg yes"></i>|
 
 </div>
 
