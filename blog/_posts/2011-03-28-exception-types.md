@@ -4,11 +4,7 @@ title: "Exception Types"
 ---
 A while ago, Eric Lippert wrote an excellent blog entry called [Vexing Exceptions](http://www.webcitation.org/5xQLUxwF3). He defines four categories of exceptions, along with recommendations of how to handle them. I summarized this information into a Word document which I've printed out and posted at my desk:
 
-[Download](http://www.landmarkbaptist.ws/misc/ExceptionTypes.docx) - [View Online in Microsoft Office Live](http://cid-d18a13492fd0fb87.office.live.com/view.aspx/.Public/ExceptionTypes.docx) - [View Online in Google Docs Viewer](http://docs.google.com/viewer?url=http%3A%2F%2Fwww.landmarkbaptist.ws%2Fmisc%2FExceptionTypes.docx)
-
-<!-- This should work, but doesn't:
-<iframe src="http://docs.google.com/viewer?url=http%3A%2F%2Fwww.landmarkbaptist.ws%2Fmisc%2FExceptionTypes.docx&amp;embedded=true" width="600" height="780" style="border: none;"></iframe>
--->
+[Download](/assets/ExceptionTypes.docx)
 
 I've also started to use Mr. Lippert's terminology in my regular work, and I see it becoming more common in the programming communities. A brief summary of the terminology is below:
 
