@@ -11,7 +11,7 @@ There's a limit to how big of a user-mode buffer one can send to a device driver
 I'm in a position where I will need to transfer large amounts of data over serial ports, so I wanted to know how much data can be transferred in a single call. [Dan Moseley's original description](http://msdn.microsoft.com/en-us/library/aa365747(VS.85).aspx) updated with the [IoAllocateMdl MSDN docs](http://msdn.microsoft.com/en-us/library/aa490866.aspx), along with the page size information from the [latest revision of Windows Internals](http://www.amazon.com/gp/product/0735625301?ie=UTF8&tag=stepheclearys-20&linkCode=as2&camp=1789&creative=390957&creativeASIN=0735625301) was enough information to calculate the answer, which I've summarized below.
 
 <div class="panel panel-default" markdown="1">
-  <div class="panel-heading" markdown="1">Maximum I/O Buffer Size for Individual Unbuffered Read/Write Operations</div>
+  <div class="panel-heading">Maximum I/O Buffer Size for Individual Unbuffered Read/Write Operations</div>
 
 {:.table .table-striped}
 |Operating System|Architecture|Page Size|Calculation|Maximum I/O Buffer Size|

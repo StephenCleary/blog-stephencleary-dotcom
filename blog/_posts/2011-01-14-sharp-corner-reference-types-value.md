@@ -15,16 +15,16 @@ The table below includes tests on a variety of types, grouped into "mostly refer
 {:.table .table-striped}
 |Category|Example Type|IsClass|Satisfies class Constraint|IsValueType|Satisfies struct Constraint|Satisfies Without Constraints|
 |-
-|Classes|class Class {}|&nbsp;|&nbsp;|&nbsp;|&nbsp;|&nbsp;|
-|Arrays|int[]|&nbsp;|&nbsp;|&nbsp;|&nbsp;|&nbsp;|
-|Delegates|delegate void DelegateT();|&nbsp;|&nbsp;|&nbsp;|&nbsp;|&nbsp;|
-|Interfaces|interface Interface {}|&nbsp;|&nbsp;|&nbsp;|&nbsp;|&nbsp;|
-|Pointers|int*|&nbsp;|&nbsp;|&nbsp;|&nbsp;|&nbsp;|
-|
-|Value types|int|&nbsp;|&nbsp;|&nbsp;|&nbsp;|&nbsp;|
-|Enumerations|enum EnumT {}|&nbsp;|&nbsp;|&nbsp;|&nbsp;|&nbsp;|
-|Nullable value types|int?|&nbsp;|&nbsp;|&nbsp;|&nbsp;|&nbsp;|
-|Void|void|&nbsp;|&nbsp;|&nbsp;|&nbsp;|&nbsp;|
+|Classes|class Class {}|<i class="fa fa-check fa-lg yes"></i>|<i class="fa fa-check fa-lg yes"></i>|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-check fa-lg yes"></i>|
+|Arrays|int[]|<i class="fa fa-check fa-lg yes"></i>|<i class="fa fa-check fa-lg yes"></i>|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-check fa-lg yes"></i>|
+|Delegates|delegate void DelegateT();|<i class="fa fa-check fa-lg yes"></i>|<i class="fa fa-check fa-lg yes"></i>|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-check fa-lg yes"></i>|
+|Interfaces|interface Interface {}|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-check fa-lg yes"></i>|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-check fa-lg yes"></i>|
+|Pointers|int*|<i class="fa fa-check fa-lg yes"></i>|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-times fa-lg no"></i>|
+|-
+|Value types|int|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-check fa-lg yes"></i>|<i class="fa fa-check fa-lg yes"></i>|<i class="fa fa-check fa-lg yes"></i>|
+|Enumerations|enum EnumT {}|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-check fa-lg yes"></i>|<i class="fa fa-check fa-lg yes"></i>|<i class="fa fa-check fa-lg yes"></i>|
+|Nullable value types|int?|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-check fa-lg yes"></i>|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-check fa-lg yes"></i>|
+|Void|void|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-check fa-lg yes"></i>|<i class="fa fa-times fa-lg no"></i>|<i class="fa fa-times fa-lg no"></i>|
 
 </div>
 

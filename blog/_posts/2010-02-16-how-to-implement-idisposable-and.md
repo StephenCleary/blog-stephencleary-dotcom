@@ -15,13 +15,13 @@ The flowchart and decision matrix below use these terms:
 ### Decision Matrix as a Table
 
 <div class="panel panel-default" markdown="1">
-  <div class="panel-heading" markdown="1">Decision Matrix for IDisposable and Finalize</div>
+  <div class="panel-heading">Decision Matrix for IDisposable and Finalize</div>
 
 {:.table .table-striped}
 ||Class does not own managed resources|Class owns at least one managed resource|
 |-
-|Class does not own unmanaged resources|Apply[Rule 1]({% post_url 2009-08-27-first-rule-of-implementing-idisposable %}): no IDisposable or Finalizer|Apply[Rule 2]({% post_url 2009-08-27-second-rule-of-implementing-idisposable %}): IDisposable but no Finalizer|
-|Class owns one unmanaged resource|Apply[Rule 3]({% post_url 2009-08-27-third-rule-of-implementing-idisposable %}): both IDisposable and Finalizer|Refactor|
+|Class does not own unmanaged resources|Apply [Rule 1]({% post_url 2009-08-27-first-rule-of-implementing-idisposable %}): no IDisposable or Finalizer|Apply [Rule 2]({% post_url 2009-08-27-second-rule-of-implementing-idisposable %}): IDisposable but no Finalizer|
+|Class owns one unmanaged resource|Apply [Rule 3]({% post_url 2009-08-27-third-rule-of-implementing-idisposable %}): both IDisposable and Finalizer|Refactor|
 |Class owns more than one unmanaged resource|Refactor|Refactor|
 
 </div>

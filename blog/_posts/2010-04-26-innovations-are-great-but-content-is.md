@@ -13,8 +13,5 @@ It turns out that all of Bing's street view coverage in the entire state is just
 Because they had content.
 
 {:.center}
-
-[![]({{ site_url }}/assets/bing-cropped.PNG)  
-]({{ site_url }}/assets/bing-cropped.PNG)
-[![]({{ site_url }}/assets/google-cropped.PNG)  
-]({{ site_url }}/assets/google-cropped.PNG)
+[![]({{ site_url }}/assets/bing-cropped.PNG)]({{ site_url }}/assets/bing-cropped.PNG)  
+[![]({{ site_url }}/assets/google-cropped.PNG)]({{ site_url }}/assets/google-cropped.PNG)
