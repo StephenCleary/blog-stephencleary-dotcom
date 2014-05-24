@@ -8,7 +8,7 @@ I tried becoming a web developer back in the version 4 browser war days; my scar
 
 Partial URLs are transformed by Internet Exporer into absolute URLs as they enter the object model. This can cause exceptions from the Uri constructor if you're only passing a single string argument. The workaround that I've opted to use is to always use the Uri constructor that takes a Uri and a string as arguments, and I pass in the current page's Uri as the first argument.
 
-I recommend never using the Uri constructor taking a single string parameter; in the following example, the <a> item has an href attribute similar to "/", which is quietly transformed by IE into a full "http://www.tempuri.org/":
+I recommend never using the Uri constructor taking a single string parameter; in the following example, the \<a> item has an href attribute similar to "/", which is quietly transformed by IE into a full "http://www.tempuri.org/":
 
     // Fails on Google Chrome
     new Uri(item.GetAttribute("href"))

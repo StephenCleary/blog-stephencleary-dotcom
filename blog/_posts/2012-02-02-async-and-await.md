@@ -38,7 +38,7 @@ I like to think of "await" as an "asynchronous wait". That is to say, the async 
 
 ## Awaitables
 
-As I mentioned, "await" takes a single argument - an "awaitable" - which is an asynchronous operation. There are two awaitable types already common in the .NET framework: Task<T> and Task.
+As I mentioned, "await" takes a single argument - an "awaitable" - which is an asynchronous operation. There are two awaitable types already common in the .NET framework: Task\<T> and Task.
 
 There are also other awaitable types: special methods such as "Task.Yield" return awaitables that are not Tasks, and the WinRT runtime (coming in Windows 8) has an unmanaged awaitable type. You can also create your own awaitable (usually for performance reasons), or use extension methods to make a non-awaitable type awaitable.
 
@@ -76,9 +76,9 @@ Tip: If you have a very simple asynchronous method, you may be able to write it 
 
 ## Return Types
 
-Async methods can return Task<T>, Task, or void. In almost all cases, you want to return Task<T> or Task, and return void only when you have to.
+Async methods can return Task\<T>, Task, or void. In almost all cases, you want to return Task\<T> or Task, and return void only when you have to.
 
-Why return Task<T> or Task? Because they're awaitable, and void is not. So if you have an async method returning Task<T> or Task, then you can pass the result to await. With a void method, you don't have anything to pass to await.
+Why return Task\<T> or Task? Because they're awaitable, and void is not. So if you have an async method returning Task\<T> or Task, then you can pass the result to await. With a void method, you don't have anything to pass to await.
 
 You have to return void when you have async event handlers.
 
@@ -90,10 +90,9 @@ You can also use async void for other "top-level" kinds of actions - e.g., a sin
 
 ## Returning Values
 
-Async methods returning Task or void do not have a return value. Async methods returning Task<T> must return a value of type T:
+Async methods returning Task or void do not have a return value. Async methods returning Task\<T> must return a value of type T:
 
 {% highlight csharp %}
-
 public async Task<int> CalculateAnswer()
 {
   await Task.Delay(100); // (Probably should be longer...)

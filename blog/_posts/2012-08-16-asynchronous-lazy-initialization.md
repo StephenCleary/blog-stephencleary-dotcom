@@ -57,7 +57,7 @@ public sealed class AsyncLazy<T>
 
 The idea is to have a lazy-initialized task, which represents the initialization of the resource.
 
-The factory delegate passed to the constructor can be either synchronous (Func\<T>) or asynchronous (Func\<Task<T>>); either way, it will be run on a thread pool thread. It will not be executed more than once, even when multiple threads attempt to start it simultaneously (this is guaranteed by the Lazy type).
+The factory delegate passed to the constructor can be either synchronous (Func\<T>) or asynchronous (Func\<Task\<T\>\>); either way, it will be run on a thread pool thread. It will not be executed more than once, even when multiple threads attempt to start it simultaneously (this is guaranteed by the Lazy type).
 
 There are two "triggers" which can start the initialization: awaiting an AsyncLazy\<T> instance or explicitly calling Start. When the factory delegate completes, the value is available, and any methods awaiting the AsyncLazy\<T> instance receive the value.
 

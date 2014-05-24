@@ -121,7 +121,7 @@ Tip: You can download an [Async Unit Test item type](http://asyncunittests.codep
 
 ## Future Directions
 
-xUnit.NET has recently released [first-class support for asynchronous unit tests](http://xunit.codeplex.com/workitem/9733): in version 1.9 (2012-01-02) and newer, for any test method returning Task/Task<T>, the test framework will wait until the task completes before declaring success/failure. However, as of now, it does not support async void unit tests; this [is planned](http://xunit.codeplex.com/workitem/9752) for a future release.
+xUnit.NET has recently released [first-class support for asynchronous unit tests](http://xunit.codeplex.com/workitem/9733): in version 1.9 (2012-01-02) and newer, for any test method returning Task/Task\<T>, the test framework will wait until the task completes before declaring success/failure. However, as of now, it does not support async void unit tests; this [is planned](http://xunit.codeplex.com/workitem/9752) for a future release.
 
 I've been in contact with some people inside of Microsoft regarding this issue, and they said they're aware of it and are considering various options. They wouldn't give me any details, of course, but they did suggest that I would be "pleasantly surprised" when Visual Studio vNext comes out.
 

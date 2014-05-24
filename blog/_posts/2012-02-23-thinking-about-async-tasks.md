@@ -12,7 +12,7 @@ An async Task is _not_ a thread - not even a tiny one. This is one of the most c
 
 Similarly, an async Task is _not_ a delegate.
 
-Some tasks do _contain_ a delegate, and they represent some work to be done on a thread. However, as we saw in [the Creating Tasks post]({% post_url 2012-02-09-creating-tasks %}), tasks created with TaskCompletionSource<T> have no code or delegate at all!
+Some tasks do _contain_ a delegate, and they represent some work to be done on a thread. However, as we saw in [the Creating Tasks post]({% post_url 2012-02-09-creating-tasks %}), tasks created with TaskCompletionSource\<T> have no code or delegate at all!
 
 ## Tasks Complete Once
 

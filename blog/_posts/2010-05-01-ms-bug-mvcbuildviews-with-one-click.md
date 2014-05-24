@@ -11,7 +11,7 @@ The steps to reproduce this situation (in VS2010) are as follows:
 1. File -> New Project -> ASP.NET MVC 2 Empty Web Application
 1. Right-click project file -> Unload Project
 1. Right-click project file -> Edit .csproj
-1. Change <MvcBuildViews> to true and save
+1. Change \<MvcBuildViews> to true and save
 1. Right-click project file -> Reload project
 1. Create Publish Settings (File System, c:\_test, Delete all existing files prior to publish)
 1. Publish (succeeds)

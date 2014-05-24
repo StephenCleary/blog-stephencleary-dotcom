@@ -35,7 +35,7 @@ The XML file itself may include a prolog, which may specify the encoding being u
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
-**XML Prolog:** The "<?xml ... ?>" element at the beginning of some XML files, specifying the XML version and (optionally) the encoding used.
+**XML Prolog:** The `<?xml ... ?>` element at the beginning of some XML files, specifying the XML version and (optionally) the encoding used.
 </div>
 
 Normally, the application protocol document specifies the encoding; this is simpler than dealing with automatically detecting the encoding. If it does specify the encoding, it should also specify whether a BOM should be present, or if a prolog is allowed to specify the encoding. A common choice is "UTF-8 without BOM or prolog", which makes the encoding always UTF-8 without a byte order mark or XML prolog.
@@ -112,7 +112,7 @@ When sending, message framing is actually applied after the encoding, so the mes
 
 [Keepalive messages]({% post_url 2009-05-16-detection-of-half-open-dropped %}) are usually necessary. Having a keepalive message defined in the application protocol specification often removes the need for separate timers when implementing the protocol.
 
-XML keepalive messages (e.g., "<keepalive/>") are not normally used. Usually, a keepalive message may be sent by using the message framing to send an empty (zero-length) message.
+XML keepalive messages (e.g., `<keepalive/>`) are not normally used. Usually, a keepalive message may be sent by using the message framing to send an empty (zero-length) message.
 
 ## Step 4: Messages
 
@@ -122,7 +122,7 @@ Once the encoding, message framing, and keepalive options have all been chosen, 
 - Which attributes and elements are required and which are optional. This includes complex relations (e.g., a "Log" element must contain at least one "Message" element and exactly one "Source" element). Be sure to use terms with specific definitions ("at least one", "exactly one", etc).
 - The format of non-string data such as dates, booleans, and integers. Often, this type of "formatting data" is defined globally near the top of the application protocol specification, and applies to each possible message type.
 
-Many protocols are based on a request/response or subscription/event model. One thing to watch out for is if the protocol elements begin looking like generic or object-oriented function calls, as though one side is accessing a remote object (e.g., "<CallMethod ObjectID='37' MethodName='GetData'/>"). At this point, the protocol will devolve into something eventually looking like SOAP. There's nothing wrong with SOAP, but there's no need to re-invent the wheel. If that level of abstraction is truly necessary, then just use SOAP instead of creating a separate protocol.
+Many protocols are based on a request/response or subscription/event model. One thing to watch out for is if the protocol elements begin looking like generic or object-oriented function calls, as though one side is accessing a remote object (e.g., `<CallMethod ObjectID='37' MethodName='GetData'/>`). At this point, the protocol will devolve into something eventually looking like SOAP. There's nothing wrong with SOAP, but there's no need to re-invent the wheel. If that level of abstraction is truly necessary, then just use SOAP instead of creating a separate protocol.
 
 ## Recommendations
 

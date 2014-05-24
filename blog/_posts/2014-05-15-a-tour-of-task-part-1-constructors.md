@@ -90,6 +90,6 @@ I think it would be fun to keep a running total of usable members, so here's the
 |Type|Actual Members|Logical Members|Usable for async|Usable for parallel|
 |-
 |Task|8|1|0|0|
-|Task<T>|8|1|0|0|
+|Task\<T>|8|1|0|0|
 
 </div>

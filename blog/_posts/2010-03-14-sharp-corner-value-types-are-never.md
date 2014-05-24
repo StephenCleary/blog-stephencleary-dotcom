@@ -2,7 +2,7 @@
 layout: post
 title: "Sharp Corner: Value Types Are Never Reference-Equal"
 ---
-There are two types of equality testing in the .NET framework: reference equality and value equality (if the type being tested supports value equality). There are numerous ways to test for equality (object.Equals, operator ==, IEqualityComparer<T>, etc), but at the end every one of them resolves to either value equality or reference equality.
+There are two types of equality testing in the .NET framework: reference equality and value equality (if the type being tested supports value equality). There are numerous ways to test for equality (object.Equals, operator ==, IEqualityComparer\<T>, etc), but at the end every one of them resolves to either value equality or reference equality.
 
 Conceptually, two objects are "reference equal" iff they are actually the same object. For example, two strings may have the same value (and thus be "value equal"), but they may be two different objects (and thus not "reference equal").
 

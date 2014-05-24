@@ -9,7 +9,7 @@ A connected socket is one which has a connection to the remote side. When a clie
 <div class="alert alert-danger" markdown="1">
 <i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
 
-**Important note: ** A socket only _believes_ it is currently connected; it can never know for sure. It is possible for one side of a connection to realize it is no longer connected, while the other side continues believing it is connected. This is called the "half-open problem", and is covered in detail in [Detection of Half-Open (Dropped) Connections]({% post_url 2009-05-16-detection-of-half-open-dropped %}){:.alert-link}.
+**Important note:** A socket only _believes_ it is currently connected; it can never know for sure. It is possible for one side of a connection to realize it is no longer connected, while the other side continues believing it is connected. This is called the "half-open problem", and is covered in detail in [Detection of Half-Open (Dropped) Connections]({% post_url 2009-05-16-detection-of-half-open-dropped %}){:.alert-link}.
 </div>
 
 There are two primary operations performed on connected sockets: Read and Write. Connected sockets may also Disconnect or Close the connection; these operations will be covered in more detail in a future FAQ entry.
@@ -21,7 +21,7 @@ A socket may be written to at any time. A Write operation places bytes into the 
 <div class="alert alert-danger" markdown="1">
 <i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
 
-**Important note: ** The completion of a Write operation does _not_ mean that the remote side has received the data.
+**Important note:** The completion of a Write operation does _not_ mean that the remote side has received the data.
 </div>
 
 The Write operation completes when the local OS has copied the entire write buffer, even though those bytes may not have been sent out on the network yet. Beginning TCP programmers often balk at this, because they think that they _must know_ if data has been received by the remote side. This reaction is called "send anxiety", and will be covered in a future FAQ entry.
@@ -55,7 +55,7 @@ The zero-length read _must_ be treated as a special case; if it is not, the rece
 <div class="alert alert-danger" markdown="1">
 <i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
 
-**Important note: ** Most of the MSDN .NET socket examples do _not_ handle this correctly! They will enter an infinite loop if the socket is closed by the remote side.
+**Important note:** Most of the MSDN .NET socket examples do _not_ handle this correctly! They will enter an infinite loop if the socket is closed by the remote side.
 </div>
 
 ## Disconnecting

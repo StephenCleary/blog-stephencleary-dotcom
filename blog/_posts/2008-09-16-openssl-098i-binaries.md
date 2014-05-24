@@ -5,6 +5,7 @@ title: "OpenSSL 0.9.8i Binaries"
 We built the OpenSSL binaries for Windows, and made them publicly available at [http://sourceforge.net/project/showfiles.php?group_id=26202&package_id=291670](http://sourceforge.net/project/showfiles.php?group_id=26202&package_id=291670)
 
 Note that there are a few differences for our version, compared to other binary packages:
+
 - All patent-encumbered algorithms have been removed (e.g., IDEA, RC5, etc.).
 - No static libraries are built; these are all DLLs.
 - Include directories and HTML documentation are packaged as well, but no import libraries.

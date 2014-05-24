@@ -80,7 +80,7 @@ class Program
 
 Note that placing the argument in double-quotes does _not_ allow the argument to start with a dash or forward-slash.
 
-Reminder: the command shell has its own set of reserved characters (**&**, **|**, **(**, **)**, **<**, **>**, and **^**). These can be escaped using **^**, or they can be wrapped in double-quotes. Command shell escapes are described in more detail in the [post on command-line lexing]({% post_url 2011-06-16-option-parsing-lexing %}).
+Reminder: the command shell has its own set of reserved characters (`&`, `|`, `(`, `)`, `<`, `>`, and `^`). These can be escaped using `^`, or they can be wrapped in double-quotes. Command shell escapes are described in more detail in the [post on command-line lexing]({% post_url 2011-06-16-option-parsing-lexing %}).
 
 ## Implementing a Simple Argument Parser
 

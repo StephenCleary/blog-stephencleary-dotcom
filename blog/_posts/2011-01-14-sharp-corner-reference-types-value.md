@@ -6,7 +6,7 @@ This week I was writing some code that had to respond differently depending on w
 
 During this exploration, I developed a few tests to evaluate the type system (code at the end of this post). The results are summarized below, along with some of my thoughts on the weirdos (types which are sort-of reference and sort-of value, depending on your definition of "reference" and "value").
 
-One way of defining a "reference type" is whether [Type.IsClass](http://msdn.microsoft.com/en-us/library/system.type.isclass.aspx) is true; another way of defining a "reference type" is whether it satisfies a [generic class constraint](http://msdn.microsoft.com/en-us/library/d5x73970.aspx) (e.g., _void Test<T>() where T : class_). Likewise, value types have [Type.IsValueType](http://msdn.microsoft.com/en-us/library/system.type.isvaluetype.aspx) and generic struct constraints.
+One way of defining a "reference type" is whether [Type.IsClass](http://msdn.microsoft.com/en-us/library/system.type.isclass.aspx) is true; another way of defining a "reference type" is whether it satisfies a [generic class constraint](http://msdn.microsoft.com/en-us/library/d5x73970.aspx) (e.g., _void Test\<T>() where T : class_). Likewise, value types have [Type.IsValueType](http://msdn.microsoft.com/en-us/library/system.type.isvaluetype.aspx) and generic struct constraints.
 
 The table below includes tests on a variety of types, grouped into "mostly reference types" and "mostly value types". The types that are more clearly reference/value types are at the top of each group, with the weirdos at the bottom.
 
@@ -45,7 +45,7 @@ Nullable types return true for **IsValueType**, but do not satisfy generic **str
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
-Take-home point: Nullable types **(type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))** will not satisfy a generic **struct** constraint, even though **IsValueType** is true.
+Take-home point: Nullable types **(type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable\<>))** will not satisfy a generic **struct** constraint, even though **IsValueType** is true.
 </div>
 
 ## Pointers are Definitely Weird

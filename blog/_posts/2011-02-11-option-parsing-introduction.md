@@ -127,5 +127,5 @@ Option parsing is case sensitive by default:
     Usage: myprog [OPTIONS]...
       -l, --level=LEVEL   Sets the level at which to operate.
 
-There's actually a lot of work being done in the single-line **OptionParser.Parse<MyOptions>()**! And this post is just scratching the surface; the Nito.KitchenSink.OptionParsing library is all about flexibility and extensibility.
+There's actually a lot of work being done in the single-line **OptionParser.Parse\<MyOptions>()**! And this post is just scratching the surface; the Nito.KitchenSink.OptionParsing library is all about flexibility and extensibility.
 

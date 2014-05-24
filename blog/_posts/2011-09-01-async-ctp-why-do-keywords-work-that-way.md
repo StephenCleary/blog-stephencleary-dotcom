@@ -4,13 +4,13 @@ title: "The Async CTP \"Why Do the Keywords Work THAT Way\" Unofficial FAQ"
 ---
 There's a lot of interest in the [Async CTP](http://msdn.microsoft.com/en-US/vstudio/async), with good reason. The Async CTP will make asynchronous programming much, much easier than it has ever been. It's somewhat less powerful but much easier to learn than [Rx](http://msdn.microsoft.com/en-us/data/gg577609).
 
-The Async CTP introduces two new keywords, **async** and **await**. Asynchronous methods (or lambda expressions) must return **void**, **Task**, or **Task<TResult>**.
+The Async CTP introduces two new keywords, **async** and **await**. Asynchronous methods (or lambda expressions) must return **void**, **Task**, or **Task\<TResult>**.
 
 This post is not an introduction to the Async CTP; there's plenty of tutorial resources available out there (including [one by yours truly]({% post_url 2012-02-02-async-and-await %})). This post is an attempt to bring together the answers to a few common questions that programmers have when they start using the Async CTP.
 
 ## Inferring the Return Type
 
-When returning a value from an **async** method, the method body returns the value directly, but the method itself is declared as returning a **Task<TResult>**. There is a bit of "disconnect" when you declare a method returning one type and have to return another type:
+When returning a value from an **async** method, the method body returns the value directly, but the method itself is declared as returning a **Task\<TResult>**. There is a bit of "disconnect" when you declare a method returning one type and have to return another type:
 
 {% highlight csharp %}
 
@@ -34,7 +34,7 @@ public async int GetValue()
 }
 {% endhighlight %}
 
-Consider: How will the method signature look to callers? Async methods that return a value must have an actual result type of **Task<TResult>**. So **GetValue** will show up in IntelliSense as returning **Task<TResult>** (this would also be true for the object browser, Reflector, etc).
+Consider: How will the method signature look to callers? Async methods that return a value must have an actual result type of **Task\<TResult>**. So **GetValue** will show up in IntelliSense as returning **Task\<TResult>** (this would also be true for the object browser, Reflector, etc).
 
 Inferring the return type [was considered](http://social.msdn.microsoft.com/Forums/en-US/async/thread/0ee0af6a-3034-4ac3-aa82-cb6bd62a9ab9#8d1826a5-d603-4b74-8c64-2a9b32d6af24) during the initial design, but the team concluded that the keeping the "disconnect" within the **async** method was better than spreading the "disconnect" throughout the code base. The "disconnect" is still there, but it's smaller than it could be. The consensus is that a consistent method signature is preferred.
 

@@ -122,7 +122,7 @@ partial class Program
 
 The tricky part in this code is the double-await in RunCoroutineAsync. This is a [normal pattern](http://blogs.msdn.com/b/pfxteam/archive/2011/10/24/10229468.aspx) when you use TaskFactory.StartNew with asynchronous delegates (alternatively, you could use Task.Unwrap).
 
-Logically, the "coroutine" parameter to RunCoroutineAsync is an asynchronous delegate (referring to one of the async co-routine methods). When we pass it to StartNew, we get back a Task<Task> representing the _starting_ of that asynchronous delegate on our exclusive scheduler. The inner Task represents the _completion_ of that asynchronous delegate. So the "await await" is used because we want RunCoroutineAsync to complete only when the asynchronous delegate completes.
+Logically, the "coroutine" parameter to RunCoroutineAsync is an asynchronous delegate (referring to one of the async co-routine methods). When we pass it to StartNew, we get back a Task\<Task> representing the _starting_ of that asynchronous delegate on our exclusive scheduler. The inner Task represents the _completion_ of that asynchronous delegate. So the "await await" is used because we want RunCoroutineAsync to complete only when the asynchronous delegate completes.
 
 If we execute this program, we can clearly see the co-routine behavior:
 

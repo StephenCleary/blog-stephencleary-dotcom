@@ -174,7 +174,7 @@ To convert this join table entity into an M to N relationship, follow these step
  1. Select the other entity in the relationship, and change the Multiplicity so that they are both Many.
  1. Click OK. Entity Framework will create an association that you can see in the designer; however, it is not actually mapped to the correct table yet.
  1. Right-click the newly-created association (the line between the entities) and select "Table Mapping".
- 1. Click the "<Add a Table or View>" and select the join table. If your foreign key columns in the join table have the same names as the primary key columns in the related tables, then the rest of the page is filled in for you. (If not, you'll have to select how the columns in each table are mapped).
+ 1. Click the `<Add a Table or View>` and select the join table. If your foreign key columns in the join table have the same names as the primary key columns in the related tables, then the rest of the page is filled in for you. (If not, you'll have to select how the columns in each table are mapped).
  1. _After_ the table has been mapped to the M to N association, you may delete the join table entity.
 
 ### Final Notes on Foreign Key Associations

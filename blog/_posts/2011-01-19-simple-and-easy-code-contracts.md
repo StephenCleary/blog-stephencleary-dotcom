@@ -12,17 +12,16 @@ After you've downloaded and installed Code Contracts and created a library proje
 
 - Set "Assembly Mode" to "Standard Contract Requires".
 - **Debug** - Check "Perform Runtime Contract Checking" and set to "Full". Check "Call-site Requires Checking".
-[![]({{ site_url }}/assets/CC-debug.PNG)  
-]({{ site_url }}/assets/CC-debug.PNG)
+
+[![]({{ site_url }}/assets/CC-debug.PNG)]({{ site_url }}/assets/CC-debug.PNG)
 
 - **Release** - Set "Contract Reference Assembly" to "Build" and check "Emit contracts into XML doc file".
-[![]({{ site_url }}/assets/CC-release.PNG)  
-]({{ site_url }}/assets/CC-release.PNG)
+
+[![]({{ site_url }}/assets/CC-release.PNG)]({{ site_url }}/assets/CC-release.PNG)
 
 In addition, if you have the Academic or Commercial Premium edition of Code Contracts, add a configuration called **CodeAnalysis** with all the settings from **Debug** and also check "Perform Static Contract Checking" and all the other checkboxes in that section except "Baseline".
 
-[![]({{ site_url }}/assets/CC-analysis.PNG)  
-]({{ site_url }}/assets/CC-analysis.PNG)
+[![]({{ site_url }}/assets/CC-analysis.PNG)]({{ site_url }}/assets/CC-analysis.PNG)
 
 This will give you three separate builds, with separate behavior:
 
@@ -32,10 +31,9 @@ This will give you three separate builds, with separate behavior:
 
 Projects _consuming_ your library should reference your **Release** build. In their **Debug** configuration, they should check "Perform Runtime Contract Checking" and "Call-site Requires Checking"; this will ensure that the code contracts for your library's public API are enforced at runtime (the "Call-site" option uses the ".Contracts.dll" assembly that you built). In their **Release** configuration, they should leave code contracts disabled, which allows all assemblies to run at full speed.
 
-[![]({{ site_url }}/assets/CC-consumer-debug.PNG)  
-]({{ site_url }}/assets/CC-consumer-debug.PNG)
-[![]({{ site_url }}/assets/CC-consumer-release.PNG)  
-]({{ site_url }}/assets/CC-consumer-release.PNG)
+[![]({{ site_url }}/assets/CC-consumer-debug.PNG)]({{ site_url }}/assets/CC-consumer-debug.PNG)
+
+[![]({{ site_url }}/assets/CC-consumer-release.PNG)]({{ site_url }}/assets/CC-consumer-release.PNG)
 
 If the consuming project suspects a bug in your library (i.e., their **Debug** build doesn't cause any Contracts violations but your library is still not behaving as expected), they can remove the reference to your **Release** build and add a reference to your **Debug** build. This is an easy way to enable all the code contract checks in your library, even the internal ones.
 

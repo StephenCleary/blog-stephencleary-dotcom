@@ -105,7 +105,7 @@ Remember the two tests to determine if IDisposable is needed (owning unmanaged r
  1. Does the ErrorList class own managed resources? Remember, "managed resources" are any classes implementing IDisposable. So, check each owned member type:
 
   1. Does string implement IDisposable? No, it does not.
-  1. Does List<string> implement IDisposable? No, it does not.
+  1. Does List\<string> implement IDisposable? No, it does not.
   1. Since none of the owned members implement IDisposable, the ErrorList class does not own any managed resources.
 
   1. Since there are no unmanaged resources and no managed resources owned by ErrorList, it does not need to implement IDisposable.

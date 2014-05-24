@@ -15,11 +15,11 @@ The problem is that SQL Server Compact Edition does not support newsequentialid(
 
 ## Design Constraints
 
- - The system clock should be considered particularly unreliable; handheld devices often reset their time to a "zero point" after a hard reset.
- - The presence of a MAC address can be assumed. All devices have the ability of network connectivity, though not always connected.
- - However, the MAC address should not directly be placed in the result, due to security concerns.
- - Efficiency of GUID generation is not a high concern; the goal is to produce sequential GUIDs that work well with SQL server indexing.
- - Be RFC 4122 conforming if possible.
+- The system clock should be considered particularly unreliable; handheld devices often reset their time to a "zero point" after a hard reset.
+- The presence of a MAC address can be assumed. All devices have the ability of network connectivity, though not always connected.
+- However, the MAC address should not directly be placed in the result, due to security concerns.
+- Efficiency of GUID generation is not a high concern; the goal is to produce sequential GUIDs that work well with SQL server indexing.
+- Be RFC 4122 conforming if possible.
 
 ## Considering RFC 4122 Conformity
 
@@ -29,32 +29,34 @@ It is possible to use a RFC 4122 Version 1 GUID if the MAC address is replaced w
 
 ## An Alternative GUID
 
-  - The two most-significant bits are used for the version:
-   - Version 0 is a MAC-based sequential GUID.
-   - Version 1 is a random-based sequential GUID.
-   - Versions 2-3 are reserved.
-   - We can generate a (system-wide) node value by hashing the lowest MAC address, or a 46-bit random value if the MAC address is unavailable. This should be changed whenever the MAC address changes.
-    - This creates a natural grouping "by source node" in SQL server.
-    - The clock sequence is similar to RFC 4122, only it is 20 bits instead of 14 bits, due to the higher possibility of clock resets in handheld devices.
-     - The clock sequence is incremented when the current timestamp is less than the last timestamp.
-     - The clock sequence is initialized to a random value when the node value changes (or is first calculated).
-     - This creates a subgrouping "by run" in SQL server.
-     - Timestamp is a 60-bit value identical to RFC 4122. The timestamp must be stored in a system-wide location.
-      - This creates a subgrouping "by time" in SQL server.
-      - All fields are stored in little-endian instead of big-endian, to maximize the efficiency of SQL server's comparision algorithm.
+- The two most-significant bits are used for the version:
+  - Version 0 is a MAC-based sequential GUID.
+  - Version 1 is a random-based sequential GUID.
+  - Versions 2-3 are reserved.
+- We can generate a (system-wide) node value by hashing the lowest MAC address, or a 46-bit random value if the MAC address is unavailable. This should be changed whenever the MAC address changes.
+  - This creates a natural grouping "by source node" in SQL server.
+- The clock sequence is similar to RFC 4122, only it is 20 bits instead of 14 bits, due to the higher possibility of clock resets in handheld devices.
+  - The clock sequence is incremented when the current timestamp is less than the last timestamp.
+  - The clock sequence is initialized to a random value when the node value changes (or is first calculated).
+  - This creates a subgrouping "by run" in SQL server.
+- Timestamp is a 60-bit value identical to RFC 4122. The timestamp must be stored in a system-wide location.
+  - This creates a subgrouping "by time" in SQL server.
+  - All fields are stored in little-endian instead of big-endian, to maximize the efficiency of SQL server's comparision algorithm.
 
 Non-volatile storage needs:
-       - Lowest MAC address on the device, and its hash; or, the random value used in place of the hash.
-       - Last clock sequence value.
-       - Last timestamp generated.
+
+- Lowest MAC address on the device, and its hash; or, the random value used in place of the hash.
+- Last clock sequence value.
+- Last timestamp generated.
 
 Implementation notes:
-        - RNGCryptoServiceProvider may be used for random number generation.
-        - Guid or SqlGuid may be used to hold the result.
-        - TimeSpan.Ticks may be used for timestamp calculations.
-        - There is no support for reading the MAC address; we'd have to p/Invoke iphlpapi.dll|GetAdaptersInfo.
-        - We would need a platform-specific method for non-volatile storage. 
-        - There is no support for named mutexes. We can p/Invoke CreateMutex from coredll.dll (using them as a WaitHandle instead of an unmanaged wait).
+
+- RNGCryptoServiceProvider may be used for random number generation.
+- Guid or SqlGuid may be used to hold the result.
+- TimeSpan.Ticks may be used for timestamp calculations.
+- There is no support for reading the MAC address; we'd have to p/Invoke iphlpapi.dll\|GetAdaptersInfo.
+- We would need a platform-specific method for non-volatile storage. 
+- There is no support for named mutexes. We can p/Invoke CreateMutex from coredll.dll (using them as a WaitHandle instead of an unmanaged wait).
 
 ## Final Words
 

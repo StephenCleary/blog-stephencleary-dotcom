@@ -17,63 +17,61 @@ This talk is titled "Live Labs Reactive Framework", given by Erik Meijer at the 
 interface IEnumerable<out T> { IEnumerator<T> GetEnumerator(); }
 interface IEnumerator<out T> : IDisposable { bool MoveNext(); T Current { get; } /* Implicit throw */ }
 {% endhighlight %}
-   - There are actually two interface concepts here (Enumerable and Disposable). For now, ignore Disposable.
-   - Swap arguments and results (mathematical duality):
+
+- There are actually two interface concepts here (Enumerable and Disposable). For now, ignore Disposable.
+- Swap arguments and results (mathematical duality):
+
 {% highlight csharp %}
 interface IObservable<in T> { IDisposable Register(IObserver<T> o); }
 interface IObserver<in T> { void OnCompleted(bool done); T OnUpdate { set; } void OnError(Exception e); }
 {% endhighlight %}
-   - A cleaner interface (getting rid of "bool done" by only calling "OnCompleted" when it's true; changing OnUpdate to a method):
+
+- A cleaner interface (getting rid of "bool done" by only calling "OnCompleted" when it's true; changing OnUpdate to a method):
+
 {% highlight csharp %}
 interface IObservable<in T> { IDisposable Attach(IObserver<T> o); }
 interface IObserver<in T> { void OnCompleted(); void OnUpdate(T value); void OnError(Exception e); }
 {% endhighlight %}
 
- - This makes the Iterator pattern (Enumerable) related to Subject Observer pattern (Observable).
- - Java has Observable/Observer, but in non-generic and noisy interfaces.
- - Since Enumerables are monads, Observables are monads. Since LINQ concepts work on monads, then there is a LINQ for Observables.
- - (At this point, Erik skipped some slides; everything under this point is my own interpretation of those slides)
-  - Combinators include Select, Where, Flatten, and SelectMany (which is Select + Flatten). [Note: Enumerable LINQ also supports flattening through SelectMany].
-  
-       - Interactive SelectMany uses a nested foreach, which iterates each element of each sequence, moving on to the next sequence when it's empty.
-       - Reactive SelectMany uses a parallel foreach, which iterates each element of any sequence as they are pushed.
-  
-     - Additional combinators include:
-  
-        - Until (to "cancel" reactions for an event)
-        - TimeOut
-        - Zip (to perform a logical combination of two event sequences)
-        - Scan (?)
-        - Take, Drop - like TakeWhile/SkipWhile (?)
-        - Sample, Buffer
-  
+- This makes the Iterator pattern (Enumerable) related to Subject Observer pattern (Observable).
+- Java has Observable/Observer, but in non-generic and noisy interfaces.
+- Since Enumerables are monads, Observables are monads. Since LINQ concepts work on monads, then there is a LINQ for Observables.
+- (At this point, Erik skipped some slides; everything under this point is my own interpretation of those slides)
+- Combinators include Select, Where, Flatten, and SelectMany (which is Select + Flatten). [Note: Enumerable LINQ also supports flattening through SelectMany].
+  - Interactive SelectMany uses a nested foreach, which iterates each element of each sequence, moving on to the next sequence when it's empty.
+  - Reactive SelectMany uses a parallel foreach, which iterates each element of any sequence as they are pushed.
+  - Additional combinators include:
+    - Until (to "cancel" reactions for an event)
+    - TimeOut
+    - Zip (to perform a logical combination of two event sequences)
+    - Scan (?)
+    - Take, Drop - like TakeWhile/SkipWhile (?)
+    - Sample, Buffer
 
-    - AJAX is all about responding to events and performing asynchronous computations; it's ideal for Rx.
-    - Rx has bridges from .NET events into an Observable collection.
-    - A common bug is being dependent on the order of asynchronous completions.
-    - Preemption operator (".Until") to listen for an event until there's another situation (like another async computation being started, so the results of the previous computation should be ignored).
-    - The let operator (".Let") avoids undesired side effects (similar to a local variable).
+- AJAX is all about responding to events and performing asynchronous computations; it's ideal for Rx.
+- Rx has bridges from .NET events into an Observable collection.
+- A common bug is being dependent on the order of asynchronous completions.
+- Preemption operator (".Until") to listen for an event until there's another situation (like another async computation being started, so the results of the previous computation should be ignored).
+- The let operator (".Let") avoids undesired side effects (similar to a local variable).
+  - Lazy evaluation with Observable makes this difficult.
 
-       - Lazy evaluation with Observable makes this difficult.
+- Comega join patterns (zips) and parser combinators can also be supported.
+  - Zip enables logic such as "(an A event and B event were pushed) or (a B event and C event were pushed)" to be treated as its own event stream.
 
-     - Comega join patterns (zips) and parser combinators can also be supported.
+- Related work:
+  - F# first-class events
+  - F# async workflows
+  - Thomasp Reactive LINQ
+  - Esterelle, Lustre
+  - Functional reactive programming
+  - Using iterators for async
+  - PowerShell, SSIS, WWF
 
-        - Zip enables logic such as "(an A event and B event were pushed) or (a B event and C event were pushed)" to be treated as its own event stream.
+- Rx is a way of composing delimited continuations: see paper "Delimited continuations in Operating Systems".
+- (At this point, Erik skipped some more slides; everything under this point is my own interpretation of those slides)
 
-      - Related work:
+  - C# pseudocode (using object expressions / anonymous inner classes) to convert a C# event to an Observable:
 
-         - F# first-class events
-         - F# async workflows
-         - Thomasp Reactive LINQ
-         - Esterelle, Lustre
-         - Functional reactive programming
-         - Using iterators for async
-         - PowerShell, SSIS, WWF
-
-       - Rx is a way of composing delimited continuations: see paper "Delimited continuations in Operating Systems".
-       - (At this point, Erik skipped some more slides; everything under this point is my own interpretation of those slides)
-
-          - C# pseudocode (using object expressions / anonymous inner classes) to convert a C# event to an Observable:
 {% highlight csharp %}
 class Control { event Action<T> KeyUp; }
 IObservable<T> GetKeyUp(this Control w)
@@ -92,26 +90,32 @@ IObservable<T> GetKeyUp(this Control w)
   };
 }
 {% endhighlight %}
-          - Two IObservable<T> extension methods exist for attaching delegates:
+
+  - Two IObservable<T> extension methods exist for attaching delegates:
+
 {% highlight csharp %}
 static IDisposable Attach<T>(this IObservable<T> src, Action<T> yield);
 static IDisposable Attach<T>(this IObservable<T> src, Action<T> yield, Action<Exception> throw);
 {% endhighlight %}
   
-             - The original style of event subscription treats the handler as a first-class object:
+  - The original style of event subscription treats the handler as a first-class object:
+
 {% highlight csharp %}
 Action<T> handler = ...;
 txtbox.KeyUp += handler;
 txtbox.KeyUp -= handler;
 {% endhighlight %}
-             - The Observable style of event subscription treats the event as a first-class object:
+
+  - The Observable style of event subscription treats the event as a first-class object:
+
 {% highlight csharp %}
 var keyup = txtbox.GetKeyUp();
 var detacher = keyup.Attach(...);
 detacher.Dispose();
 {% endhighlight %}
   
-           - Observable event collections when used with combinators allow implicit state variables. e.g., consider a "drag & drop":
+  - Observable event collections when used with combinators allow implicit state variables. e.g., consider a "drag & drop":
+
 {% highlight csharp %}
 var W = ... control to be dragged ...;
  
@@ -134,13 +138,17 @@ var mouseDrag = from mousedown in mouseClicks
  
 mouseDrag.Attach(delta => { ... move W according to delta ... });
 {% endhighlight %}
-           - You always need to be aware of side effects; use the Let operator to tame them:
+
+  - You always need to be aware of side effects; use the Let operator to tame them:
+
 {% highlight csharp %}
 var mouseDiffs = from diff in mouseMoves.Skip(1).Zip(mouseMoves) // This part pushes the current and last location of the mouse every time it moves
                  select new { dX = diff.First.X - diff.Second.X,
                               dY = diff.First.Y - diff.Second.Y }; // Pushes the difference in location each time the mouse moves
 {% endhighlight %}
-    should be:
+
+should be:
+
 {% highlight csharp %}
 var mouseDiffs = mouseMoves.Let(_mouseMoves => // This part avoids side effects on mouseMoves
                  from diff in _mouseMoves.Skip(1).Zip(_mouseMoves) // This part pushes the current and last location of the mouse every time it moves

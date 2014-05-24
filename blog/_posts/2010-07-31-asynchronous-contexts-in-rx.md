@@ -8,7 +8,7 @@ There have been some great resources released about Rx recently. Most notably, t
 
 This week, I had a business need to create a "search" form. The form is very simple: the user types something in a TextBox, and we populate a ListView with matching objects. It's sort of like a whole form devoted to AutoComplete. The actual "matching" function could be run asynchronously, so this problem ended up almost exactly like the dictionary lookup in the Rx hands-on lab document.
 
-The one big difference is that the "matching" function will return its results incrementally (it's actually an IEnumerable<T>), and I'd like to display the results incrementally as they are found. In contrast, the dictionary lookup in the Rx hands-on lab example returns all of its results at once.
+The one big difference is that the "matching" function will return its results incrementally (it's actually an IEnumerable\<T>), and I'd like to display the results incrementally as they are found. In contrast, the dictionary lookup in the Rx hands-on lab example returns all of its results at once.
 
 Here's the first brush of the code:
 
@@ -50,13 +50,13 @@ this.searchAction =
 
 The first chunk of the code is almost identical to the first chunk of the Rx hands-on lab code. The only difference is that I use ObserveOn(this) and Do() to clear out any previous search results when a new search _starts_ (the hands-on lab clears previous search results when a search _completes_). I also do a Merge() with an empty string, which causes all results to be returned as soon as the form is loaded.
 
-The second chunk of code defines how searches are performed. The "matchProvider" object just returns an IEnumerable<T> for a given search string. This enumerable is iterated on a ThreadPool thread, and the results are marshalled to the UI thread. This is similar to the asynchronous web service used by the Rx hands-on lab, except that it produces its results incrementally instead of all at once.
+The second chunk of code defines how searches are performed. The "matchProvider" object just returns an IEnumerable\<T> for a given search string. This enumerable is iterated on a ThreadPool thread, and the results are marshalled to the UI thread. This is similar to the asynchronous web service used by the Rx hands-on lab, except that it produces its results incrementally instead of all at once.
 
 The third part of the code uses the Switch() operator to cancel old searches and start new ones as they are ready. A label is updated to notify the user when a search completes. All results from the combined searches are added to the ListView as they arrive. There is no need to marshal to the UI thread first, because both of the observable sources in this combination have already been marshalled to the UI thread.
 
 ## The Need for an Asynchronous Context
 
-There's a rather subtle race condition in the code above. Observable sequences can get tricky whenever they change threads, and that is happening a couple of times here. The first one is not really obvious: Throttle() transfers control to a ThreadPool thread because of its timer. The other one _is_ obvious: we're converting an IEnumerable<T> to an observable using Scheduler.ThreadPool. Both of these sequences do get marshalled back to the UI thread and combined using Switch(), and that's actually where the problem comes in.
+There's a rather subtle race condition in the code above. Observable sequences can get tricky whenever they change threads, and that is happening a couple of times here. The first one is not really obvious: Throttle() transfers control to a ThreadPool thread because of its timer. The other one _is_ obvious: we're converting an IEnumerable\<T> to an observable using Scheduler.ThreadPool. Both of these sequences do get marshalled back to the UI thread and combined using Switch(), and that's actually where the problem comes in.
 
 According to [an authoritative post on the Rx forums](http://social.msdn.microsoft.com/Forums/en-US/rx/thread/19be939b-d257-4d8e-b104-4dfcc59b3ff8), when subscriptions are disposed they _may_ not stop immediately. At first this seems like a design flaw, but it actually makes perfect sense. Believe me - I've done enough asynchronous work to know how complicated it would be to have all subscription disposals stop their observables immediately.
 
@@ -139,7 +139,7 @@ Note that all context-based actions (setting the current context when starting a
 
 ## A Reusable Solution
 
-I'm playing around with a few classes that make asynchronous contexts a little easier to use. Observable elements bound to a context are placed into a structure similar to Timestamped<T> (which binds observable elements to a timestamp), and there are special binding and verification operators. The actual AsynchronousContext type also includes thread checking to ensure that it is used in a synchronized fashion.
+I'm playing around with a few classes that make asynchronous contexts a little easier to use. Observable elements bound to a context are placed into a structure similar to Timestamped\<T> (which binds observable elements to a timestamp), and there are special binding and verification operators. The actual AsynchronousContext type also includes thread checking to ensure that it is used in a synchronized fashion.
 
 However, I'm just not pleased with how usable it is. I'll continue playing with it over the next week or so, and if I can find a good solution, I'll post it here and put it into [Nito.Async](http://nitoasync.codeplex.com/). Suggestions are welcome. :)
 

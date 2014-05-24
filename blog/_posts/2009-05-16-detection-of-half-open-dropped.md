@@ -52,38 +52,31 @@ This bridge was in full production, and had been for some time. The company that
  
 There are a couple of wrong methods to detect dropped connections. Beginning socket programmers often come up with these incorrect solutions to the half-open problem. They are listed here only for reference, along with a brief description of why they are wrong.
 
- - **A Second socket connection.** A new socket connection cannot determine the validity of an existing connection in all cases. In particular, if the remote side has crashed and rebooted, then a second connection attempt will succeed even though the original connection is in a half-open state.
- - **Ping.** Sending a ping (ICMP) to the remote side has the same problem: it may succeed even when the connection is unusable. Furthermore, ICMP traffic is often treated differently than TCP traffic by routers.
+- **A Second socket connection.** A new socket connection cannot determine the validity of an existing connection in all cases. In particular, if the remote side has crashed and rebooted, then a second connection attempt will succeed even though the original connection is in a half-open state.
+- **Ping.** Sending a ping (ICMP) to the remote side has the same problem: it may succeed even when the connection is unusable. Furthermore, ICMP traffic is often treated differently than TCP traffic by routers.
 
  
 ## Correct Methods to Detect Dropped Connections
  
 There are several correct solutions to the half-open problem. Each one has their pros and cons, depending on the problem domain. This list is in order from best solution to worst solution (IMO):
 
-  1. **Add a keepalive message to the [application protocol framing]({% post_url 2009-04-30-message-framing %}) (an empty message).** Length-prefixed and delimited systems may send empty messages (e.g., a length prefix of "0 bytes" or a single "end delimiter").  
+1. **Add a keepalive message to the [application protocol framing]({% post_url 2009-04-30-message-framing %}) (an empty message).** Length-prefixed and delimited systems may send empty messages (e.g., a length prefix of "0 bytes" or a single "end delimiter").  
+    - _Advantages._ The higher-level protocol (the actual messages) are not affected.  
+    - _Disadvantages._ This requires a change to the software on both sides of the connection, so it may not be an option if the application protocol is already specified and immutable.
+1. **Add a keepalive message to the actual application protocol (a "null" message).** This adds a new message to the application protocol: a "null" message that should just be ignored.  
+    - _Advantages._ This may be used if the application protocol uses a non-uniform message framing system. In this case, the first solution could not be used.  
+    - _Disadvantages._ (Same as the first solution) This requires a change to the software on both sides of the connection, so it may not be an option if the application protocol is already specified and immutable.
+1. **Explicit timer assuming the worst.** Have a timer and assume that the connection has been dropped when the timer expires (of course, the timer is reset each time data is transferred). This is the way HTTP servers work, if they support persistent connections.  
+    - _Advantages._ Does not require changes to the application protocol; in situations where the code on the remote side cannot be changed, the first two solutions cannot be used. Furthermore, this solution causes less network traffic; it is the only solution that does not involve sending out keepalive (i.e., "are you still there?") packets.  
+    - _Disadvantages._ Depending on the protocol, this may cause a high number of valid connections to be dropped.
+1. **Manipulate the TCP/IP keepalive packet settings.** This is a highly controversial solution that has complex arguments for both pros and cons. It is discussed in depth in [Stevens' book]({% post_url 2009-05-04-tcpip-resources %}), chapter 23. Essentially, this instructs the TCP/IP stack to send keepalive packets periodically on the application's behalf.
+  - _Advantages._ Once the code to set the keepalive parameters is working, there is nothing else that the application needs to change. The other solutions all have timer events that the application must respond to; this one is "set and forget".  
+  - _Disadvantages._ RFC 1122, section 4.2.3.6 indicates that acknowledgements for TCP keepalives without data may not be transmitted reliably by routers; this may cause valid connections to be dropped. Furthermore, TCP/IP stacks are not required to support keepalives at all (and many embedded stacks do not), so this solution may not translate to other platforms.
 
-_Advantages._ The higher-level protocol (the actual messages) are not affected.  
+There are two ways to have the TCP/IP stack send keepalives on behalf of the application:
 
-_Disadvantages._ This requires a change to the software on both sides of the connection, so it may not be an option if the application protocol is already specified and immutable.
-  1. **Add a keepalive message to the actual application protocol (a "null" message).** This adds a new message to the application protocol: a "null" message that should just be ignored.  
-
-_Advantages._ This may be used if the application protocol uses a non-uniform message framing system. In this case, the first solution could not be used.  
-
-_Disadvantages._ (Same as the first solution) This requires a change to the software on both sides of the connection, so it may not be an option if the application protocol is already specified and immutable.
-  1. **Explicit timer assuming the worst.** Have a timer and assume that the connection has been dropped when the timer expires (of course, the timer is reset each time data is transferred). This is the way HTTP servers work, if they support persistent connections.  
-
-_Advantages._ Does not require changes to the application protocol; in situations where the code on the remote side cannot be changed, the first two solutions cannot be used. Furthermore, this solution causes less network traffic; it is the only solution that does not involve sending out keepalive (i.e., "are you still there?") packets.  
-
-_Disadvantages._ Depending on the protocol, this may cause a high number of valid connections to be dropped.
-  1. **Manipulate the TCP/IP keepalive packet settings.** This is a highly controversial solution that has complex arguments for both pros and cons. It is discussed in depth in [Stevens' book]({% post_url 2009-05-04-tcpip-resources %}), chapter 23. Essentially, this instructs the TCP/IP stack to send keepalive packets periodically on the application's behalf. There are two ways that this can be done:
-
-   1. Set SocketOptionName.KeepAlive. The MSDN documentation isn't clear that this uses a 2-hour timeout, which is too long for most applications. This can be changed (system-wide) through a registry key, but changing this system-wide (i.e., for all other applications) is greatly frowned upon. This is the old-fashioned way to enable keepalive packets.
-   1. Set per-connection keepalives. Keepalive parameters can be set per-connection only on Windows 2000 and newer, not the old 9x line. This has to be done by issuing I/O control codes to the socket: pass [IOControlCode.KeepAliveValues](http://msdn.microsoft.com/en-us/library/system.net.sockets.iocontrolcode.aspx) along with a structure to [Socket.IOControl](http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.iocontrol.aspx); the necessary structure is not covered by the .NET documentation but is described in the unmanaged documentation for [WSAIoctl (SIO_KEEPALIVE_VALS)](http://msdn.microsoft.com/en-us/library/ms741621.aspx).
-
-_Advantages._ Once the code to set the keepalive parameters is working, there is nothing else that the application needs to change. The other solutions all have timer events that the application must respond to; this one is "set and forget".  
-
-_Disadvantages._ RFC 1122, section 4.2.3.6 indicates that acknowledgements for TCP keepalives without data may not be transmitted reliably by routers; this may cause valid connections to be dropped. Furthermore, TCP/IP stacks are not required to support keepalives at all (and many embedded stacks do not), so this solution may not translate to other platforms.
-
+1. Set SocketOptionName.KeepAlive. The MSDN documentation isn't clear that this uses a 2-hour timeout, which is too long for most applications. This can be changed (system-wide) through a registry key, but changing this system-wide (i.e., for all other applications) is greatly frowned upon. This is the old-fashioned way to enable keepalive packets.
+1. Set per-connection keepalives. Keepalive parameters can be set per-connection only on Windows 2000 and newer, not the old 9x line. This has to be done by issuing I/O control codes to the socket: pass [IOControlCode.KeepAliveValues](http://msdn.microsoft.com/en-us/library/system.net.sockets.iocontrolcode.aspx) along with a structure to [Socket.IOControl](http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.iocontrol.aspx); the necessary structure is not covered by the .NET documentation but is described in the unmanaged documentation for [WSAIoctl (SIO_KEEPALIVE_VALS)](http://msdn.microsoft.com/en-us/library/ms741621.aspx).
  
 Each side of the application protocol may employ different keepalive solutions, and even different keepalive solutions at different states in the protocol. For example, the client side of a request/response style protocol may choose to send "null" requests when there is not a request pending, and switch to a timeout solution while waiting for a response.
 

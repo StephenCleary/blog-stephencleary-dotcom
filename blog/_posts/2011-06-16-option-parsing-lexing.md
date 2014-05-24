@@ -14,9 +14,9 @@ The first step in parsing a command line is _lexing_, which converts a single st
 The information in this section is derived from the TechNet articles [Command shell overview](http://technet.microsoft.com/en-us/library/bb490954.aspx){:.alert-link} ([webcite](http://www.webcitation.org/5ytzcAcrB){:.alert-link}) and [The Windows NT Command Shell](http://technet.microsoft.com/en-us/library/cc723564.aspx){:.alert-link} ([webcite](http://www.webcitation.org/5ytzuqd4h){:.alert-link}).
 </div>
 
-The command shell has these special characters: **&**, **|**, **(**, **)**, **<**, **>**, and **^**. There are two ways to pass these special characters on the command line: _escaping_ and _quoting_.
+The command shell has these special characters: `&`, `|`, `(`, `)`, `<`, `>`, and `^`. There are two ways to pass these special characters on the command line: _escaping_ and _quoting_.
 
-The **^** character is the shell escape character. You may prefix any of the special shell characters with that escape character, and the special shell character will be passed to the program (without the escape character).
+The `^` character is the shell escape character. You may prefix any of the special shell characters with that escape character, and the special shell character will be passed to the program (without the escape character).
 
 The command shell also supports quoting; special characters may be passed within a pair of double-quotes. In this case, the special characters are passed to the program along with the surrounding quotes.
 
@@ -52,9 +52,9 @@ Shell escaping and quoting are applied to every process by the Command Shell; th
 
 ## Default .NET Lexing
 
-The command line is split up into a list of process arguments by the .NET runtime. The algorithm is described in the documentation for [Environment.GetCommandLineArgs](http://msdn.microsoft.com/en-us/library/system.environment.getcommandlineargs.aspx). The same results (except for the process name) are also passed as the single argument to the **Main** method, if present.
+The command line is split up into a list of process arguments by the .NET runtime. The algorithm is described in the documentation for [Environment.GetCommandLineArgs](http://msdn.microsoft.com/en-us/library/system.environment.getcommandlineargs.aspx). The same results (except for the process name) are also passed as the single argument to the `Main` method, if present.
 
-The .NET lexing also uses a combination of escaping and quoting, but it has some surprising results because escaping is allowed inside quoting. The escape character is **\**, and the quote character is the double-quote.
+The .NET lexing also uses a combination of escaping and quoting, but it has some surprising results because escaping is allowed inside quoting. The escape character is `\`, and the quote character is the double-quote.
 
 Each non-escaped double-quote starts or ends a quoted string, just like command shell quoting. However, unlike command shell quoting, escaping is allowed within quoted strings. The .NET lexing also allows two consecutive double-quotes inside a quoted string to represent a single double-quote. Consider the outputs from this example program:
 

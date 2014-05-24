@@ -8,7 +8,7 @@ Most Microsoft native code dlls support x86, x64, and IA64 architectures. We hav
 
 The main executable for this project is C#, platform-agnostic, and we wanted to keep it that way. Normally, the installer would just install the exe and then choose one of the interop dll's to install, based on the architecture. However, we had to create a demo system that could be run without installing - so, the question became: how does one detect the platform at runtime and bind to the appropriate dll?
 
-Well, after spending a lot of time researching ways it wouldn't work (<probing>, GetSystemInfo, AppendPrivatePath), and rejecting setting up a second AppDomain (too much pain and overhead for one simple problem), we finally hit upon a ridiculously simple solution: handle the assembly's ModuleResolve event.
+Well, after spending a lot of time researching ways it wouldn't work (\<probing>, GetSystemInfo, AppendPrivatePath), and rejecting setting up a second AppDomain (too much pain and overhead for one simple problem), we finally hit upon a ridiculously simple solution: handle the assembly's ModuleResolve event.
 
 IntPtr.Size gives you a hint on how to proceed, and from there, ModuleResolveEventHandler just needs a bit of try...except to distinguish x64 from IA64. You just have to be careful to handle re-entry situations (in case the dll really _is_ missing).
 

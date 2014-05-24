@@ -2,7 +2,7 @@
 layout: post
 title: "Generic Generics and Method Overloads"
 ---
-I was happily coding along this week, adding more IList<T> extension methods to my general utility library, when I came across an annoying problem. The following code works fine:
+I was happily coding along this week, adding more IList\<T> extension methods to my general utility library, when I came across an annoying problem. The following code works fine:
 
     int test1<T>(IList<T> x) { return 0; }
     int test1<T>(IEnumerable<T> x) { return 1; }
@@ -45,12 +45,12 @@ The reasoning behind this is a bit obscure, but understandable. The compiler det
     IList<IList<int>> tmp1 = list3;
     IEnumerable<IEnumerable<int>> tmp2 = list3;
 
-However, when determining which overload is "better", the compiler _cannot_ convert from IList<IList<int>> to IEnumerable<IEnumerable<int>>, so it decides that neither overload is better, and therefore they are ambiguous. The first example worked because there _is_ a conversion from IList<T> to IEnumerable<T>, so the IList<T> overload was chosen.
+However, when determining which overload is "better", the compiler _cannot_ convert from IList\<IList\<int\>\> to IEnumerable\<IEnumerable\<int\>\>, so it decides that neither overload is better, and therefore they are ambiguous. The first example worked because there _is_ a conversion from IList\<T> to IEnumerable\<T>, so the IList\<T> overload was chosen.
 
     // The lack of this implicit conversion is why the methods are ambiguous.
     //tmp2 = tmp1;
 
-Note also that this situation _may_ change when .NET 4 comes out. .NET 4 introduces covariance and contravariance for generics. The concepts don't apply to APIs that are both readable and writeable (e.g., IList<T>), but they do apply to APIs that are one or the other (e.g., IEnumerable<T>). It's expected that .NET 4 will have an implicit conversion from IList<IList<int>> to IEnumerable<IEnumerable<int>> (because IList<IList<int>> implements IEnumerable<IList<int>>), but it's unclear exactly how "smart" the compiler will be while resolving overload resolution.
+Note also that this situation _may_ change when .NET 4 comes out. .NET 4 introduces covariance and contravariance for generics. The concepts don't apply to APIs that are both readable and writeable (e.g., IList\<T>), but they do apply to APIs that are one or the other (e.g., IEnumerable\<T>). It's expected that .NET 4 will have an implicit conversion from IList\<IList\<int\>\> to IEnumerable\<IEnumerable\<int\>\> (because IList\<IList\<int\>\> implements IEnumerable\<IList\<int\>\>), but it's unclear exactly how "smart" the compiler will be while resolving overload resolution.
 
 [We live in interesting times.](http://en.wikipedia.org/wiki/May_you_live_in_interesting_times)
 
