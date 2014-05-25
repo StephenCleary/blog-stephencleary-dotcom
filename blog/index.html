@@ -1,12 +1,23 @@
 ---
 layout: default
+id: 'index'
 ---
 
 <div>
-    <h1>All Posts</h1>
-    <ul class="nav nav-pills nav-stacked">
+    {% if site.url == site.url_blog %}
+    <h1>All Blog Posts</h1>
+    <div class="list-group">
         {% for post in site.posts %}
-            <li><a href="{{ post.url | prepend: site.baseurl }}">{{ post.title }} <small>&bull; {{ post.date | date: "%b %-d, %Y" }}</small></a></li>
+        <a href="{{ post.url | prepend: site.baseurl }}" class="list-group-item clearfix"><h2 class="pull-right"><small>{{ post.date | date: "%b %-d, %Y" }}</small></h2><h2>{{ post.title }}</h2></a>
         {% endfor %}
-    </ul>
+    </div>
+    {% else %}
+    <h1>Stephen Cleary "dot com"</h1>
+    <div class="list-group">
+        <a href="{{ site.url_blog }}" class="list-group-item clearfix"><h2>Blog</h2></a>
+        <a href="/projects/" class="list-group-item clearfix"><h2>Open-source libraries and applications</h2></a>
+        <a href="/publications/" class="list-group-item clearfix"><h2>Books and articles</h2></a>
+        <a href="/contact/" class="list-group-item clearfix"><h2>Online accounts and contact information</h2></a>
+    </div>
+    {% endif %}
 </div>
