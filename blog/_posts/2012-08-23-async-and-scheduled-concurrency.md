@@ -47,7 +47,7 @@ The other TaskScheduler is very interesting. It's new in .NET 4.5 and goes by th
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
-As of this writing, the .NET 4.5 docs are a bit lacking. For more information on the design of ConcurrentExclusiveSchedulerPair, see [this blog post by Stephen Toub](http://blogs.msdn.com/b/pfxteam/archive/2010/04/08/9990422.aspx){:.alert-link} (who else?) or [the original implementation](http://code.msdn.microsoft.com/Samples-for-Parallel-b4b76364/sourcecode?fileId=44488&pathId=2072038893){.alert-link}. At that time, it was called ConcurrentExclusiveInterleave.
+As of this writing, the .NET 4.5 docs are a bit lacking. For more information on the design of ConcurrentExclusiveSchedulerPair, see [this blog post by Stephen Toub](http://blogs.msdn.com/b/pfxteam/archive/2010/04/08/9990422.aspx){:.alert-link} (who else?) or [the original implementation](http://code.msdn.microsoft.com/Samples-for-Parallel-b4b76364/sourcecode?fileId=44488&pathId=2072038893){:.alert-link}. At that time, it was called ConcurrentExclusiveInterleave.
 </div>
 
 ConcurrentExclusiveSchedulerPair actually handles any mixture of these scenarios:
