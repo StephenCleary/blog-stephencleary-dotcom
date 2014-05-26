@@ -9,4 +9,4 @@ To use:
 You can serve Jekyll from within VS, but it can't be stopped in the Package Manager Console. So use a regular Powershell console instead:
 > D:\Programs\PortableJekyll\setpath.ps1
 > chcp 65001
-> jekyll serve -w
+> jekyll serve -w --config _config.blog.local.yml
