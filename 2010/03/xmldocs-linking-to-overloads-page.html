@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>XmlDocs: Linking to the Overloads Page</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2010/03/xmldocs-linking-to-overloads-page.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>XmlDocs: Linking to the Overloads Page</h1>
+          <small>Mar 27, 2010 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>XML documentation has a natural “link to code” element: the <a href="http://msdn.microsoft.com/en-us/library/acd0tfbe.aspx">&lt;see&gt; tag</a>. When a function is overloaded, the resulting help file contains an “overloads” page <a href="http://msdn.microsoft.com/en-us/library/system.text.encoding.getstring.aspx">like this</a>, but getting the <strong>see</strong> element to link to the overloads page is not exactly straightforward.</p>
+
+<p>The &lt;see&gt; tag is one of the tags that is verified by the compiler, so it’s not possible to just stick anything in there. The <strong>see.cref</strong> attribute must be a resolvable code element. The compiler doesn’t allow you to resolve to a method group; it wants a single, unambiguous member reference.</p>
+
+<p>Here’s an example of a warning/error message when attempting to link to an overload group:</p>
+
+<pre><code>Warning as Error: Ambiguous reference in cref attribute: 'FindFiles'. Assuming 'Nito.KitchenSink.WinInet.FtpHandle.FindFiles(string, Nito.KitchenSink.WinInet.FtpHandle.FindFilesFlags)', but could have also matched other overloads including 'Nito.KitchenSink.WinInet.FtpHandle.FindFiles()'.
+</code></pre>
+
+<p>Here’s a little-known fact about the &lt;see&gt; tag: it will <em>not</em> verify any <strong>see.cref</strong> values that start with a single character followed by a colon. This enables specifying full DocumentationId links such as “T:Nito.Async.ActionDispatcher”.</p>
+
+<p>There is a standard extension of the DocumentationId format for overloads that is understood by Sandcastle: it uses the “Overload:” prefix as such: “Overload:System.Windows.Threading.Dispatcher.Invoke”. Unfortunately, Visual Studio (as of 2008) will attempt to resolve a link like this, and will fail.</p>
+
+<p>The workaround is to use the “O:” prefix for such links (this prefix is unused by the DocumentationId format), and modify the XML documentation file before it is passed to Sandcastle. The “O:” prefix bypasses Visual Studio’s verification, and the “Overload:” prefix is correctly understood by Sandcastle.</p>
+
+<p>In my projects, I use the following XSLT transformation to automatically translate <strong>see.cref</strong> references starting with “O:” to have a prefix of “Overload:” instead:</p>
+
+<pre><code>&lt;?xml version='1.0'?&gt;
+&lt;xsl:stylesheet xmlns:xsl='http://www.w3.org/1999/XSL/Transform' version='1.0'&gt;
+ &lt;xsl:output method="xml" indent="yes"/&gt;
+
+   &lt;!-- Copy all documentation as-is except for what matches other rules --&gt;
+   &lt;xsl:template match="@* | node()"&gt;
+    &lt;xsl:copy&gt;
+     &lt;xsl:apply-templates select="@* | node()"/&gt;
+    &lt;/xsl:copy&gt;
+   &lt;/xsl:template&gt;
+
+   &lt;!-- Convert "cref" references that start with "O:" to starting with "Overload:". --&gt;
+   &lt;xsl:template match="@cref[starts-with(., 'O:')]"&gt;
+    &lt;xsl:attribute name="cref"&gt;
+     &lt;xsl:value-of select="concat('Overload:', substring-after(., 'O:'))"/&gt;
+    &lt;/xsl:attribute&gt;
+   &lt;/xsl:template&gt;
+&lt;/xsl:stylesheet&gt;
+</code></pre>
+
+<p>By the way, it’s not difficult to include an XSLT transformation as part of an MSBuild project file (with the <a href="http://msbuildextensionpack.codeplex.com/">MSBuild Extension Pack</a>). It’s beyond the scope of this blog post, but you can check out the <a href="http://nitoasync.codeplex.com/SourceControl/changeset/view/40861#324550">Nito.Async main project build file</a> for an example.</p>
+
+
+  </article>
+    
+    <footer>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2010/03/xml-documentation-basics.html" title="XML Documentation: The Basics">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2010/04/sharp-corners-ilist-isreadonly.html" title="Sharp Corners: IList&lt;T&gt;.IsReadOnly != IList.IsReadOnly">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2010/03/xmldocs-linking-to-overloads-page";
+var disqus_title = "XmlDocs: Linking to the Overloads Page";
+var disqus_url = "http://localhost:4000/2010/03/xmldocs-linking-to-overloads-page.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

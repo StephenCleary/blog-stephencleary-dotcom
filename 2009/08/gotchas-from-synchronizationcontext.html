@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Gotchas from SynchronizationContext!</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2009/08/gotchas-from-synchronizationcontext.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Gotchas from SynchronizationContext!</h1>
+          <small>Aug 14, 2009 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>This week, I’ve been designing a <a href="http://msdn.microsoft.com/en-us/library/system.threading.synchronizationcontext.aspx">SynchronizationContext</a> equivalent for the Compact Framework as groundwork for sharing a layer of asynchronous service objects between desktop and mobile applications. I ran into two difficulties with its semantics. I’ve encountered both of these before, but now that I’m designing something nearly equivalent, I’m trying to fix them before they cause problems for others.</p>
+
+<h2 id="gotcha-1-reentrancy">Gotcha #1: Reentrancy</h2>
+
+<p>Did you know that <a href="http://msdn.microsoft.com/en-us/library/system.threading.synchronizationcontext.send.aspx">SynchronizationContext.Send</a> can directly invoke the delegate argument? You did? Ah, yes… the default implementation, mscorlib.dll:System.Threading.SynchronizationContext.Send does indeed invoke its delegate argument directly. This is a slightly obscure but not unheard-of fact.</p>
+
+<p>Now for the one that surprised me this week: <a href="http://msdn.microsoft.com/en-us/library/system.threading.synchronizationcontext.post.aspx">SynchronizationContext.Post</a> can <em>also</em> directly invoke its delegate argument! The evidence is in System.Web.dll:System.Web.AspNetSynchronizationContext.Post, which invokes its delegate argument directly.</p>
+
+<p>A careful reading of the SynchronizationContext documentation leads me to conclude that both Send and Post may result in reentrant behavior. Previously, I had assumed that Post (at least) would not be reentrant.</p>
+
+<p>If code for an asynchronous component needs to prevent reentrancy from a generic SynchronizationContext, it may easily do so by using the <a href="http://msdn.microsoft.com/en-us/library/system.threading.threadpool.aspx">ThreadPool</a>:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="c1">/// &lt;summary&gt;</span>
+<span class="c1">/// Provides extension methods for &lt;see cref=&quot;SynchronizationContext&quot;/&gt;.</span>
+<span class="c1">/// &lt;/summary&gt;</span>
+<span class="k">public</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">SynchronizationContextExtensions</span>
+<span class="p">{</span>
+    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">/// Synchronously invokes a delegate by passing it to a &lt;see cref=&quot;SynchronizationContext&quot;/&gt;, waiting for it to complete.</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="c1">/// &lt;param name=&quot;synchronizationContext&quot;&gt;The &lt;see cref=&quot;SynchronizationContext&quot;/&gt; to pass the delegate to. May not be null.&lt;/param&gt;</span>
+    <span class="c1">/// &lt;param name=&quot;action&quot;&gt;The delegate to invoke. May not be null.&lt;/param&gt;</span>
+    <span class="c1">/// &lt;remarks&gt;</span>
+    <span class="c1">/// &lt;para&gt;This method is guaranteed to not be reentrant.&lt;/para&gt;</span>
+    <span class="c1">/// &lt;/remarks&gt;</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">SafeSend</span><span class="p">(</span><span class="k">this</span> <span class="n">SynchronizationContext</span> <span class="n">synchronizationContext</span><span class="p">,</span> <span class="n">Action</span> <span class="n">action</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="c1">// The semantics of SynchronizationContext.Send allow it to invoke the delegate directly, but we can&#39;t allow that.</span>
+        <span class="n">Action</span> <span class="n">forwardDelegate</span> <span class="p">=</span> <span class="p">()</span> <span class="p">=&gt;</span> <span class="n">synchronizationContext</span><span class="p">.</span><span class="n">Send</span><span class="p">((</span><span class="n">state</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="n">action</span><span class="p">(),</span> <span class="k">null</span><span class="p">);</span>
+        <span class="n">IAsyncResult</span> <span class="n">result</span> <span class="p">=</span> <span class="n">forwardDelegate</span><span class="p">.</span><span class="n">BeginInvoke</span><span class="p">(</span><span class="k">null</span><span class="p">,</span> <span class="k">null</span><span class="p">);</span>
+        <span class="n">result</span><span class="p">.</span><span class="n">AsyncWaitHandle</span><span class="p">.</span><span class="n">WaitOne</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">/// Asynchronously invokes a delegate by passing it to a &lt;see cref=&quot;SynchronizationContext&quot;/&gt;, returning immediately.</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="c1">/// &lt;param name=&quot;synchronizationContext&quot;&gt;The &lt;see cref=&quot;SynchronizationContext&quot;/&gt; to pass the delegate to. May not be null.&lt;/param&gt;</span>
+    <span class="c1">/// &lt;param name=&quot;action&quot;&gt;The delegate to invoke. May not be null.&lt;/param&gt;</span>
+    <span class="c1">/// &lt;remarks&gt;</span>
+    <span class="c1">/// &lt;para&gt;This method is guaranteed to not be reentrant.&lt;/para&gt;</span>
+    <span class="c1">/// &lt;/remarks&gt;</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">SafePost</span><span class="p">(</span><span class="k">this</span> <span class="n">SynchronizationContext</span> <span class="n">synchronizationContext</span><span class="p">,</span> <span class="n">Action</span> <span class="n">action</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="c1">// The semantics of SynchronizationContext.Post allow it to invoke the delegate directly, but we can&#39;t allow that.</span>
+        <span class="n">ThreadPool</span><span class="p">.</span><span class="n">QueueUserWorkItem</span><span class="p">((</span><span class="n">state</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="n">synchronizationContext</span><span class="p">.</span><span class="n">Post</span><span class="p">((</span><span class="n">state2</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="n">action</span><span class="p">(),</span> <span class="k">null</span><span class="p">));</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>This code or something similar may go into the next release of <a href="http://www.codeplex.com/NitoAsync">Nito.Async</a>. However, the code as-is will cause a deadlock when used with synchronization contexts that are sometimes reentrant (e.g., WindowsFormsSynchronizationContext.Send or DispatcherSynchronizationContext.Send if called from the specific thread associated with that synchronization context).</p>
+
+<h2 id="gotcha-2-non-exclusive-execution">Gotcha #2: Non-exclusive execution</h2>
+
+<p>SynchronizationContext does not guarantee that delegates queued to it will be executed exclusively (one at a time). This is obvious; the default implementation (using the ThreadPool) will simply queue them to the ThreadPool, which will execute them in parallel.</p>
+
+<p>However, this brings up concerns when designing APIs for asynchronous components. In particular, cancellation becomes problematic.</p>
+
+<p>Some SynchronizationContext instances do execute exclusively: the <a href="http://msdn.microsoft.com/en-us/library/system.windows.forms.windowsformssynchronizationcontext.aspx">WindowsFormsSynchronizationContext</a>, <a href="http://msdn.microsoft.com/en-us/library/system.windows.threading.dispatchersynchronizationcontext.aspx">DispatcherSynchronizationContext</a> and <a href="http://www.codeplex.com/NitoAsync">Nito.Async.ActionDispatcherSynchronizationContext</a> all operate on some type of queue internally, which has a single thread processing requests one at a time.</p>
+
+<p>Most asynchronous components that use the <a href="http://msdn.microsoft.com/en-us/library/wewwczdw.aspx">event-based asynchronous pattern (EBAP)</a> - including Nito.Async classes - assume that SynchronizationContext will actually synchronize the delegates with some notion of an “originating thread”. However, this is only true for SynchronizationContext instances that execute exclusively. So it works in most cases (Windows Forms, WPF, and explicit ActionDispatcher queues), but would fail in other cases (most notably ASP.NET and in free-threaded/ThreadPool contexts).</p>
+
+<p>There does not appear to be an EBAP solution that is Clean (keeping the EBAP design), Generic (working with any SynchronizationContext), and Safe (preventing event callbacks after cancellation). In fact, this is another manifestation of the <a href="/2009/06/threadsafe-events.html">“thread-safe” events problem</a>.</p>
+
+<p>One approach is to break the EBAP design by passing callbacks to the _Operation_Async method; a callback delegate can be made cancelable, returning an “ICancelable” to the caller. By enclosing the callback in a cancelable object, we can introduce a lock scope just for that single callback and its canceller. A (recursive) lock could be held during the delegate invokation and requested by ICancelable.Cancel; normally, holding locks during callbacks is A Fast Road To Pain, but with careful implementation it would work in this instance. This would be a Generic and Safe solution (works with any SynchronizationContext and guarantees not to invoke a callback after ICancelable.Cancel returns). Further development down this design path would yield something very similar to the <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.task(VS.100).aspx">Task</a> class expected to be in .NET 4.0.</p>
+
+<p>A second approach is to break thread safety by using <a href="/2009/06/threadsafe-events.html">“thread-safe events”</a>, wrong solution #2: the EBAP component can queue a delegate that executes the _Operation_Completed event from the component after copying it into a local variable. Cancelling the notification is possible by clearing the event, but the race condition means that the notification may be invoked after _Operation_Cancel returns. This solution is Clean and Generic (keeps the _Operation_Completed event on the EBAP class and works with any SynchronizationContext). Also, this solution is Safe as long as the SynchronizationContext executes exclusively.</p>
+
+<p>The third approach is to only support SynchronizationContext instances that execute exclusively. This approach is the one currently taken by Nito.Async EBAP components: each delegate is assumed to be synchronized when it is queued to the SynchronizationContext, and uses a <a href="/2009/04/asynchronous-callback-contexts.html">callback context</a> to determine if it has been cancelled. This solution is Clean and Safe (keeping the _Operation_Completed event on the EBAP class and guarantees not to invoke it after _Operation_Cancel returns).</p>
+
+<h2 id="the-future">The future</h2>
+
+<p>I’m a big fan of quiet cancellation over noisy cancellation. If I call “Cancel”, then I don’t need an event to tell me that I just called “Cancel”. The entire Nito.Async library works on the same (quiet cancellation) principle. However, if noisy cancellation is embraced, then the Safe issue goes away (because noisy cancellation EBAP components cannot be Safe, by definition).</p>
+
+<p>Perhaps - just perhaps - the next version of Nito.Async will change to use noisy cancellation semantics. I’m still exploring alternatives. :)</p>
+
+
+  </article>
+    
+    <footer>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2009/07/this-post-illustrates-one-of-several.html" title="SimplePropertyPath: A Poor Man&#39;s Binding">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2009/08/alternative-guids-for-mobile-devices.html" title="Alternative GUIDs for mobile devices using SQL Server Compact">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2009/08/gotchas-from-synchronizationcontext";
+var disqus_title = "Gotchas from SynchronizationContext!";
+var disqus_url = "http://localhost:4000/2009/08/gotchas-from-synchronizationcontext.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

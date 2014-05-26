@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Async WCF Today and Tomorrow</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2012/08/async-wcf-today-and-tomorrow.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Async WCF Today and Tomorrow</h1>
+          <small>Aug 2, 2012 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>In the near future, all of my web services will be changed to REST APIs served via the Web API library. However, for now I do have some WCF services that are implemented using the Async CTP, and I thought it would be helpful to describe how it was done.</p>
+
+<p>My current production services use the Task-based Asynchronous Pattern (TAP) on VS2010 with the Async CTP. You can do it the same way using VS2012 with the Async Targeting Pack for .NET 4.0. I’ll also describe how WCF is becoming async-friendly in the near future with .NET 4.5.</p>
+
+<p>To keep things simple, I’m just going to expose a “Calculator” service that has a single “Divide” method. If there is a DivideByZeroException, the Calculator service will raise a CalculatorFault.</p>
+
+<h2 id="today">Today</h2>
+
+<p>Let’s tackle the server first. If we want to create an asynchronous WCF service method, we have to set OperationContract.AsyncPattern to true and follow the Asynchronous Programming Model (APM) pattern:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="na">[DataContract]</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">CalculatorFault</span>
+<span class="p">{</span>
+<span class="na">  [DataMember]</span>
+  <span class="k">public</span> <span class="kt">string</span> <span class="n">Message</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="na">[ServiceContract]</span>
+<span class="k">public</span> <span class="k">interface</span> <span class="n">ICalculator</span>
+<span class="p">{</span>
+  <span class="c1">// Synchronous equivalent:</span>
+  <span class="c1">//  [OperationContract]</span>
+  <span class="c1">//  [FaultContract(typeof(CalculatorFault))]</span>
+  <span class="c1">//  uint Divide(uint numerator, uint denominator);</span>
+
+<span class="na">  [OperationContract(AsyncPattern = true)]</span>
+<span class="na">  [FaultContract(typeof(CalculatorFault))]</span>
+  <span class="n">IAsyncResult</span> <span class="nf">BeginDivide</span><span class="p">(</span><span class="kt">uint</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">uint</span> <span class="n">denominator</span><span class="p">,</span> <span class="n">AsyncCallback</span> <span class="n">callback</span><span class="p">,</span> <span class="kt">object</span> <span class="n">state</span><span class="p">);</span>
+  <span class="kt">uint</span> <span class="nf">EndDivide</span><span class="p">(</span><span class="n">IAsyncResult</span> <span class="n">asyncResult</span><span class="p">);</span>
+<span class="p">}</span></code></pre></div>
+
+<p>In WCF, the “asynchronicity” of the server is an implementation detail. If you look at the metadata that is published for ICalculator, it looks exactly like the synchronous equivalent; the ICalculator metadata just describes a single operation named “Divide”.</p>
+
+<p>If we’re going to have an asynchronous server, we’re going to want to use the Task-based Asynchronous Pattern (TAP) to write it. So here’s our implementation, error handling and all:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">Calculator</span> <span class="p">:</span> <span class="n">ICalculator</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">uint</span><span class="p">&gt;</span> <span class="n">DivideAsync</span><span class="p">(</span><span class="kt">uint</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">uint</span> <span class="n">denominator</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">try</span>
+    <span class="p">{</span>
+      <span class="kt">var</span> <span class="n">myTask</span> <span class="p">=</span> <span class="n">Task</span><span class="p">.</span><span class="n">Factory</span><span class="p">.</span><span class="n">StartNew</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">numerator</span> <span class="p">/</span> <span class="n">denominator</span><span class="p">);</span>
+      <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">myTask</span><span class="p">;</span>
+      <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">DivideByZeroException</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="n">FaultException</span><span class="p">&lt;</span><span class="n">CalculatorFault</span><span class="p">&gt;(</span><span class="k">new</span> <span class="n">CalculatorFault</span> <span class="p">{</span> <span class="n">Message</span> <span class="p">=</span> <span class="s">&quot;Undefined result&quot;</span> <span class="p">});</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>I’m using StartNew for example code; real code can use Task.Run (TaskEx.Run for Async CTP) if you want to run code on a background thread.</p>
+</div>
+
+<p>OK, so we’ve got our implementation (using TAP), and our interface (using APM). Now we have to wire them together by writing Begin/End wrapper methods around our TAP method:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">Calculator</span> <span class="p">:</span> <span class="n">ICalculator</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="n">IAsyncResult</span> <span class="nf">BeginDivide</span><span class="p">(</span><span class="kt">uint</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">uint</span> <span class="n">denominator</span><span class="p">,</span> <span class="n">AsyncCallback</span> <span class="n">callback</span><span class="p">,</span> <span class="kt">object</span> <span class="n">state</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="c1">// See the Task-Based Asynchronous Pattern document for an explanation of the Begin/End implementations.</span>
+    <span class="kt">var</span> <span class="n">tcs</span> <span class="p">=</span> <span class="k">new</span> <span class="n">TaskCompletionSource</span><span class="p">&lt;</span><span class="kt">uint</span><span class="p">&gt;(</span><span class="n">state</span><span class="p">);</span>
+    <span class="kt">var</span> <span class="n">task</span> <span class="p">=</span> <span class="n">DivideAsync</span><span class="p">(</span><span class="n">numerator</span><span class="p">,</span> <span class="n">denominator</span><span class="p">);</span>
+    <span class="n">task</span><span class="p">.</span><span class="n">ContinueWith</span><span class="p">(</span><span class="n">t</span> <span class="p">=&gt;</span>
+    <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="n">IsFaulted</span><span class="p">)</span>
+        <span class="n">tcs</span><span class="p">.</span><span class="n">TrySetException</span><span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="n">Exception</span><span class="p">.</span><span class="n">InnerExceptions</span><span class="p">);</span>
+      <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="n">IsCanceled</span><span class="p">)</span>
+        <span class="n">tcs</span><span class="p">.</span><span class="n">TrySetCanceled</span><span class="p">();</span>
+      <span class="k">else</span>
+        <span class="n">tcs</span><span class="p">.</span><span class="n">TrySetResult</span><span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="n">Result</span><span class="p">);</span>
+
+      <span class="k">if</span> <span class="p">(</span><span class="n">callback</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+        <span class="n">callback</span><span class="p">(</span><span class="n">tcs</span><span class="p">.</span><span class="n">Task</span><span class="p">);</span>
+    <span class="p">});</span>
+
+    <span class="k">return</span> <span class="n">tcs</span><span class="p">.</span><span class="n">Task</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="k">public</span> <span class="kt">uint</span> <span class="nf">EndDivide</span><span class="p">(</span><span class="n">IAsyncResult</span> <span class="n">asyncResult</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">try</span>
+    <span class="p">{</span>
+      <span class="k">return</span> <span class="p">((</span><span class="n">Task</span><span class="p">&lt;</span><span class="kt">uint</span><span class="p">&gt;)</span><span class="n">asyncResult</span><span class="p">).</span><span class="n">Result</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">AggregateException</span> <span class="n">ex</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="c1">// Note: the original stack trace is lost by this re-throw, but it doesn&#39;t really matter.</span>
+      <span class="k">throw</span> <span class="n">ex</span><span class="p">.</span><span class="n">InnerException</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>The wrappers are straightforward. The only tricky part is in the End wrapper where we re-throw a FaultException.</p>
+
+<p>The wrappers are also tedious, especially if you have a lot of methods to wrap. My <a href="http://nitoasyncex.codeplex.com/">AsyncEx library</a> includes AsyncFactory.ToBegin and AsyncFactory.ToEnd methods that handle the TAP-to-APM conversion cleanly. That’s what I use:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">Calculator</span> <span class="p">:</span> <span class="n">ICalculator</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="n">IAsyncResult</span> <span class="nf">BeginDivide</span><span class="p">(</span><span class="kt">uint</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">uint</span> <span class="n">denominator</span><span class="p">,</span> <span class="n">AsyncCallback</span> <span class="n">callback</span><span class="p">,</span> <span class="kt">object</span> <span class="n">state</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="kt">var</span> <span class="n">task</span> <span class="p">=</span> <span class="n">DivideAsync</span><span class="p">(</span><span class="n">numerator</span><span class="p">,</span> <span class="n">denominator</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">AsyncFactory</span><span class="p">&lt;</span><span class="kt">uint</span><span class="p">&gt;.</span><span class="n">ToBegin</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">state</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="k">public</span> <span class="kt">uint</span> <span class="nf">EndDivide</span><span class="p">(</span><span class="n">IAsyncResult</span> <span class="n">asyncResult</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="n">AsyncFactory</span><span class="p">&lt;</span><span class="kt">uint</span><span class="p">&gt;.</span><span class="n">ToEnd</span><span class="p">(</span><span class="n">asyncResult</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>At this point, we have a working server that is implemented asynchronously.</p>
+
+<p>Now, let’s turn our attention to the client. In WCF, either the service or the client can be either synchronous or asynchronous; they don’t have to match. I usually want asynchronous clients, though - and if they’re asynchronous, I want them to be TAP!</p>
+
+<p>Fortunately, this is pretty easy. Create a client proxy <em>enabling asynchronous methods</em> (under the “advanced” options). By default, the generated proxy supports APM and EAP (Event-based Asynchronous Programming), but not TAP.</p>
+
+<p>There are two ways to add TAP support. You can add it manually by implementing a TAP wrapper method around the APM methods:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">static</span> <span class="k">class</span> <span class="nc">Program</span>
+<span class="p">{</span>
+  <span class="c1">// Wrap those Begin/End methods back into a Task-based API.</span>
+  <span class="k">public</span> <span class="k">static</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">uint</span><span class="p">&gt;</span> <span class="n">DivideAsyncTask</span><span class="p">(</span><span class="k">this</span> <span class="n">CalculatorClient</span> <span class="n">client</span><span class="p">,</span> <span class="kt">uint</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">uint</span> <span class="n">denominator</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">uint</span><span class="p">&gt;.</span><span class="n">Factory</span><span class="p">.</span><span class="n">FromAsync</span><span class="p">(</span><span class="n">client</span><span class="p">.</span><span class="n">BeginDivide</span><span class="p">,</span> <span class="n">client</span><span class="p">.</span><span class="n">EndDivide</span><span class="p">,</span> <span class="n">numerator</span><span class="p">,</span> <span class="n">denominator</span><span class="p">,</span> <span class="k">null</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p><strong>Or,</strong> you can build the sample project at “My Documents\Microsoft Visual Studio Async CTP\Samples(C# WCF) Stock Quotes”, copy the TaskWsdlImportExtension.dll into your solution, and modify your app.config to use it for building WCF proxies (as described in <a href="http://www.larswilhelmsen.com/2010/11/05/taskwsdlimportextensiona-hidden-gem-in-the-c-vnext-async-ctp-samples/">this blog post</a>):</p>
+
+<pre><code>&lt;configuration&gt;
+ &lt;system.serviceModel&gt;
+  &lt;client&gt;
+   &lt;metadata&gt;
+    &lt;wsdlImporters&gt;
+     &lt;extension type="TaskWsdlImportExtension.TaskAsyncWsdlImportExtension, TaskWsdlImportExtension" /&gt;
+    &lt;/wsdlImporters&gt;
+   &lt;/metadata&gt;
+  &lt;/client&gt;
+ &lt;/system.serviceModel&gt;
+&lt;/configuration&gt;
+</code></pre>
+
+<p>This is more work to set up, but once it’s done you don’t have to write any TAP wrappers at all. TaskAsyncWsdlImportExtension does them for you. Unfortunately, this doesn’t seem to be an option on VS2012 with the Async Targeting Pack.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>Side note: TaskWsdlImportExtension will generate a method called “DivideAsync”, while our manual wrapper uses “DivideAsyncTask” - why the difference? Well, we <em>would</em> have used “DivideAsync”, but the name was already taken by the EAP method. TaskWsdlImportExtension does not generate the EAP methods, so it can use the “DivideAsync” name.</p>
+</div>
+
+<p>Now, we’re ready to actually call the client. I have some TAP code that uses the WCF client proxy (“CallCalculator”) as well as a simple Main:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">static</span> <span class="k">class</span> <span class="nc">Program</span>
+<span class="p">{</span>
+  <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">CallCalculator</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="k">try</span>
+    <span class="p">{</span>
+      <span class="kt">var</span> <span class="n">proxy</span> <span class="p">=</span> <span class="k">new</span> <span class="n">CalculatorClient</span><span class="p">();</span>
+      <span class="c1">// The following call should be &quot;DivideAsyncTask&quot; if we wrote our own wrappers.</span>
+      <span class="kt">var</span> <span class="n">task</span> <span class="p">=</span> <span class="n">proxy</span><span class="p">.</span><span class="n">DivideAsync</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="m">0</span><span class="p">);</span>
+      <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">task</span><span class="p">;</span>
+      <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Result: &quot;</span> <span class="p">+</span> <span class="n">result</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">FaultException</span><span class="p">&lt;</span><span class="n">CalculatorFault</span><span class="p">&gt;</span> <span class="n">ex</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Console</span><span class="p">.</span><span class="n">Error</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Error: &quot;</span> <span class="p">+</span> <span class="n">ex</span><span class="p">.</span><span class="n">Detail</span><span class="p">.</span><span class="n">Message</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">try</span>
+    <span class="p">{</span>
+      <span class="n">CallCalculator</span><span class="p">().</span><span class="n">Wait</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Console</span><span class="p">.</span><span class="n">Error</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">ex</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="n">Console</span><span class="p">.</span><span class="n">ReadKey</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>In this sample code, Main is blocking on the Task returned from CallCalculator. This is not recommended for real-world code.</p>
+</div>
+
+<h2 id="tomorrow">Tomorrow</h2>
+
+<p>Well, that’s quite a bit of work to enable async!</p>
+
+<p>The good news is: in .NET 4.5, <a href="http://blogs.msdn.com/b/endpoint/archive/2010/11/13/simplified-asynchronous-programming-model-in-wcf-with-async-await.aspx">this all gets easier</a> (<a href="http://www.webcitation.org/69BfBD7pO">webcite</a>). How much easier, you ask?</p>
+
+<p>A <strong>lot</strong> easier.</p>
+
+<p>Let’s start over, this time targeting .NET 4.5 for both server and client. First, the service interface:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="na">[DataContract]</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">CalculatorFault</span>
+<span class="p">{</span>
+<span class="na">  [DataMember]</span>
+  <span class="k">public</span> <span class="kt">string</span> <span class="n">Message</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="na">[ServiceContract]</span>
+<span class="k">public</span> <span class="k">interface</span> <span class="n">ICalculator</span>
+<span class="p">{</span>
+  <span class="c1">// Synchronous equivalent:</span>
+  <span class="c1">//  [OperationContract]</span>
+  <span class="c1">//  [FaultContract(typeof(CalculatorFault))]</span>
+  <span class="c1">//  uint Divide(uint numerator, uint denominator);</span>
+
+<span class="na">  [OperationContract]</span>
+<span class="na">  [FaultContract(typeof(CalculatorFault))]</span>
+  <span class="n">Task</span><span class="p">&lt;</span><span class="kt">uint</span><span class="p">&gt;</span> <span class="n">DivideAsync</span><span class="p">(</span><span class="kt">uint</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">uint</span> <span class="n">denominator</span><span class="p">);</span>
+<span class="p">}</span></code></pre></div>
+
+<p>OK, it’s a little simpler so far, because we can declare service methods returning Task instead of a Begin/End pair.</p>
+
+<p>The core implementation is <em>exactly the same:</em></p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">Calculator</span> <span class="p">:</span> <span class="n">ICalculator</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">uint</span><span class="p">&gt;</span> <span class="n">DivideAsync</span><span class="p">(</span><span class="kt">uint</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">uint</span> <span class="n">denominator</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">try</span>
+    <span class="p">{</span>
+      <span class="kt">var</span> <span class="n">myTask</span> <span class="p">=</span> <span class="n">Task</span><span class="p">.</span><span class="n">Factory</span><span class="p">.</span><span class="n">StartNew</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">numerator</span> <span class="p">/</span> <span class="n">denominator</span><span class="p">);</span>
+      <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">myTask</span><span class="p">;</span>
+      <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">DivideByZeroException</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="n">FaultException</span><span class="p">&lt;</span><span class="n">CalculatorFault</span><span class="p">&gt;(</span><span class="k">new</span> <span class="n">CalculatorFault</span> <span class="p">{</span> <span class="n">Message</span> <span class="p">=</span> <span class="s">&quot;Undefined result&quot;</span> <span class="p">});</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>And… wait for it… that’s it! No need for any APM wrapper methods! The WCF runtime is intelligent enough to understand that this is an asynchronous implementation of a service method.</p>
+
+<p>Now let’s turn our attention to the client. There’s another nice surprise awaiting us there.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>I reiterate: the “asynchronicity” of a WCF service is independent from the “asynchronicity” of a WCF client. So if you only control one half of the connection, you can still make your half asynchronous.</p>
+</div>
+
+<p>Create a WCF client proxy. Heh, that’s it. :)</p>
+
+<p>Not only are TAP methods created, they are created <em>by default!</em> Totally awesome!</p>
+
+<p>The client code is <em>exactly the same</em> as if the TaskWsdlImportExtension was used:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">static</span> <span class="k">class</span> <span class="nc">Program</span>
+<span class="p">{</span>
+  <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">CallCalculator</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="k">try</span>
+    <span class="p">{</span>
+      <span class="kt">var</span> <span class="n">proxy</span> <span class="p">=</span> <span class="k">new</span> <span class="n">CalculatorClient</span><span class="p">();</span>
+      <span class="kt">var</span> <span class="n">task</span> <span class="p">=</span> <span class="n">proxy</span><span class="p">.</span><span class="n">DivideAsync</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="m">0</span><span class="p">);</span>
+      <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">task</span><span class="p">;</span>
+      <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Result: &quot;</span> <span class="p">+</span> <span class="n">result</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">FaultException</span><span class="p">&lt;</span><span class="n">CalculatorFault</span><span class="p">&gt;</span> <span class="n">ex</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Console</span><span class="p">.</span><span class="n">Error</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Error: &quot;</span> <span class="p">+</span> <span class="n">ex</span><span class="p">.</span><span class="n">Detail</span><span class="p">.</span><span class="n">Message</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">try</span>
+    <span class="p">{</span>
+      <span class="n">CallCalculator</span><span class="p">().</span><span class="n">Wait</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Console</span><span class="p">.</span><span class="n">Error</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">ex</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="n">Console</span><span class="p">.</span><span class="n">ReadKey</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>Unfortunately for me, all this wonderful WCF async goodness is coming out along with the ASP.NET Web API, and I’ll be migrating away from WCF. Oh, well.</p>
+
+
+  </article>
+    
+    <footer>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2012/07/async-interop-with-iasyncresult.html" title="Async Interop with IAsyncResult">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2012/08/async-doesnt-change-http-protocol.html" title="Async Doesn&#39;t Change the HTTP Protocol">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2012/08/async-wcf-today-and-tomorrow";
+var disqus_title = "Async WCF Today and Tomorrow";
+var disqus_url = "http://localhost:4000/2012/08/async-wcf-today-and-tomorrow.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

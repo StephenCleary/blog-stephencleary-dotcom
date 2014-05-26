@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Async Coroutines</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2012/08/async-coroutines.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Async Coroutines</h1>
+          <small>Aug 30, 2012 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>We’ve been <a href="/2012/08/async-and-scheduled-concurrency.html">introduced to scheduled concurrency</a>. Now how about a quick example?</p>
+
+<p>Today we’re going to use the exclusive scheduler to create a simplistic kind of round-robin co-routine, similar to <a href="http://msmvps.com/blogs/jon_skeet/archive/2011/06/22/eduasync-part-13-first-look-at-coroutines-with-async.aspx">Jon Skeet’s EduAsync Coroutines</a>.</p>
+
+<div class="alert alert-danger">
+  <p><i class="fa fa-exclamation-triangle fa-2x pull-left"></i></p>
+
+  <p>Please note: this is only “playing around” code. Do not use this in production!</p>
+</div>
+
+<p>There isn’t that much to it. We define three co-routines with slightly different behavior to make it a little interesting: FirstCoroutine yields twice, SecondCoroutine yields three times, and ThirdCoroutine yields once.</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
+
+<span class="k">partial</span> <span class="k">class</span> <span class="nc">Program</span>
+<span class="p">{</span>
+    <span class="c1">// The first co-routine yields twice.</span>
+    <span class="k">private</span> <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">FirstCoroutine</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Starting FirstCoroutine&quot;</span><span class="p">);</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Yielding from FirstCoroutine...&quot;</span><span class="p">);</span>
+
+        <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Yield</span><span class="p">();</span>
+
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Returned to FirstCoroutine&quot;</span><span class="p">);</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Yielding from FirstCoroutine again...&quot;</span><span class="p">);</span>
+
+        <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Yield</span><span class="p">();</span>
+
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Returned to FirstCoroutine again&quot;</span><span class="p">);</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Finished FirstCoroutine&quot;</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="c1">// The second co-routine yields three times.</span>
+    <span class="k">private</span> <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">SecondCoroutine</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;  Starting SecondCoroutine&quot;</span><span class="p">);</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;  Yielding from SecondCoroutine...&quot;</span><span class="p">);</span>
+
+        <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Yield</span><span class="p">();</span>
+
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;  Returned to SecondCoroutine&quot;</span><span class="p">);</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;  Yielding from SecondCoroutine again...&quot;</span><span class="p">);</span>
+
+        <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Yield</span><span class="p">();</span>
+
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;  Returned to SecondCoroutine&quot;</span><span class="p">);</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;  Yielding from SecondCoroutine again...&quot;</span><span class="p">);</span>
+
+        <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Yield</span><span class="p">();</span>
+
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;  Returned to SecondCoroutine again&quot;</span><span class="p">);</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;  Finished SecondCoroutine&quot;</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="c1">// The third co-routine yields once.</span>
+    <span class="k">private</span> <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">ThirdCoroutine</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;    Starting ThirdCoroutine&quot;</span><span class="p">);</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;    Yielding from ThirdCoroutine...&quot;</span><span class="p">);</span>
+
+        <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Yield</span><span class="p">();</span>
+
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;    Returned to ThirdCoroutine&quot;</span><span class="p">);</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;    Finished ThirdCoroutine&quot;</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>To run the co-routines exclusively, we create a TaskFactory wrapping a ConcurrentExclusiveSchedulerPair.ExclusiveScheduler. We also create a convenience method RunCoroutineAsync, which takes a co-routine delegate and executes it on that scheduler.</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
+
+<span class="k">partial</span> <span class="k">class</span> <span class="nc">Program</span>
+<span class="p">{</span>
+    <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="kt">var</span> <span class="n">task</span> <span class="p">=</span> <span class="n">MainAsync</span><span class="p">();</span>
+        <span class="n">task</span><span class="p">.</span><span class="n">Wait</span><span class="p">();</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">ReadKey</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">/// A task factory using an exclusive scheduler.</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="k">private</span> <span class="k">static</span> <span class="n">TaskFactory</span> <span class="n">coroutineFactory</span> <span class="p">=</span> <span class="k">new</span> <span class="n">TaskFactory</span><span class="p">(</span><span class="k">new</span> <span class="n">ConcurrentExclusiveSchedulerPair</span><span class="p">().</span><span class="n">ExclusiveScheduler</span><span class="p">);</span>
+
+    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">/// Executes a co-routine using an exclusive scheduler.</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="k">private</span> <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">RunCoroutineAsync</span><span class="p">(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&gt;</span> <span class="n">coroutine</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">await</span> <span class="k">await</span> <span class="n">coroutineFactory</span><span class="p">.</span><span class="n">StartNew</span><span class="p">(</span><span class="n">coroutine</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">/// Starts three co-routines and awaits for them all to complete.</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">MainAsync</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="kt">var</span> <span class="n">coroutines</span> <span class="p">=</span> <span class="k">new</span><span class="p">[]</span>
+        <span class="p">{</span>
+            <span class="n">RunCoroutineAsync</span><span class="p">(</span><span class="n">FirstCoroutine</span><span class="p">),</span>
+            <span class="n">RunCoroutineAsync</span><span class="p">(</span><span class="n">SecondCoroutine</span><span class="p">),</span>
+            <span class="n">RunCoroutineAsync</span><span class="p">(</span><span class="n">ThirdCoroutine</span><span class="p">),</span>
+        <span class="p">};</span>
+
+        <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">WhenAll</span><span class="p">(</span><span class="n">coroutines</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>The tricky part in this code is the double-await in RunCoroutineAsync. This is a <a href="http://blogs.msdn.com/b/pfxteam/archive/2011/10/24/10229468.aspx">normal pattern</a> when you use TaskFactory.StartNew with asynchronous delegates (alternatively, you could use Task.Unwrap).</p>
+
+<p>Logically, the “coroutine” parameter to RunCoroutineAsync is an asynchronous delegate (referring to one of the async co-routine methods). When we pass it to StartNew, we get back a Task&lt;Task&gt; representing the <em>starting</em> of that asynchronous delegate on our exclusive scheduler. The inner Task represents the <em>completion</em> of that asynchronous delegate. So the “await await” is used because we want RunCoroutineAsync to complete only when the asynchronous delegate completes.</p>
+
+<p>If we execute this program, we can clearly see the co-routine behavior:</p>
+
+<pre><code>Starting FirstCoroutine
+Yielding from FirstCoroutine...
+  Starting SecondCoroutine
+  Yielding from SecondCoroutine...
+    Starting ThirdCoroutine
+    Yielding from ThirdCoroutine...
+Returned to FirstCoroutine
+Yielding from FirstCoroutine again...
+  Returned to SecondCoroutine
+  Yielding from SecondCoroutine again...
+    Returned to ThirdCoroutine
+    Finished ThirdCoroutine
+Returned to FirstCoroutine again
+Finished FirstCoroutine
+  Returned to SecondCoroutine
+  Yielding from SecondCoroutine again...
+  Returned to SecondCoroutine again
+  Finished SecondCoroutine
+</code></pre>
+
+<p>Just one final word. There are benign race conditions in this code: e.g., it’s possible that FirstCoroutine may run and yield to itself before SecondCoroutine even starts. The ExclusiveScheduler does not make guarantees about queueing or fairness (though it does <em>try</em> to be fair) - it only guarantees exclusive scheduling.</p>
+
+
+  </article>
+    
+    <footer>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2012/08/async-and-scheduled-concurrency.html" title="Async and Scheduled Concurrency">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2012/09/a-new-web-site.html" title="A New Web Site">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2012/08/async-coroutines";
+var disqus_title = "Async Coroutines";
+var disqus_url = "http://localhost:4000/2012/08/async-coroutines.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

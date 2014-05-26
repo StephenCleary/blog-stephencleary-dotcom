@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Task.Run vs BackgroundWorker: Conclusion</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2013/09/taskrun-vs-backgroundworker-conclusion.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Task.Run vs BackgroundWorker: Conclusion</h1>
+          <small>Sep 26, 2013 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>In this <a href="/2013/05/taskrun-vs-backgroundworker-intro.html">series on Task.Run vs BackgroundWorker</a>, we’ve looked at the most common aspects of running background tasks. As a recap, here’s the full list of posts in chronological order:</p>
+
+<ul>
+  <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Introduction</a> - we’re only contrasting <code>Task.Run</code> with <code>BackgroundWorker</code> for situations that <code>BackgroundWorker</code> was designed for.</li>
+  <li><a href="/2013/05/taskrun-vs-backgroundworker-round-1.html">Round 1: Basics</a> - how to run code on a background thread and receive a completion notification marshaled back to the UI thread. The <code>Task.Run</code> code is shorter and simpler with less “ceremony code”.</li>
+  <li><a href="/2013/07/taskrun-vs-backgroundworker-round-2.html">Round 2: Errors</a> - how to handle exceptions from the background thread code. The <code>Task.Run</code> code uses the more natural and less error-prone <code>try/catch</code> blocks, and has less error-prone exception propagation.</li>
+  <li><a href="/2013/08/taskrun-vs-backgroundworker-round-3.html">Round 3: Results</a> - how to retrieve a result value from the background thread. The <code>Task.Run</code> code uses the more natural <code>return</code> statement and the result value is strongly-typed.</li>
+  <li><a href="/2013/09/taskrun-vs-backgroundworker-round-4.html">Round 4: Cancellation</a> - how to cancel the background thread. The <code>Task.Run</code> code uses the common cancellation framework, which is simpler, less error-prone, and interoperates more cleanly with other cancellation-aware APIs.</li>
+  <li><a href="/2013/09/taskrun-vs-backgroundworker-round-5.html">Round 5: Progress Reports</a> - how to support progress updates from the background thread. The <code>Task.Run</code> code uses a strongly-typed progress report type.</li>
+</ul>
+
+<p>What I am not planning to cover in this series are more complex situations, which is actually where <code>Task.Run</code> <em>really</em> outperforms <code>BackgroundWorker</code>. For example, nesting one background operation within another is easier with <code>Task.Run</code>. Also, anything like <a href="http://stackoverflow.com/questions/18659124/merging-the-results-of-two-background-workers-upon-completion/18659509#18659509">waiting for two separate background operations to complete before doing something else</a> is much easier with <code>Task.Run</code>. Pretty much any time you have to <em>coordinate</em> background operations, <code>Task.Run</code> code is going to be <em>much</em> simpler!</p>
+
+<p>I hope that this series is sufficient to convince you that <code>BackgroundWorker</code> is a type that should not be used in new code. Everything it can do, <code>Task.Run</code> can do better; and <code>Task.Run</code> can do a lot of things that <code>BackgroundWorker</code> can’t!</p>
+
+<p>I’ll leave you with a “combined” example. The code below starts a cancelable background operation that reports progress, and will either throw an exception or return a value. These are all the basic operations of <code>BackgroundWorker</code>. One of these uses <code>BackgroundWorker</code> and the other uses <code>Task.Run</code>. Don’t just look at the length of the code; consider all the little nuances of how it works (type safety, how easily the API can be misused, etc). Then ask yourself: which code would I rather maintain?</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="n">BackgroundWorker</span> <span class="n">_bgw</span><span class="p">;</span>
+<span class="k">private</span> <span class="k">void</span> <span class="nf">button1_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="kt">var</span> <span class="n">fail</span> <span class="p">=</span> <span class="n">checkBox1</span><span class="p">.</span><span class="n">Checked</span><span class="p">;</span>
+  <span class="n">_bgw</span> <span class="p">=</span> <span class="k">new</span> <span class="n">BackgroundWorker</span><span class="p">();</span>
+  <span class="kt">var</span> <span class="n">bgw</span> <span class="p">=</span> <span class="n">_bgw</span><span class="p">;</span>
+  <span class="n">bgw</span><span class="p">.</span><span class="n">WorkerSupportsCancellation</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+  <span class="n">bgw</span><span class="p">.</span><span class="n">WorkerReportsProgress</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+  <span class="n">bgw</span><span class="p">.</span><span class="n">DoWork</span> <span class="p">+=</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span> <span class="p">=&gt;</span>
+  <span class="p">{</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">!=</span> <span class="m">100</span><span class="p">;</span> <span class="p">++</span><span class="n">i</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">bgw</span><span class="p">.</span><span class="n">ReportProgress</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="n">i</span> <span class="p">+</span> <span class="s">&quot;%&quot;</span><span class="p">);</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">bgw</span><span class="p">.</span><span class="n">CancellationPending</span><span class="p">)</span>
+      <span class="p">{</span>
+        <span class="n">args</span><span class="p">.</span><span class="n">Cancel</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+        <span class="k">return</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="n">Thread</span><span class="p">.</span><span class="n">Sleep</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">fail</span><span class="p">)</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="nf">InvalidOperationException</span><span class="p">(</span><span class="s">&quot;Requested to fail.&quot;</span><span class="p">);</span>
+    <span class="n">args</span><span class="p">.</span><span class="n">Result</span> <span class="p">=</span> <span class="m">13</span><span class="p">;</span>
+  <span class="p">};</span>
+  <span class="n">bgw</span><span class="p">.</span><span class="n">ProgressChanged</span> <span class="p">+=</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span> <span class="p">=&gt;</span>
+  <span class="p">{</span>
+    <span class="n">label1</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="p">(</span><span class="kt">string</span><span class="p">)</span><span class="n">args</span><span class="p">.</span><span class="n">UserState</span><span class="p">;</span>
+  <span class="p">};</span>
+  <span class="n">bgw</span><span class="p">.</span><span class="n">RunWorkerCompleted</span> <span class="p">+=</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span> <span class="p">=&gt;</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">args</span><span class="p">.</span><span class="n">Cancelled</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">label1</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="s">&quot;Cancelled.&quot;</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">args</span><span class="p">.</span><span class="n">Error</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">args</span><span class="p">.</span><span class="n">Result</span><span class="p">;</span>
+      <span class="n">label1</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="s">&quot;Completed: &quot;</span> <span class="p">+</span> <span class="n">result</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span>
+    <span class="p">{</span>
+      <span class="n">label1</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="n">args</span><span class="p">.</span><span class="n">Error</span><span class="p">.</span><span class="n">GetType</span><span class="p">().</span><span class="n">Name</span> <span class="p">+</span> <span class="s">&quot;: &quot;</span> <span class="p">+</span> <span class="n">args</span><span class="p">.</span><span class="n">Error</span><span class="p">.</span><span class="n">Message</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">};</span>
+  <span class="n">bgw</span><span class="p">.</span><span class="n">RunWorkerAsync</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="k">private</span> <span class="k">void</span> <span class="nf">cancelButton1_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">_bgw</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+    <span class="n">_bgw</span><span class="p">.</span><span class="n">CancelAsync</span><span class="p">();</span>
+<span class="p">}</span></code></pre></div>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="n">CancellationTokenSource</span> <span class="n">_cts</span><span class="p">;</span>
+<span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">button2_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="kt">var</span> <span class="n">fail</span> <span class="p">=</span> <span class="n">checkBox1</span><span class="p">.</span><span class="n">Checked</span><span class="p">;</span>
+  <span class="n">_cts</span> <span class="p">=</span> <span class="k">new</span> <span class="n">CancellationTokenSource</span><span class="p">();</span>
+  <span class="kt">var</span> <span class="n">token</span> <span class="p">=</span> <span class="n">_cts</span><span class="p">.</span><span class="n">Token</span><span class="p">;</span>
+  <span class="kt">var</span> <span class="n">progressHandler</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Progress</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;(</span><span class="k">value</span> <span class="p">=&gt;</span>
+  <span class="p">{</span>
+    <span class="n">label2</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="k">value</span><span class="p">;</span>
+  <span class="p">});</span>
+  <span class="kt">var</span> <span class="n">progress</span> <span class="p">=</span> <span class="n">progressHandler</span> <span class="k">as</span> <span class="n">IProgress</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;;</span>
+  <span class="k">try</span>
+  <span class="p">{</span>
+    <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span>
+    <span class="p">{</span>
+      <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">!=</span> <span class="m">100</span><span class="p">;</span> <span class="p">++</span><span class="n">i</span><span class="p">)</span>
+      <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">progress</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+          <span class="n">progress</span><span class="p">.</span><span class="n">Report</span><span class="p">(</span><span class="n">i</span> <span class="p">+</span> <span class="s">&quot;%&quot;</span><span class="p">);</span>
+        <span class="n">token</span><span class="p">.</span><span class="n">ThrowIfCancellationRequested</span><span class="p">();</span>
+        <span class="n">Thread</span><span class="p">.</span><span class="n">Sleep</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
+      <span class="p">}</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">fail</span><span class="p">)</span>
+        <span class="k">throw</span> <span class="k">new</span> <span class="nf">InvalidOperationException</span><span class="p">(</span><span class="s">&quot;Requested to fail.&quot;</span><span class="p">);</span>
+      <span class="k">return</span> <span class="m">13</span><span class="p">;</span>
+    <span class="p">});</span>
+    <span class="n">label2</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="s">&quot;Completed: &quot;</span> <span class="p">+</span> <span class="n">result</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">catch</span> <span class="p">(</span><span class="n">OperationCanceledException</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">label2</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="s">&quot;Cancelled.&quot;</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">label2</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="n">ex</span><span class="p">.</span><span class="n">GetType</span><span class="p">().</span><span class="n">Name</span> <span class="p">+</span> <span class="s">&quot;: &quot;</span> <span class="p">+</span> <span class="n">ex</span><span class="p">.</span><span class="n">Message</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+<span class="k">private</span> <span class="k">void</span> <span class="nf">cancelButton2_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">_cts</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+    <span class="n">_cts</span><span class="p">.</span><span class="n">Cancel</span><span class="p">();</span>
+<span class="p">}</span></code></pre></div>
+
+  </article>
+    
+    <footer>
+        
+            
+                
+            
+                
+            
+                
+            
+
+            
+            
+            
+                
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                        
+                        
+                        
+                            
+                        
+                    
+                
+                    
+                        
+                        
+                        
+                            
+                        
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                        
+                        
+                        
+                            
+                        
+                    
+                
+                    
+                        
+                        
+                        
+                            
+                        
+                    
+                
+                    
+                
+                    
+                
+                    
+                        
+                        
+                        
+                            
+                        
+                    
+                
+                    
+                        
+                        
+                        
+                            
+                        
+                    
+                
+                    
+                        
+                        
+                            
+                            
+                        
+                        
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+            
+
+            <ul class="pager">
+                <li class="previous"><a href="/2013/09/taskrun-vs-backgroundworker-round-5.html" title="Task.Run vs BackgroundWorker, Round 5: Reporting Progress">&larr; Previous in Task.Run vs. BackgroundWorker</a></li>
+                
+            </ul>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2013/09/taskrun-vs-backgroundworker-round-5.html" title="Task.Run vs BackgroundWorker, Round 5: Reporting Progress">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2013/10/continuewith-is-dangerous-too.html" title="ContinueWith is Dangerous, Too">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+                
+                    
+                
+                    
+                
+                    
+                
+                <div class="panel panel-primary">
+                    <div class="panel-heading">Task.Run vs. BackgroundWorker</div>
+                    <div class="panel-body sidenav">
+                        <ul class="nav nav-pills nav-stacked">
+                            
+                                
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Intro</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2013/05/taskrun-vs-backgroundworker-round-1.html">The Basic Pattern</a></li>
+                                        
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2013/07/taskrun-vs-backgroundworker-round-2.html">Error Handling</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2013/08/taskrun-vs-backgroundworker-round-3.html">Returning Results</a></li>
+                                        
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2013/09/taskrun-vs-backgroundworker-round-4.html">Cancellation</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2013/09/taskrun-vs-backgroundworker-round-5.html">Reporting Progress</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="active sidenavitem"><a href="/2013/09/taskrun-vs-backgroundworker-conclusion.html">Conclusion</a></li>
+                                        
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                            
+                        </ul>
+                    </div>
+                </div>
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+<script src="/lib/jquery.scrollTo.min.js"></script>
+<script type="text/javascript">
+(function ($) {
+    $(function () {
+        var container = $('.affix').filter(function() { return $(this).css('position') == 'fixed'; });
+        var target = container.find('.active');
+        container.scrollTo(target, { offset: - (container.height() / 2 - target.height() / 2) });
+    });
+})(window.jQuery);
+</script>
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2013/09/taskrun-vs-backgroundworker-conclusion";
+var disqus_title = "Task.Run vs BackgroundWorker: Conclusion";
+var disqus_url = "http://localhost:4000/2013/09/taskrun-vs-backgroundworker-conclusion.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

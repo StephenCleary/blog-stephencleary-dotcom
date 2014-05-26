@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>SQLite and Entity Framework 4</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2010/06/sqlite-and-entity-framework-4.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>SQLite and Entity Framework 4</h1>
+          <small>Jun 21, 2010 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>I met a nice fellow at the Microsoft Code Camp in Chicago recently. He had a question about how well the Entity Framework worked with other ADO.NET providers. When I told him that I had a solution working using Entity Framework running on SQLite, he was quite interested. There are a handful of hurdles to get it all working, though.</p>
+
+<h2 id="adonet-provider-for-sqlite">ADO.NET Provider for SQLite</h2>
+
+<p>The first thing you need is an ADO.NET provider for SQLite. There’s an excellent (and free) solution available called <a href="http://sqlite.phxsoftware.com/">System.Data.SQLite</a>. This is actually an ADO.NET 2.0/3.5 provider, and also includes support for the Entity Framework.</p>
+
+<h2 id="supporting-sqlite-from-a-net-40-project">Supporting SQLite from a .NET 4.0 Project</h2>
+
+<p>By default, a .NET 4.0 process will happily load a .NET 2.0-3.5 managed DLL, but will refuse to load a .NET 2.0-3.5 mixed-mode DLL. This is a problem for SQLite, since it is a .NET 2.0 mixed-mode DLL. A full description of this problem and its solution is <a href="http://www.marklio.com/marklio/PermaLink,guid,ecc34c3c-be44-4422-86b7-900900e451f9.aspx">available online</a>, but the short answer is to set <a href="http://msdn.microsoft.com/en-us/library/bbx34a2h.aspx">useLegacyV2RuntimeActivationPolicy</a> to true in your app.config.</p>
+
+<h2 id="opening-alternative-data-files">Opening Alternative Data Files</h2>
+
+<p>SQLite has a simple “one database per file” concept that does not exist for all ADO.NET data sources. If you need to allow your application to access user-selected database files, it’s possible to “redirect” an Entity Framework connection string to an alternative data file. The correct way to do this is to crack the Entity Framework connection string, extract the SQLite connection string, crack the SQLite connection string, replace the data file, rebuild the SQLite connection string, and finally rebuild the Entity Framework connection string:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="c1">/// &lt;summary&gt;</span>
+<span class="c1">/// Redirects a SQLite Entity Framework connection string to an alternative database file, optionally encrypted with a password.</span>
+<span class="c1">/// &lt;/summary&gt;</span>
+<span class="c1">/// &lt;param name=&quot;originalConnectionString&quot;&gt;The Visual-Studio-generated original Entity Framework connection string.&lt;/param&gt;</span>
+<span class="c1">/// &lt;param name=&quot;databaseFile&quot;&gt;The alternative database file to open.&lt;/param&gt;</span>
+<span class="c1">/// &lt;param name=&quot;password&quot;&gt;The password to use for encryption. May be &lt;c&gt;null&lt;/c&gt; to indicate no password.&lt;/param&gt;</span>
+<span class="c1">/// &lt;returns&gt;A SQLite Entity Framework connection string referencing the alternative database file.&lt;/returns&gt;</span>
+<span class="k">public</span> <span class="k">static</span> <span class="kt">string</span> <span class="nf">RedirectedEntityFrameworkConnectionString</span><span class="p">(</span><span class="kt">string</span> <span class="n">originalConnectionString</span><span class="p">,</span> <span class="kt">string</span> <span class="n">databaseFile</span><span class="p">,</span> <span class="kt">string</span> <span class="n">password</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// Parse the Entity Framework connection string.</span>
+    <span class="kt">var</span> <span class="n">connectionStringBuilder</span> <span class="p">=</span> <span class="k">new</span> <span class="n">EntityConnectionStringBuilder</span><span class="p">(</span><span class="n">originalConnectionString</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">connectionStringBuilder</span><span class="p">.</span><span class="n">Provider</span> <span class="p">!=</span> <span class="s">&quot;System.Data.SQLite&quot;</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">throw</span> <span class="k">new</span> <span class="nf">ArgumentException</span><span class="p">(</span><span class="s">&quot;Entity Framework connection string does not use System.Data.SQLite provider.&quot;</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="c1">// Parse the underlying provider (SQLite) connection string.</span>
+    <span class="kt">var</span> <span class="n">providerConnectionStringBuilder</span> <span class="p">=</span> <span class="k">new</span> <span class="n">SQLiteConnectionStringBuilder</span><span class="p">(</span><span class="n">connectionStringBuilder</span><span class="p">.</span><span class="n">ProviderConnectionString</span><span class="p">);</span>
+
+    <span class="c1">// Redirect to the specified database file, and apply encryption.</span>
+    <span class="n">providerConnectionStringBuilder</span><span class="p">.</span><span class="n">DataSource</span> <span class="p">=</span> <span class="n">databaseFile</span><span class="p">;</span>
+    <span class="n">providerConnectionStringBuilder</span><span class="p">.</span><span class="n">Password</span> <span class="p">=</span> <span class="n">password</span><span class="p">;</span>
+
+    <span class="c1">// Rebuild the Entity Framework connection string.</span>
+    <span class="n">connectionStringBuilder</span><span class="p">.</span><span class="n">ProviderConnectionString</span> <span class="p">=</span> <span class="n">providerConnectionStringBuilder</span><span class="p">.</span><span class="n">ConnectionString</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">connectionStringBuilder</span><span class="p">.</span><span class="n">ConnectionString</span><span class="p">;</span>
+<span class="p">}</span></code></pre></div>
+
+<p>The redirected Entity Framework connection string may be passed to the ObjectContext-derived class constructor (e.g., the “MyEntities” class that the Entity Framework creates for you):</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">const</span> <span class="kt">string</span> <span class="n">OriginalConnectionString</span> <span class="p">=</span> <span class="s">&quot;...&quot;</span><span class="p">;</span> <span class="c1">// (Copy out of app.config)</span>
+<span class="kt">var</span> <span class="n">connectionString</span> <span class="p">=</span> <span class="n">RedirectedEntityFrameworkConnectionString</span><span class="p">(</span><span class="n">OriginalConnectionString</span><span class="p">,</span> <span class="n">myFileName</span><span class="p">,</span> <span class="k">null</span><span class="p">);</span>
+<span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">context</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MyEntities</span><span class="p">(</span><span class="n">connectionString</span><span class="p">))</span>
+<span class="p">{</span>
+    <span class="p">...</span>
+<span class="p">}</span></code></pre></div>
+
+<h2 id="the-entity-frameworks-database-connection">The Entity Framework’s Database Connection</h2>
+
+<p>The Entity Framework is actually an ADO.NET data provider that is itself wrapping an ADO.NET data provider (SQLite, to be specific). <a href="http://msdn.microsoft.com/en-us/library/bb896325.aspx">Normally, the Entity Framework will open a database connection whenever it needs one; these automatically-opened connections are automatically closed when the Entity Framework is finished with it.</a> This default behavior works well with SQL Server due to its ADO.NET provider’s connection pooling. However, it does not work well with SQLite, due to various “properties” existing on the SQLite connection itself. One example is “PRAGMA foreign_keys = ON”, which enforces foreign keys only for that SQLite database connection. If the Entity Framework opens and closes its connections at will, then SQLite PRAGMAs such as these are lost.</p>
+
+<p>As a general rule, you should explicitly call “Connection.Open()” for any ObjectContext. You must also ensure that the ObjectContext is disposed, so that the database connection is cleanly closed. Once “Connection.Open()” has been called, the Entity Framework will no longer open and close its own transient connections.</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">myEntities</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MyEntities</span><span class="p">())</span>
+<span class="p">{</span>
+    <span class="c1">// Open the connection (to make it long-lived)</span>
+    <span class="n">myEntities</span><span class="p">.</span><span class="n">Connection</span><span class="p">.</span><span class="n">Open</span><span class="p">();</span>
+
+    <span class="c1">// Apply PRAGMA directives...</span>
+
+    <span class="c1">// Use Entity classes...</span>
+<span class="p">}</span></code></pre></div>
+
+<p>It’s often useful to get at the SQLiteConnection being used by the Entity Framework. This is available through the “EntityConnection.StoreConnection” property, as illustrated by this code sample:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="kt">var</span> <span class="n">connection</span> <span class="p">=</span> <span class="p">(</span><span class="n">myEntities</span><span class="p">.</span><span class="n">Connection</span> <span class="k">as</span> <span class="n">EntityConnection</span><span class="p">).</span><span class="n">StoreConnection</span> <span class="k">as</span> <span class="n">SQLiteConnection</span><span class="p">;</span></code></pre></div>
+
+<h2 id="directly-accessing-the-database-using-sql">Directly Accessing the Database Using SQL</h2>
+
+<p>Even when using the Entity Framework, there are situations where one wishes to execute SQL commands directly against the database. PRAGMAs are one common scenario; another is updating the schema structure to the latest version.</p>
+
+<p>This is possible one of two ways; once the SQLiteConnection has been acquired (see above), it’s possible to create a SQLiteCommand and execute it:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">command</span> <span class="p">=</span> <span class="n">connection</span><span class="p">.</span><span class="n">CreateCommand</span><span class="p">())</span>
+<span class="p">{</span>
+    <span class="n">command</span><span class="p">.</span><span class="n">CommandText</span> <span class="p">=</span> <span class="s">&quot;PRAGMA encoding = \&quot;UTF-8\&quot;&quot;</span><span class="p">;</span>
+    <span class="n">command</span><span class="p">.</span><span class="n">ExecuteNonQuery</span><span class="p">();</span>
+<span class="p">}</span></code></pre></div>
+
+<p>However, there’s an even easier way of doing this: Entity Framework exposes a method named “ExecuteStoreCommand”:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="n">myEntities</span><span class="p">.</span><span class="n">ExecuteStoreCommand</span><span class="p">(</span><span class="s">&quot;PRAGMA encoding = \&quot;UTF-8\&quot;&quot;</span><span class="p">);</span></code></pre></div>
+
+<h2 id="entity-framework-transactions">Entity Framework Transactions</h2>
+
+<p>The <a href="http://msdn.microsoft.com/en-us/library/bb896325.aspx">official Entity Framework documentation</a> recommends using generic transactions (e.g., TransactionScope). This has some benefits; it can be easily promoted to a distributed transaction, etc.</p>
+
+<p>However, it has a timeout scheme that is not very friendly (I <a href="/2010/06/transactionscope-has-default-timeout.html">mentioned this</a> a few weeks ago). In my situation, I had to potentially spend quite a bit of time upgrading the client’s database on first run.</p>
+
+<p>Fortunately, SQLiteTransaction works perfectly well with the Entity Framework. My database schema upgrade code now looks like this (referencing the SQLiteConnection from above):</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">transaction</span> <span class="p">=</span> <span class="n">connection</span><span class="p">.</span><span class="n">BeginTransaction</span><span class="p">())</span>
+<span class="p">{</span>
+    <span class="c1">// lots of time-consuming stuff</span>
+
+    <span class="n">transaction</span><span class="p">.</span><span class="n">Commit</span><span class="p">();</span>
+<span class="p">}</span></code></pre></div>
+
+<p>SQLiteTransaction does not have the same timeout restrictions that plague TransactionScope, et. al.</p>
+
+<p><em>Reminder:</em> You <em>do</em> want to use a SQLiteTransaction! The Entity Framework by default will create (and commit) a new transaction for each call to SaveChanges (or each call to ExecuteStoreCommand). This is true even if EF has a long-lived connection. By using SQLiteTransaction, you’ll avoid <a href="http://www.sqlite.org/faq.html#q19">serious performance issues</a>.</p>
+
+<h2 id="defining-and-enforcing-foreign-keys">Defining and Enforcing Foreign Keys</h2>
+
+<p>First, you need to enforce foreign keys on your database connection; see the <a href="http://www.sqlite.org/foreignkeys.html">SQLite foreign keys documentation</a> for more information. This is done simply as such:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="n">myEntities</span><span class="p">.</span><span class="n">ExecuteStoreCommand</span><span class="p">(</span><span class="s">&quot;PRAGMA foreign_keys = ON&quot;</span><span class="p">);</span></code></pre></div>
+
+<p>The next step is to actually establish the Entity Framework relationships. Some SQLite databases work just fine; the EF designer is able to understand the foreign key relationships and adds them correctly. Other SQLite databases just import the entities themselves without the relationships; I’m not sure why this is the case.</p>
+
+<p>If you have a SQLite database that does not get its relationships imported, then you’ll have to define them by hand. If your entity relationships are all imported fine, then you can just skip down to the “final notes”.</p>
+
+<h3 id="foreign-keys-01-to-n-and-1-to-n">Foreign Keys: 0..1 to N and 1 to N</h3>
+
+<p><a href="/assets/1toNp1.PNG"><img src="/assets/1toNp1.PNG" alt="" /><br />
+</a><a href="/assets/1toNp2.PNG"><img src="/assets/1toNp2.PNG" alt="" /><br />
+</a></p>
+
+<p>In this type of relationship, the “parent” table has an identity, and the “child” table has its own identity and a foreign key referring to a row in the “parent” table. To establish this relationship, follow these steps:</p>
+
+<ol>
+  <li>Right-click the “parent” entity in the Entity Framework designer, open the “Add” submenu, and select “Association…”.</li>
+  <li>Select the entity which has a foreign key pointing to this one, and ensure that the Multiplicity on both ends is correct (tip: read the plain English explanation carefully).</li>
+  <li>Be sure to <em>uncheck</em> the “Add foreign key properties” option.</li>
+  <li>Click OK. Entity Framework will create an association that you can see in the designer; however, it is not actually mapped to the correct columns yet.</li>
+  <li>Double-click the newly-created association (the line between the entities).</li>
+  <li>In the “Principal” drop-down, select the “parent” entity. If your foreign key columns in the “child” entity have the same names as the primary key columns in the “parent” entity, then the rest of the dialog is filled in for you. (If not, you’ll have to select which “Dependent Property” maches each “Principal Key”).</li>
+  <li>Click OK. The foreign key association is now completed.</li>
+</ol>
+
+<p>Thanks to the Entity Framework Design team for their <a href="http://blogs.msdn.com/b/efdesign/archive/2009/03/16/foreign-keys-in-the-entity-framework.aspx">blog post on FK Associations</a>; my instructions above are derived from that post.</p>
+
+<h3 id="foreign-keys-m-to-n">Foreign Keys: M to N</h3>
+
+<p><a href="/assets/MtoNp1.PNG"><img src="/assets/MtoNp1.PNG" alt="" /><br />
+</a><a href="/assets/MtoNp2.PNG"><img src="/assets/MtoNp2.PNG" alt="" /><br />
+</a></p>
+
+<p>This type of relationship has a special table in the database, commonly called a “join table”. Unfortunately, the Entity Framework support for SQLite does not pick up on these relationships either, so the join table will actually be added to the Entity Framework designer as an entity.</p>
+
+<p>To convert this join table entity into an M to N relationship, follow these steps:</p>
+
+<ol>
+  <li>Right-click one of the two entities in the relationship, open the “Add” submenu, and select “Association…”.</li>
+  <li>Select the other entity in the relationship, and change the Multiplicity so that they are both Many.</li>
+  <li>Click OK. Entity Framework will create an association that you can see in the designer; however, it is not actually mapped to the correct table yet.</li>
+  <li>Right-click the newly-created association (the line between the entities) and select “Table Mapping”.</li>
+  <li>Click the <code>&lt;Add a Table or View&gt;</code> and select the join table. If your foreign key columns in the join table have the same names as the primary key columns in the related tables, then the rest of the page is filled in for you. (If not, you’ll have to select how the columns in each table are mapped).</li>
+  <li><em>After</em> the table has been mapped to the M to N association, you may delete the join table entity.</li>
+</ol>
+
+<h3 id="final-notes-on-foreign-key-associations">Final Notes on Foreign Key Associations</h3>
+
+<p>Once the entity associations are defined (as above), you may freely “update” your model from the database without losing those associations.</p>
+
+<p>When using the Entity Framework with SQL Server, it is possible to detect some foreign key conflicts before they actually hit the database (e.g., a required “parent” reference). I haven’t found a way to get this working with SQLite yet, but it’s not a big deal, IMO.</p>
+
+
+  </article>
+    
+    <footer>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2010/06/reporting-progress-from-tasks.html" title="Reporting Progress from Tasks">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2010/06/on-lighter-note-socketflagsmaxiovectorl.html" title="On A Lighter Note: SocketFlags.MaxIOVectorLength">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2010/06/sqlite-and-entity-framework-4";
+var disqus_title = "SQLite and Entity Framework 4";
+var disqus_url = "http://localhost:4000/2010/06/sqlite-and-entity-framework-4.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Threadsafe Events</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2009/06/threadsafe-events.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Threadsafe Events</h1>
+          <small>Jun 19, 2009 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>Disclaimer: <em>This blog entry only deals with the common case of instance events; static events are ignored. Furthermore, the contents of this blog entry are 100% my own opinion. However, it is the opinion of someone who has specialized in multithreading for 13 years.</em></p>
+
+<p>When writing components in a multithreaded world, one question that commonly crops up is, “how do I make my events threadsafe?” The asker is usually concerned with threadsafe subscription and unsubscription, but threadsafe raising must also be taken into consideration.</p>
+
+<h2 id="the-wrong-solution-1-from-the-c-language-specification">The Wrong Solution #1, from the C# Language Specification</h2>
+
+<p>The C# language authors attempted to make event subscription and unsubscription threadsafe by default. To do so, they allow (but do not require) locking on <code>this</code>, which is generally considered bad. This code:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">event</span> <span class="n">MyEventHandler</span> <span class="n">MyEvent</span><span class="p">;</span></code></pre></div>
+
+<p>Logically becomes this code:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="n">MyEventHandler</span> <span class="n">__MyEvent</span><span class="p">;</span>
+<span class="k">public</span> <span class="k">event</span> <span class="n">MyEventHandler</span> <span class="n">MyEvent</span>
+<span class="p">{</span>
+    <span class="k">add</span>
+    <span class="p">{</span>
+        <span class="k">lock</span> <span class="p">(</span><span class="k">this</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">this</span><span class="p">.</span><span class="n">__MyEvent</span> <span class="p">+=</span> <span class="k">value</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">remove</span>
+    <span class="p">{</span>
+        <span class="k">lock</span> <span class="p">(</span><span class="k">this</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">this</span><span class="p">.</span><span class="n">__MyEvent</span> <span class="p">-=</span> <span class="k">value</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>Chris Burrows, a Microsoft developer on the C# compiler team, explains why this is bad in his blog post <a href="http://blogs.msdn.com/cburrows/archive/2008/02/18/field-like-events-considered-harmful.aspx">Field-like Events Considered Harmful</a>. His blog post covers the reasoning thoroughly, so it won’t be repeated here.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p><strong>Minor rant:</strong> The Java language fell into the same trap; see <a href="http://wiki.apidesign.org/wiki/Java_Monitor" class="alert-link">Practical API Design’s Java Monitor page</a>. Why is it that some language designers believe they can declaratively solve multithreading problems? If the solution was really as simple as that, then why haven’t other people already figured it out? Multithreaded programming has consumed some of the brightest minds for decades, and it’s <em>hard</em>. Language designers can’t make multithreading complexities go away by sprinkling some magical fairy powder, even if they name the powder <code>MethodImplOptions.Synchronized</code>. In fact, most of the time they’re just making it worse.</p>
+</div>
+
+<p>Pretend for a minute that locking on <code>this</code> is OK. It actually <em>would</em> work, after all; it just raises the likelihood of unexpected deadlocks. It’s also possible that a future C# compiler may lock on a super-secret private field instead of <code>this</code>. However, even if the <em>implementation</em> is OK, the <em>design</em> is still flawed. The problem becomes clear when one ponders how to raise the event in a threadsafe manner.</p>
+
+<p>This is the standard, simple, and logical event-raising code:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">MyEvent</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">MyEvent</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="n">args</span><span class="p">);</span>
+<span class="p">}</span></code></pre></div>
+
+<p>If there are multiple threads subscribing to and unsubscribing from an event, then the built-in field-like event locking works <em>only</em> for subscribing and unsubscribing. The event raising code exposes a problem: if another thread unsubscribes from the event after the <code>if</code> statement but before the event is raised, then this code may result in a NullReferenceException!</p>
+
+<p>So, it turns out that “thread-safe” events weren’t really thread-safe. Moving on…</p>
+
+<h2 id="the-wrong-solution-2-from-the-framework-design-guidelines-and-msdn">The Wrong Solution #2, from the Framework Design Guidelines and MSDN</h2>
+
+<p>One solution to the problem described above is to make a copy of the event delegate before testing it. The event raising code becomes:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="n">MyEventHandler</span> <span class="n">myEvent</span> <span class="p">=</span> <span class="k">this</span><span class="p">.</span><span class="n">MyEvent</span><span class="p">;</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">myEvent</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">myEvent</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="n">args</span><span class="p">);</span>
+<span class="p">}</span></code></pre></div>
+
+<p>This is the solution used by <a href="http://msdn.microsoft.com/en-us/library/w369ty8x.aspx">MSDN examples</a> and recommended by the semi-standard <a href="http://www.amazon.com/gp/product/0321545613?ie=UTF8&amp;tag=stepheclearys-20&amp;linkCode=as2&amp;camp=1789&amp;creative=390957&amp;creativeASIN=0321545613">Framework Design Guidelines</a> (my 2nd edition has it on page 157, but the relevant section of the book is available online <a href="http://blogs.msdn.com/brada/archive/2005/01/14/353132.aspx">here</a>).</p>
+
+<p>This solution is simple, obvious, and wrong. [By the way, I’m not dissing Framework Design Guidelines. They have lots of good advice, and I don’t mean to be critical of the book in general. They’re just mistaken in this particular recommendataion.]</p>
+
+<p>Programmers without a strong background in multithreaded programming may not immediately detect why this solution is wrong. Delegates are immutable reference types, so the local variable copy is atomic; no problem there. The problem exists in the memory model: it is possible that an out-of-date value for the delegate field is held in one processor’s cache. Without going into a painful level of detail, in order to ensure that one is reading the current value of a non-volatile field, one must either issue a memory barrier or wrap the copy operation within a lock (and it must be the same lock acquired by the event add/remove methods).</p>
+
+<p>In short, this solution does prevent the NullReferenceException race condition; but it introduces <em>another</em> race condition in its place (raising an unsubscribed event handler).</p>
+
+<h2 id="the-wrong-solution-3-from-jon-skeet">The Wrong Solution #3, from Jon Skeet</h2>
+
+<p>[OK, let me say this first: Jon Skeet is an awesome programmer. I highly recommend his book <a href="http://www.amazon.com/gp/product/1933988363?ie=UTF8&amp;tag=stepheclearys-20&amp;linkCode=as2&amp;camp=1789&amp;creative=390957&amp;creativeASIN=1933988363">C# in Depth</a> to <em>anyone and everyone using C#</em> (I own the first edition and will buy the 2nd as soon as it comes out; he’s writing it now and I’m so excited!). I follow his blog. I highly respect the man, and I can’t believe my first mention of him on my blog is in a negative light… However, he did come up with a wrong solution for thread-safe events. To give him credit, though, he ended his paper recommending the right solution!]</p>
+
+<p>Jon Skeet has a great treatment of this subject in his paper <a href="http://www.yoda.arachsys.com/csharp/events.html">Delegates and Events</a> (you may wish to skip to the section titled “Thread-safe events”). He covers everything that I’ve described above, but then proceeds on to propose another wrong solution. He dislikes the memory barrier solution (as do I), and attempts to solve it by wrapping the copy operation within the lock. As Jon points out, the event add/remove methods <em>may</em> lock <code>this</code> or they could lock something else (remember, a future C# compiler may choose to lock on a super-secret private field instead). So, the default add/remove methods have to be replaced with ones that perform an explicit lock, as such:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="kt">object</span> <span class="n">myEventLock</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">object</span><span class="p">();</span>
+<span class="k">private</span> <span class="n">MyEventHandler</span> <span class="n">myEvent</span><span class="p">;</span>
+<span class="k">public</span> <span class="n">MyEventHandler</span> <span class="n">MyEvent</span>
+<span class="p">{</span>
+    <span class="k">add</span>
+    <span class="p">{</span>
+        <span class="k">lock</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">myEventLock</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">this</span><span class="p">.</span><span class="n">myEvent</span> <span class="p">+=</span> <span class="k">value</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">remove</span>
+    <span class="p">{</span>
+        <span class="k">lock</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">myEventLock</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">this</span><span class="p">.</span><span class="n">myEvent</span> <span class="p">-=</span> <span class="k">value</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">protected</span> <span class="k">virtual</span> <span class="nf">OnMyEvent</span><span class="p">(</span><span class="n">MyEventArgs</span> <span class="n">args</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">MyEventHandler</span> <span class="n">localMyEvent</span><span class="p">;</span>
+    <span class="k">lock</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">myEventLock</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">localMyEvent</span> <span class="p">=</span> <span class="k">this</span><span class="p">.</span><span class="n">myEvent</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">localMyEvent</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">localMyEvent</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="n">args</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>That’s a fair amount of code for a single event! Some people have even written helper objects to reduce the amount of code. Before jumping on that bandwagon, though, remember that this solution is also wrong.</p>
+
+<p>There is <em>still</em> a race condition.</p>
+
+<p>Specifically, it is possible that the value of <code>myEvent</code> is modified after it has been read into <code>localMyEvent</code> but before it is raised. This can result in an unsubscribed handler being invoked, which could be problematic. So, this solution does solve the last solution’s problem (with the memory model and processor cache), but it turns out there was an underlying race condition anyway (this same problem does affect the other two solutions above, too).</p>
+
+<h2 id="the-wrong-solution-4-from-nobody-but-just-in-case-you-were-thinking-about-it">The Wrong Solution #4, from Nobody (but just in case you were thinking about it!)</h2>
+
+<p>A natural response is to extend the <code>lock</code> statement in Jon’s code to include raising the event. That does prevent the race condition problem from all the solutions described above, but it introduces a more serious problem.</p>
+
+<p>If this solution is used, then an event handler cannot wait on another thread that is attempting to subscribe or unsubscribe a handler to the same event. In other words, it’s the original “unexpected deadlock” story (the same reason why locking on <code>this</code> is bad). Jon does make a note of this in <a href="http://www.yoda.arachsys.com/csharp/events.html">Delegates and Events</a>.</p>
+
+<p>To my knowledge, no one has proposed this as a solution. In general, the community seems to favor solutions that fail “loudly” (with exceptions) instead of failing “silently” (with a deadlock).</p>
+
+<h2 id="why-all-solutions-are-wrong-by-stephen-cleary-thats-me">Why All Solutions are Wrong, by Stephen Cleary (that’s me!)</h2>
+
+<p>“Callbacks” (usually events in C#) have always been problematic for multithreaded programming. This is because a good rule of thumb for component design is: <strong>Do your best to allow the event handler to do <em>anything.</em></strong> Since “communicate with another thread that is attempting to take any lock” is one example of “anything”, a natural corollary of this rule is: <strong>Never hold locks during callbacks.</strong></p>
+
+<p>This is the reasoning behind why locking on exposed objects (such as <code>this</code>) is considered bad practice (see <a href="http://msdn.microsoft.com/en-us/library/c5kehkcz.aspx">MSDN: lock Statement</a>). Holding that lock while raising an event (such as solution 4 does) makes the bad practice even worse.</p>
+
+<p>To review, all the solutions above fail in one of two situations.</p>
+
+<p>Solutions 1-3 above all fail the same use case:</p>
+
+<ul>
+  <li>Thread A will raise the event.</li>
+  <li>Thread B subscribes a handler to the event. The handler code depends on a resource.</li>
+  <li>Thread A begins to raise the event. Immediately before the delegate is invoked, Thread A is preempted by Thread B.</li>
+  <li>Thread B no longer needs the event notification, so it unsubscribes the handler from the event and disposes of the resource.</li>
+  <li>Thread A proceeds to raise the event (that has been unsubscribed). The handler code depends on a resource that has now been disposed.</li>
+</ul>
+
+<p>Solution 4 fails this use case:</p>
+
+<ul>
+  <li>Thread A will raise the event.</li>
+  <li>Thread B subscribes a handler to the event. The handler code communicates with Thread C.</li>
+  <li>Thread A begins to raise the event. Immediately before the delegate is invoked, Thread A is preempted by Thread C.</li>
+  <li>Thread C subscribes a handler to the event. Thread C blocks.</li>
+  <li>Thread A proceeds to raise the event. The handler code cannot communicate with Thread C because it is blocked.</li>
+</ul>
+
+<p>A general-purpose “thread-safe event” solution does not exist - at least, not using the synchronization primitives we currently have at our disposal. The implementation <em>must</em> either have a race condition or deadlock possibility. A lock can prevent contention (solving the race condition), but only if it is held during the raising of the event (possibly causing deadlock). Alternatively, an unadorned raised event does not have the possibility of a deadlock, but loses the guarantees of the lock (causing a race condition).</p>
+
+<p>A <em>general-purpose</em> solution does not exist, but it <em>is</em> possible to solve the problem for a specific event by imposing special requirements on the user. Some of the solutions above may work if one places restrictions on the event handlers.</p>
+
+<p>Solution 3 (and solution 2 in Microsoft’s current implementations) works if the event handler is coded to handle the situation where it is invoked after it has unsubscribed from the event. It is not difficult to write a handler this way; <a href="/2009/04/asynchronous-callback-contexts.html">asynchronous callback contexts</a> would help with the implementation. The drawback is that each event handler must include multithread-awareness code, which complicates the method.</p>
+
+<p>Solution 4 may also be made to work if the event handler does not block on a thread that subscribes to or unsubscribes from that same event. For simplicity, APIs that take this route often just state that event handlers may not block. The drawback is that this can be difficult to guarantee, since many objects hide their locking logic from their callers.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>A general-purpose solution does not exist, and all other solutions have serious drawbacks (placing severe restrictions on the actions available to the event handler).</p>
+
+<p>For this reason, I recommend the same approach that Jon Skeet ends up recommending at the end of <a href="http://www.yoda.arachsys.com/csharp/events.html">Delegates and Events</a>: “don’t do that”, i.e., don’t use events in a multithreaded fashion. If an event exists on an object, then only one thread should be able to subscribe to or unsubscribe from that event, and it’s the same thread that will raise the event.</p>
+
+<p>One nice side effect of this approach is that the code becomes much simpler:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">event</span> <span class="n">MyEventHandler</span> <span class="n">MyEvent</span><span class="p">;</span>
+
+<span class="k">protected</span> <span class="k">virtual</span> <span class="nf">OnMyEvent</span><span class="p">(</span><span class="n">MyEventArgs</span> <span class="n">args</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">MyEvent</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">this</span><span class="p">.</span><span class="n">MyEvent</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="n">args</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>Efficiency freaks can go one step further and explicitly implement the backing field, add handler, and remove handler. By removing the default locking (which is useless), the code is more explicit but also more efficient:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="n">MyEventHandler</span> <span class="n">myEvent</span><span class="p">;</span>
+<span class="k">public</span> <span class="k">event</span> <span class="n">MyEventHandler</span> <span class="n">MyEvent</span>
+<span class="p">{</span>
+    <span class="k">add</span>
+    <span class="p">{</span>
+        <span class="k">this</span><span class="p">.</span><span class="n">myEvent</span> <span class="p">+=</span> <span class="k">value</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">remove</span>
+    <span class="p">{</span>
+        <span class="k">this</span><span class="p">.</span><span class="n">myEvent</span> <span class="p">-=</span> <span class="k">value</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">protected</span> <span class="k">virtual</span> <span class="nf">OnMyEvent</span><span class="p">(</span><span class="n">MyEventArgs</span> <span class="n">args</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">myEvent</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">this</span><span class="p">.</span><span class="n">myEvent</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="n">args</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>Another side effect is that this type of event handling forces one towards <a href="http://msdn.microsoft.com/en-us/library/hkasytyf.aspx">Event-Based Asynchronous Programming</a> (or something very similar to it). EBAP is a logical conclusion for asynchronous object design, yielding maximal reusability. EBAP is also more consistent with regards to normal object concurrency restrictions: “Public static members of this type are thread safe. Any instance members are not guaranteed to be thread safe.” Events that can only be accessed by one thread follow this common pattern; the event, as an instance member, is not guaranteed to be thread safe.</p>
+
+<p>A third side effect takes longer to realize: more correct communication among threads. Instead of various threads directly subscribing to events (which would be run on another thread anyway), one must implement some form of thread communication. This forces the programmer to more clearly state the requirements from each thread’s perspective, and this in turn results in less buggy multithreading code. Usually, more appropriate ways for thread communciation are found. The event subscription model is naturally discarded as a thread communication method (due to its inherent unsuitability) in favor of much more proven design patterns. This will eventually result in more correct multithreading code, though the process requires a minor redesign.</p>
+
+<h2 id="a-final-note">A Final Note</h2>
+
+<p>As of this writing, it is still popular to promote solution 2 (copy the delegate before raising the event). However, I strongly discourage this practice; it makes the code more obscure, and provides a false sense of security because it <em>does not solve the problem!</em> It is far better to simply not have “thread-safe events”.</p>
+
+
+  </article>
+    
+    <footer>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2009/06/using-socket-as-connected-socket.html" title="Using Socket as a Connected Socket">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2009/06/application-protocol-specifications.html" title="Application Protocol Specifications">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2009/06/threadsafe-events";
+var disqus_title = "Threadsafe Events";
+var disqus_url = "http://localhost:4000/2009/06/threadsafe-events.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

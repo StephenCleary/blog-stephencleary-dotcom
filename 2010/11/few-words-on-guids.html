@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>A Few Words on GUIDs</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2010/11/few-words-on-guids.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>A Few Words on GUIDs</h1>
+          <small>Nov 16, 2010 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>I keep seeing a lot of confusion in programmers as to how exactly GUIDs work, likeliness of collision, etc. I did some work <a href="/2009/08/alternative-guids-for-mobile-devices.html">a while ago</a> developing my own GUID, so I thought I’d post some clarifications about GUIDs.</p>
+
+<h2 id="the-standard">The Standard</h2>
+
+<p>First off, GUIDs do have a standard: <a href="http://www.apps.ietf.org/rfc/rfc4122.html">RFC 4122</a>. However, there are other types of GUIDs; these will be called “non-conforming GUIDs” in this blog post.</p>
+
+<h2 id="high-level-structure">High-Level Structure</h2>
+
+<p>A GUID is a 128-bit (16-byte) value that is normally divided into five groups of varying lengths: 4 bytes, 2 bytes, 2 bytes, 2 bytes, and 6 bytes. Certain bits have certain meanings.</p>
+
+<p>RFC 4122 defines several different types of GUIDs, each of which may be composed of “fields.” The first field of note is the Variant field, which determines the “type” of the GUID. The two most significant bits in the 8th octet may be used to get the variant: 0 and 1 are reserved for NCS backwards compatibility; 2 is an RFC 4122 GUID; 3 is reserved for Microsoft backwards compatibility and future expandibility. Almost all discussion of GUIDs on the Internet are dealing with Variant 2 (RFC 4122) GUIDs. [Note: The actual Variant field interpretation is more complex, but this description is close enough].</p>
+
+<p>The second field of note is the Version field. This acts as a sort of “sub-type” for Variant 2 RFC 4122 GUIDs. The four most significant bits in the 7th octet determine the version: 1 is a time-based GUID; 2 is a DCE GUID (not described in the RFC); 3 is an MD5-hashed name-based GUID; 4 is a random GUID; 5 is a SHA1-hashed name-based GUID; and [0, 6-15] are undefined. Again, almost all discussion of GUIDs on the Internet are dealing with Version 1 or 4 GUIDs.</p>
+
+<p>Name-based GUIDs (versions 3 and 5) are hardly ever used; they provide a means to hash a name in a given “namespace” to a GUID value consistently. This is a nice idea, but most programs just use the hash directly instead of truncating it into a GUID structure.</p>
+
+<h2 id="random-guids-version-4">Random GUIDs (Version 4)</h2>
+
+<p>Today, the most common type of GUIDs are Variant 2, Version 4 RFC 4122 GUIDs, also known as “random GUIDs”. Aside from the Variant and Version fields, all other bits in the GUID are random. In particular, random GUIDs do <em>not</em> expose a MAC address.</p>
+
+<p>The .NET Framework <a href="http://msdn.microsoft.com/en-us/library/system.guid.newguid.aspx">Guid.NewGuid</a> static method generates a random GUID. The “Create GUID” tool (guidgen.exe) included in Visual Studio and the Windows SDK also generates random GUIDs, as does the uuidgen.exe tool in the SDK.</p>
+
+<h2 id="likelihood-of-collision">Likelihood of Collision</h2>
+
+<p>The Variant and Version fields are 6 bits together, which leaves 122 bits of randomness in a random GUID. There are 5.3e36 total unique random GUIDs, which is a lot. What is more important, however, is the <em>likelihood of collision</em>.</p>
+
+<p>Assuming a perfect source of entropy on each device generating random GUIDs, there is a 50% chance of collision after 2.7e18 random GUIDs have been generated. That’s more than 2.7 million million million. That’s a lot.</p>
+
+<p>Even if you reduce the chance of collision to 1%, it would still take about 3.27e17 random GUIDs for just a 1% chance of collision. That’s more than 326 million billion. That’s a lot.</p>
+
+<p>Random GUIDs cannot ever collide with other types of RFC 4122 GUIDs (e.g., time-based GUIDs). This is because the Variant or Version fields would be set to different values. However, non-conforming GUIDs may collide with random GUIDs.</p>
+
+<h2 id="time-based-guids-version-1">Time-Based GUIDs (Version 1)</h2>
+
+<p>Time-based GUIDs are Variant 2, Version 1 RFC 4122 GUIDs, also known as “sequential GUIDs” because they can be generated with values very close to each other. They consist of three fields in addition to Variant and Version: a 60-bit UTC Timestamp, a 14-bit Clock Sequence, and a 48-bit Node Identifier.</p>
+
+<p>The Node Identifier is normally the MAC address of the computer generating the time-based GUID (which is guaranteed to be unique, since MAC addresses use a registration system). However, it may also be a 47-bit random value (with the broadcast bit set). In this case, there is no danger of collision with real MAC addresses because the broadcast bit of a physical MAC address is always 0. There is a danger of collision with other random node identifiers, though; specifically, there is a 50% chance of collision once 13.97 million random nodes enter the network.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>Note: using a random value instead of the MAC address is not currently supported by Microsoft’s Win32 API. This means that any GUID generation done using <a href="http://msdn.microsoft.com/en-us/library/aa379322(VS.85).aspx" class="alert-link">UuidCreateSequential</a> <em>will</em> expose the MAC address.</p>
+</div>
+
+<p>The Clock Sequence field is initialized to a random value and incremented whenever the system clock has moved backward since the last generated GUID (e.g., if the computer corrects its time with a time server, or if it lost its date and thinks it’s 1980). This allows 16,384 clock resets without any danger of a collision. If the GUIDs are being generated so quickly that the system clock has not moved <em>forward</em> since the last GUID’s timestamp, then the GUID generation algorithm will generally stall until the system clock increments the timestamp.</p>
+
+<p>Sequential GUIDs are not actually <em>sequential</em>. In normal circumstances, GUIDs being generated by the same computer will have gradually increasing Timestamp fields (with the other fields remaining constant). However, the Timestamp field is not in the least-significant bit positions of the GUID, so if the GUID is treated as a 128-bit number, it does not actually <em>increment</em>.</p>
+
+<p>It’s important to note that the likelihood of collisions of sequential GUIDs is extremely small. The Clock Sequence and Timestamp almost certainly uniquely identify a point in time, and the Node Identifier almost certainly identifies a unique source.</p>
+
+<p>Sequential GUIDs can be created by the Win32 function <a href="http://msdn.microsoft.com/en-us/library/aa379322(VS.85).aspx">UuidCreateSequential</a> or by using uuidgen.exe from the Windows SDK passing the -x parameter.</p>
+
+<h2 id="microsofts-change">Microsoft’s Change</h2>
+
+<p>The primary method for creating GUIDs on Windows is the <a href="http://msdn.microsoft.com/en-us/library/aa379205(VS.85).aspx">UuidCreate</a> function. Before Windows 2000 (e.g., Windows NT and the 9x line), GUIDs created by this function were time-based (version 1) GUIDs. This was changed in Windows 2000 to return random (version 4) GUIDs due to privacy concerns regarding the exposure of the MAC address in Version 1 GUIDs.</p>
+
+<p>Note that “the” GUID algorithm did not change. Microsoft simply changed which GUID algorithm they were using to implement that function. Both the old and new implementations are RFC 4122 compliant, and “old” GUIDs will not conflict with “new” GUIDs. “Old” (Version 1) GUIDs can still be created by calling <a href="http://msdn.microsoft.com/en-us/library/aa379322(VS.85).aspx">UuidCreateSequential</a>.</p>
+
+<h2 id="the-database-problems">The Database Problem(s)</h2>
+
+<p>Database indexes do not work well with random values; the on-disk search trees end up very wide because the indexes do not cluster well. So, when using GUIDs for keys, it helps to use a more… <em>sequential…</em> solution.</p>
+
+<p>However, there’s another problem with GUIDs as database keys: the order in which the database compares GUIDs. Remember that sequential GUIDs aren’t really <em>sequential</em> because the Timestamp field is not at the end of the GUID structure. Furthermore, some databases compare GUID values in strange ways (I’m looking at you, <a href="http://blogs.msdn.com/b/sqlprogrammability/archive/2006/11/06/how-are-guids-compared-in-sql-server-2005.aspx">SQL Server</a> (<a href="http://www.webcitation.org/5ylIiAwyb">webcite</a>)).</p>
+
+<p>So, when Microsoft added <a href="http://msdn.microsoft.com/en-us/library/ms189786.aspx">newsequentialid()</a> to SQL Server, they did not just return a regular sequential GUID. They <a href="http://www.jorriss.net/blog/jorriss/archive/2008/04/24/unraveling-the-mysteries-of-newsequentialid.aspx">shuffled some of the bytes</a> (<a href="http://www.webcitation.org/5ylItnhAb">webcite</a>) to make index clustering more efficient.</p>
+
+<p>Unfortunately, the shuffled bytes include the Version and Variant fields. This means that <strong>newsequentialid() GUIDs are not RFC 4122 compliant!</strong> As a result, GUIDs from newsequentialid() have a higher likelihood of colliding with RFC 4122 compliant GUIDs such as sequential or random GUIDs.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>When using GUIDs as keys in a database, you must ensure that the GUIDs are all compatible with each other. In particular, newsequentialid() is not compatible with Guid.NewGuid or UuidCreateSequential (unless you’re doing byte swapping manually). Guid.NewGuid and UuidCreateSequential are compatible with each other (since they are both RFC 4122 compliant). Other made-up GUIDs - including <a href="http://www.informit.com/articles/article.aspx?p=25862">“comb” GUIDs</a> (<a href="http://www.webcitation.org/5ylJ1c1VK">webcite</a>) - are not compatible with any other type of GUID.</p>
+
+<p>Mixing incompatible GUIDs may work for a while, but you do greatly increase your chances of collisions. If GUIDs are used as keys in a database, then you should choose one particular type of combed GUID (such as newsequentialid()) and use it exclusively. If the GUIDs are not used as keys in a database, just use random RFC 4122 GUIDs. Published GUIDs (e.g., COM identifiers) are usually assumed to be RFC 4122 compliant.</p>
+
+<p>There are many statements on the Internet about observing GUID collisions in production. These statements almost always conclude that “GUIDs can collide”, which should be taken with a healthy dose of skepticism. Collisions are most likely a result of using two incompatible GUID formats (e.g., an RFC 4122 GUID and a non-conforming GUID); however, they may also be caused by one of the devices using a poor source of entropy (for random GUIDs), or a device repeatedly having its clock reset (for sequential GUIDs).</p>
+
+<p>Another possible problem is when well-meaning coders actually <em>increment</em> an existing GUID instead of generating a new one. It is <strong>wrong</strong> to take any GUID and increment it. Period. Always has been and always will be.</p>
+
+<h2 id="code">Code!</h2>
+
+<p>When doing the research for <a href="/2009/08/alternative-guids-for-mobile-devices.html">my own combed GUID</a>, I wrote <a href="http://nitokitchensink.codeplex.com/SourceControl/changeset/view/57812#1006424">a few extension methods</a> for the Guid structure that allow examining the RFC 4122 fields. For example, you can extract the MAC address and creation time for a sequential GUID. Naturally, these extension methods will only work for RFC 4122 GUIDs.</p>
+
+
+  </article>
+    
+    <footer>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2010/10/grand-rapids-day-of-dotnet-slides.html" title="Grand Rapids Day of DotNET Slides Available">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2010/11/its-girl.html" title="It&#39;s a Girl!">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2010/11/few-words-on-guids";
+var disqus_title = "A Few Words on GUIDs";
+var disqus_url = "http://localhost:4000/2010/11/few-words-on-guids.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

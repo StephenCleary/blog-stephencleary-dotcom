@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Option Parsing: Lexing</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2011/06/option-parsing-lexing.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Option Parsing: Lexing</h1>
+          <small>Jun 16, 2011 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>The first step in parsing a command line is <em>lexing</em>, which converts a single string (the command line) into a sequence of strings (individual options and/or arguments). Actually, the <em>very</em> first step takes place before the program even runs: the command shell has its own simple lexer.</p>
+
+<h2 id="command-shell-escaping-and-quoting">Command Shell Escaping and Quoting</h2>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>The information in this section is derived from the TechNet articles <a href="http://technet.microsoft.com/en-us/library/bb490954.aspx" class="alert-link">Command shell overview</a> (<a href="http://www.webcitation.org/5ytzcAcrB" class="alert-link">webcite</a>) and <a href="http://technet.microsoft.com/en-us/library/cc723564.aspx" class="alert-link">The Windows NT Command Shell</a> (<a href="http://www.webcitation.org/5ytzuqd4h" class="alert-link">webcite</a>).</p>
+</div>
+
+<p>The command shell has these special characters: <code>&amp;</code>, <code>|</code>, <code>(</code>, <code>)</code>, <code>&lt;</code>, <code>&gt;</code>, and <code>^</code>. There are two ways to pass these special characters on the command line: <em>escaping</em> and <em>quoting</em>.</p>
+
+<p>The <code>^</code> character is the shell escape character. You may prefix any of the special shell characters with that escape character, and the special shell character will be passed to the program (without the escape character).</p>
+
+<p>The command shell also supports quoting; special characters may be passed within a pair of double-quotes. In this case, the special characters are passed to the program along with the surrounding quotes.</p>
+
+<p>The shell escaping and quoting appears to be a simple algorithm: escaped characters (including normal characters) are passed through directly, and each (non-escaped) double-quote either starts or ends a quoted string. Consider the outputs from this example program:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">Environment</span><span class="p">.</span><span class="n">CommandLine</span><span class="p">);</span>
+<span class="p">}</span></code></pre></div>
+
+<pre><code>&gt; CommandLineParsingTest.exe ^^ "^"
+CommandLineParsingTest.exe ^ "^"
+
+&gt; CommandLineParsingTest.exe ^"^"
+CommandLineParsingTest.exe ""
+
+&gt; CommandLineParsingTest.exe ^""
+CommandLineParsingTest.exe ""
+
+&gt; CommandLineParsingTest.exe "^"^"
+CommandLineParsingTest.exe "^""
+
+&gt; CommandLineParsingTest.exe "^"^^"
+CommandLineParsingTest.exe "^"^"
+
+&gt; CommandLineParsingTest.exe "^^
+CommandLineParsingTest.exe "^^
+</code></pre>
+
+<p>Shell escaping and quoting are applied to every process by the Command Shell; there is no way to opt out of this behavior. After the command shell does its own escaping and quoting, the command line is passed to the program.</p>
+
+<h2 id="default-net-lexing">Default .NET Lexing</h2>
+
+<p>The command line is split up into a list of process arguments by the .NET runtime. The algorithm is described in the documentation for <a href="http://msdn.microsoft.com/en-us/library/system.environment.getcommandlineargs.aspx">Environment.GetCommandLineArgs</a>. The same results (except for the process name) are also passed as the single argument to the <code>Main</code> method, if present.</p>
+
+<p>The .NET lexing also uses a combination of escaping and quoting, but it has some surprising results because escaping is allowed inside quoting. The escape character is <code>\</code>, and the quote character is the double-quote.</p>
+
+<p>Each non-escaped double-quote starts or ends a quoted string, just like command shell quoting. However, unlike command shell quoting, escaping is allowed within quoted strings. The .NET lexing also allows two consecutive double-quotes inside a quoted string to represent a single double-quote. Consider the outputs from this example program:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">arg</span> <span class="k">in</span> <span class="n">args</span><span class="p">)</span>
+    <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">arg</span><span class="p">);</span>
+<span class="p">}</span></code></pre></div>
+
+<pre><code>&gt; CommandLineParsingTest.exe "a"
+a
+
+&gt; CommandLineParsingTest.exe \"a"
+"a
+
+&gt; CommandLineParsingTest.exe \"a
+"a
+
+&gt; CommandLineParsingTest.exe "a\"
+a"
+
+&gt; CommandLineParsingTest.exe "a\\"
+a\
+
+&gt; CommandLineParsingTest.exe a \"
+a
+"
+
+&gt; CommandLineParsingTest.exe "a \\"
+a \
+
+&gt; CommandLineParsingTest.exe "a\"b"
+a"b
+
+&gt; CommandLineParsingTest.exe "a""b"
+a"b
+
+&gt; CommandLineParsingTest.exe a "" """"
+a
+
+"
+</code></pre>
+
+<p>This lexing behavior is particularly problematic when passing directories. Since directories may contain spaces, they should be wrapped with quotes. However, if the directory ends with a backslash, the closing quote will be escaped:</p>
+
+<pre><code>&gt; CommandLineParsingTest.exe "c:\my path"
+c:\my path
+
+&gt; CommandLineParsingTest.exe "c:\my path\"
+c:\my path"
+</code></pre>
+
+<p>This is a rather serious limitation of the default .NET lexer. It is possible to write your own replacement lexer using a different algorithm. This lexer would take the process command line as input and produce a sequence of strings.</p>
+
+<p>The <a href="http://nuget.org/List/Packages/Nito.KitchenSink.OptionParsing">Nito.KitchenSink.OptionParser</a> library does not have a lexer of its own, but it will accept a sequence of strings as input into its parsing methods. If no sequence of strings is passed to a parsing method, then the method will use the process’ command line lexed with the default .NET lexer.</p>
+
+
+  </article>
+    
+    <footer>
+        
+            
+                
+            
+                
+            
+                
+            
+
+            
+            
+            
+                
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                        
+                        
+                        
+                            
+                        
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                        
+                        
+                        
+                            
+                        
+                    
+                
+                    
+                        
+                        
+                            
+                            
+                        
+                        
+                    
+                
+                    
+                        
+                            
+                            
+                        
+                        
+                        
+                    
+                
+                    
+                        
+                        
+                        
+                    
+                
+                    
+                        
+                        
+                        
+                    
+                
+                    
+                        
+                        
+                        
+                    
+                
+                    
+                
+                    
+                        
+                        
+                        
+                    
+                
+                    
+                        
+                        
+                        
+                    
+                
+                    
+                        
+                        
+                        
+                    
+                
+                    
+                        
+                        
+                        
+                    
+                
+                    
+                        
+                        
+                        
+                    
+                
+                    
+                
+                    
+                
+                    
+                        
+                        
+                        
+                    
+                
+                    
+                        
+                        
+                        
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+            
+
+            <ul class="pager">
+                <li class="previous"><a href="/2011/06/option-parsing-option-parsing-pipeline.html" title="Option Parsing: The Option Parsing Pipeline">&larr; Previous in Option Parsing</a></li>
+                <li class="next"><a href="/2011/06/option-parsing-error-handling.html" title="Option Parsing: Error Handling">Next in Option Parsing &rarr;</a></li>
+            </ul>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2011/06/option-parsing-option-parsing-pipeline.html" title="Option Parsing: The Option Parsing Pipeline">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2011/06/option-parsing-error-handling.html" title="Option Parsing: Error Handling">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+                
+                    
+                
+                    
+                
+                    
+                
+                <div class="panel panel-primary">
+                    <div class="panel-heading">Option Parsing</div>
+                    <div class="panel-body sidenav">
+                        <ul class="nav nav-pills nav-stacked">
+                            
+                                
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2011/02/option-parsing-introduction.html">Introduction</a></li>
+                                        
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2011/06/option-parsing-option-parsing-pipeline.html">The Option Parsing Pipeline</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="active sidenavitem"><a href="/2011/06/option-parsing-lexing.html">Lexing</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2011/06/option-parsing-error-handling.html">Error Handling</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2011/06/option-parsing-option-names.html">Option Names</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2011/07/option-parsing-default-and-nullable.html">Default and Nullable Argument Values</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2011/07/option-parsing-options-with-optional.html">Options with Optional Arguments</a></li>
+                                        
+                                    
+                                
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2011/07/option-parsing-allowing-multiple.html">Allowing Multiple Argument Values</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2011/08/option-parsing-preventing-multiple.html">Preventing Multiple Argument Values</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2011/08/option-parsing-argument-parsing.html">Argument Parsing</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2011/08/option-parsing-boolean-options.html">Boolean Options</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2011/08/option-parsing-validation.html">Validation</a></li>
+                                        
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2011/10/option-parsing-positional-arguments.html">Positional Arguments</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2011/10/option-parsing-case-sensitivity.html">Case Sensitivity</a></li>
+                                        
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                            
+                        </ul>
+                    </div>
+                </div>
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+<script src="/lib/jquery.scrollTo.min.js"></script>
+<script type="text/javascript">
+(function ($) {
+    $(function () {
+        var container = $('.affix').filter(function() { return $(this).css('position') == 'fixed'; });
+        var target = container.find('.active');
+        container.scrollTo(target, { offset: - (container.height() / 2 - target.height() / 2) });
+    });
+})(window.jQuery);
+</script>
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2011/06/option-parsing-lexing";
+var disqus_title = "Option Parsing: Lexing";
+var disqus_url = "http://localhost:4000/2011/06/option-parsing-lexing.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

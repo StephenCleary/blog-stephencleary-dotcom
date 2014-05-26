@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Don't Block in Asynchronous Code</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2012/12/dont-block-in-asynchronous-code.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Don't Block in Asynchronous Code</h1>
+          <small>Dec 6, 2012 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>One of my most famous blog posts is <a href="/2012/07/dont-block-on-async-code.html">Don’t Block on Asynchronous Code</a>, which took an in-depth look at how a synchronous method could deadlock if it blocked on asynchronous code (e.g., using <code>Task.Wait</code> or <code>Task.Result</code>). This is a fairly common beginner’s mistake.</p>
+
+<p>Recently, I came across another deadlock situation: in some cases, an <code>async</code> method may deadlock if it blocks on a <code>Task</code>. I found this behavior surprising and <a href="https://connect.microsoft.com/VisualStudio/feedback/details/769322/waiting-on-task-can-deadlock-in-free-threaded-context">reported it as a bug</a>. I suspect it won’t be fixed because it’s a very uncommon situation and the easiest fix would have a negative impact on performance for <em>all</em> <code>async</code> code.</p>
+
+<div class="alert alert-danger">
+  <p><i class="fa fa-exclamation-triangle fa-2x pull-left"></i></p>
+
+  <p>This deadlock scenario is due to an undocumented implementation detail. This post is accurate as of the initial release of .NET 4.5 in 2012. Microsoft may change this behavior in the future.</p>
+</div>
+
+<p>This code will deadlock in a free-threaded context (e.g., a Console application, unit test, or <code>Task.Run</code>):</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="c1">// Creates a new task on the thread pool and waits for it.</span>
+<span class="c1">// This method will deadlock if called in a free-threaded context.</span>
+<span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">Test</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="c1">// Indicates the task has been started and is ready.</span>
+  <span class="kt">var</span> <span class="n">taskReady</span> <span class="p">=</span> <span class="k">new</span> <span class="n">TaskCompletionSource</span><span class="p">&lt;</span><span class="kt">object</span><span class="p">&gt;();</span>
+
+  <span class="c1">// Start the task, running on a thread pool thread.</span>
+  <span class="kt">var</span> <span class="n">task</span> <span class="p">=</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span>
+  <span class="p">{</span>
+    <span class="c1">// Spend a bit of time getting ready.</span>
+    <span class="n">Thread</span><span class="p">.</span><span class="n">Sleep</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
+
+    <span class="c1">// Let the Test method know we&#39;ve been started and are ready.</span>
+    <span class="n">taskReady</span><span class="p">.</span><span class="n">SetResult</span><span class="p">(</span><span class="k">null</span><span class="p">);</span>
+
+    <span class="c1">// Spend a bit more time doing nothing in particular.</span>
+    <span class="n">Thread</span><span class="p">.</span><span class="n">Sleep</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
+  <span class="p">});</span>
+
+  <span class="c1">// Wait for the task to be started and ready.</span>
+  <span class="k">await</span> <span class="n">taskReady</span><span class="p">.</span><span class="n">Task</span><span class="p">;</span>
+
+  <span class="c1">// Block until the task is completed.</span>
+  <span class="n">task</span><span class="p">.</span><span class="n">Wait</span><span class="p">();</span>
+<span class="p">}</span></code></pre></div>
+
+<p>Do you see the problem? I didn’t.</p>
+
+<p>The deadlock is due to an optimization in the implementation of <code>await</code>: <strong>an <code>async</code> method’s continuation is scheduled with <code>TaskContinuationOptions.ExecuteSynchronously</code></strong>.</p>
+
+<p>So, stepping through the example code:</p>
+
+<ol>
+  <li>We kick off a task running on the thread pool. So far, so good.</li>
+  <li>The thread pool task does a bit of “work”. This is just to make sure <code>taskReady</code> is awaited before we call <code>SetResult</code>.</li>
+  <li>Meanwhile, the <code>Test</code> method continues running and awaits <code>taskReady</code>.</li>
+  <li>After a short time, the thread pool task completes its “work” and invokes <code>SetResult</code>. This is where things get interesting! <code>Test</code> is <em>already awaiting</em> <code>taskReady</code> <strong>and</strong> its continuation is expecting to run in a thread pool context. In this case, <code>SetResult</code> will <em>not</em> asynchronously schedule the continuation; it will execute it directly.</li>
+  <li>The <code>Test</code> method continues execution, only it’s no longer independent from the thread pool task. Instead, <code>Test</code> is executing on that same thread pool thread. So when we proceed to <code>Wait</code> on the thread pool task, we are blocking on something that we’re supposed to be completing.</li>
+  <li>As a result, the last <code>Sleep</code> never actually runs. The thread pool task never completes, and <code>Test</code> never completes.</li>
+</ol>
+
+<p>If you place this same method in a GUI project or ASP.NET project, you won’t see a deadlock. The difference is in step 4: the continuation must be run in the captured <code>SynchronizationContext</code>, but it’s being scheduled by a thread pool thread; so in this case <code>SetResult</code> will schedule the continuation to run asynchronously instead of executing it directly.</p>
+
+<p>One fun twist to this scenario is that if we use <code>ConfigureAwait</code>, then the method will <em>consistently</em> deadlock, regardless of its initial context:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="c1">// Creates a new task on the thread pool and waits for it.</span>
+<span class="c1">// This method will always deadlock.</span>
+<span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">Test</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="c1">// Indicates the task has been started and is ready.</span>
+  <span class="kt">var</span> <span class="n">taskReady</span> <span class="p">=</span> <span class="k">new</span> <span class="n">TaskCompletionSource</span><span class="p">&lt;</span><span class="kt">object</span><span class="p">&gt;();</span>
+
+  <span class="c1">// Start the task, running on a thread pool thread.</span>
+  <span class="kt">var</span> <span class="n">task</span> <span class="p">=</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span>
+  <span class="p">{</span>
+    <span class="c1">// Spend a bit of time getting ready.</span>
+    <span class="n">Thread</span><span class="p">.</span><span class="n">Sleep</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
+
+    <span class="c1">// Let the Test method know we&#39;ve been started and are ready.</span>
+    <span class="n">taskReady</span><span class="p">.</span><span class="n">SetResult</span><span class="p">(</span><span class="k">null</span><span class="p">);</span>
+
+    <span class="c1">// Spend a bit more time doing nothing in particular.</span>
+    <span class="n">Thread</span><span class="p">.</span><span class="n">Sleep</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
+  <span class="p">});</span>
+
+  <span class="c1">// Wait for the task to be started and ready.</span>
+  <span class="k">await</span> <span class="n">taskReady</span><span class="p">.</span><span class="n">Task</span><span class="p">.</span><span class="n">ConfigureAwait</span><span class="p">(</span><span class="n">continueOnCapturedContext</span><span class="p">:</span> <span class="k">false</span><span class="p">);</span>
+
+  <span class="c1">// Block until the task is completed.</span>
+  <span class="n">task</span><span class="p">.</span><span class="n">Wait</span><span class="p">();</span>
+<span class="p">}</span></code></pre></div>
+
+<p>Most people would not write code like this. It’s very unnatural to call <code>Task.Wait</code> in an <code>async</code> method; the natural code would use <code>await</code> instead. I only came across this behavior while writing unit tests for my <a href="http://nitoasyncex.codeplex.com/">AsyncEx</a> library; these unit tests can get pretty complex and can involve a mixture of synchronous and asynchronous code.</p>
+
+<p>In conclusion, we already knew <a href="/2012/07/dont-block-on-async-code.html">not to block <strong>on</strong> asynchronous code</a>; now we know not to block <strong>in</strong> asynchronous code either!</p>
+
+
+  </article>
+    
+    <footer>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2012/11/portable-class-library-enlightenment.html" title="Portable Class Library Enlightenment / Adaptation">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2012/12/returning-early-from-aspnet-requests.html" title="Returning Early from ASP.NET Requests">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2012/12/dont-block-in-asynchronous-code";
+var disqus_title = "Don&#39;t Block in Asynchronous Code";
+var disqus_url = "http://localhost:4000/2012/12/dont-block-in-asynchronous-code.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

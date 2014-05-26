@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Declarative Programming Languages</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2010/04/declarative-programming-languages.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Declarative Programming Languages</h1>
+          <small>Apr 15, 2010 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>There’s a lot of excitement about declarative languages, as opposed to imperative languages.</p>
+
+<p>Any programmer who has been around for a while knows that there’s <em>always been</em> a lot of excitement about declarative languages. There’s a tendency to overinflate their importance. Why, by using declarative constructs, we can program more efficiently (developer time gains)! Why, by using declarative constructs, we can have more intelligent interpreters (run-time gains)! Why, by using declarative constructs, we can have threadsafe programs (safety gains)!</p>
+
+<p>And all of this is true, <strong>but only to a point.</strong> That point is at a very specific location: where the designers of the declarative language <em>stopped adding features.</em> So, declarative languages work great when the programmers stay within the box. However, no declarative language can do everything, and one of two things happens:</p>
+
+<ol>
+  <li>The declarative language eventually ceases to evolve; e.g., a standards body decides that it is complete.</li>
+  <li>The declarative language includes extension points (which are not written in the declarative language itself), so that others may add to the language; this results in a handful of experts feeding libraries to the masses.</li>
+</ol>
+
+<p>Neither solution is maintainable in the long term.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>Note that I’m only addressing declarative <em>programming</em> here; declarative languages are perfectly well-suited for <em>declaring</em> things, such as file structure or GUI layouts. But why do we take a perfectly good declarative language and try to shove programs into it?</p>
+</div>
+
+<h2 id="blast-from-the-past">Blast from the Past</h2>
+
+<p>I’m a relatively new programmer, entering the workforce in 1995. There was a big, new thing that came out around that time. It was called XML. XML was a declarative language, and if you believed all the hype about it, it could cure cancer.</p>
+
+<p>XML was perfectly fine for what it was used for: structuring text data. Binary data was a bit more complex, but there were ways to make it work. Relational databases didn’t fit perfectly into the XML world, but there were mappings that worked sufficiently. XML was even used to represent function calls (as data).</p>
+
+<p>So, XML worked for data, and worked well. But then some genius decided to write an XML <em>programming language.</em> There was lot of talk about how XML declarative languages would be the future of all programming - seriously!</p>
+
+<p>A lot of work went into designing various XML languages, only one of which has survived. It is called XSLT, and pretty much everyone hates it. Is it possible to program in XML? Yes. It is fun? No.</p>
+
+<h2 id="a-word-about-functional-languages">A Word about Functional Languages</h2>
+
+<p>Functional languages are sometimes called declarative languages, but I disagree with this classification. Imperative languages and functional languages are both concerned with <em>how</em> a program is supposed to run. Declarative languages attempt to make the semantic leap to only being concerned with <em>what</em> a program is supposed to do.</p>
+
+<p>When looked at from this perspective, functional languages are really the same as imperative languages; they are just inside-out from each other. Declarative languages are completely different.</p>
+
+<h2 id="partially-declarative-languages">Partially-Declarative Languages</h2>
+
+<p>LINQ is an example of a declarative sub-language within an imperative language (C# or VB). LINQ, when used with the Queryable system, will actually build a complete expression tree. The LINQ provider can then use that higher-level view of the code to generate the most efficient implementation.</p>
+
+<p>Since anyone is free to implement a LINQ provider, LINQ is an example of a declarative language with an extension point (the Queryable system). People have written providers for an amazing array of data sources.</p>
+
+<p>The problem: implementing a LINQ provider is <a href="http://blogs.msdn.com/mattwar/pages/linq-links.aspx">hard!</a> Getting one working is hard enough; making it general-purpose (i.e., intelligently handling all LINQ operations) is a nightmare; and creating one that is efficient is next to impossible. So, this leads us to the predictable conclusion: a handful of provider authors attempting to satisfy the demands of the masses. Furthermore, the vast majority of LINQ providers only do the minimum necessary to get it working; they are neither general-purpose nor efficient.</p>
+
+<h2 id="declarative-languages-arent-all-bad">Declarative Languages Aren’t All Bad</h2>
+
+<p>If a programmer can stay within the existing boundaries of a declarative language, then they are very useful! I love LINQ and I love XAML data binding, both of which are declarative. I’m just trying to point out that “declarative languages” are not general-purpose solutions for all problems.</p>
+
+<p>Microsoft made a genius decision with regards to LINQ in particular: they allow a programmer to “step out” of the declarative language when the language falls short. They did this by including LINQ to Objects, which is <em>functional</em> and not <em>declarative,</em> technically speaking. Every LINQ provider has its own limitations (that “point” where the implementors stopped adding features), and at that point one can use “AsEnumerable” to transfer from the declarative system to a functional one.</p>
+
+<div class="alert alert-info">
+
+  <p>Example: LINQ to Entities cannot select new object instances like this: “db.ServiceSet.Select(x =&gt; new SelectListItem { Text = x.Name, Value = x.Id.ToString(), Selected = x.Id == serviceId });”  </p>
+
+  <p>However, one can use LINQ to Entities to retrieve the entity set and then switch to LINQ to Objects to complete the transformation: “db.ServiceSet.AsEnumerable().Select(x =&gt; new SelectListItem { Text = x.Name, Value = x.Id.ToString(), Selected = x.Id == serviceId });”</p>
+</div>
+
+<h2 id="final-rant-declarative-code-is-still-code">Final Rant: Declarative Code Is Still Code</h2>
+
+<p>Remember a few years ago when XAML came out? I had a hard time keeping from laughing out loud at some of those demos.</p>
+
+<p>First off, the central breakthrough is that we’re now using <em>declarations</em> to <em>declare</em> the UI (instead of doing it with code, a la WinForms)… But it’s kind of funny that before WinForms, the way to declare the UI was using an old thing called a dialog resource… and this dialog resource was <em>declared</em> within an RC file, which was written in a <em>declarative language</em>. Going in circles is always amusing.</p>
+
+<p>The <em>really</em> funny part of a lot of these demos, though, is when they would try to code in XAML. After showing how <em>amazing</em> it was to declare a UI in XML, they showed us how it could even support (limited) programming! Without fail, after cutting and pasting tons of XAML, they would show some fancy UI animation and proudly proclaim: <em>“with zero lines of code!”</em></p>
+
+<p>So… um… you just took a dozen lines of C# and replaced it with a couple hundred lines of XAML? And that’s an improvement? I’m sorry to break it to you, fella, but <strong>XAML is still code!</strong></p>
+
+<p>Of course, XAML is good for declaring things like UIs or even animation sequences. But programmers trying to do real <em>programming</em> in XAML quickly run into its limitations. Ever try to chain a converter? Or apply a filter on a collection? Just like LINQ, XAML can be extended, but it is surprisingly difficult.</p>
+
+<p>MVVM advocates originally attempted to achieve the “no code-behind nirvana,” but quickly ran into the limitations of the declarative language (XAML). A handful of brave souls attempted to fill the gaps - at least for their specific needs - but the general advice from the MVVM community has shifted to the more practical “minimal code-behind.”</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>The fundamental problem with every declarative language is that the programmer has to place themselves at the complete mercy of the language designer(s). It’s simply unmaintainable as a permanent solution. I believe that every sane programmer will continue <em>programming</em> in imperative languages and continue <em>declaring</em> in declarative languages.</p>
+
+<p>And there’s nothing wrong with that, in spite of the declarative programming hype.</p>
+
+
+  </article>
+    
+    <footer>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2010/04/vs2010-without-web-deployment-projects.html" title="VS2010 Without Web Deployment Projects">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2010/04/svn-source-indexing-to-codeplex.html" title="SVN Source Indexing to CodePlex">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2010/04/declarative-programming-languages";
+var disqus_title = "Declarative Programming Languages";
+var disqus_url = "http://localhost:4000/2010/04/declarative-programming-languages.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

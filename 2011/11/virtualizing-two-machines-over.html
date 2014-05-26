@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Virtualizing Two Machines over Thanksgiving</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2011/11/virtualizing-two-machines-over.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Virtualizing Two Machines over Thanksgiving</h1>
+          <small>Nov 26, 2011 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>Like many “computer people,” I do a lot of admin work for friends and familiy. Over the last few years, I’ve worked with <a href="http://landmarkbaptist.com">my church</a> to get them out of the dark ages of computing. The process is almost complete; I only have one more machine to replace, and then they will all be 64-bit dual-core 4GB systems running Pro editions of Windows. Next year I hope to (finally) put in a domain.</p>
+
+<p>It turns out that two of the old machines have some outdated software that’s critical to weekly operations. I’m working on replacements for the software, but in the meantime, the old machines were just sitting around, taking up space in the church office.</p>
+
+<p>I decided to try to virtualize these machines on Friday (the day after Thanksgiving). This blog entry is just a “lessons learned” from this adventure.</p>
+
+<h2 id="the-challenge-and-the-plan">The Challenge, and the Plan</h2>
+
+<p>The old “server” (XP Home with 192 MB RAM) and the old office machine (XP Home with 256 MB RAM) both needed virtualization. Due to the way the weekly process is done in the office, the old server would have to be virtualized onto the new server, and the old office machine would have to be virtualized onto the new office machine.</p>
+
+<p>I’m most familiar with <a href="http://www.vmware.com/">VMWare products</a> (particularly VMWare Workstation), and I highly recommend them. However, I wanted to see if it was possible to virtualize these machines without incurring a licensing cost. My budget at Landmark Baptist isn’t comparable to most IT departments. ;)  So, I decided to try Hyper-V or Virtual PC, falling back on VirtualBox if necessary (it wasn’t).</p>
+
+<p>The server was the first machine to be replaced, so unfortunately at this point the new server has the most outdated hardware/OS. It’s running Server 2008 but without Hyper-V… or even CPU virtualization support. :(  Furthermore, according to what I’ve read, Hyper-V doesn’t support USB, which IMO is a significant limitation (and a showstopper for the old “server”).</p>
+
+<p>So, I decided to try using Virtual PC for both virtual machines. The new office machine runs Win7 Pro, which is fully supported by the current version of Virtual PC (“Windows Virtual PC”). I was a bit apprehensive about the new server; Server 2008 isn’t an officially supported platform for the previous version of Virtual PC (“Microsoft Virtual PC 2007 SP1”), but it turned out to work fine. Microsoft still has Virtual PC 2007 available for download, and SP1 added support for machines without virtualization hardware (which is just what I needed).</p>
+
+<p>One limitation with Virtual PC is that it can only handle 127 GB hard drives. In my case, both machines had hard drives much smaller than that, so it wasn’t a problem.</p>
+
+<p>The plan at this point was to virtualize each machine to a different version of Virtual PC (running on different OSes and hardware). We’ll see how well this worked in a moment, but first I’ll mention the tool which kicked off this whole adventure.</p>
+
+<p>Systems Internals has a great tool called <a href="http://technet.microsoft.com/en-us/sysinternals/ee656415">disk2vhd</a>, which can create a virtual disk from a physical disk - even storing the virtual disk image on the physical disk it’s imaging, while the physical disk is running the OS running disk2vhd. If you think about it, that’s pretty cool.</p>
+
+<p>Disk2vhd can take quite a while (i.e., 8-10 hours) to run, so I tried to make my plan where it would run overnight. Once I have the machines in a VHD image, I should be able to create a Virtual PC machine using that for a hard drive. VirtualBox also supports VHD, so my fallback would be ready just in case.</p>
+
+<p>There are several articles on the Internet where others have successfully converted a physical XP machine to a virtual PC on Windows 7. The steps are straightforward: Create a disk image using disk2vhd; copy the image to the host PC; set up a new virtual machine in Virtual PC; re-activate Windows on the virtual machine; and install Integration Components/Services.</p>
+
+<p>One final note: during my preparations, I discovered that XP can run into a stop 0x7B when backing up to a disk image and restoring on different hardware (which is very similar to what I’m doing with disk2vhd). The steps to fix this are in <a href="http://support.microsoft.com/kb/314082">KB314082</a>. I did not run into this issue, but I’m including it here for others who may.</p>
+
+<p>On Wednesday (the day before Thanksgiving), I had done all the research and established my plan. I downloaded disk2vhd, VirtualBox, and both versions of Virtual PC onto my USB drive and left for Petoskey. That night, I started both machines running disk2vhd and went over to my Mom’s for Thanksgiving.</p>
+
+<h2 id="a-snag-oem-os">A Snag: OEM OS</h2>
+
+<p>I popped in to check the status on Thursday morning. The server disk2vhd failed; my external USB drive had a faulty power adapter and it had shorted out overnight. So I restarted it with my other USB drive, and turned my attention to the office machine.</p>
+
+<p>I had noticed on the disk2vhd download page that OEM OS licenses prevent virtualization. Turns out the office machine was XP Home OEM. The VHD came out fine, but it was not possible to re-activate Windows on the virtual machine. I did have a spare XP Home Retail key, but apparently you can’t activate an OEM install with a Retail key. I also tried the original OEM key, but that didn’t work since it’s keyed to the BIOS which is different in a virtual machine.</p>
+
+<p>Re-installing the OS was out of the question (if I actually <em>had</em> the install media for the outdated programs, I would have installed them on the new machine and we wouldn’t need to virtualize in the first place). In desperation, I searched online for any way to convert OEM to Retail in-place. Most of the articles recommended running a repair from a different CD, but that seemed hokey to me (how would that affect updates already installed?).</p>
+
+<p>Finally, I discovered the <a href="http://go.microsoft.com/fwlink/?LinkId=204141">Product Key Update Tool</a>. I ran it on the old office machine, converting it from OEM to Retail, and then re-started disk2vhd. This time, I ran disk2vhd with the output disk image going directly over the network to the new host PC; this worked just fine and I highly recommend it.</p>
+
+<p>During my searching, I also discovered <strong>sysprep</strong>. The Product Key Update Tool changes the old key to a new key; whereas Sysprep removes the existing key, requiring the user to type it in the next time the computer boots. I used the Update Tool, but Sysprep would probably also work.</p>
+
+<h2 id="another-snag-remote-control">Another Snag: Remote Control</h2>
+
+<p>I was hoping to do most of the work on Friday from the comfort of my Mom’s living room, eating Thanksgiving leftovers and watching the kids play with their uncles. Unfortunately, I could not get mouse capture to work at all remotely before Integration Services were installed.</p>
+
+<p>It doesn’t appear to be possible to set up a new virtual machine remotely. At least not using <a href="https://secure.logmein.com/">LogMeIn</a>, which is my remote control software of choice; in the past I’ve used pcAnywhere, UltraVNC, and Windows Live Mesh, but I’ve now settled solidly on LogMeIn.</p>
+
+<p>I also tried to LogMeIn into another computer and Remote Desktop to the Virtual PC host; however, the mouse capture was still funky (the scale was messed up). Once I got Integration Services installed, remotely controlling a host PC worked fine.</p>
+
+<p>So, I ended up having to physically be present for the initial virtual machine setup, which was disappointing.</p>
+
+<h2 id="another-snag-networking">Another Snag: Networking</h2>
+
+<p>When I brought up the old “server” as a virtual machine on the new server, the networking didn’t work. Since I only had the Windows Activation UI available, it wasn’t possible to diagnose. By default, Virtual PC will share the host’s network card (using a network switch in software). The new server had a static IP, but this shouldn’t have caused a problem. When I switched it to use NAT (a network router in software), the problem went away.</p>
+
+<p>I’ve always used NAT for my VMWare virtual machines, so this was a natural step.</p>
+
+<h2 id="issue-slow-initial-boot">Issue: Slow Initial Boot</h2>
+
+<p>The “server” disk2vhd process never finished. I’m not entirely sure why; the disk file was approximately the correct size, but disk2vhd never completed. Eventually I just exited the program and decided to try to use the file anyway.</p>
+
+<p>When starting the old server as a virtual machine for the first time, it took about an hour to get from initial startup, through Windows activation, and to the desktop. Virtual PC was pegging the CPU the entire time. I’m unsure of the reason for this; the host PC does not have virtualization hardware, the vhd could be incomplete, the vhd is dynamic, …</p>
+
+<p>Once I installed Integration Components and rebooted, the CPU problems disappeared. I can’t say whether the resolution was due to the installation or the rebooting.</p>
+
+<h2 id="issue-integration-components-on-xp-home">Issue: Integration Components on XP Home</h2>
+
+<p>The virtualized XP office machine is running on Windows Virtual PC under a Windows 7 Pro host. Normally, this situation allows a really neat trick: you can set up a program on the virtual machine so it looks like a program on the host, with its own Start menu entry, running in a regular window instead of a full virtual machine desktop, etc.</p>
+
+<p>Unfortunately, that does not work if the virtual machine is XP Home. Apparently, the Integration Components use RDP (Remote Desktop) for that functionality. The auto-login feature is also not available.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>The project was completed, though it took longer than I expected. I’ll find out next week if everything works sufficiently on the virtualized machines.</p>
+
+<p>Lessons learned:</p>
+
+<ul>
+  <li>You cannot virtualize an OEM install. You have to change it to a Retail install first, using the <a href="http://go.microsoft.com/fwlink/?LinkId=204141">Product Key Update Tool</a>.</li>
+  <li><a href="http://technet.microsoft.com/en-us/sysinternals/ee656415">Disk2vhd</a> can target a vhd image over the network.</li>
+  <li>You must be physically present to set up the virtual machines, at least until the point that Integration Services are installed.</li>
+  <li>If you’re having problems getting the virtual machine on the network, try using NAT.</li>
+  <li>Some Integration Components features do not work if the guest is XP Home.</li>
+</ul>
+
+  </article>
+    
+    <footer>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2011/10/option-parsing-case-sensitivity.html" title="Option Parsing: Case Sensitivity">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2011/12/out-for-bit.html" title="Out for a Bit">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2011/11/virtualizing-two-machines-over";
+var disqus_title = "Virtualizing Two Machines over Thanksgiving";
+var disqus_url = "http://localhost:4000/2011/11/virtualizing-two-machines-over.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

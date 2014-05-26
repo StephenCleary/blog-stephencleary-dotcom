@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Async Unit Tests, Part 1: The Wrong Way</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2012/02/async-unit-tests-part-1-wrong-way.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Async Unit Tests, Part 1: The Wrong Way</h1>
+          <small>Feb 6, 2012 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <blockquote>Code without tests does not exist.<footer>(Overheard at <a href="http://codemash.org/">CodeMash</a>)</footer></blockquote>
+
+<p>The core meaning of this quote is that code without unit tests is not as useful as code with unit tests. The speaker even goes so far as to say he <em>won’t</em> use code without tests.</p>
+
+<p>I don’t take a position quite this extreme, but I definitely agree with the underlying sentiment: that code with unit tests is far more useful. Unit tests prove correct functionality (at least for a limited set of cases). Unit tests also provide a sort of documentation.</p>
+
+<p>If you don’t write unit tests - or if you or your manager think writing tests just delays software development - then I refer you to the best computer book ever written, <a href="http://www.amazon.com/gp/product/0735619670/ref=as_li_ss_tl?ie=UTF8&amp;tag=stepheclearys-20&amp;linkCode=as2&amp;camp=1789&amp;creative=390957&amp;creativeASIN=0735619670">Code Complete</a>. In that book, Steve McConnell presents some very interesting hard facts about testing.</p>
+
+<p>I hope we can all agree that unit testing is a fundamental skill in Modern Programming. And this brings me to a sad chapter in async/await support: the “obvious” way to do unit tests is wrong.</p>
+
+<p>Let’s start with a simple asynchronous method. So simple, in fact, that it will just pretend to work for a while and then do a single integer division:</p>
+
+<pre><code>public static class MyClass
+{
+  public static async Task&lt;int&gt; Divide(int numerator, int denominator)
+  {
+    // Work for a while...
+    await Task.Delay(10); // (Use TaskEx.Delay on VS2010)
+
+    // Return the result
+    return numerator / denominator;
+  }
+}
+</code></pre>
+
+<p>Boy, it doesn’t seem that there <em>can</em> be much wrong with that code! But as we’ll see, there’s a lot that can be wrong with the unit tests…</p>
+
+<p>When developers write unit tests for async code, they usually take one of two mistaken approaches (with the second one being what I call “obvious”). We’ll look at each of these approaches in this post and examine why they’re wrong, and look at solutions next time.</p>
+
+<h2 id="wrong-way-1-using-taskwait-and-taskresult">Wrong Way #1: Using Task.Wait and Task.Result</h2>
+
+<p>This mistake is most common for people new to async: they decide to wait for the task to complete and then check its result. Well, that <em>seems</em> logical enough, and some unit tests written this way actually work:</p>
+
+<pre><code>[TestMethod]
+public void FourDividedByTwoIsTwo()
+{
+  Task&lt;int&gt; task = MyClass.Divide(4, 2);
+  task.Wait();
+  Assert.AreEqual(2, task.Result);
+}
+</code></pre>
+
+<p><img src="/assets/AsyncUnitTests1.png" alt="" />  </p>
+
+<p>But one of the problems with this approach is unit tests that check error handling:</p>
+
+<pre><code>[TestMethod]
+[ExpectedException(typeof(DivideByZeroException))]
+public void DenominatorIsZeroThrowsDivideByZero()
+{
+  Task&lt;int&gt; task = MyClass.Divide(4, 0);
+  task.Wait();
+}
+</code></pre>
+
+<p><img src="/assets/AsyncUnitTests2.png" alt="" />  </p>
+
+<p>This unit test is failing, even though the async method under test <em>is</em> throwing a DivideByZeroException. The Test Results Details explains why:</p>
+
+<p><img src="/assets/AsyncUnitTests3.png" alt="" />  </p>
+
+<p>The Task class is wrapping our exception into an AggregateException. This is why the Task.Wait and Task.Result members should not be used with new async code (see the end of <a href="/2012/02/async-and-await.html">last week’s async intro post</a>).</p>
+
+<p>Well, we could await the task, which would unwrap the exception for us. This would require our test method to be async. Congratulations, you can move on to the next section.</p>
+
+<h2 id="wrong-way-2-using-async-test-methods">Wrong Way #2: Using Async Test Methods</h2>
+
+<p>This mistake is more common for people who have used async in some real-world code. They’ve observed how async “grows” through the code base, and so it’s natural to extend async to the test methods. This is what I consider the “obvious” solution:</p>
+
+<pre><code>[TestMethod]
+public async Task FourDividedByTwoIsTwoAsync()
+{
+  int result = await MyClass.Divide(4, 2);
+  Assert.AreEqual(2, result);
+}
+</code></pre>
+
+<p><img src="/assets/AsyncUnitTests4.png" alt="" />  </p>
+
+<p>Yay! It works!</p>
+
+<p>…</p>
+
+<p>Wait…</p>
+
+<pre><code>[TestMethod]
+public async Task FourDividedByTwoIsThirteenAsync()
+{
+  int result = await MyClass.Divide(4, 2);
+  Assert.AreEqual(13, result);
+}
+</code></pre>
+
+<p><img src="/assets/AsyncUnitTests5.png" alt="" />  </p>
+
+<p>Um, that test should <em>certainly not</em> be passing! What is going on here???</p>
+
+<p>We’ve encountered a situation very similar to <a href="/2012/02/async-console-programs.html">async in Console programs</a>: there is no async context provided for unit tests, so they’re just using the thread pool context. This means that when we await our method under test, then our async test method returns to its caller (the unit test framework), and the remainder of the async test method - including the Assert - is scheduled to run on the thread pool. When the unit test framework sees the test method return (without an exception), then it marks the method as “Passed”. Eventually, the Assert will fail on the thread pool.</p>
+
+<p>There is now a race condition. There’s no race condition in the test itself; it will always pass (incorrectly). The race condition is when the assertion fires. If the assertion fires <em>after</em> the unit test framework finishes the test run, then you’ll see a successful test run (like the last screenshot). But if the assertion fires <em>before</em> the unit test framework finishes the test run, then you’ll see something like this:</p>
+
+<p><img src="/assets/AsyncUnitTests6.png" alt="" />  </p>
+
+<p>Clicking on the link shows that the Assertion is indeed failing on the thread pool, some time after the test is considered completed and “Passed”:</p>
+
+<p><img src="/assets/AsyncUnitTests7.png" alt="" />  </p>
+
+<div class="alert alert-danger">
+  <p><i class="fa fa-exclamation-triangle fa-2x pull-left"></i></p>
+
+  <p><strong>Update:</strong> Visual Studio 2012 will correctly support “async <em>Task</em>” unit tests, but doesn’t support “async void” unit tests.</p>
+</div>
+
+<h2 id="next-time-the-right-way">Next Time: The Right Way</h2>
+
+<p>During CodeMash, I gave a lightning talk about async unit testing. You could almost hear the teeth grinding at this point, when the TDD/BDD fans discovered that async unit tests were essentially broken. But do not give up hope!</p>
+
+<p>Tomorrow we’ll look at <a href="/2012/02/async-unit-tests-part-2-right-way.html">the right way to do async unit testing</a>.</p>
+
+
+  </article>
+    
+    <footer>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2012/02/async-console-programs.html" title="Async Console Programs">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2012/02/async-unit-tests-part-2-right-way.html" title="Async Unit Tests, Part 2: The Right Way">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2012/02/async-unit-tests-part-1-wrong-way";
+var disqus_title = "Async Unit Tests, Part 1: The Wrong Way";
+var disqus_url = "http://localhost:4000/2012/02/async-unit-tests-part-1-wrong-way.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

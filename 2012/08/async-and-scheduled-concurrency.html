@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Async and Scheduled Concurrency</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2012/08/async-and-scheduled-concurrency.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Async and Scheduled Concurrency</h1>
+          <small>Aug 23, 2012 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>Async doesn’t play well with traditional synchronization primitives. For example, <a href="http://stackoverflow.com/questions/7612602/why-cant-i-use-the-await-operator-within-the-body-of-a-lock-statement">think about what happens when you await while holding a lock</a>: the async method will <em>return</em> to its caller, allowing other code to run on that thread while the lock is held. If the method later resumes on the same thread (e.g., a UI context), and the “other code” attempts to take the lock, then you have a deadlock. Another case is if the method resumes on a different thread (e.g.,  ConfigureAwait(false)); in that case the new thread will attempt to release a lock it doesn’t have.</p>
+
+<p>The compiler will prevent await from within a lock{}, but it’s not omnipotent; async code has similar problems with Semaphore, ManualResetEvent, or really any other kind of traditional synchronization primitive that assumes thread affinity and works by blocking.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>You <em>can</em> use the traditional primitives as “building blocks”. E.g., ConcurrentDictionary will use locks internally, and it can be safely used from async code. This is permitted because all the code within the locks is synchronous; there is no way for the async method to yield while holding one of ConcurrentDictionary’s internal locks.</p>
+</div>
+
+<h2 id="async-concurrency-options">Async Concurrency Options</h2>
+
+<p>The best option is to restructure your code so that concurrency is removed. Instead of having different methods or different objects contending over the same state, focus on the data being moved. Often, you can use <a href="http://msdn.microsoft.com/en-us/devlabs/gg585582.aspx">TPL Dataflow</a> or <a href="http://msdn.microsoft.com/en-us/data/gg577609.aspx">Rx</a> to represent the logic more naturally, leaving all concurrency internal to those libraries. TPL Dataflow is built on Tasks and plays very well with async. Rx is a bit different but it also plays well with async.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>This is yet another example of async code gently pushing you towards a functional programming style.</p>
+</div>
+
+<p>The first option isn’t always feasible, though. If you want minimal impact to your existing code, you can check out Stephen Toub’s series where he creates async-friendly versions of <a href="http://blogs.msdn.com/b/pfxteam/archive/2012/02/11/10266920.aspx">ManualResetEvent</a>, <a href="http://blogs.msdn.com/b/pfxteam/archive/2012/02/11/10266923.aspx">AutoResetEvent</a>, <a href="http://blogs.msdn.com/b/pfxteam/archive/2012/02/11/10266930.aspx">CountdownEvent</a>, <a href="http://blogs.msdn.com/b/pfxteam/archive/2012/02/11/10266932.aspx">Barrier</a>, <a href="http://blogs.msdn.com/b/pfxteam/archive/2012/02/12/10266983.aspx">Semaphore</a>, <a href="http://blogs.msdn.com/b/pfxteam/archive/2012/02/12/10266988.aspx">lock</a>, and <a href="http://blogs.msdn.com/b/pfxteam/archive/2012/02/12/building-async-coordination-primitives-part-7-asyncreaderwriterlock.aspx">ReaderWriterLock</a>. There’s some tremendous knowledge in these posts, even if you don’t use the code.</p>
+
+<p>Today, though, I’m going to explore a third option: <strong>scheduled concurrency</strong>. A lot of people aren’t even aware that it’s an option.</p>
+
+<h2 id="async-scheduled-concurrency">Async Scheduled Concurrency</h2>
+
+<p>By default, <a href="/2012/02/async-and-await.html">when an async method resumes after awaiting a Task, it resumes in a “context”</a>. I’m always careful not to say “synchronization context” there; the actual async context is SynchronizationContext <em>unless it is null</em>, in which case the async context is the current TaskScheduler.</p>
+
+<p>So if we want to control the async context, one option is to implement a custom SynchronizationContext. That’s somewhat painful. It does have its uses (e.g., async unit testing), but it’s not something we want to do a lot.</p>
+
+<p>The other option - using a custom TaskScheduler - is what we’ll be considering today. Most of the time, you’ll only need to specify the TaskScheduler when creating the highest-level async Task. By default, the async context (including our TaskScheduler) will be inherited by all the async methods in the call tree.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>Remember, resuming the async context after an await is <strong>by default</strong>. You can always jump out of your TaskScheduler by awaiting ConfigureAwait(false).</p>
+</div>
+
+<p>There are two important TaskSchedulers you should know about. The first one is TaskScheduler.Default, which schedules tasks to the ThreadPool. That one’s not very interesting because it’s the default behavior if we don’t provide a custom TaskScheduler.</p>
+
+<p>The other TaskScheduler is very interesting. It’s new in .NET 4.5 and goes by the name of <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.concurrentexclusiveschedulerpair(v=VS.110).aspx">ConcurrentExclusiveScheculerPair</a>. It’s actually a pair of schedulers: one concurrent and one exclusive. It acts like a reader/writer lock, only at the scheduler level. So instead of blocking a task (synchronously via ReaderWriterLock or asynchronously via <a href="http://blogs.msdn.com/b/pfxteam/archive/2012/02/12/building-async-coordination-primitives-part-7-asyncreaderwriterlock.aspx">AsyncReaderWriterLock</a>), it simply doesn’t execute the task until it’s permitted to run.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>As of this writing, the .NET 4.5 docs are a bit lacking. For more information on the design of ConcurrentExclusiveSchedulerPair, see <a href="http://blogs.msdn.com/b/pfxteam/archive/2010/04/08/9990422.aspx" class="alert-link">this blog post by Stephen Toub</a> (who else?) or <a href="http://code.msdn.microsoft.com/Samples-for-Parallel-b4b76364/sourcecode?fileId=44488&amp;pathId=2072038893">the original implementation</a>{.alert-link}. At that time, it was called ConcurrentExclusiveInterleave.</p>
+</div>
+
+<p>ConcurrentExclusiveSchedulerPair actually handles any mixture of these scenarios:</p>
+
+<ul>
+  <li>Reader/writer locks (obviously). Schedule reader tasks to ConcurrentScheduler and writer tasks to ExclusiveScheduler.</li>
+  <li>Plain ‘ol locks (obviously). Schedule all tasks to ExclusiveScheduler.</li>
+  <li>Limited concurrency. You can pass a parameter to ConcurrentExclusiveSchedulerPair to indicate how many concurrent tasks can be scheduled on the ConcurrentScheduler at a time. Then schedule all tasks to ConcurrentScheduler.</li>
+</ul>
+
+<p>It’s also possible to define your own special TaskScheduler, if you really need one. E.g., a UI scheduler that gave its tasks a low dispatcher priority, or an STA scheduler for COM interop.</p>
+
+<div class="alert alert-danger">
+  <p><i class="fa fa-exclamation-triangle fa-2x pull-left"></i></p>
+
+  <p><strong>Note:</strong> When an asynchronous method awaits, it returns back to its context. This means that ExclusiveScheduler is perfectly happy to run one task <em>at a time</em>, not one task <em>until it completes</em>. As soon as an asynchronous method awaits, it’s no longer the “owner” of the ExclusiveScheduler. Stephen Toub’s async-friendly primitives like <a href="http://blogs.msdn.com/b/pfxteam/archive/2012/02/12/10266988.aspx" class="alert-link">AsyncLock</a> use a different strategy, allowing an asynchronous method to hold the lock while it awaits.</p>
+</div>
+
+<!--
+
+<h4>Schedulers, Schedulers, Everywhere!</h4>
+
+<p>Schedulers can actually do much more than just synchronization. They can also specify a context.</p>
+
+<p>The most obvious example is TaskScheduler.FromCurrentSynchronizationContext, which is a TaskScheduler that schedules tasks on the current SynchronizationContext. Await does't use this scheduler because it will use SynchronizationContext directly if it is present.</p>
+
+<p>What about other contexts? Stephen Toub (again) has been there and done that with his <a href="http://blogs.msdn.com/b/pfxteam/archive/2010/04/07/9990421.aspx">StaTaskScheduler</a> (for scheduling tasks to an STA thread for COM interop) and <a href="http://blogs.msdn.com/b/pfxteam/archive/2010/04/09/9990424.aspx">many other interesting schedulers</a>. However, out of all of these, only ConcurrentExclusiveSchedulerPair made it into production.</p>
+
+-->
+
+<h2 id="mix-and-match">Mix and Match</h2>
+
+<p>In this blog post, I’ve mentioned three options for concurrency control: TPL Dataflow/Rx, async-friendly primitives, and scheduled concurrency. These are not exclusive.</p>
+
+<p>ConcurrentExclusiveSchedulerPair is particularly useful with TPL Dataflow. Using dataflow, you can define a “mesh” for your data to travel through, and you can use ConcurrentExclusiveSchedulerPair to synchronize or throttle any parts of that mesh. Combining TPL Dataflow with scheduled concurrency is truly powerful!</p>
+
+
+  </article>
+    
+    <footer>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2012/08/windows-8-boot-to-differencing-vhd.html" title="Windows 8 Boot to Differencing VHD">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2012/08/async-coroutines.html" title="Async Coroutines">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2012/08/async-and-scheduled-concurrency";
+var disqus_title = "Async and Scheduled Concurrency";
+var disqus_url = "http://localhost:4000/2012/08/async-and-scheduled-concurrency.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

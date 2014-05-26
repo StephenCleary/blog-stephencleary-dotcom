@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Returning Early from ASP.NET Requests</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2012/12/returning-early-from-aspnet-requests.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Returning Early from ASP.NET Requests</h1>
+          <small>Dec 13, 2012 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <div class="alert alert-danger">
+  <p><i class="fa fa-exclamation-triangle fa-2x pull-left"></i></p>
+
+  <p><strong>Update, 2014-05-07:</strong> The <a href="http://msdn.microsoft.com/en-us/library/ms171868(v=vs.110).aspx#v452">.NET Framework 4.5.2 introduced <code>HostingEnvironment.QueueBackgroundWorkItem</code></a>{.alert-text}, which effectively rendered the code below obsolete. On .NET 4.5.2, you can use the new API instead of the <code>BackgroundTaskManager.Run</code> described below. However, the same safety warnings apply.</p>
+</div>
+
+<p>I have great reservations about writing this blog post. Pretty much everything I’m going to describe here is a bad idea and you should strongly avoid putting it into production, but there <em>are</em> just a few situations where this technique can be really helpful.</p>
+
+<p>As I described in <a href="/2012/08/async-doesnt-change-http-protocol.html">Async Doesn’t Change the HTTP Protocol</a>, in the ASP.NET worldview you only get one “response” for each “request”. You can’t return early just by using an <code>await</code>. However, in some situations you have enough information to generate the response but the actual request processing may take some more time. That’s were today’s solution comes in.</p>
+
+<h2 id="not-recommended">Not Recommended</h2>
+
+<p>The solution in this blog post is not recommended. Before putting it into production, you <strong>need</strong> to understand <strong>why</strong> it’s not recommended.</p>
+
+<p>ASP.NET executes your web site (or web application) in an AppDomain, separated from other web sites (or web applications) on the same server. There are <a href="http://blogs.msdn.com/b/tess/archive/2006/08/02/asp-net-case-study-lost-session-variables-and-appdomain-recycles.aspx">many</a> <a href="http://blogs.msdn.com/b/johan/archive/2007/05/16/common-reasons-why-your-application-pool-may-unexpectedly-recycle.aspx">reasons</a> why this AppDomain may be shut down; modern versions of IIS <a href="http://www.iis.net/configreference/system.applicationhost/applicationpools/add/recycling">recycle the entire process</a> every 29 hours by default just to keep things clean. Also, you have to take into consideration unmanaged shutdowns: hard drive failures, hurricanes, etc.</p>
+
+<p>Consider what happens if you generate (and return) the response but you’re still working on the request. If you lose your AppDomain for any reason, that in-progress work is <em>lost</em>. The client thinks it was completed, but it really wasn’t. As long as the request is incomplete, the responsibility is on the client. When you complete the request (by sending a response), you have accepted the full responsibility of that request. If you haven’t already committed the changes, you need to be absolutely sure that they <em>will</em> be committed.</p>
+
+<h2 id="proper-solutions">Proper Solutions</h2>
+
+<p>The correct solutions are all complicated: you need to put the additional work in a safe place, like an Azure queue, database, or persistent messaging system (Azure message bus, MSMQ, WebSphere MQ, etc). And each of those solutions brings a whole scope of additional work: setup and configuration, dead-letter queues, poison messages, etc.</p>
+
+<p>But that’s the correct way to do it, because <em>you can’t drop the ball!</em> You store the additional work in the safe place and then return a response after the work is safely stored. Personally, I like distributed systems (like Azure queues) because it’s not just safely stored on the hard drive - it’s safely stored on <em>six</em> hard drives, three of which are in a <em>different geographic location.</em> This gives you more protection from more problems (like hard drive failures and hurricanes).</p>
+
+<h2 id="the-improper-solution">The Improper “Solution”</h2>
+
+<p>The <em>unsafe</em> way to do it is to keep the work in memory. The simple way to do this is to just toss the work into <code>Task.Run</code>. Unfortunately, ASP.NET has no idea if you have queued work like this, and it will feel free to take down your AppDomain when it thinks it’s idle.</p>
+
+<p>The <em>slightly safer but still unsafe</em> way to do it is to keep the work in memory but register it with ASP.NET so that it will notify you when your AppDomain is going away. The code in this blog post uses <a href="http://haacked.com/archive/2011/10/16/the-dangers-of-implementing-recurring-background-tasks-in-asp-net.aspx">the technique described by Phil Haack</a> to register work with the ASP.NET runtime. It’s important to note the <strong>limitations</strong> of this approach:</p>
+
+<ul>
+  <li>By default, you only have 30 seconds total from the time the notification goes out to the time the AppDomain is yanked out from under you.</li>
+  <li>You <em>may</em> not get notification at all. In an unmanaged shutdown (e.g., power loss), all bets are off.</li>
+</ul>
+
+<p>Still, this approach <em>can</em> be useful in a limited set of scenarios, so with great reservation let’s take a look at the code. <strong>Update 2014-04: A newer version of this code is now <a href="https://github.com/StephenCleary/AspNetBackgroundTasks">on GitHub.</a></strong></p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Threading</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Web.Hosting</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">Nito.AsyncEx</span><span class="p">;</span>
+
+<span class="c1">/// &lt;summary&gt;</span>
+<span class="c1">/// A type that tracks background operations and notifies ASP.NET that they are still in progress.</span>
+<span class="c1">/// &lt;/summary&gt;</span>
+<span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">BackgroundTaskManager</span> <span class="p">:</span> <span class="n">IRegisteredObject</span>
+<span class="p">{</span>
+    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">/// A cancellation token that is set when ASP.NET is shutting down the app domain.</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="k">private</span> <span class="k">readonly</span> <span class="n">CancellationTokenSource</span> <span class="n">shutdown</span><span class="p">;</span>
+
+    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">/// A countdown event that is incremented each time a task is registered and decremented each time it completes. When it reaches zero, we are ready to shut down the app domain. </span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="k">private</span> <span class="k">readonly</span> <span class="n">AsyncCountdownEvent</span> <span class="n">count</span><span class="p">;</span>
+
+    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">/// A task that completes after &lt;see cref=&quot;count&quot;/&gt; reaches zero and the object has been unregistered.</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="k">private</span> <span class="k">readonly</span> <span class="n">Task</span> <span class="n">done</span><span class="p">;</span>
+
+    <span class="k">private</span> <span class="nf">BackgroundTaskManager</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="c1">// Start the count at 1 and decrement it when ASP.NET notifies us we&#39;re shutting down.</span>
+        <span class="n">shutdown</span> <span class="p">=</span> <span class="k">new</span> <span class="n">CancellationTokenSource</span><span class="p">();</span>
+        <span class="n">count</span> <span class="p">=</span> <span class="k">new</span> <span class="n">AsyncCountdownEvent</span><span class="p">(</span><span class="m">1</span><span class="p">);</span>
+        <span class="n">shutdown</span><span class="p">.</span><span class="n">Token</span><span class="p">.</span><span class="n">Register</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">count</span><span class="p">.</span><span class="n">Signal</span><span class="p">(),</span> <span class="n">useSynchronizationContext</span><span class="p">:</span> <span class="k">false</span><span class="p">);</span>
+
+        <span class="c1">// Register the object and unregister it when the count reaches zero.</span>
+        <span class="n">HostingEnvironment</span><span class="p">.</span><span class="n">RegisterObject</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+        <span class="n">done</span> <span class="p">=</span> <span class="n">count</span><span class="p">.</span><span class="n">WaitAsync</span><span class="p">().</span><span class="n">ContinueWith</span><span class="p">(</span><span class="n">_</span> <span class="p">=&gt;</span> <span class="n">HostingEnvironment</span><span class="p">.</span><span class="n">UnregisterObject</span><span class="p">(</span><span class="k">this</span><span class="p">),</span> <span class="n">TaskContinuationOptions</span><span class="p">.</span><span class="n">ExecuteSynchronously</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">void</span> <span class="n">IRegisteredObject</span><span class="p">.</span><span class="n">Stop</span><span class="p">(</span><span class="kt">bool</span> <span class="n">immediate</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">shutdown</span><span class="p">.</span><span class="n">Cancel</span><span class="p">();</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">immediate</span><span class="p">)</span>
+            <span class="n">done</span><span class="p">.</span><span class="n">Wait</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">/// Registers a task with the ASP.NET runtime.</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="c1">/// &lt;param name=&quot;task&quot;&gt;The task to register.&lt;/param&gt;</span>
+    <span class="k">private</span> <span class="k">void</span> <span class="nf">Register</span><span class="p">(</span><span class="n">Task</span> <span class="n">task</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">count</span><span class="p">.</span><span class="n">AddCount</span><span class="p">();</span>
+        <span class="n">task</span><span class="p">.</span><span class="n">ContinueWith</span><span class="p">(</span><span class="n">_</span> <span class="p">=&gt;</span> <span class="n">count</span><span class="p">.</span><span class="n">Signal</span><span class="p">(),</span> <span class="n">TaskContinuationOptions</span><span class="p">.</span><span class="n">ExecuteSynchronously</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">/// The background task manager for this app domain.</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="k">private</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">BackgroundTaskManager</span> <span class="n">instance</span> <span class="p">=</span> <span class="k">new</span> <span class="n">BackgroundTaskManager</span><span class="p">();</span>
+
+    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">/// Gets a cancellation token that is set when ASP.NET is shutting down the app domain.</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="n">CancellationToken</span> <span class="n">Shutdown</span> <span class="p">{</span> <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="n">instance</span><span class="p">.</span><span class="n">shutdown</span><span class="p">.</span><span class="n">Token</span><span class="p">;</span> <span class="p">}</span> <span class="p">}</span>
+    
+    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">/// Executes an &lt;c&gt;async&lt;/c&gt; background operation, registering it with ASP.NET.</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="c1">/// &lt;param name=&quot;operation&quot;&gt;The background operation.&lt;/param&gt;</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Run</span><span class="p">(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&gt;</span> <span class="n">operation</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">instance</span><span class="p">.</span><span class="n">Register</span><span class="p">(</span><span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(</span><span class="n">operation</span><span class="p">));</span>
+    <span class="p">}</span>
+
+    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">/// Executes a background operation, registering it with ASP.NET.</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="c1">/// &lt;param name=&quot;operation&quot;&gt;The background operation.&lt;/param&gt;</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Run</span><span class="p">(</span><span class="n">Action</span> <span class="n">operation</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">instance</span><span class="p">.</span><span class="n">Register</span><span class="p">(</span><span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(</span><span class="n">operation</span><span class="p">));</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p><code>BackgroundTaskManager</code> is a singleton that keeps track of background operations. It uses an <a href="http://nitoasyncex.codeplex.com/wikipage?title=AsyncCountdownEvent">AsyncCountdownEvent</a> from <a href="http://nitoasyncex.codeplex.com/">AsyncEx</a> as a counter of background operations (plus an extra count that is decremented when ASP.NET notifies us that the AppDomain is going down).</p>
+
+<p>You can queue synchronous or asynchronous work by calling <code>Run</code>:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="n">BackgroundTaskManager</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span>
+<span class="p">{</span>
+    <span class="n">Thread</span><span class="p">.</span><span class="n">Sleep</span><span class="p">(</span><span class="m">20000</span><span class="p">);</span>
+<span class="p">});</span>
+<span class="n">BackgroundTaskManager</span><span class="p">.</span><span class="n">Run</span><span class="p">(</span><span class="k">async</span> <span class="p">()</span> <span class="p">=&gt;</span>
+<span class="p">{</span>
+    <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">20000</span><span class="p">);</span>
+<span class="p">});</span></code></pre></div>
+
+<p><code>BackgroundTaskManager</code> also publishes a <code>CancellationToken</code> that is canceled when ASP.NET notifies us that our AppDomain is shutting down. <code>async</code> code can use this to abort processing (when it is safe to do so):</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="n">BackgroundTaskManager</span><span class="p">.</span><span class="n">Run</span><span class="p">(</span><span class="k">async</span> <span class="p">()</span> <span class="p">=&gt;</span>
+<span class="p">{</span>
+    <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">20000</span><span class="p">,</span> <span class="n">BackgroundTaskManager</span><span class="p">.</span><span class="n">Shutdown</span><span class="p">);</span>
+<span class="p">});</span></code></pre></div>
+
+<p>One important note about background operations: <strong>exceptions are ignored!</strong> So if you want to catch errors and toss a “hail Mary” to ETW or the Event Log, you’ll need to do so with a <code>try ... catch</code> inside each operation. In the example above, if the AppDomain is recycled while the operation is doing the delay, the cancellation exception will be raised from the operation and then it will be ignored.</p>
+
+<p>As a final reminder, do <strong>not</strong> put critical processing in a background operation like this. It works fine for the “easy” case (ASP.NET gets a gentle request to shut down the AppDomain and nicely notifies the background operations, which all complete or cancel well within the timeout window), but it can fall down if anything goes wrong (IIS is killed, or the background operations continue too long due to another process hogging the CPU, or there’s a power outage, etc).</p>
+
+
+  </article>
+    
+    <footer>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2012/12/dont-block-in-asynchronous-code.html" title="Don&#39;t Block in Asynchronous Code">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2012/12/async-producer-consumer-queue-2-more.html" title="Async Producer-Consumer Queue 2: More Portability">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2012/12/returning-early-from-aspnet-requests";
+var disqus_title = "Returning Early from ASP.NET Requests";
+var disqus_url = "http://localhost:4000/2012/12/returning-early-from-aspnet-requests.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Async Producer/Consumer Queue using Dataflow</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2012/11/async-producerconsumer-queue-using.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Async Producer/Consumer Queue using Dataflow</h1>
+          <small>Nov 8, 2012 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>Today we’ll build on what we learned about Dataflow to build an async-compatible producer/consumer queue.</p>
+
+<p>A <em>producer/consumer queue</em> is a classic problem in multithreading: you have one (or more) “producers” which are producing data, you have one (or more) “consumers” which are consuming data, and you need some kind of data structure that will receive data from the producer(s) and provide it to the consumer(s).</p>
+
+<p>Using TPL Dataflow, this is incredibly easy: a <code>BufferBlock</code> is an async-ready producer/consumer queue. We’ll start with the simple example of a single producer and consumer, and build from there.</p>
+
+<p>Our producer can just enqueue a sequence of values, and then mark the queue as complete:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Produce</span><span class="p">(</span><span class="n">BufferBlock</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">queue</span><span class="p">,</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">values</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="k">value</span> <span class="k">in</span> <span class="n">values</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">queue</span><span class="p">.</span><span class="n">Post</span><span class="p">(</span><span class="k">value</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="n">queue</span><span class="p">.</span><span class="n">Complete</span><span class="p">();</span>
+<span class="p">}</span></code></pre></div>
+
+<p>Similarly, the consumer can just await until a value is ready in the queue, and then add it to its collection of received values. Note that this works only if we have a single consumer; if we have multiple consumers, then they would all see the output available, but they wouldn’t all be able to receive it.</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">IEnumerable</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;&gt;</span> <span class="n">Consume</span><span class="p">(</span><span class="n">BufferBlock</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">queue</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">var</span> <span class="n">ret</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;();</span>
+    <span class="k">while</span> <span class="p">(</span><span class="k">await</span> <span class="n">queue</span><span class="p">.</span><span class="n">OutputAvailableAsync</span><span class="p">())</span>
+    <span class="p">{</span>
+        <span class="n">ret</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="k">await</span> <span class="n">queue</span><span class="p">.</span><span class="n">ReceiveAsync</span><span class="p">());</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">ret</span><span class="p">;</span>
+<span class="p">}</span></code></pre></div>
+
+<p>We can wrap these up in a simple unit test:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="na">[TestMethod]</span>
+<span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">ConsumerReceivesCorrectValues</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="c1">// Define the mesh.</span>
+    <span class="kt">var</span> <span class="n">queue</span> <span class="p">=</span> <span class="k">new</span> <span class="n">BufferBlock</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;();</span>
+
+    <span class="c1">// Start the producer and consumer.</span>
+    <span class="kt">var</span> <span class="n">values</span> <span class="p">=</span> <span class="n">Enumerable</span><span class="p">.</span><span class="n">Range</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">10</span><span class="p">);</span>
+    <span class="n">Produce</span><span class="p">(</span><span class="n">queue</span><span class="p">,</span> <span class="n">values</span><span class="p">);</span>
+    <span class="kt">var</span> <span class="n">consumer</span> <span class="p">=</span> <span class="n">Consume</span><span class="p">(</span><span class="n">queue</span><span class="p">);</span>
+
+    <span class="c1">// Wait for everything to complete.</span>
+    <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">WhenAll</span><span class="p">(</span><span class="n">consumer</span><span class="p">,</span> <span class="n">queue</span><span class="p">.</span><span class="n">Completion</span><span class="p">);</span>
+
+    <span class="c1">// Ensure the consumer got what the producer sent (in the correct order).</span>
+    <span class="kt">var</span> <span class="n">results</span> <span class="p">=</span> <span class="k">await</span> <span class="n">consumer</span><span class="p">;</span>
+    <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">results</span><span class="p">.</span><span class="n">SequenceEqual</span><span class="p">(</span><span class="n">values</span><span class="p">));</span>
+<span class="p">}</span></code></pre></div>
+
+<h2 id="throttling">Throttling</h2>
+
+<p>A common requirement for producer/consumer queues is a throttling restriction. We don’t want to run out of memory if the producers can produce data items faster than consumers can consume them!</p>
+
+<p>First, we need to change our producer. <code>Post</code> will (synchronously) block once the throttling threshold is reached, so we’ll switch to the asynchronous <code>SendAsync</code> (and make the producer itself asynchronous):</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">Produce</span><span class="p">(</span><span class="n">BufferBlock</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">queue</span><span class="p">,</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">values</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="k">value</span> <span class="k">in</span> <span class="n">values</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">await</span> <span class="n">queue</span><span class="p">.</span><span class="n">SendAsync</span><span class="p">(</span><span class="k">value</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="n">queue</span><span class="p">.</span><span class="n">Complete</span><span class="p">();</span>
+<span class="p">}</span></code></pre></div>
+
+<p>Dataflow blocks have built-in support for throttling, so adding this to the mesh is rather easy once we have an asynchronous producer. We can say there should never be more than 5 data items in the queue, and it’s a one-line change (the line that defines the mesh):</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="na">[TestMethod]</span>
+<span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">ConsumerReceivesCorrectValues</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="c1">// Define the mesh.</span>
+    <span class="kt">var</span> <span class="n">queue</span> <span class="p">=</span> <span class="k">new</span> <span class="n">BufferBlock</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;(</span><span class="k">new</span> <span class="n">DataflowBlockOptions</span> <span class="p">{</span> <span class="n">BoundedCapacity</span> <span class="p">=</span> <span class="m">5</span><span class="p">,</span> <span class="p">});</span>
+
+    <span class="c1">// Start the producer and consumer.</span>
+    <span class="kt">var</span> <span class="n">values</span> <span class="p">=</span> <span class="n">Enumerable</span><span class="p">.</span><span class="n">Range</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">10</span><span class="p">);</span>
+    <span class="kt">var</span> <span class="n">producer</span> <span class="p">=</span> <span class="n">Produce</span><span class="p">(</span><span class="n">queue</span><span class="p">,</span> <span class="n">values</span><span class="p">);</span>
+    <span class="kt">var</span> <span class="n">consumer</span> <span class="p">=</span> <span class="n">Consume</span><span class="p">(</span><span class="n">queue</span><span class="p">);</span>
+
+    <span class="c1">// Wait for everything to complete.</span>
+    <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">WhenAll</span><span class="p">(</span><span class="n">producer</span><span class="p">,</span> <span class="n">consumer</span><span class="p">,</span> <span class="n">queue</span><span class="p">.</span><span class="n">Completion</span><span class="p">);</span>
+
+    <span class="c1">// Ensure the consumer got what the producer sent (in the correct order).</span>
+    <span class="kt">var</span> <span class="n">results</span> <span class="p">=</span> <span class="k">await</span> <span class="n">consumer</span><span class="p">;</span>
+    <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">results</span><span class="p">.</span><span class="n">SequenceEqual</span><span class="p">(</span><span class="n">values</span><span class="p">));</span>
+<span class="p">}</span></code></pre></div>
+
+<h2 id="multiple-producers">Multiple Producers</h2>
+
+<p>We can have multiple producers pushing data to the same queue (or any dataflow mesh). The only thing we have to change is when the block is completed.</p>
+
+<p>First, we remove the block completion from the producers:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">Produce</span><span class="p">(</span><span class="n">BufferBlock</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">queue</span><span class="p">,</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">values</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="k">value</span> <span class="k">in</span> <span class="n">values</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">await</span> <span class="n">queue</span><span class="p">.</span><span class="n">SendAsync</span><span class="p">(</span><span class="k">value</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>Now, we can write a simple “producer manager” method that will complete the queue when all producers complete:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">ProduceAll</span><span class="p">(</span><span class="n">BufferBlock</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">queue</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">var</span> <span class="n">producer1</span> <span class="p">=</span> <span class="n">Produce</span><span class="p">(</span><span class="n">queue</span><span class="p">,</span> <span class="n">Enumerable</span><span class="p">.</span><span class="n">Range</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">10</span><span class="p">));</span>
+    <span class="kt">var</span> <span class="n">producer2</span> <span class="p">=</span> <span class="n">Produce</span><span class="p">(</span><span class="n">queue</span><span class="p">,</span> <span class="n">Enumerable</span><span class="p">.</span><span class="n">Range</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="m">10</span><span class="p">));</span>
+    <span class="kt">var</span> <span class="n">producer3</span> <span class="p">=</span> <span class="n">Produce</span><span class="p">(</span><span class="n">queue</span><span class="p">,</span> <span class="n">Enumerable</span><span class="p">.</span><span class="n">Range</span><span class="p">(</span><span class="m">20</span><span class="p">,</span> <span class="m">10</span><span class="p">));</span>
+    <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">WhenAll</span><span class="p">(</span><span class="n">producer1</span><span class="p">,</span> <span class="n">producer2</span><span class="p">,</span> <span class="n">producer3</span><span class="p">);</span>
+    <span class="n">queue</span><span class="p">.</span><span class="n">Complete</span><span class="p">();</span>
+<span class="p">}</span></code></pre></div>
+
+<p>The updated test looks like this (note that because we have three independent producers, the order of results is no longer guaranteed):</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="na">[TestMethod]</span>
+<span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">ConsumerReceivesCorrectValues</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="c1">// Define the mesh.</span>
+    <span class="kt">var</span> <span class="n">queue</span> <span class="p">=</span> <span class="k">new</span> <span class="n">BufferBlock</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;(</span><span class="k">new</span> <span class="n">DataflowBlockOptions</span> <span class="p">{</span> <span class="n">BoundedCapacity</span> <span class="p">=</span> <span class="m">5</span><span class="p">,</span> <span class="p">});</span>
+
+    <span class="c1">// Start the producers and consumer.</span>
+    <span class="kt">var</span> <span class="n">producers</span> <span class="p">=</span> <span class="n">ProduceAll</span><span class="p">(</span><span class="n">queue</span><span class="p">);</span>
+    <span class="kt">var</span> <span class="n">consumer</span> <span class="p">=</span> <span class="n">Consume</span><span class="p">(</span><span class="n">queue</span><span class="p">);</span>
+
+    <span class="c1">// Wait for everything to complete.</span>
+    <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">WhenAll</span><span class="p">(</span><span class="n">producers</span><span class="p">,</span> <span class="n">consumer</span><span class="p">,</span> <span class="n">queue</span><span class="p">.</span><span class="n">Completion</span><span class="p">);</span>
+
+    <span class="c1">// Ensure the consumer got what the producer sent.</span>
+    <span class="kt">var</span> <span class="n">results</span> <span class="p">=</span> <span class="k">await</span> <span class="n">consumer</span><span class="p">;</span>
+    <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">results</span><span class="p">.</span><span class="n">OrderBy</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="n">x</span><span class="p">).</span><span class="n">SequenceEqual</span><span class="p">(</span><span class="n">Enumerable</span><span class="p">.</span><span class="n">Range</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">30</span><span class="p">)));</span>
+<span class="p">}</span></code></pre></div>
+
+<h2 id="multiple-consumers">Multiple Consumers</h2>
+
+<p>The consumer side of this example does <em>work,</em> but it’s not done in a TPL Dataflowish sort of way. It starts to get more complicated when we consider multiple consumers, because there’s no <code>TryReceiveAsync</code> available on our block.</p>
+
+<p>Instead of fighting the flow, let’s change our consumer side to be TPL Dataflowish. Specifically, we’re going to replace the consumer <em>method</em> with a dataflow <code>ActionBlock</code>:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="na">[TestMethod]</span>
+<span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">ConsumerReceivesCorrectValues</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="kt">var</span> <span class="n">results</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;();</span>
+
+    <span class="c1">// Define the mesh.</span>
+    <span class="kt">var</span> <span class="n">queue</span> <span class="p">=</span> <span class="k">new</span> <span class="n">BufferBlock</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;(</span><span class="k">new</span> <span class="n">DataflowBlockOptions</span> <span class="p">{</span> <span class="n">BoundedCapacity</span> <span class="p">=</span> <span class="m">5</span><span class="p">,</span> <span class="p">});</span>
+    <span class="kt">var</span> <span class="n">consumerOptions</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ExecutionDataflowBlockOptions</span> <span class="p">{</span> <span class="n">BoundedCapacity</span> <span class="p">=</span> <span class="m">1</span><span class="p">,</span> <span class="p">};</span>
+    <span class="kt">var</span> <span class="n">consumer</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ActionBlock</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="n">results</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">consumerOptions</span><span class="p">);</span>
+    <span class="n">queue</span><span class="p">.</span><span class="n">LinkTo</span><span class="p">(</span><span class="n">consumer</span><span class="p">,</span> <span class="k">new</span> <span class="n">DataflowLinkOptions</span> <span class="p">{</span> <span class="n">PropagateCompletion</span> <span class="p">=</span> <span class="k">true</span><span class="p">,</span> <span class="p">});</span>
+
+    <span class="c1">// Start the producers.</span>
+    <span class="kt">var</span> <span class="n">producers</span> <span class="p">=</span> <span class="n">ProduceAll</span><span class="p">(</span><span class="n">queue</span><span class="p">);</span>
+
+    <span class="c1">// Wait for everything to complete.</span>
+    <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">WhenAll</span><span class="p">(</span><span class="n">producers</span><span class="p">,</span> <span class="n">consumer</span><span class="p">.</span><span class="n">Completion</span><span class="p">);</span>
+
+    <span class="c1">// Ensure the consumer got what the producer sent.</span>
+    <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">results</span><span class="p">.</span><span class="n">OrderBy</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="n">x</span><span class="p">).</span><span class="n">SequenceEqual</span><span class="p">(</span><span class="n">Enumerable</span><span class="p">.</span><span class="n">Range</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">30</span><span class="p">)));</span>
+<span class="p">}</span></code></pre></div>
+
+<p>Notice that we set the <code>ExecutionDataflowBlockOptions.BoundedCapacity</code> for the consumer block to <code>1</code>. This is necessary if we want to maintain throttling. Without this set, the producers could produce tons of data items which pass through the queue block and get buffered up in the consumer block (making our queue throttling meaningless).</p>
+
+<p>Now that we have a consumer block, it’s much more straightforward to add multiple consumers:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="na">[TestMethod]</span>
+<span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">ConsumerReceivesCorrectValues</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="kt">var</span> <span class="n">results1</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;();</span>
+    <span class="kt">var</span> <span class="n">results2</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;();</span>
+    <span class="kt">var</span> <span class="n">results3</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;();</span>
+
+    <span class="c1">// Define the mesh.</span>
+    <span class="kt">var</span> <span class="n">queue</span> <span class="p">=</span> <span class="k">new</span> <span class="n">BufferBlock</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;(</span><span class="k">new</span> <span class="n">DataflowBlockOptions</span> <span class="p">{</span> <span class="n">BoundedCapacity</span> <span class="p">=</span> <span class="m">5</span><span class="p">,</span> <span class="p">});</span>
+    <span class="kt">var</span> <span class="n">consumerOptions</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ExecutionDataflowBlockOptions</span> <span class="p">{</span> <span class="n">BoundedCapacity</span> <span class="p">=</span> <span class="m">1</span><span class="p">,</span> <span class="p">};</span>
+    <span class="kt">var</span> <span class="n">consumer1</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ActionBlock</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="n">results1</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">consumerOptions</span><span class="p">);</span>
+    <span class="kt">var</span> <span class="n">consumer2</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ActionBlock</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="n">results2</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">consumerOptions</span><span class="p">);</span>
+    <span class="kt">var</span> <span class="n">consumer3</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ActionBlock</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="n">results3</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">consumerOptions</span><span class="p">);</span>
+    <span class="kt">var</span> <span class="n">linkOptions</span> <span class="p">=</span> <span class="k">new</span> <span class="n">DataflowLinkOptions</span> <span class="p">{</span> <span class="n">PropagateCompletion</span> <span class="p">=</span> <span class="k">true</span><span class="p">,</span> <span class="p">};</span>
+    <span class="n">queue</span><span class="p">.</span><span class="n">LinkTo</span><span class="p">(</span><span class="n">consumer1</span><span class="p">,</span> <span class="n">linkOptions</span><span class="p">);</span>
+    <span class="n">queue</span><span class="p">.</span><span class="n">LinkTo</span><span class="p">(</span><span class="n">consumer2</span><span class="p">,</span> <span class="n">linkOptions</span><span class="p">);</span>
+    <span class="n">queue</span><span class="p">.</span><span class="n">LinkTo</span><span class="p">(</span><span class="n">consumer3</span><span class="p">,</span> <span class="n">linkOptions</span><span class="p">);</span>
+
+    <span class="c1">// Start the producers.</span>
+    <span class="kt">var</span> <span class="n">producers</span> <span class="p">=</span> <span class="n">ProduceAll</span><span class="p">(</span><span class="n">queue</span><span class="p">);</span>
+
+    <span class="c1">// Wait for everything to complete.</span>
+    <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">WhenAll</span><span class="p">(</span><span class="n">producers</span><span class="p">,</span> <span class="n">consumer1</span><span class="p">.</span><span class="n">Completion</span><span class="p">,</span> <span class="n">consumer2</span><span class="p">.</span><span class="n">Completion</span><span class="p">,</span> <span class="n">consumer3</span><span class="p">.</span><span class="n">Completion</span><span class="p">);</span>
+
+    <span class="c1">// Ensure the consumer got what the producer sent.</span>
+    <span class="kt">var</span> <span class="n">results</span> <span class="p">=</span> <span class="n">results1</span><span class="p">.</span><span class="n">Concat</span><span class="p">(</span><span class="n">results2</span><span class="p">).</span><span class="n">Concat</span><span class="p">(</span><span class="n">results3</span><span class="p">);</span>
+    <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">results</span><span class="p">.</span><span class="n">OrderBy</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="n">x</span><span class="p">).</span><span class="n">SequenceEqual</span><span class="p">(</span><span class="n">Enumerable</span><span class="p">.</span><span class="n">Range</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">30</span><span class="p">)));</span>
+<span class="p">}</span></code></pre></div>
+
+<p>Note that <code>ExecutionDataflowBlockOptions.BoundedCapacity</code> is now performing another important function: in addition to maintaining the throttling, it is performing load balancing. If this is left at the default value (<code>DataflowBlockOptions.Unbounded</code>), then all of the data items will end up in the first consumer, which will buffer them up until it can process them. With the buffer limited to a single data item, the queue will offer its item to the next consumer when the first consumer is busy.</p>
+
+<p>In summary, we just reviewed two scenarios where we should set <code>BoundedCapacity</code> to a low number: when we want to maintain throttling throughout a pipeline, and when we have a “T” in our dataflow mesh.</p>
+
+
+  </article>
+    
+    <footer>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2012/11/and-im-back.html" title="And I&#39;m Back!">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2012/11/portable-class-library-enlightenment.html" title="Portable Class Library Enlightenment / Adaptation">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2012/11/async-producerconsumer-queue-using";
+var disqus_title = "Async Producer/Consumer Queue using Dataflow";
+var disqus_url = "http://localhost:4000/2012/11/async-producerconsumer-queue-using.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

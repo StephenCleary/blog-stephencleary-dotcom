@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Task.Run Etiquette Examples: Don't Use Task.Run in the Implementation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2013/11/taskrun-etiquette-examples-dont-use.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Task.Run Etiquette Examples: Don't Use Task.Run in the Implementation</h1>
+          <small>Nov 7, 2013 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>Last time we looked at <a href="/2013/11/taskrun-etiquette-examples-using.html">using <code>Task.Run</code> for the wrong thing</a> (code that is not CPU-bound). So let’s move on to the proper use case of <code>Task.Run</code>: CPU-bound code. We start off with some existing code, which synchronously does some heavy calculations.</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">class</span> <span class="nc">MyService</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="kt">int</span> <span class="nf">CalculateMandelbrot</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="c1">// Tons of work to do in here!</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">!=</span> <span class="m">10000000</span><span class="p">;</span> <span class="p">++</span><span class="n">i</span><span class="p">)</span>
+      <span class="p">;</span>
+    <span class="k">return</span> <span class="m">42</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="p">...</span>
+
+<span class="k">private</span> <span class="k">void</span> <span class="nf">MyButton_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="c1">// Blocks UI thread! :(</span>
+  <span class="n">myService</span><span class="p">.</span><span class="n">CalculateMandelbrot</span><span class="p">();</span>
+<span class="p">}</span></code></pre></div>
+
+<p>Now, we want to use this from a UI thread, but this method will block our thread. This <strong>is</strong> a problem that should be solved using <code>Task.Run</code>. Doing these calculations is a CPU-bound operation.</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="c1">// Warning: bad code!</span>
+<span class="k">class</span> <span class="nc">MyService</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">CalculateMandelbrotAsync</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span>
+    <span class="p">{</span>
+      <span class="c1">// Tons of work to do in here!</span>
+      <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">!=</span> <span class="m">10000000</span><span class="p">;</span> <span class="p">++</span><span class="n">i</span><span class="p">)</span>
+        <span class="p">;</span>
+      <span class="k">return</span> <span class="m">42</span><span class="p">;</span>
+    <span class="p">});</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="p">...</span>
+
+<span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">MyButton_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="c1">// Does not block UI thread! Yay!</span>
+  <span class="k">await</span> <span class="n">myService</span><span class="p">.</span><span class="n">CalculateMandelbrotAsync</span><span class="p">();</span>
+<span class="p">}</span></code></pre></div>
+
+<p>At first glance, it may look like this solves the problem. And it does solve <em>this</em> problem, but it does not do it in the best way.</p>
+
+<p>Let’s say that this service is a generic dll that can be used inside any .NET application. It has an API, and <strong>APIs are all about etiquette</strong>.</p>
+
+<p>How would an ASP.NET application react to this change?</p>
+
+<p>Let’s introduce a simple ASP.NET MVC controller that returns a view using the (original, synchronous) service.</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">class</span> <span class="nc">MyService</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="kt">int</span> <span class="nf">CalculateMandelbrot</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="c1">// Tons of work to do in here!</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">!=</span> <span class="m">10000000</span><span class="p">;</span> <span class="p">++</span><span class="n">i</span><span class="p">)</span>
+      <span class="p">;</span>
+    <span class="k">return</span> <span class="m">42</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="p">...</span>
+
+<span class="k">public</span> <span class="k">class</span> <span class="nc">MandelbrotController</span><span class="p">:</span> <span class="n">Controller</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="n">ActionResult</span> <span class="nf">Index</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="n">myService</span><span class="p">.</span><span class="n">CalculateMandelbrot</span><span class="p">();</span>
+    <span class="k">return</span> <span class="nf">View</span><span class="p">(</span><span class="n">result</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>So far, so good. When a request comes in, the controller uses the service to (synchronously) calculate the view data. A single request thread is used the entire time during that calculation.</p>
+
+<p>But the desktop app required a change in the service. It’s now <code>async</code>, which is “no problem” because ASP.NET MVC naturally supports asynchronous actions.</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="c1">// Warning: bad code!</span>
+<span class="k">class</span> <span class="nc">MyService</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">CalculateMandelbrotAsync</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span>
+    <span class="p">{</span>
+      <span class="c1">// Tons of work to do in here!</span>
+      <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">!=</span> <span class="m">10000000</span><span class="p">;</span> <span class="p">++</span><span class="n">i</span><span class="p">)</span>
+        <span class="p">;</span>
+      <span class="k">return</span> <span class="m">42</span><span class="p">;</span>
+    <span class="p">});</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="p">...</span>
+
+<span class="k">public</span> <span class="k">class</span> <span class="nc">MandelbrotController</span><span class="p">:</span> <span class="n">Controller</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">ActionResult</span><span class="p">&gt;</span> <span class="n">IndexAsync</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">myService</span><span class="p">.</span><span class="n">CalculateMandelbrotAsync</span><span class="p">();</span>
+    <span class="k">return</span> <span class="nf">View</span><span class="p">(</span><span class="n">result</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>And when we do testing, it works! Unfortunately, this change introduced a performance problem.</p>
+
+<p>With the original (synchronous) code, only one thread was used to process the request, from beginning to end. That’s a heavily-optimized ASP.NET scenario. With this <code>async</code> code using <code>Task.Run</code>, instead of a single request thread, this is what happens:</p>
+
+<ul>
+  <li>The request starts processing on an ASP.NET thread.</li>
+  <li><code>Task.Run</code> starts a task on the thread pool to do the calculations. The ASP.NET thread pool has to deal with (unexpectedly) losing one of its threads for the duration of this request.</li>
+  <li>The original request thread is returned to the ASP.NET thread pool.</li>
+  <li>When the calculation is complete, that thread completes the request and is returned to the ASP.NET thread pool. The ASP.NET thread pool has to deal with (unexpectedly) getting another thread.</li>
+</ul>
+
+<p>This will <em>work</em> correctly, but it’s not at all <em>efficient</em>.</p>
+
+<p>There are (at least) four efficiency problems introduced as soon as you use <code>await</code> with <code>Task.Run</code> in ASP.NET:</p>
+
+<ul>
+  <li>Extra (unnecessary) thread switching to the <code>Task.Run</code> thread pool thread. Similarly, when that thread finishes the request, it has to enter the request context (which is not an actual thread switch but does have overhead).</li>
+  <li>Extra (unnecessary) garbage is created. Asynchronous programming is a tradeoff: you get increased responsiveness at the expense of higher memory usage. In this case, you end up creating more garbage for the asynchronous operations that is totally unnecessary.</li>
+  <li>The ASP.NET thread pool heuristics are thrown off by <code>Task.Run</code> “unexpectedly” borrowing a thread pool thread. I don’t have a lot of experience here, but my gut instinct tells me that the heuristics should recover well if the unexpected task is really short and would not handle it as elegantly if the unexpected task lasts more than two seconds.</li>
+  <li>ASP.NET is not able to terminate the request early, i.e., if the client disconnects or the request times out. In the synchronous case, ASP.NET knew the request thread and could abort it. In the asynchronous case, ASP.NET is not aware that the secondary thread pool thread is “for” that request. It <em>is</em> possible to fix this by using cancellation tokens, but that’s outside the scope of this blog post.</li>
+</ul>
+
+<p>If you have multiple calls to <code>Task.Run</code>, then the performance problems are compounded. On a busy server, this kind of implementation can kill scalability.</p>
+
+<p>That’s why one of the principles of ASP.NET is to <strong>avoid using thread pool threads</strong> (except for the request thread that ASP.NET gives you, of course). More to the point, this means that <strong>ASP.NET applications should avoid <code>Task.Run</code></strong>.</p>
+
+<p>Whew! OK, so now we know what the problem is with that implementation. The plain fact is that ASP.NET prefers synchronous methods if the operation is CPU-bound. And this is also true for other scenarios: Console applications, background threads in desktop applications, etc. In fact, the only place we really <em>need</em> an asynchronous calculation is when we call it from the UI thread.</p>
+
+<p>But watch out! There’s another pitfall just ahead…</p>
+
+<h2 id="using-taskrun-for-asynchronous-wrappers">Using Task.Run for Asynchronous Wrappers</h2>
+
+<p>Let’s continue the “Mandelbrot” example. We’ve learned that some clients prefer asynchronous APIs for CPU-bound code and others prefer synchronous APIs for CPU-bound code.</p>
+
+<p>So, let’s be good API citizens (“APIs are all about etiquette”) and keep the new synchronous version along with the asynchronous version. That way there’s no breaking changes, right? It’s simple enough, and we can even implement it easily so that there’s no code duplication!</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="c1">// Warning: bad code!</span>
+<span class="k">class</span> <span class="nc">MyService</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="kt">int</span> <span class="nf">CalculateMandelbrot</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="c1">// Tons of work to do in here!</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">!=</span> <span class="m">10000000</span><span class="p">;</span> <span class="p">++</span><span class="n">i</span><span class="p">)</span>
+      <span class="p">;</span>
+    <span class="k">return</span> <span class="m">42</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="k">public</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">CalculateMandelbrotAsync</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">CalculateMandelbrot</span><span class="p">());</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>Sweet. The UI app has its nice asynchronous method, and the ASP.NET app has its original synchronous method. Easy! And there are many other examples where synchronous and asynchronous APIs exist side-by-side, so developers are already used to this! But the fact is that <strong>using <code>Task.Run</code> for asynchronous wrappers is a code smell</strong>.</p>
+
+<p>The problem with this approach is what is implied by this API design. Consider all the examples where synchronous and asynchronous APIs exist side-by-side, e.g., Entity Framework 6, or the <code>WebClient</code> class. Notice anything? <em>They’re all naturally asynchronous!</em> Not a single one of them is <em>CPU-bound</em>.</p>
+
+<p>When a developer sees two methods in an API <code>Method</code> and <code>MethodAsync</code>, the convention is that they represent a naturally-asynchronous operation. In other words, the developer expects that <code>MethodAsync</code> is the “natural” implementation and that <code>Method</code> is essentially a synchronous (blocking) equivalent of that operation. That API implies that <code>Method</code> will at some point have the calling thread enter a wait state as it blocks for the naturally-asynchronous operation to complete.</p>
+
+<p>Let’s make this a bit more practical. When a new ASP.NET developer approaches our service API, they’ll see <code>CalculateMandelbrot</code> and <code>CalculateMandelbrotAsync</code> (and let’s pretend that our method names are not so obviously CPU-bound). If they’re familiar with asynchronous APIs at all, they’ll assume that this calculation is naturally asynchronous. And on ASP.NET, you <em>should</em> use naturally-asynchronous methods. Therefore, they will choose what they think is the naturally-asynchronous <code>CalculateMandelbrotAsync</code> method and end up inheriting the performance problems discussed earlier.</p>
+
+<p><code>CalculateMandelbrotAsync</code> is what I call “fake-asynchronous” because it’s just a thread pool wrapper around a synchronous operation. But when developers see that API, they assume that it is a naturally-asynchronous operation.</p>
+
+<p>This is just a brief description and I only covered one facet of this problem. Stephen Toub has an excellent blog post explaining in detail <a href="http://blogs.msdn.com/b/pfxteam/archive/2012/03/24/10287244.aspx">why you should not write asynchronous wrappers for synchronous methods</a>.</p>
+
+<h2 id="ok-enough-about-the-wrong-solutions-how-do-we-fix-this-the-right-way">OK, enough about the <em>wrong</em> solutions? How do we fix this the <em>right</em> way???</h2>
+
+<p>Back up to the original problem for a moment. What is the problem? The UI thread is blocked. How did we solve it? By changing the service. Who needs the asynchronous API? Only the UI thread. Sounds like we just seriously violated the “Separation of Concerns” principle.</p>
+
+<p>The key here is that the solution does not belong in the service. It belongs in the UI layer itself. Let the UI layer solve its own problems and leave the service out of it.</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">class</span> <span class="nc">MyService</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="kt">int</span> <span class="nf">CalculateMandelbrot</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="c1">// Tons of work to do in here!</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">!=</span> <span class="m">10000000</span><span class="p">;</span> <span class="p">++</span><span class="n">i</span><span class="p">)</span>
+      <span class="p">;</span>
+    <span class="k">return</span> <span class="m">42</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="p">...</span>
+
+<span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">MyButton_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">myService</span><span class="p">.</span><span class="n">CalculateMandelbrot</span><span class="p">());</span>
+<span class="p">}</span></code></pre></div>
+
+<p>Now the service API is clean (it exposes a synchronous API for a naturally-synchronous, CPU-bound method), it works for all consumers (e.g., ASP.NET), and the <em>UI</em> layer is responsible for not blocking the <em>UI</em> thread.</p>
+
+<p>Conclusion: <strong>do not use Task.Run in the <em>implementation</em> of the method; instead, use Task.Run to <em>call</em> the method</strong>.</p>
+
+
+  </article>
+    
+    <footer>
+        
+            
+                
+            
+                
+            
+                
+            
+
+            
+            
+            
+                
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                        
+                        
+                        
+                            
+                        
+                    
+                
+                    
+                        
+                        
+                        
+                            
+                        
+                    
+                
+                    
+                        
+                        
+                            
+                            
+                        
+                        
+                    
+                
+                    
+                        
+                            
+                            
+                        
+                        
+                        
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+            
+
+            <ul class="pager">
+                <li class="previous"><a href="/2013/11/taskrun-etiquette-examples-using.html" title="Task.Run Etiquette Examples: Don&#39;t Use Task.Run for the Wrong Thing">&larr; Previous in Task.Run Etiquette</a></li>
+                <li class="next"><a href="/2013/11/taskrun-etiquette-examples-even-in.html" title="Task.Run Etiquette Examples: Even in the Complex Case, Don&#39;t Use Task.Run in the Implementation">Next in Task.Run Etiquette &rarr;</a></li>
+            </ul>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2013/11/taskrun-etiquette-examples-using.html" title="Task.Run Etiquette Examples: Don&#39;t Use Task.Run for the Wrong Thing">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2013/11/taskrun-etiquette-examples-even-in.html" title="Task.Run Etiquette Examples: Even in the Complex Case, Don&#39;t Use Task.Run in the Implementation">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+                
+                    
+                
+                    
+                
+                    
+                
+                <div class="panel panel-primary">
+                    <div class="panel-heading">Task.Run Etiquette</div>
+                    <div class="panel-body sidenav">
+                        <ul class="nav nav-pills nav-stacked">
+                            
+                                
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Overview</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2013/11/taskrun-etiquette-examples-using.html">Task.Run and Blocking</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="active sidenavitem"><a href="/2013/11/taskrun-etiquette-examples-dont-use.html">Task.Run in the Implementation</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2013/11/taskrun-etiquette-examples-even-in.html">The Complex Case</a></li>
+                                        
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                            
+                        </ul>
+                    </div>
+                </div>
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+<script src="/lib/jquery.scrollTo.min.js"></script>
+<script type="text/javascript">
+(function ($) {
+    $(function () {
+        var container = $('.affix').filter(function() { return $(this).css('position') == 'fixed'; });
+        var target = container.find('.active');
+        container.scrollTo(target, { offset: - (container.height() / 2 - target.height() / 2) });
+    });
+})(window.jQuery);
+</script>
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2013/11/taskrun-etiquette-examples-dont-use";
+var disqus_title = "Task.Run Etiquette Examples: Don&#39;t Use Task.Run in the Implementation";
+var disqus_url = "http://localhost:4000/2013/11/taskrun-etiquette-examples-dont-use.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

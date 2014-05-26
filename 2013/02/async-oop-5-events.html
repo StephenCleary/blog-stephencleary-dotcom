@@ -1,0 +1,1478 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Async OOP 5: Events</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2013/02/async-oop-5-events.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Async OOP 5: Events</h1>
+          <small>Feb 28, 2013 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>This post is going to deal with asynchronous event handlers. More specifically, how to design objects that will allow asynchronous event handlers.</p>
+
+<p>For the vast majority of events, asynchronous event handlers work normally and we don’t have to do anything special. Consider the classic <code>Button.Click</code> as a reasonable example: the producer of the event (<code>Button</code>) just raises the event normally, which starts calling the event subscribers one at a time. If there is an asynchronous handler, it will return early and the producer continues with the next event subscriber. Eventually, the asynchronous handler continues, usually returning to its original context, so it won’t overlap the execution of any other event subscriber. In effect, asynchronous event handlers (usually) just get divided into a few actual events that each move the handler along a bit. This works perfectly well for the vast majority of events.</p>
+
+<p>However, there’s another class of events where this won’t work. If the producer takes some special action when the event is completed, then the event is not really an <em>event</em> - it’s a <em>command</em>. For example, the <code>Application.Suspending</code> event in Windows Store applications is an event that is raised when the application is being suspended; when the event handler returns, Windows assumes that the application is done preparing to be suspended. An asynchronous handler for this kind of “command-style event” isn’t going to work well: the handler will return early and Windows will suspend the application, preventing the rest of the handler from executing.</p>
+
+<p>Other examples exist, too: ASP.NET has page lifecycle “events”, and when those handlers return, the page moves to the next step in the lifecycle. Class designs that implement the visitor pattern can also suffer from early returns - and this is true whether the visitor type is implemented using actual events or virtual methods that act like events. Some types just use (misuse?) events as implementations, e.g., <code>BackgroundWorker.DoWork</code>. In each of these situations, asynchronous event handlers are not going to behave as expected.</p>
+
+<p>Normal events are <em>notifications</em> - the producer doesn’t care whether there’s a handler and there’s no special semantic meaning to the completion of the event handlers. Normal events work fine if they’re broadcasted, with no result returning to the producer. Other events are <em>commands</em> - the producer takes some action when the event handlers have completed. Command events with asynchronous handlers need to report some kind of completion or result back to the producer so that it knows the event handler has completed.</p>
+
+<h2 id="the-winrt-solution-deferrals">The WinRT Solution: Deferrals</h2>
+
+<p>With that background in mind, let’s look at how WinRT solves this problem. For command-style events, the event producer must wait for a signal before considering the event handled. In the case of multiple asynchronous handlers, the producer must wait for <em>all</em> handlers to signal before considering the event handled. Also, it would be nice to solve this problem in a way that adds no overhead for synchronous event handlers.</p>
+
+<p>WinRT introduces the concept of a “deferral” for command-style events. An asynchronous handler acquires a deferral before its first <code>await</code>, and notifies that deferral when the handler is complete. Synchronous handlers do not need to acquire deferrals. WinRT does not provide a “deferral manager” type for implementing our own command-style events, so we’ll have to make our own.</p>
+
+<p>There’s already a type in my <a href="http://nitoasyncex.codeplex.com">AsyncEx</a> library with much of the functionality we need: <a href="http://nitoasyncex.codeplex.com/wikipage?title=AsyncCountdownEvent">AsyncCountdownEvent</a>. We increment the count whenever a handler acquires a deferral and signal the count whenever a deferral is completed. To prevent race conditions, we also need to increment the count before invoking the handlers and signal the count when all the handlers have returned.</p>
+
+<p>There is one difference in the design of WinRT deferrals and my deferral manager: WinRT provides different interfaces and implementations for each different deferral scenario (i.e., <code>SuspendingDeferral</code> has no relation to <code>BackgroundTaskDeferral</code>). Since a “deferral” only has one possible action (<code>Complete</code>), and since this action should <em>always</em> be done regardless of exceptions, I chose to represent deferrals as <code>IDisposable</code>. This allows asynchronous event handlers to use a <code>using</code> block in their implementation.</p>
+
+<p>Compared to the design, the code is actually quite simple:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">DeferralManager</span>
+<span class="p">{</span>
+  <span class="k">private</span> <span class="k">readonly</span> <span class="n">AsyncCountdownEvent</span> <span class="n">_count</span> <span class="p">=</span> <span class="k">new</span> <span class="n">AsyncCountdownEvent</span><span class="p">(</span><span class="m">1</span><span class="p">);</span>
+
+  <span class="k">public</span> <span class="n">IDisposable</span> <span class="nf">GetDeferral</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="k">new</span> <span class="nf">Deferral</span><span class="p">(</span><span class="n">_count</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="k">public</span> <span class="n">Task</span> <span class="nf">SignalAndWaitAsync</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="n">_count</span><span class="p">.</span><span class="n">Signal</span><span class="p">();</span>
+    <span class="k">return</span> <span class="n">_count</span><span class="p">.</span><span class="n">WaitAsync</span><span class="p">();</span>
+  <span class="p">}</span>
+
+  <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Deferral</span> <span class="p">:</span> <span class="n">IDisposable</span>
+  <span class="p">{</span>
+    <span class="k">private</span> <span class="n">AsyncCountdownEvent</span> <span class="n">_count</span><span class="p">;</span>
+
+    <span class="k">public</span> <span class="nf">Deferral</span><span class="p">(</span><span class="n">AsyncCountdownEvent</span> <span class="n">count</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">_count</span> <span class="p">=</span> <span class="n">count</span><span class="p">;</span>
+      <span class="n">_count</span><span class="p">.</span><span class="n">AddCount</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="k">void</span> <span class="n">IDisposable</span><span class="p">.</span><span class="n">Dispose</span><span class="p">()</span>
+    <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">_count</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+        <span class="k">return</span><span class="p">;</span>
+      <span class="n">_count</span><span class="p">.</span><span class="n">Signal</span><span class="p">();</span>
+      <span class="n">_count</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>The <a href="http://nitoasyncex.codeplex.com/wikipage?title=DeferralManager" class="alert-link">DeferralManager in the AsyncEx library</a> is almost identical to this code, except that it lazy-creates the asynchronous countdown event. This minimizes overhead if all the handlers are synchronous.</p>
+</div>
+
+<p>Once you have a <code>DeferralManager</code>, you can extend your “command-style” event arguments type as such:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">MyEventArgs</span> <span class="p">:</span> <span class="n">EventArgs</span>
+<span class="p">{</span>
+  <span class="k">private</span> <span class="k">readonly</span> <span class="n">DeferralManager</span> <span class="n">deferrals</span> <span class="p">=</span> <span class="k">new</span> <span class="n">DeferralManager</span><span class="p">();</span>
+
+  <span class="p">...</span> <span class="c1">// Your own constructors and properties.</span>
+
+  <span class="k">public</span> <span class="n">IDisposable</span> <span class="nf">GetDeferral</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="n">deferrals</span><span class="p">.</span><span class="n">GetDeferral</span><span class="p">();</span>
+  <span class="p">}</span>
+
+  <span class="k">internal</span> <span class="n">Task</span> <span class="nf">WaitForDeferralsAsync</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="n">deferrals</span><span class="p">.</span><span class="n">SignalAndWaitAsync</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>Then, each time you raise the event, use code similar to this:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="n">Task</span> <span class="nf">RaiseMyEventAsync</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="kt">var</span> <span class="n">handler</span> <span class="p">=</span> <span class="n">MyEvent</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">handler</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Task</span><span class="p">.</span><span class="n">FromResult</span><span class="p">&lt;</span><span class="kt">object</span><span class="p">&gt;(</span><span class="k">null</span><span class="p">);</span> <span class="c1">// or TaskConstants.Completed</span>
+
+  <span class="kt">var</span> <span class="n">args</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MyEventArgs</span><span class="p">(...);</span>
+  <span class="n">handler</span><span class="p">(</span><span class="n">args</span><span class="p">);</span>
+  <span class="k">return</span> <span class="n">args</span><span class="p">.</span><span class="n">WaitForDeferralsAsync</span><span class="p">();</span>
+<span class="p">}</span></code></pre></div>
+
+<p>One final note: ensure that your event arguments type (<code>MyEventArgs</code>) supports concurrent access. If there are multiple asynchronous handlers, they all will share a reference to the same event arguments instance. Ideally, all the properties on that type should be immutable.</p>
+
+<h2 id="the-task-returning-delegate-solution">The Task-Returning Delegate Solution</h2>
+
+<p>I think deferrals are a perfectly acceptable solution. It’s the solution that was chosen for WinRT, so it’s one that programmers will be familiar with.</p>
+
+<p>However, there’s another solution that should work as well: make your event handler delegate type return <code>Task</code> instead of <code>void</code>. This is not as evil as it first appears; it’s true that event handlers are supposed to return <code>void</code>, but <code>Task</code> is the <code>async</code> equivalent of <code>void</code>, so the event handler delegate type still <em>logically</em> returns <code>void</code>, even though it doesn’t <em>literally</em> return <code>void</code>.</p>
+
+<p>If you take this approach, you could use <code>Delegate.GetInvocationList</code> to invoke each handler individually and <code>Task.WhenAll</code> to detect when they have all completed.</p>
+
+<p>The advantage of this approach is that there’s no need for deferrals (or any explicit code) in the event handlers. The disadvantage is that <em>all</em> event handlers are forced to have an asynchronous signature; this means synchronous event handlers would have to return <code>Task.FromResult&lt;object&gt;(null)</code> or some such. This is both awkward and inefficient.</p>
+
+<h2 id="the-synchronizationcontext-solution">The SynchronizationContext Solution</h2>
+
+<p>OK, I suppose there is a third solution, if you <em>really</em> want to go there.</p>
+
+<p>Consider the example of ASP.NET page lifecycle events. With this example, it would have been a lot of work to add deferrals to the existing events, and that solution would probably bring up backwards-compatibility issues. So ASP.NET took a different approach: they integrated their events with the ASP.NET <code>SynchronizationContext</code>.</p>
+
+<p>My <a href="http://msdn.microsoft.com/en-us/magazine/gg598924.aspx">Feb 2011 MSDN article</a> describes how <code>async</code> methods interact with <code>SynchronizationContext</code>; at that time <code>async</code> was in a CTP stage, but that interaction did not change when <code>async</code> was released in VS2012. To summarize: <code>async void</code> methods call <code>SynchronizationContext.OperationStarted</code> at the beginning of the method and <code>SynchronizationContext.OperationCompleted</code> at the end of the method. The ASP.NET <code>SynchronizationContext</code> uses these methods to keep track of how many operations are currently in progress.</p>
+
+<p>So, the ASP.NET page lifecycle events use this information: after raising each event, the ASP.NET runtime (asynchronously) waits until the operation count returns to its previous level. At that point, it knows that any <code>async</code> event handlers have run to completion.</p>
+
+<p>But don’t do that. Yes, it’s cool, and very clever. But having your component override the <code>SynchronizationContext</code> for your event handlers is almost certainly a bad idea. It makes sense for ASP.NET because ASP.NET is a platform, not a library.</p>
+
+<h2 id="you-should-use-deferrals">You Should Use Deferrals</h2>
+
+<p>I recommend using deferrals. It’s what programmers are expecting these days. I just mentioned these other solutions for the sake of completeness.</p>
+
+
+  </article>
+    
+    <footer>
+        
+            
+                
+            
+                
+            
+                
+            
+
+            
+            
+            
+                
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                        
+                        
+                        
+                            
+                        
+                    
+                
+                    
+                        
+                        
+                        
+                            
+                        
+                    
+                
+                    
+                        
+                        
+                        
+                            
+                        
+                    
+                
+                    
+                        
+                        
+                        
+                            
+                        
+                    
+                
+                    
+                        
+                        
+                        
+                            
+                        
+                    
+                
+                    
+                        
+                        
+                            
+                            
+                        
+                        
+                    
+                
+                    
+                
+                    
+                
+                    
+                        
+                            
+                            
+                        
+                        
+                        
+                    
+                
+                    
+                        
+                        
+                        
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+            
+
+            <ul class="pager">
+                <li class="previous"><a href="/2013/01/async-oop-4-state.html" title="Async OOP 4: State">&larr; Previous in Async OOP</a></li>
+                <li class="next"><a href="/2013/03/async-oop-6-disposal.html" title="Async OOP 6: Disposal">Next in Async OOP &rarr;</a></li>
+            </ul>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2013/01/async-oop-4-state.html" title="Async OOP 4: State">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2013/03/msdn-article-and-grdevday.html" title="MSDN Article and GRDevDay">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+                
+                    
+                
+                    
+                
+                    
+                
+                <div class="panel panel-primary">
+                    <div class="panel-heading">Async OOP</div>
+                    <div class="panel-body sidenav">
+                        <ul class="nav nav-pills nav-stacked">
+                            
+                                
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2013/01/async-oop-0-introduction.html">Introduction</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2013/01/async-oop-1-inheritance-and-interfaces.html">Inheritance and Interfaces</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2013/01/async-oop-2-constructors.html">Constructors</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2013/01/async-oop-3-properties.html">Properties</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2013/01/async-oop-4-state.html">State</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="active sidenavitem"><a href="/2013/02/async-oop-5-events.html">Events</a></li>
+                                        
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2013/03/async-oop-6-disposal.html">Disposal</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2013/03/async-oop-7-design.html">Design</a></li>
+                                        
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                            
+                        </ul>
+                    </div>
+                </div>
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+<script src="/lib/jquery.scrollTo.min.js"></script>
+<script type="text/javascript">
+(function ($) {
+    $(function () {
+        var container = $('.affix').filter(function() { return $(this).css('position') == 'fixed'; });
+        var target = container.find('.active');
+        container.scrollTo(target, { offset: - (container.height() / 2 - target.height() / 2) });
+    });
+})(window.jQuery);
+</script>
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2013/02/async-oop-5-events";
+var disqus_title = "Async OOP 5: Events";
+var disqus_url = "http://localhost:4000/2013/02/async-oop-5-events.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

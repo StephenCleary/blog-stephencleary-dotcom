@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Notes from the Rx talk</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2009/09/notes-from-rx-talk.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Notes from the Rx talk</h1>
+          <small>Sep 3, 2009 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>As someone who does a lot of asynchronous programming on .NET, I had heard about the Rx (“reactive”) framework some time ago. The details online have been a little sketchy, so I finally took some time to watch <a href="http://www.langnetsymposium.com/2009/talks/23-ErikMeijer-LiveLabsReactiveFramework.html">Erik Meijer’s talk</a>. Below are my notes and initial thoughts. I haven’t had time to play with the actual framework itself, but it’s something that is definitely coming to .NET eventually (it’s rumored to be in 4.0).</p>
+
+<p>This talk is titled “Live Labs Reactive Framework”, given by Erik Meijer at the 2009 Lang.NET Symposium.</p>
+
+<ul>
+  <li>LINQ is derived from Haskell ideas.</li>
+  <li>Reactive programming is where the program asks the environment for input. But not with blocking, like Console.ReadLine does.</li>
+  <li>Enumerable: consumer pulls successive elements from the collection, with blocking.</li>
+  <li>Observable: producer pushes successive elements from the collection.</li>
+  <li>There is a mathematical duality between Enumerable and Observable, which allows theorems proven for one system to have a dual theorem in the other system.</li>
+  <li>Consider Enumerable:</li>
+</ul>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">interface</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="k">out</span> <span class="n">T</span><span class="p">&gt;</span> <span class="p">{</span> <span class="n">IEnumerator</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">GetEnumerator</span><span class="p">();</span> <span class="p">}</span>
+<span class="k">interface</span> <span class="n">IEnumerator</span><span class="p">&lt;</span><span class="k">out</span> <span class="n">T</span><span class="p">&gt;</span> <span class="p">:</span> <span class="n">IDisposable</span> <span class="p">{</span> <span class="kt">bool</span> <span class="n">MoveNext</span><span class="p">();</span> <span class="n">T</span> <span class="n">Current</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="cm">/* Implicit throw */</span> <span class="p">}</span></code></pre></div>
+
+<ul>
+  <li>There are actually two interface concepts here (Enumerable and Disposable). For now, ignore Disposable.</li>
+  <li>Swap arguments and results (mathematical duality):</li>
+</ul>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">interface</span> <span class="n">IObservable</span><span class="p">&lt;</span><span class="k">in</span> <span class="n">T</span><span class="p">&gt;</span> <span class="p">{</span> <span class="n">IDisposable</span> <span class="n">Register</span><span class="p">(</span><span class="n">IObserver</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">o</span><span class="p">);</span> <span class="p">}</span>
+<span class="k">interface</span> <span class="n">IObserver</span><span class="p">&lt;</span><span class="k">in</span> <span class="n">T</span><span class="p">&gt;</span> <span class="p">{</span> <span class="k">void</span> <span class="n">OnCompleted</span><span class="p">(</span><span class="kt">bool</span> <span class="n">done</span><span class="p">);</span> <span class="n">T</span> <span class="n">OnUpdate</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span> <span class="k">void</span> <span class="n">OnError</span><span class="p">(</span><span class="n">Exception</span> <span class="n">e</span><span class="p">);</span> <span class="p">}</span></code></pre></div>
+
+<ul>
+  <li>A cleaner interface (getting rid of “bool done” by only calling “OnCompleted” when it’s true; changing OnUpdate to a method):</li>
+</ul>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">interface</span> <span class="n">IObservable</span><span class="p">&lt;</span><span class="k">in</span> <span class="n">T</span><span class="p">&gt;</span> <span class="p">{</span> <span class="n">IDisposable</span> <span class="n">Attach</span><span class="p">(</span><span class="n">IObserver</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">o</span><span class="p">);</span> <span class="p">}</span>
+<span class="k">interface</span> <span class="n">IObserver</span><span class="p">&lt;</span><span class="k">in</span> <span class="n">T</span><span class="p">&gt;</span> <span class="p">{</span> <span class="k">void</span> <span class="n">OnCompleted</span><span class="p">();</span> <span class="k">void</span> <span class="n">OnUpdate</span><span class="p">(</span><span class="n">T</span> <span class="k">value</span><span class="p">);</span> <span class="k">void</span> <span class="n">OnError</span><span class="p">(</span><span class="n">Exception</span> <span class="n">e</span><span class="p">);</span> <span class="p">}</span></code></pre></div>
+
+<ul>
+  <li>This makes the Iterator pattern (Enumerable) related to Subject Observer pattern (Observable).</li>
+  <li>Java has Observable/Observer, but in non-generic and noisy interfaces.</li>
+  <li>Since Enumerables are monads, Observables are monads. Since LINQ concepts work on monads, then there is a LINQ for Observables.</li>
+  <li>(At this point, Erik skipped some slides; everything under this point is my own interpretation of those slides)</li>
+  <li>Combinators include Select, Where, Flatten, and SelectMany (which is Select + Flatten). [Note: Enumerable LINQ also supports flattening through SelectMany].
+    <ul>
+      <li>Interactive SelectMany uses a nested foreach, which iterates each element of each sequence, moving on to the next sequence when it’s empty.</li>
+      <li>Reactive SelectMany uses a parallel foreach, which iterates each element of any sequence as they are pushed.</li>
+      <li>Additional combinators include:
+        <ul>
+          <li>Until (to “cancel” reactions for an event)</li>
+          <li>TimeOut</li>
+          <li>Zip (to perform a logical combination of two event sequences)</li>
+          <li>Scan (?)</li>
+          <li>Take, Drop - like TakeWhile/SkipWhile (?)</li>
+          <li>Sample, Buffer</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li>AJAX is all about responding to events and performing asynchronous computations; it’s ideal for Rx.</li>
+  <li>Rx has bridges from .NET events into an Observable collection.</li>
+  <li>A common bug is being dependent on the order of asynchronous completions.</li>
+  <li>Preemption operator (“.Until”) to listen for an event until there’s another situation (like another async computation being started, so the results of the previous computation should be ignored).</li>
+  <li>The let operator (“.Let”) avoids undesired side effects (similar to a local variable).
+    <ul>
+      <li>Lazy evaluation with Observable makes this difficult.</li>
+    </ul>
+  </li>
+  <li>Comega join patterns (zips) and parser combinators can also be supported.
+    <ul>
+      <li>Zip enables logic such as “(an A event and B event were pushed) or (a B event and C event were pushed)” to be treated as its own event stream.</li>
+    </ul>
+  </li>
+  <li>Related work:
+    <ul>
+      <li>F# first-class events</li>
+      <li>F# async workflows</li>
+      <li>Thomasp Reactive LINQ</li>
+      <li>Esterelle, Lustre</li>
+      <li>Functional reactive programming</li>
+      <li>Using iterators for async</li>
+      <li>PowerShell, SSIS, WWF</li>
+    </ul>
+  </li>
+  <li>Rx is a way of composing delimited continuations: see paper “Delimited continuations in Operating Systems”.</li>
+  <li>
+    <p>(At this point, Erik skipped some more slides; everything under this point is my own interpretation of those slides)</p>
+
+    <ul>
+      <li>C# pseudocode (using object expressions / anonymous inner classes) to convert a C# event to an Observable:</li>
+    </ul>
+  </li>
+</ul>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">class</span> <span class="nc">Control</span> <span class="p">{</span> <span class="k">event</span> <span class="n">Action</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">KeyUp</span><span class="p">;</span> <span class="p">}</span>
+<span class="n">IObservable</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">GetKeyUp</span><span class="p">(</span><span class="k">this</span> <span class="n">Control</span> <span class="n">w</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">return</span> <span class="k">new</span> <span class="n">IObservible</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span>
+  <span class="p">{</span>
+    <span class="n">IDisposable</span> <span class="nf">Attach</span><span class="p">(</span><span class="n">IObserver</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">h</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="kt">var</span> <span class="n">d</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Action</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="n">h</span><span class="p">.</span><span class="n">Yield</span><span class="p">);</span> <span class="c1">// Create delegate to call observer</span>
+      <span class="n">w</span><span class="p">.</span><span class="n">KeyUp</span> <span class="p">+=</span> <span class="n">d</span><span class="p">;</span> <span class="c1">// Attach observer to event directly</span>
+      <span class="k">return</span> <span class="k">new</span> <span class="n">IDisposable</span>
+      <span class="p">{</span>
+        <span class="k">void</span> <span class="nf">Dispose</span><span class="p">()</span> <span class="p">{</span> <span class="n">w</span><span class="p">.</span><span class="n">KeyUp</span> <span class="p">-=</span> <span class="n">d</span><span class="p">;</span> <span class="p">}</span> <span class="c1">// Disconnect on dispose</span>
+      <span class="p">};</span>
+    <span class="p">}</span>
+  <span class="p">};</span>
+<span class="p">}</span></code></pre></div>
+
+<ul>
+  <li>Two IObservable<t> extension methods exist for attaching delegates:</t></li>
+</ul>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">static</span> <span class="n">IDisposable</span> <span class="n">Attach</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="k">this</span> <span class="n">IObservable</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">src</span><span class="p">,</span> <span class="n">Action</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="k">yield</span><span class="p">);</span>
+<span class="k">static</span> <span class="n">IDisposable</span> <span class="n">Attach</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="k">this</span> <span class="n">IObservable</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">src</span><span class="p">,</span> <span class="n">Action</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="k">yield</span><span class="p">,</span> <span class="n">Action</span><span class="p">&lt;</span><span class="n">Exception</span><span class="p">&gt;</span> <span class="k">throw</span><span class="p">);</span></code></pre></div>
+
+<ul>
+  <li>The original style of event subscription treats the handler as a first-class object:</li>
+</ul>
+
+<div class="highlight"><pre><code class="csharp"><span class="n">Action</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">handler</span> <span class="p">=</span> <span class="p">...;</span>
+<span class="n">txtbox</span><span class="p">.</span><span class="n">KeyUp</span> <span class="p">+=</span> <span class="n">handler</span><span class="p">;</span>
+<span class="n">txtbox</span><span class="p">.</span><span class="n">KeyUp</span> <span class="p">-=</span> <span class="n">handler</span><span class="p">;</span></code></pre></div>
+
+<ul>
+  <li>The Observable style of event subscription treats the event as a first-class object:</li>
+</ul>
+
+<div class="highlight"><pre><code class="csharp"><span class="kt">var</span> <span class="n">keyup</span> <span class="p">=</span> <span class="n">txtbox</span><span class="p">.</span><span class="n">GetKeyUp</span><span class="p">();</span>
+<span class="kt">var</span> <span class="n">detacher</span> <span class="p">=</span> <span class="n">keyup</span><span class="p">.</span><span class="n">Attach</span><span class="p">(...);</span>
+<span class="n">detacher</span><span class="p">.</span><span class="n">Dispose</span><span class="p">();</span></code></pre></div>
+
+<ul>
+  <li>Observable event collections when used with combinators allow implicit state variables. e.g., consider a “drag &amp; drop”:</li>
+</ul>
+
+<div class="highlight"><pre><code class="csharp"><span class="kt">var</span> <span class="n">W</span> <span class="p">=</span> <span class="p">...</span> <span class="n">control</span> <span class="n">to</span> <span class="n">be</span> <span class="n">dragged</span> <span class="p">...;</span>
+ 
+<span class="c1">// Set up mouse down/up detector</span>
+<span class="kt">var</span> <span class="n">mouseDowns</span> <span class="p">=</span> <span class="k">from</span> <span class="n">md</span> <span class="k">in</span> <span class="n">W</span><span class="p">.</span><span class="n">GetMouseDown</span><span class="p">()</span> <span class="k">select</span> <span class="k">true</span><span class="p">;</span> <span class="c1">// Pushes &quot;true&quot; every time the mouse button goes down</span>
+<span class="kt">var</span> <span class="n">mouseUps</span> <span class="p">=</span> <span class="k">from</span> <span class="n">md</span> <span class="k">in</span> <span class="n">W</span><span class="p">.</span><span class="n">GetMouseUp</span><span class="p">()</span> <span class="k">select</span> <span class="k">false</span><span class="p">;</span> <span class="c1">// Pushes &quot;false&quot; every time the mouse button goes up</span>
+<span class="kt">var</span> <span class="n">mouseClicks</span> <span class="p">=</span> <span class="n">mouseDowns</span><span class="p">.</span><span class="n">Merge</span><span class="p">(</span><span class="n">mouseUps</span><span class="p">);</span> <span class="c1">// A simple combination; pushes &quot;true&quot; when down, &quot;false&quot; when up</span>
+ 
+<span class="c1">// Set up mouse movement detector and measurer</span>
+<span class="kt">var</span> <span class="n">mouseMoves</span> <span class="p">=</span> <span class="k">from</span> <span class="n">mm</span> <span class="k">in</span> <span class="n">W</span><span class="p">.</span><span class="n">GetMouseMove</span><span class="p">()</span> <span class="k">select</span> <span class="k">new</span> <span class="p">{</span> <span class="n">mm</span><span class="p">.</span><span class="n">X</span><span class="p">,</span> <span class="n">mm</span><span class="p">.</span><span class="n">Y</span> <span class="p">};</span> <span class="c1">// Pushes the X,Y location of the mouse every time it moves</span>
+<span class="c1">// (This next line has a bug)</span>
+<span class="kt">var</span> <span class="n">mouseDiffs</span> <span class="p">=</span> <span class="k">from</span> <span class="n">diff</span> <span class="k">in</span> <span class="n">mouseMoves</span><span class="p">.</span><span class="n">Skip</span><span class="p">(</span><span class="m">1</span><span class="p">).</span><span class="n">Zip</span><span class="p">(</span><span class="n">mouseMoves</span><span class="p">)</span> <span class="c1">// This part pushes the current and last location of the mouse every time it moves</span>
+                 <span class="k">select</span> <span class="k">new</span> <span class="p">{</span> <span class="n">dX</span> <span class="p">=</span> <span class="n">diff</span><span class="p">.</span><span class="n">First</span><span class="p">.</span><span class="n">X</span> <span class="p">-</span> <span class="n">diff</span><span class="p">.</span><span class="n">Second</span><span class="p">.</span><span class="n">X</span><span class="p">,</span>
+                              <span class="n">dY</span> <span class="p">=</span> <span class="n">diff</span><span class="p">.</span><span class="n">First</span><span class="p">.</span><span class="n">Y</span> <span class="p">-</span> <span class="n">diff</span><span class="p">.</span><span class="n">Second</span><span class="p">.</span><span class="n">Y</span> <span class="p">};</span> <span class="c1">// Pushes the difference in location each time the mouse moves</span>
+ 
+<span class="c1">// Set up mouse drag &amp; drop detector</span>
+<span class="kt">var</span> <span class="n">mouseDrag</span> <span class="p">=</span> <span class="k">from</span> <span class="n">mousedown</span> <span class="k">in</span> <span class="n">mouseClicks</span>
+                <span class="k">from</span> <span class="n">delta</span> <span class="k">in</span> <span class="n">mouseDiffs</span> <span class="k">where</span> <span class="n">leftdown</span>
+                <span class="k">select</span> <span class="n">delta</span><span class="p">;</span> <span class="c1">// Pushes the difference in location each time the mouse moves while a button is down</span>
+ 
+<span class="n">mouseDrag</span><span class="p">.</span><span class="n">Attach</span><span class="p">(</span><span class="n">delta</span> <span class="p">=&gt;</span> <span class="p">{</span> <span class="p">...</span> <span class="n">move</span> <span class="n">W</span> <span class="n">according</span> <span class="n">to</span> <span class="n">delta</span> <span class="p">...</span> <span class="p">});</span></code></pre></div>
+
+<ul>
+  <li>You always need to be aware of side effects; use the Let operator to tame them:</li>
+</ul>
+
+<div class="highlight"><pre><code class="csharp"><span class="kt">var</span> <span class="n">mouseDiffs</span> <span class="p">=</span> <span class="k">from</span> <span class="n">diff</span> <span class="k">in</span> <span class="n">mouseMoves</span><span class="p">.</span><span class="n">Skip</span><span class="p">(</span><span class="m">1</span><span class="p">).</span><span class="n">Zip</span><span class="p">(</span><span class="n">mouseMoves</span><span class="p">)</span> <span class="c1">// This part pushes the current and last location of the mouse every time it moves</span>
+                 <span class="k">select</span> <span class="k">new</span> <span class="p">{</span> <span class="n">dX</span> <span class="p">=</span> <span class="n">diff</span><span class="p">.</span><span class="n">First</span><span class="p">.</span><span class="n">X</span> <span class="p">-</span> <span class="n">diff</span><span class="p">.</span><span class="n">Second</span><span class="p">.</span><span class="n">X</span><span class="p">,</span>
+                              <span class="n">dY</span> <span class="p">=</span> <span class="n">diff</span><span class="p">.</span><span class="n">First</span><span class="p">.</span><span class="n">Y</span> <span class="p">-</span> <span class="n">diff</span><span class="p">.</span><span class="n">Second</span><span class="p">.</span><span class="n">Y</span> <span class="p">};</span> <span class="c1">// Pushes the difference in location each time the mouse moves</span></code></pre></div>
+
+<p>should be:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="kt">var</span> <span class="n">mouseDiffs</span> <span class="p">=</span> <span class="n">mouseMoves</span><span class="p">.</span><span class="n">Let</span><span class="p">(</span><span class="n">_mouseMoves</span> <span class="p">=&gt;</span> <span class="c1">// This part avoids side effects on mouseMoves</span>
+                 <span class="k">from</span> <span class="n">diff</span> <span class="k">in</span> <span class="n">_mouseMoves</span><span class="p">.</span><span class="n">Skip</span><span class="p">(</span><span class="m">1</span><span class="p">).</span><span class="n">Zip</span><span class="p">(</span><span class="n">_mouseMoves</span><span class="p">)</span> <span class="c1">// This part pushes the current and last location of the mouse every time it moves</span>
+                 <span class="k">select</span> <span class="k">new</span> <span class="p">{</span> <span class="n">dX</span> <span class="p">=</span> <span class="n">diff</span><span class="p">.</span><span class="n">First</span><span class="p">.</span><span class="n">X</span> <span class="p">-</span> <span class="n">diff</span><span class="p">.</span><span class="n">Second</span><span class="p">.</span><span class="n">X</span><span class="p">,</span>
+                              <span class="n">dY</span> <span class="p">=</span> <span class="n">diff</span><span class="p">.</span><span class="n">First</span><span class="p">.</span><span class="n">Y</span> <span class="p">-</span> <span class="n">diff</span><span class="p">.</span><span class="n">Second</span><span class="p">.</span><span class="n">Y</span> <span class="p">};</span> <span class="c1">// Pushes the difference in location each time the mouse moves</span></code></pre></div>
+
+<h2 id="my-thoughts">My thoughts</h2>
+
+<p>Asynchronous programming has always been difficult. One of the hardest parts is the correct handling of “asynchronous state”, objects whose sole purpose in life is to track the state of input as events come in. I expect the Rx framework will really shine at removing the need for explicitly tracking state, especially noticeable in situations where keeping “asynchronous state” is complex.</p>
+
+<p>The documentation will have to be good regarding side effects, so that programmers can more easily determine when Let/Until operators are required. Currently, I’m not aware of any documentation, even on the .NET 4.0 beta MSDN. This is just a preemptive warning: the docs will have to be really, really good; better than what was done for LINQ (where the docs are often unclear which operators cause buffering).</p>
+
+<p>There is still a missing piece in the “pipeline story”. Historically, every language has gradually developed the same ideas: consumers, then producers, then a full pipeline. Push algorithms are usually the response to the “tee problem” in a pull-based framework. I did the same thing in C++ about 6 years ago, developing what I called “pipe algorithms”, named after the Unix pipe. Currently, we have Enumerable (pull) and Observable (push) models, but there are no easy translators between the two (these “translators” require dedicated threads).</p>
+
+<p>It’s also important to note that one is not “better” than the other. Most algorithms are more naturally defined in an Enumerable model, so that is the one that is more intuitive. Other algorithms are a more natural fit to the Observable model. Once we have translators back and forth between the two models, then we’ll have a more mature language.</p>
+
+<p>One person stated that the Rx framework will remove the need for EBAP components. I have not yet been convinced of this; I see EBAP as still being a useful technique for synchronizing events. The synchronized events can then be used as input to an Rx query. In this sense, I see the EBAP and Rx approaches as complementing each other.</p>
+
+
+  </article>
+    
+    <footer>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2009/09/naming-unit-tests.html" title="Naming Unit Tests">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2009/09/70-536-in-bag.html" title="70-536 In the Bag">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2009/09/notes-from-rx-talk";
+var disqus_title = "Notes from the Rx talk";
+var disqus_url = "http://localhost:4000/2009/09/notes-from-rx-talk.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

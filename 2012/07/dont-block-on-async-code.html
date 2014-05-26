@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Don't Block on Async Code</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2012/07/dont-block-on-async-code.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Don't Block on Async Code</h1>
+          <small>Jul 12, 2012 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>This is a problem that is brought up repeatedly on the forums and Stack Overflow. I think it’s the most-asked question by async newcomers once they’ve learned the basics.</p>
+
+<h2 id="ui-example">UI Example</h2>
+
+<p>Consider the example below. A button click will initiate a REST call and display the results in a text box (this sample is for Windows Forms, but the same principles apply to <em>any</em> UI application).</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="c1">// My &quot;library&quot; method.</span>
+<span class="k">public</span> <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">JObject</span><span class="p">&gt;</span> <span class="n">GetJsonAsync</span><span class="p">(</span><span class="n">Uri</span> <span class="n">uri</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">client</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">())</span>
+  <span class="p">{</span>
+    <span class="kt">var</span> <span class="n">jsonString</span> <span class="p">=</span> <span class="k">await</span> <span class="n">client</span><span class="p">.</span><span class="n">GetStringAsync</span><span class="p">(</span><span class="n">uri</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">JObject</span><span class="p">.</span><span class="n">Parse</span><span class="p">(</span><span class="n">jsonString</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// My &quot;top-level&quot; method.</span>
+<span class="k">public</span> <span class="k">void</span> <span class="nf">Button1_Click</span><span class="p">(...)</span>
+<span class="p">{</span>
+  <span class="kt">var</span> <span class="n">jsonTask</span> <span class="p">=</span> <span class="n">GetJsonAsync</span><span class="p">(...);</span>
+  <span class="n">textBox1</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="n">jsonTask</span><span class="p">.</span><span class="n">Result</span><span class="p">;</span>
+<span class="p">}</span></code></pre></div>
+
+<p>The “GetJson” helper method takes care of making the actual REST call and parsing it as JSON. The button click handler waits for the helper method to complete and then displays its results.</p>
+
+<p>This code will deadlock.</p>
+
+<h2 id="aspnet-example">ASP.NET Example</h2>
+
+<p>This example is very similar; we have a library method that performs a REST call, only this time it’s used in an ASP.NET context (Web API in this case, but the same principles apply to <em>any</em> ASP.NET application):</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="c1">// My &quot;library&quot; method.</span>
+<span class="k">public</span> <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">JObject</span><span class="p">&gt;</span> <span class="n">GetJsonAsync</span><span class="p">(</span><span class="n">Uri</span> <span class="n">uri</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">client</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">())</span>
+  <span class="p">{</span>
+    <span class="kt">var</span> <span class="n">jsonString</span> <span class="p">=</span> <span class="k">await</span> <span class="n">client</span><span class="p">.</span><span class="n">GetStringAsync</span><span class="p">(</span><span class="n">uri</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">JObject</span><span class="p">.</span><span class="n">Parse</span><span class="p">(</span><span class="n">jsonString</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// My &quot;top-level&quot; method.</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">MyController</span> <span class="p">:</span> <span class="n">ApiController</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="kt">string</span> <span class="nf">Get</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="kt">var</span> <span class="n">jsonTask</span> <span class="p">=</span> <span class="n">GetJsonAsync</span><span class="p">(...);</span>
+    <span class="k">return</span> <span class="n">jsonTask</span><span class="p">.</span><span class="n">Result</span><span class="p">.</span><span class="n">ToString</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>This code will also deadlock. For the same reason.</p>
+
+<h2 id="what-causes-the-deadlock">What Causes the Deadlock</h2>
+
+<p>Here’s the situation: remember <a href="/2012/02/async-and-await.html">from my intro post</a> that after you await a Task, when the method continues it will continue <em>in a context</em>.</p>
+
+<p>In the first case, this context is a UI context (which applies to <em>any</em> UI except Console applications). In the second case, this context is an ASP.NET request context.</p>
+
+<p>One other important point: an ASP.NET request context is not tied to a specific thread (like the UI context is), but it <em>does</em> only allow one thread in <em>at a time</em>. This interesting aspect is not officially documented anywhere AFAIK, but it is mentioned in <a href="http://msdn.microsoft.com/en-us/magazine/gg598924.aspx">my MSDN article about SynchronizationContext</a>.</p>
+
+<p>So this is what happens, starting with the top-level method (Button1_Click for UI / MyController.Get for ASP.NET):</p>
+
+<ol>
+  <li>The top-level method calls GetJsonAsync (within the UI/ASP.NET context).</li>
+  <li>GetJsonAsync starts the REST request by calling HttpClient.GetStringAsync (still within the context).</li>
+  <li>GetStringAsync returns an uncompleted Task, indicating the REST request is not complete.</li>
+  <li>GetJsonAsync awaits the Task returned by GetStringAsync. The context is captured and will be used to continue running the GetJsonAsync method later. GetJsonAsync returns an uncompleted Task, indicating that the GetJsonAsync method is not complete.</li>
+  <li>The top-level method synchronously blocks on the Task returned by GetJsonAsync. This blocks the context thread.</li>
+  <li>… Eventually, the REST request will complete. This completes the Task that was returned by GetStringAsync.</li>
+  <li>The continuation for GetJsonAsync is now ready to run, and it waits for the context to be available so it can execute in the context.</li>
+  <li>Deadlock. The top-level method is blocking the context thread, waiting for GetJsonAsync to complete, and GetJsonAsync is waiting for the context to be free so it can complete.</li>
+</ol>
+
+<p>For the UI example, the “context” is the UI context; for the ASP.NET example, the “context” is the ASP.NET request context. This type of deadlock can be caused for either “context”.</p>
+
+<h2 id="preventing-the-deadlock">Preventing the Deadlock</h2>
+
+<p>There are two best practices (both covered in <a href="/2012/02/async-and-await.html">my intro post</a>) that avoid this situation:</p>
+
+<ol>
+  <li>In your “library” async methods, use ConfigureAwait(false) wherever possible.</li>
+  <li>Don’t block on Tasks; use async all the way down.</li>
+</ol>
+
+<p>Consider the first best practice. The new “library” method looks like this:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">JObject</span><span class="p">&gt;</span> <span class="n">GetJsonAsync</span><span class="p">(</span><span class="n">Uri</span> <span class="n">uri</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">client</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">())</span>
+  <span class="p">{</span>
+    <span class="kt">var</span> <span class="n">jsonString</span> <span class="p">=</span> <span class="k">await</span> <span class="n">client</span><span class="p">.</span><span class="n">GetStringAsync</span><span class="p">(</span><span class="n">uri</span><span class="p">).</span><span class="n">ConfigureAwait</span><span class="p">(</span><span class="k">false</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">JObject</span><span class="p">.</span><span class="n">Parse</span><span class="p">(</span><span class="n">jsonString</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>This changes the continuation behavior of GetJsonAsync so that it does <em>not</em> resume on the context. Instead, GetJsonAsync will resume on a thread pool thread. This enables GetJsonAsync to complete the Task it returned without having to re-enter the context.</p>
+
+<p>Consider the second best practice. The new “top-level” methods look like this:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">Button1_Click</span><span class="p">(...)</span>
+<span class="p">{</span>
+  <span class="kt">var</span> <span class="n">json</span> <span class="p">=</span> <span class="k">await</span> <span class="n">GetJsonAsync</span><span class="p">(...);</span>
+  <span class="n">textBox1</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="n">json</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">public</span> <span class="k">class</span> <span class="nc">MyController</span> <span class="p">:</span> <span class="n">ApiController</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">Get</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="kt">var</span> <span class="n">json</span> <span class="p">=</span> <span class="k">await</span> <span class="n">GetJsonAsync</span><span class="p">(...);</span>
+    <span class="k">return</span> <span class="n">json</span><span class="p">.</span><span class="n">ToString</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>This changes the blocking behavior of the top-level methods so that the context is never actually blocked; all “waits” are “asynchronous waits”.</p>
+
+<p><strong>Note:</strong> It is best to apply both best practices. Either one will prevent the deadlock, but <em>both</em> must be applied to achieve maximum performance and responsiveness.</p>
+
+<h2 id="resources">Resources</h2>
+
+<ul>
+  <li>My <a href="/2012/02/async-and-await.html">introduction to async/await</a> is a good starting point. </li>
+  <li>Stephen Toub’s blog post <a href="http://blogs.msdn.com/b/pfxteam/archive/2011/01/13/10115163.aspx">Await, and UI, and deadlocks! Oh, my!</a> covers this exact type of deadlock (in January of 2011, no less!).</li>
+  <li>If you prefer videos, <a href="http://channel9.msdn.com/Events/BUILD/BUILD2011/TOOL-829T">Stephen Toub demoed this deadlock live</a> (39:40 - 42:50, but the whole presentation is great!). <a href="http://blogs.msdn.com/b/lucian/archive/2012/03/29/talk-async-part-1-the-message-loop-and-the-task-type.aspx">Lucian Wischik also demoed this deadlock</a> using VB (17:10 - 19:15).</li>
+  <li>The <a href="http://blogs.msdn.com/b/pfxteam/archive/2012/04/12/10293335.aspx">Async/Await FAQ</a> goes into detail on exactly when contexts are captured and used for continuations.</li>
+</ul>
+
+<p>This kind of deadlock is always the result of mixing synchronous with asynchronous code. Usually this is because people are just trying out async with one small piece of code and use synchronous code everywhere else. Unfortunately, partially-asynchronous code is much more complex and tricky than just making everything asynchronous.</p>
+
+<p>If you <em>do</em> need to maintain a partially-asynchronous code base, then be sure to check out two more of Stephen Toub’s blog posts: <a href="http://blogs.msdn.com/b/pfxteam/archive/2012/03/24/10287244.aspx">Asynchronous Wrappers for Synchronous Methods</a> and <a href="http://blogs.msdn.com/b/pfxteam/archive/2012/04/13/10293638.aspx">Synchronous Wrappers for Asynchronous Methods</a>, as well as my <a href="http://nitoasyncex.codeplex.com/">AsyncEx library</a>.</p>
+
+<h2 id="answered-questions">Answered Questions</h2>
+
+<p>There are scores of answered questions out there that are all caused by the same deadlock problem. It has shown up on WinRT, WPF, Windows Forms, Windows Phone, MonoDroid, Monogame, and ASP.NET.</p>
+
+<!--
+Boring list that I'm no longer interested enough in to maintain.
+
+<p>These questions were all caused by the same deadlock problem, just in different scenarios.</p>
+
+<ul>
+<li>UI context:
+<ul>
+ <li>WinRT:
+ <ul>
+  <li><a href="http://stackoverflow.com/questions/14485115/synchronously-waiting-for-an-async-operation-and-why-does-wait-freeze-the-pro">Synchronously waiting for an async operation, and why does Wait() freeze the program here</a></li>
+  <li><a href="http://stackoverflow.com/questions/13930113/getfilesasync-stops-working">GetFilesAsync stops working</a></li>
+  <li><a href="http://stackoverflow.com/questions/13333786/fileio-writeasync-hanging">FileIO.WriteAsync hanging</a></li>
+  <li><a href="http://stackoverflow.com/questions/10700570/fileio-readtextasync-occasionally-hangs">FileIO.ReadTextAsync occasionally hangs</a></li>
+  <li><a href="http://stackoverflow.com/questions/12701545/async-and-await-with-httpwebrequest-getresponseasync">Async and Await with HttpWebRequest.GetResponseAsync</a></li>
+  <li><a href="http://stackoverflow.com/questions/12235085/winrt-loading-static-data-with-getfilefromapplicationuriasync">WinRT: Loading static data with GetFileFromApplicationUriAsync()</a></li>
+  <li><a href="http://stackoverflow.com/questions/12392567/async-method-never-retuns">Async method never retuns</a></li>
+  <li><a href="http://stackoverflow.com/questions/12048128/async-await-pattern-help-am-i-doing-it-right">Async await pattern help. Am I doing it right?</a></li>
+  <li><a href="http://stackoverflow.com/questions/11316438/call-to-await-getfileasync-never-returns-and-app-hangs-in-winrt-app">Call to await GetFileAsync() never returns and app hangs in WinRT app</a></li>
+ </ul>
+ </li>
+ <li>WPF:
+ <ul>
+  <li><a href="http://social.msdn.microsoft.com/Forums/en-US/parallelextensions/thread/8322bcc5-1ef5-4efe-9683-96fd0829b49d">async/await hang in WPF app</a></li>
+ </ul>
+ </li>
+ <li>Windows Forms:
+ <ul>
+  <li><a href="http://stackoverflow.com/questions/14597232/asp-net-web-api-client-progressmessagehandler-post-task-stuck-in-winform-app">ASP.NET Web API Client ProgressMessageHandler Post Task stuck in WinForm App</a></li>
+ </ul>
+ </li>
+ <li>Windows Phone 8:
+ <ul>
+  <li><a href="http://stackoverflow.com/questions/14712132/live-connect-async-and-await-blocking-ui">Live Connect - async and await blocking UI</a></li>
+  <li><a href="http://stackoverflow.com/questions/15327993/windows-phone-8-sqlite-async-operations-hanging-indefinitely">Windows Phone 8 SQLite async operations hanging indefinitely</a></li>
+ </ul>
+ </li>
+ <li>Android (MonoDroid):
+ <ul>
+  <li><a href="http://stackoverflow.com/questions/14631781/using-microsoft-bcl-async-in-pcl-with-mono-droid">Using Microsoft.bcl.async in PCL with Mono Droid?</a></li>
+ </ul>
+ </li>
+ <li>Monogame:
+ <ul>
+  <li><a href="http://stackoverflow.com/questions/15193520/unable-to-get-list-of-files-in-directory-from-monogame">Unable to get list of files in directory from MonoGame</a></li>
+ </ul>
+ </li>
+ <li>Unspecified:
+ <ul>
+  <li><a href="http://social.msdn.microsoft.com/Forums/en-AU/async/thread/269172a3-adb9-4b5e-9ac1-8b67ff920177">Async Issue(Why blocking the UI thread)??</a></li>
+ </ul>
+ </li>
+</ul>
+</li>
+<li>ASP.NET context:
+<ul>
+ <li><a href="http://stackoverflow.com/questions/14875856/asp-net-web-api-httpclient-download-large-files-breaks">Asp.net Web API: HttpClient Download large files breaks</a></li>
+ <li><a href="http://stackoverflow.com/questions/14526377/why-does-this-async-action-hang">Why does this async action hang?</a></li>
+ <li><a href="http://stackoverflow.com/questions/14046471/task-waitall-keeps-in-loop">Task.WaitAll keeps in loop</a></li>
+ <li><a href="http://stackoverflow.com/questions/13621647/using-async-even-if-it-should-complete-as-part-of-a-mvc-route-deadlocks-the">Using “async” (even if it should complete) as part of a MVC route deadlocks the route; how can this be avoided?</a></li>
+ <li><a href="http://stackoverflow.com/questions/12981490/task-waitall-hanging-with-multiple-awaitable-tasks-in-asp-net">Task.WaitAll hanging with multiple awaitable tasks in ASP.NET</a></li>
+ <li><a href="http://stackoverflow.com/questions/13140523/await-vs-task-wait-deadlock">await vs Task.Wait - Deadlock?</a></li>
+ <li><a href="http://stackoverflow.com/questions/12701879/confusing-behaviour-when-invoking-async-methods-inside-asp-net">Confusing behaviour when invoking async methods inside ASP.NET</a></li>
+ <li><a href="http://stackoverflow.com/questions/11887915/preventing-a-deadlock-when-calling-an-async-method-without-using-await">Preventing a deadlock when calling an async method without using await</a></li>
+ <li><a href="http://stackoverflow.com/questions/11364272/asp-net-mvc-4-controller-hangs-whenever-async-is-used">ASP.Net MVC 4 controller hangs whenever async is used</a></li>
+ <li><a href="http://stackoverflow.com/questions/10343632/httpclient-getasync-never-returns-when-using-await-async">HttpClient.GetAsync(…) never returns when using await/async</a></li>
+ <li><a href="http://stackoverflow.com/questions/7804363/async-ctp-bug-task-never-completes">Async CTP Bug - Task Never Completes</a></li>
+</ul>
+</li>
+<li>Unspecified context:
+<ul>
+ <li><a href="http://stackoverflow.com/questions/14470983/await-task-getting-lost-with-dbcontext-savechanges">Await Task 'getting lost' with dbContext.savechanges()</a></li>
+ <li><a href="http://stackoverflow.com/questions/14186608/c-sharp-net-4-5-async-await-task-wait-blocking-issue">c# .net 4.5 async await Task.Wait() blocking issue</a></li>
+ <li><a href="http://stackoverflow.com/questions/9545885/get-result-of-async-method">Get result of async method</a></li>
+</ul>
+</li>
+</ul>
+
+-->
+
+  </article>
+    
+    <footer>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2012/06/arraysegments-library-available.html" title="ArraySegments Library Available">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2012/07/thread-is-dead.html" title="Thread is Dead">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2012/07/dont-block-on-async-code";
+var disqus_title = "Don&#39;t Block on Async Code";
+var disqus_url = "http://localhost:4000/2012/07/dont-block-on-async-code.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

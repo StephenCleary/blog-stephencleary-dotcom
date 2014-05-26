@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Asynchronous Contexts in Rx</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2010/07/asynchronous-contexts-in-rx.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Asynchronous Contexts in Rx</h1>
+          <small>Jul 31, 2010 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>Yesterday I (finally) wrote my first real-world code using Rx. Like many others, I’ve played around with various aspects of Rx, but until last night these were all just throwaway experiments. It turns out that in my very first real-world use of Rx, I had to implement an old concept: asynchronous contexts.</p>
+
+<p>There have been some great resources released about Rx recently. Most notably, the <a href="http://blogs.msdn.com/b/rxteam/archive/2010/07/15/rx-hands-on-labs-published.aspx">Rx hands-on lab</a> (<a href="http://download.microsoft.com/download/C/5/D/C5D669F9-01DF-4FAF-BBA9-29C096C462DB/Rx%20HOL%20.NET.pdf">direct link to PDF</a>), which is the closest thing to an Rx tutorial in existence. The Rx team followed up later this month with a two-part series on using Rx on the server: <a href="http://blogs.msdn.com/b/jeffva/archive/2010/07/23/rx-on-the-server-part-1-of-n-asynchronous-system-io-stream-reading.aspx">asynchronous Stream</a> and <a href="http://blogs.msdn.com/b/jeffva/archive/2010/07/26/rx-on-the-server-part-2-of-n-asynchronous-streamreader.aspx">asynchronous StreamReader</a>. These blog posts are great examples of how to think when approaching a problem with Rx in hand.</p>
+
+<p>This week, I had a business need to create a “search” form. The form is very simple: the user types something in a TextBox, and we populate a ListView with matching objects. It’s sort of like a whole form devoted to AutoComplete. The actual “matching” function could be run asynchronously, so this problem ended up almost exactly like the dictionary lookup in the Rx hands-on lab document.</p>
+
+<p>The one big difference is that the “matching” function will return its results incrementally (it’s actually an IEnumerable&lt;T&gt;), and I’d like to display the results incrementally as they are found. In contrast, the dictionary lookup in the Rx hands-on lab example returns all of its results at once.</p>
+
+<p>Here’s the first brush of the code:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="c1">// Listen for the user typing.</span>
+<span class="kt">var</span> <span class="n">searchCommands</span> <span class="p">=</span> <span class="n">Observable</span><span class="p">.</span><span class="n">FromEvent</span><span class="p">&lt;</span><span class="n">EventArgs</span><span class="p">&gt;(</span><span class="k">this</span><span class="p">.</span><span class="n">textBoxSearch</span><span class="p">,</span> <span class="s">&quot;TextChanged&quot;</span><span class="p">)</span>
+  <span class="p">.</span><span class="n">Select</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="k">this</span><span class="p">.</span><span class="n">textBoxSearch</span><span class="p">.</span><span class="n">Text</span><span class="p">)</span>
+  <span class="p">.</span><span class="n">Throttle</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">FromMilliseconds</span><span class="p">(</span><span class="m">200</span><span class="p">))</span> <span class="c1">// For fast typists.</span>
+  <span class="p">.</span><span class="n">DistinctUntilChanged</span><span class="p">()</span> <span class="c1">// Only pass along the event if the actual text changed.</span>
+  <span class="p">.</span><span class="n">ObserveOn</span><span class="p">(</span><span class="k">this</span><span class="p">)</span> <span class="c1">// Marshal to UI thread.</span>
+  <span class="p">.</span><span class="n">Merge</span><span class="p">(</span><span class="n">Observable</span><span class="p">.</span><span class="n">Return</span><span class="p">(</span><span class="kt">string</span><span class="p">.</span><span class="n">Empty</span><span class="p">))</span> <span class="c1">// Start by searching an empty string.</span>
+  <span class="p">.</span><span class="n">Do</span><span class="p">(</span><span class="n">_</span> <span class="p">=&gt;</span>
+  <span class="p">{</span>
+    <span class="c1">// Update UI each time we get a new search request.</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">listViewResults</span><span class="p">.</span><span class="n">Items</span><span class="p">.</span><span class="n">Clear</span><span class="p">();</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">labelStatus</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="s">&quot;Searching...&quot;</span><span class="p">;</span>
+  <span class="p">});</span>
+
+<span class="c1">// Define how we do searches.</span>
+<span class="n">Func</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="n">IObservable</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;&gt;</span> <span class="n">performSearch</span> <span class="p">=</span> <span class="n">searchString</span> <span class="p">=&gt;</span> <span class="k">this</span><span class="p">.</span><span class="n">matchProvider</span><span class="p">.</span><span class="n">Lookup</span><span class="p">(</span><span class="n">searchString</span><span class="p">)</span>
+  <span class="p">.</span><span class="n">ToObservable</span><span class="p">(</span><span class="n">Scheduler</span><span class="p">.</span><span class="n">ThreadPool</span><span class="p">)</span> <span class="c1">// Do the iteration on a ThreadPool thread.</span>
+  <span class="p">.</span><span class="n">ObserveOn</span><span class="p">(</span><span class="k">this</span><span class="p">);</span> <span class="c1">// Marshal to the UI thread.</span>
+
+<span class="c1">// Each time a search is requested, cancel any existing searches and start the new one.</span>
+<span class="k">this</span><span class="p">.</span><span class="n">searchAction</span> <span class="p">=</span>
+  <span class="n">searchCommands</span>
+  <span class="p">.</span><span class="n">Select</span><span class="p">(</span><span class="n">searchString</span> <span class="p">=&gt;</span>
+    <span class="n">performSearch</span><span class="p">(</span><span class="n">searchString</span><span class="p">)</span> <span class="c1">// Do the search.</span>
+    <span class="p">.</span><span class="n">Do</span><span class="p">(</span><span class="n">_</span> <span class="p">=&gt;</span> <span class="p">{</span> <span class="p">},</span>
+      <span class="p">()</span> <span class="p">=&gt;</span>
+      <span class="p">{</span>
+        <span class="c1">// Update UI when the search is done.</span>
+        <span class="k">this</span><span class="p">.</span><span class="n">labelStatus</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="s">&quot;Done!&quot;</span><span class="p">;</span>
+      <span class="p">}))</span>
+  <span class="p">.</span><span class="n">Switch</span><span class="p">()</span> <span class="c1">// Cancel existing searches when a new search starts.</span>
+  <span class="p">.</span><span class="n">Subscribe</span><span class="p">(</span><span class="n">response</span> <span class="p">=&gt;</span> <span class="k">this</span><span class="p">.</span><span class="n">listViewResults</span><span class="p">.</span><span class="n">Items</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">toListViewItem</span><span class="p">(</span><span class="n">response</span><span class="p">)));</span></code></pre></div>
+
+<p>The first chunk of the code is almost identical to the first chunk of the Rx hands-on lab code. The only difference is that I use ObserveOn(this) and Do() to clear out any previous search results when a new search <em>starts</em> (the hands-on lab clears previous search results when a search <em>completes</em>). I also do a Merge() with an empty string, which causes all results to be returned as soon as the form is loaded.</p>
+
+<p>The second chunk of code defines how searches are performed. The “matchProvider” object just returns an IEnumerable&lt;T&gt; for a given search string. This enumerable is iterated on a ThreadPool thread, and the results are marshalled to the UI thread. This is similar to the asynchronous web service used by the Rx hands-on lab, except that it produces its results incrementally instead of all at once.</p>
+
+<p>The third part of the code uses the Switch() operator to cancel old searches and start new ones as they are ready. A label is updated to notify the user when a search completes. All results from the combined searches are added to the ListView as they arrive. There is no need to marshal to the UI thread first, because both of the observable sources in this combination have already been marshalled to the UI thread.</p>
+
+<h2 id="the-need-for-an-asynchronous-context">The Need for an Asynchronous Context</h2>
+
+<p>There’s a rather subtle race condition in the code above. Observable sequences can get tricky whenever they change threads, and that is happening a couple of times here. The first one is not really obvious: Throttle() transfers control to a ThreadPool thread because of its timer. The other one <em>is</em> obvious: we’re converting an IEnumerable&lt;T&gt; to an observable using Scheduler.ThreadPool. Both of these sequences do get marshalled back to the UI thread and combined using Switch(), and that’s actually where the problem comes in.</p>
+
+<p>According to <a href="http://social.msdn.microsoft.com/Forums/en-US/rx/thread/19be939b-d257-4d8e-b104-4dfcc59b3ff8">an authoritative post on the Rx forums</a>, when subscriptions are disposed they <em>may</em> not stop immediately. At first this seems like a design flaw, but it actually makes perfect sense. Believe me - I’ve done enough asynchronous work to know how complicated it would be to have all subscription disposals stop their observables immediately.</p>
+
+<p>In short, it’s possible to have a former search complete (and update the UI displaying “Done!”) after a newer search starts (and updates the UI displaying “Searching…”). The Rx hands-on lab does not have this problem because they only marshal to the UI thread (and display the results) when the lookup has completed.</p>
+
+<p>Conceptually, this is the same problem that I discussed in <a href="/2009/04/asynchronous-callback-contexts.html">one of my first blog posts</a>: an asynchronous operation can’t always be reliably cancelled. In this case, the solution is to introduce an <em>asynchronous callback context</em> and have the operation actively check its context before executing. If the callback is synchronized before checking the callback context, then it <em>knows</em> whether or not it is cancelled (without causing another race condition).</p>
+
+<p>To solve this problem in Rx, we’ll use an asynchronous context (dropping the “callback” moniker, since it doesn’t really apply). The concept is the same: asynchronous events copy the current value of the context (while they are synchronized), then go off and do whatever they do asynchronously, and finally check their saved context against the current value of the context (after they are re-synchronized).</p>
+
+<p>Note that asynchronous contexts in Rx need to be attached to <em>each element</em> in the observable. Logically, each observable element is an event.</p>
+
+<h2 id="using-the-asynchronous-context">Using the Asynchronous Context</h2>
+
+<p>This code uses an asynchronous context. The simplest context is just an Object instance, which can be easily compared for equality and is guaranteed unique from any other context.</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="c1">// Our asynchronous context.</span>
+<span class="kt">object</span> <span class="n">context</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+
+<span class="c1">// Listen for the user typing.</span>
+<span class="kt">var</span> <span class="n">searchCommands</span> <span class="p">=</span> <span class="n">Observable</span><span class="p">.</span><span class="n">FromEvent</span><span class="p">&lt;</span><span class="n">EventArgs</span><span class="p">&gt;(</span><span class="k">this</span><span class="p">.</span><span class="n">textBoxSearch</span><span class="p">,</span> <span class="s">&quot;TextChanged&quot;</span><span class="p">)</span>
+  <span class="p">.</span><span class="n">Select</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="k">this</span><span class="p">.</span><span class="n">textBoxSearch</span><span class="p">.</span><span class="n">Text</span><span class="p">)</span>
+  <span class="p">.</span><span class="n">Throttle</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">FromMilliseconds</span><span class="p">(</span><span class="m">200</span><span class="p">))</span> <span class="c1">// For fast typists.</span>
+  <span class="p">.</span><span class="n">DistinctUntilChanged</span><span class="p">()</span> <span class="c1">// Only pass along the event if the actual text changed.</span>
+  <span class="p">.</span><span class="n">ObserveOn</span><span class="p">(</span><span class="k">this</span><span class="p">)</span> <span class="c1">// Marshal to UI thread.</span>
+  <span class="p">.</span><span class="n">Merge</span><span class="p">(</span><span class="n">Observable</span><span class="p">.</span><span class="n">Return</span><span class="p">(</span><span class="kt">string</span><span class="p">.</span><span class="n">Empty</span><span class="p">))</span> <span class="c1">// Start by searching an empty string.</span>
+  <span class="p">.</span><span class="n">Do</span><span class="p">(</span><span class="n">_</span> <span class="p">=&gt;</span>
+  <span class="p">{</span>
+    <span class="c1">// Change the context to prevent any future updates from old observables.</span>
+    <span class="n">context</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">object</span><span class="p">();</span>
+
+    <span class="c1">// Update UI each time we get a new search request.</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">listViewResults</span><span class="p">.</span><span class="n">Items</span><span class="p">.</span><span class="n">Clear</span><span class="p">();</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">labelStatus</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="s">&quot;Searching...&quot;</span><span class="p">;</span>
+  <span class="p">})</span>
+  <span class="p">.</span><span class="n">Select</span><span class="p">(</span><span class="n">searchString</span> <span class="p">=&gt;</span> <span class="k">new</span> <span class="p">{</span> <span class="n">context</span><span class="p">,</span> <span class="n">searchString</span> <span class="p">});</span> <span class="c1">// Attach context to each search string.</span>
+
+<span class="c1">// Define how we do searches.</span>
+<span class="n">Func</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="n">IObservable</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;&gt;</span> <span class="n">performSearch</span> <span class="p">=</span> <span class="n">searchString</span> <span class="p">=&gt;</span> <span class="k">this</span><span class="p">.</span><span class="n">matchProvider</span><span class="p">.</span><span class="n">Lookup</span><span class="p">(</span><span class="n">searchString</span><span class="p">)</span>
+  <span class="p">.</span><span class="n">ToObservable</span><span class="p">(</span><span class="n">Scheduler</span><span class="p">.</span><span class="n">ThreadPool</span><span class="p">)</span> <span class="c1">// Do the iteration on a ThreadPool thread.</span>
+  <span class="p">.</span><span class="n">ObserveOn</span><span class="p">(</span><span class="k">this</span><span class="p">);</span> <span class="c1">// Marshal to the UI thread.</span>
+
+<span class="c1">// Each time a search is requested, cancel any existing searches and start the new one.</span>
+<span class="c1">// Propogate the context to each search result.</span>
+<span class="k">this</span><span class="p">.</span><span class="n">searchAction</span> <span class="p">=</span>
+  <span class="n">searchCommands</span>
+  <span class="p">.</span><span class="n">Select</span><span class="p">(</span><span class="n">request</span> <span class="p">=&gt;</span>
+    <span class="n">performSearch</span><span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="n">searchString</span><span class="p">)</span> <span class="c1">// Start searching.</span>
+    <span class="p">.</span><span class="n">Select</span><span class="p">(</span><span class="n">result</span> <span class="p">=&gt;</span> <span class="k">new</span> <span class="p">{</span> <span class="n">request</span><span class="p">.</span><span class="n">context</span><span class="p">,</span> <span class="n">result</span> <span class="p">})</span> <span class="c1">// Propogate the context to each search result.</span>
+    <span class="p">.</span><span class="n">Do</span><span class="p">(</span><span class="n">_</span> <span class="p">=&gt;</span> <span class="p">{</span> <span class="p">},</span>
+      <span class="p">()</span> <span class="p">=&gt;</span>
+      <span class="p">{</span>
+        <span class="c1">// Check the context before handling the result.</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="n">context</span> <span class="p">==</span> <span class="n">context</span><span class="p">)</span>
+        <span class="p">{</span>
+          <span class="c1">// Update UI when the search is done.</span>
+          <span class="k">this</span><span class="p">.</span><span class="n">labelStatus</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="s">&quot;Done!&quot;</span><span class="p">;</span>
+        <span class="p">}</span>
+      <span class="p">}))</span>
+  <span class="p">.</span><span class="n">Switch</span><span class="p">()</span>
+  <span class="p">.</span><span class="n">Subscribe</span><span class="p">(</span>
+    <span class="n">response</span> <span class="p">=&gt;</span>
+    <span class="p">{</span>
+      <span class="c1">// Check the context before handling the result.</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">response</span><span class="p">.</span><span class="n">context</span> <span class="p">==</span> <span class="n">context</span><span class="p">)</span>
+      <span class="p">{</span>
+        <span class="k">this</span><span class="p">.</span><span class="n">listViewResults</span><span class="p">.</span><span class="n">Items</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">toListViewItem</span><span class="p">(</span><span class="n">response</span><span class="p">.</span><span class="n">result</span><span class="p">));</span>
+      <span class="p">}</span>
+    <span class="p">});</span></code></pre></div>
+
+<p>The changes in this code all have to do with the asynchronous context. The local “context” variable always refers to the currently valid context (all other contexts are, by definition, invalid). When a new user search request is detected, we create a new context for the request, and we “bind” the context to the search request using an anonymous projection.</p>
+
+<p>The second block of code (defining how we perform a search) is the same. The search results are treated a bit differently, though: we “bind” each search result to the same context associated with the search request. Also, when the search is completed, the request’s bound context is verified against the current context before updating the UI.</p>
+
+<p>Finally, the bound context for each response is verified against the current context before updating the UI. Remember that each response’s context is copied from their associated requests’s context, so they remain valid as long as their request is the most recent one.</p>
+
+<p>Note that all context-based actions (setting the current context when starting a request, binding the current context to the observable elements, and verifying the bound contexts against the current context) are all done on the UI thread. Synchronizing context actions is a requirement for asynchronous contexts, to avoid race conditions.</p>
+
+<h2 id="a-reusable-solution">A Reusable Solution</h2>
+
+<p>I’m playing around with a few classes that make asynchronous contexts a little easier to use. Observable elements bound to a context are placed into a structure similar to Timestamped&lt;T&gt; (which binds observable elements to a timestamp), and there are special binding and verification operators. The actual AsynchronousContext type also includes thread checking to ensure that it is used in a synchronized fashion.</p>
+
+<p>However, I’m just not pleased with how usable it is. I’ll continue playing with it over the next week or so, and if I can find a good solution, I’ll post it here and put it into <a href="http://nitoasync.codeplex.com/">Nito.Async</a>. Suggestions are welcome. :)</p>
+
+
+  </article>
+    
+    <footer>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2010/07/resharper-and-obscure-cts-corner-case.html" title="ReSharper and the Obscure CTS Corner Case">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2010/08/reminder-about-asynchronous-filestreams.html" title="A Reminder about Asynchronous FileStreams">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2010/07/asynchronous-contexts-in-rx";
+var disqus_title = "Asynchronous Contexts in Rx";
+var disqus_url = "http://localhost:4000/2010/07/asynchronous-contexts-in-rx.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

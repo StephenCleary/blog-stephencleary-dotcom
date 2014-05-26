@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Simple and Easy Tracing in .NET</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2010/12/simple-and-easy-tracing-in-net.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Simple and Easy Tracing in .NET</h1>
+          <small>Dec 30, 2010 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>.NET includes a fairly complete tracing framework built right in, but there isn’t much in the way of “getting started” tutorials that provide best practices. So, here’s a simple guide to the built-in .NET tracing support, skipping all the hard stuff. :)</p>
+
+<h2 id="define-the-tracesource">Define the TraceSource</h2>
+
+<p>One <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.tracesource.aspx">TraceSource</a> should be defined per “component.” The “component” is up to you; it’s a group of trace statements that can be enabled or disabled together.</p>
+
+<p>A <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.tracesource.aspx">TraceSource</a> needs a name, and that name should be globally unique. Something like “MyCompany.MyProduct.MyComponent” should suffice.</p>
+
+<p>You usually want to define the <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.tracesource.aspx">TraceSource</a> as a <strong>static</strong> member of a class being traced. The example code below uses a <strong>private static</strong> <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.tracesource.aspx">TraceSource</a>, but if other classes use the same source, you may prefer <strong>internal static</strong>:</p>
+
+<pre><code>public class MyComponentClass
+{
+  private readonly static TraceSource Tracer = new TraceSource("MyCompany.MyProduct.MyComponent");
+  ...
+}
+</code></pre>
+
+<h2 id="use-the-tracesource">Use the TraceSource</h2>
+
+<p>Add calls to <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.tracesource.aspx">TraceSource</a> methods where you want tracing to take place:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">void</span> <span class="nf">Frob</span><span class="p">(</span><span class="kt">string</span> <span class="n">arg</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">Tracer</span><span class="p">.</span><span class="n">TraceInformation</span><span class="p">(</span><span class="s">&quot;Frobbing &quot;</span> <span class="p">+</span> <span class="n">arg</span><span class="p">);</span>
+  <span class="p">...</span>
+<span class="p">}</span></code></pre></div>
+
+<p>The <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.tracesource.aspx">TraceSource</a> class provides several tracing methods; the most common are <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.tracesource.traceinformation.aspx">TraceInformation</a> (used for informational message) and <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.tracesource.traceevent.aspx">TraceEvent</a> (used for any type of message).</p>
+
+<p>The types of messages <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.traceeventtype.aspx">include</a> (in increasing order of severity): Verbose, Information, Warning, Error, and Critical.</p>
+
+<h2 id="enable-the-tracesource">Enable the TraceSource</h2>
+
+<p>Defining and using the TraceSource is all the changes that need to be made to the code. However, running the code above will not actually cause any tracing to be done at runtime, because the TraceSource is not enabled.</p>
+
+<p>To enable the TraceSource, you’ll need to merge the following with your app.config or web.config (and restart the application):</p>
+
+<pre><code>&lt;configuration&gt;
+  &lt;system.diagnostics&gt;
+    &lt;sources&gt;
+      &lt;source name="MyCompany.MyProduct.MyComponent" switchValue="All" /&gt;
+    &lt;/sources&gt;
+  &lt;/system.diagnostics&gt;
+&lt;/configuration&gt;
+</code></pre>
+
+<p>The switchValue attribute <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.sourcelevels.aspx">may be set to</a> Off, Critical, Error, Warning, Information, Verbose, or All. This setting interacts with the TraceEvent message types exactly as you’d expect:</p>
+
+<div class="panel panel-default">
+
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th> </th>
+        <th>Verbose</th>
+        <th>Information</th>
+        <th>Warning</th>
+        <th>Error</th>
+        <th>Critical</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Off</td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+      </tr>
+      <tr>
+        <td>Critical</td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+      </tr>
+      <tr>
+        <td>Error</td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+      </tr>
+      <tr>
+        <td>Warning</td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+      </tr>
+      <tr>
+        <td>Information</td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+      </tr>
+      <tr>
+        <td>Verbose</td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+      </tr>
+      <tr>
+        <td>All</td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+
+<p>Tip: you can leave the <strong>source</strong> element defined in your app.config / web.config when you deploy to production. As long as its switchValue is set to Off, it won’t actually trace but it’s easy to find and turn on.</p>
+
+<p>Another tip: TraceSource works the same in both Debug and Release builds, so it’s great for instrumenting an application heading to production where you want to enable or disable the tracing without recompiling.</p>
+
+<h2 id="observe-the-trace-messages">Observe the Trace Messages</h2>
+
+<p>Simple tracing can be observed in one of two ways:</p>
+
+<ul>
+  <li>If you run the application in the Visual Studio Debugger, all enabled trace output is written to the Output window.</li>
+  <li>If you’re running in production (or for some other reason can’t use the debugger), a free Microsoft tool called <a href="http://technet.microsoft.com/en-us/sysinternals/bb896647">DebugView</a> may be used to view the traces in real-time (and optionally log them to a file). Tip: uncheck “Options” “Force Carriage Returns” to make the trace output line up correctly.</li>
+</ul>
+
+<h2 id="more-power">More Power!</h2>
+
+<p>This blog post just scratched the surface of the complexity of the built-in .NET tracing system. It is extensible in many ways:</p>
+
+<ul>
+  <li>You can add “trace listeners”. The simple tracing above just uses the Default trace listener. .NET also includes listeners for logging to the Event Log, a text file, an XML file, or the Console. In addition, you can write your own trace listener (e.g., a rollover log so that the file doesn’t get too large).</li>
+  <li>You can add trace switches. Our simple tracing just sets a single switchValue for each TraceSource. It’s possible to add trace switches that are shared between multiple trace sources. In addition, you can define your own <em>type</em> of trace switch.</li>
+  <li>You can add trace filters. For example, it’s possible to put in a trace filter that sends some messages to one trace listener and other messages to another trace listener. You can also define your own trace filter type, if the built-in ones aren’t sufficient.</li>
+  <li>There are additional types of messages that fall under “ActivityTracing”: Start, Stop, etc. These can be used in addition to the existing Verbose to Critical hierarchy.</li>
+  <li>There’s a <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.trace.correlationmanager.aspx">Trace.CorrelationManager</a> class that enables “grouping” of traces into logical operations. This is used in conjection with the ActivityTracing messages to relate traces together that would otherwise get intermixed with other traces.</li>
+</ul>
+
+<p>For more information, see <a href="http://stackoverflow.com/questions/576185/logging-best-practices/939944#939944">this SO answer</a> and the <a href="http://msdn.microsoft.com/en-us/library/zs6s4h68.aspx">MSDN documentation</a>. Also, check out <a href="http://essentialdiagnostics.codeplex.com/">Essential Diagnostics</a> on CodePlex before writing your own extensions; the most useful things have already been done.</p>
+
+<h2 id="other-tracesources">Other TraceSources</h2>
+
+<p>Many people aren’t aware that a lot of the .NET built-in libraries have already been instrumented with their own TraceSources. <a href="http://msdn.microsoft.com/en-us/library/ty48b824(v=VS.100).aspx">Network activity</a>, for example, or <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.presentationtracesources.aspx">tons of tracing for WPF</a>. The two that I’ve found most useful are <strong>System.Net.Sockets</strong> for TCP/IP sockets and <strong>System.Windows.Data</strong> for debugging data binding errors. There are probably many more out there…</p>
+
+
+  </article>
+    
+    <footer>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2010/12/on-lighter-note-wii-me.html" title="On a Lighter Note: &quot;Wii Me&quot;?">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2011/01/sharp-corner-reference-types-value.html" title="Sharp Corner: Reference Types, Value Types, and Weirdos">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2010/12/simple-and-easy-tracing-in-net";
+var disqus_title = "Simple and Easy Tracing in .NET";
+var disqus_url = "http://localhost:4000/2010/12/simple-and-easy-tracing-in-net.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

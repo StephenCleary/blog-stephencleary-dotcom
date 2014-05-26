@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>CancellationToken Behavior with AsyncEx Coordination Primitives</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2013/04/cancellationtoken-behavior-with-asyncex.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>CancellationToken Behavior with AsyncEx Coordination Primitives</h1>
+          <small>Apr 11, 2013 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>Today I’m going to talk a little bit about some behavior that I standardized on for the asynchronous coordination primitives in my AsyncEx library. I’ll first review what’s currently available in the BCL and then describe my approach.</p>
+
+<h2 id="waiting-on-semaphoreslim">Waiting on SemaphoreSlim</h2>
+
+<p>The only built-in .NET asynchronous-compatible coordination primitive (as of .NET 4.5) is <a href="http://msdn.microsoft.com/en-us/library/system.threading.semaphoreslim.aspx">SemaphoreSlim</a>. This type can be used by both synchronous and asynchronous code, which is a very interesting aspect. What I’m looking at today is all the different ways to <em>wait</em> for a semaphore to be available (and I’m just going to consider asynchronous code).</p>
+
+<p>First, there’s the obvious <a href="http://msdn.microsoft.com/en-us/library/hh462805.aspx">Task WaitAsync()</a> method for an <strong>unconditional wait</strong>. This is the most commonly-used type of wait: the code knows it needs to acquire the semaphore and it will wait however long it takes until the semaphore is available.</p>
+
+<p>Next, there’s a couple of overloads for timeouts. <a href="http://msdn.microsoft.com/en-us/library/hh462740.aspx">Task&lt;bool&gt; WaitAsync(int)</a> and <a href="http://msdn.microsoft.com/en-us/library/hh462723.aspx">Task&lt;bool&gt; WaitAsync(TimeSpan)</a> both do an (asynchronous) <strong>timed wait</strong>, which will return <code>false</code> if the wait ran out of time before it was granted access.</p>
+
+<p>There’s an overload taking a cancellation token, <a href="http://msdn.microsoft.com/en-us/library/hh462773.aspx">Task WaitAsync(CancellationToken)</a>. This performs a <strong>cancelable wait</strong>, where some event can interrupt the wait if it determines that the code doesn’t need that semaphore anymore. If a wait is canceled, the wait task is canceled (instead of returning <code>false</code>).</p>
+
+<p>You can also have cancelable timed waits, via the <a href="http://msdn.microsoft.com/en-us/library/hh462846.aspx">Task&lt;bool&gt; WaitAsync(int, CancellationToken)</a> and <a href="http://msdn.microsoft.com/en-us/library/hh462788.aspx">Task&lt;bool&gt; WaitAsync(TimeSpan, CancellationToken)</a>. These overloads will cancel their tasks if the cancellation token fires, and return <code>false</code> if they hit the timeout.</p>
+
+<p>Finally, there’s one other important kind of wait you can do: an <strong>atomic wait</strong>, where you immediately (synchronously) acquire the semaphore if it is available. Asynchronous code can use <a href="http://msdn.microsoft.com/en-us/library/dd289488.aspx">bool Wait(int)</a> and pass zero to perform an atomic wait. This is logically similar to <code>Monitor.TryEnter</code>.</p>
+
+<h2 id="waiting-on-asyncsemaphore">Waiting on AsyncSemaphore</h2>
+
+<p>I’ll skip right to the punchline. There are only two wait overloads in the <code>AsyncSemaphore</code> class: <code>Task WaitAsync()</code> and <code>Task WaitAsync(CancellationToken)</code>.</p>
+
+<p>The <strong>unconditional wait</strong> uses the same obvious method: <code>Task WaitAsync()</code> (which is shorthand for <code>WaitAsync(CancellationToken.None)</code>). The other overload <code>Task WaitAsync(CancellationToken)</code> handles everything else.</p>
+
+<p>To do a <strong>timed wait</strong>, create a cancellation token to cancel the wait (e.g., using <code>CancellationTokenSource.CancellationTokenSource(TimeSpan)</code> or <code>CancellationTokenHelpers.Timeout(TimeSpan)</code>) and pass it to <code>WaitAsync</code>. When the timer expires, the wait is canceled.</p>
+
+<p>Of course, a <strong>cancelable wait</strong> can just pass in its <code>CancellationToken</code>. Cancelable timed waits can use chained cancellation tokens (via <code>CancellationTokenSource.CreateLinkedTokenSource</code> or <code>CancellationTokenHelpers.Normalize</code>), and they can follow up with <code>CancellationToken.IsCancellationRequested</code> if it’s important to distinguish <em>why</em> the wait was canceled.</p>
+
+<p>That just leaves the <strong>atomic wait</strong>, and this is where the “interesting design” comes in. If you pass in a token that is <em>already canceled</em>, then <code>WaitAsync</code> will always return synchronously: a successfully completed task if the semaphore is available, otherwise a canceled task. This gives you the “TryLock” kind of behavior, but this also means that if you have a regular cancellation token, it will not result in a canceled task if the semaphore is available.</p>
+
+<p>This special behavior is supported for every kind of “wait” in AsyncEx where atomic waits make sense and that modifies state: <code>AsyncSemaphore.WaitAsync</code>, <code>AsyncLock.LockAsync</code>, <code>AsyncAutoResetEvent.WaitAsync</code>, <code>AsyncMonitor.EnterAsync</code>, <code>AsyncReaderWriterLock.WriterLockAsync</code>, <code>AsyncReaderWriterLock.ReaderLockAsync</code>, <code>AsyncReaderWriterLock.UpgradeableReaderLockAsync</code>, and <code>AsyncReaderWriterLock.UpgradeableReaderKey.UpgradeAsync</code>.</p>
+
+
+  </article>
+    
+    <footer>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2013/04/implicit-async-context-asynclocal.html" title="Implicit Async Context (&quot;AsyncLocal&quot;)">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2013/04/ui-guidelines-for-async.html" title="UI Guidelines for Async">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2013/04/cancellationtoken-behavior-with-asyncex";
+var disqus_title = "CancellationToken Behavior with AsyncEx Coordination Primitives";
+var disqus_url = "http://localhost:4000/2013/04/cancellationtoken-behavior-with-asyncex.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

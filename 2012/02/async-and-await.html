@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Async and Await</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2012/02/async-and-await.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Async and Await</h1>
+          <small>Feb 2, 2012 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>Most people have already heard about the new “async” and “await” functionality coming in Visual Studio 11. This is Yet Another Introductory Post.</p>
+
+<p>First, the punchline: Async will fundamentally change the way most code is written.</p>
+
+<p>Yup, I believe async/await will have a bigger impact than LINQ. Understanding async will be a basic necessity just a few short years from now.</p>
+
+<h2 id="introducing-the-keywords">Introducing the Keywords</h2>
+
+<p>Let’s dive right in. I’ll use some concepts that I’ll expound on later on - just hold on for this first part.</p>
+
+<p>Asynchronous methods look something like this:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="c1">// In the Real World, we would actually do something...</span>
+  <span class="c1">// For this example, we&#39;re just going to (asynchronously) wait 100ms.</span>
+  <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
+<span class="p">}</span></code></pre></div>
+
+<p>The “async” keyword enables the “await” keyword in that method. <em>That’s all the async keyword does!</em> It does not run this method on a thread pool thread, or do any other kind of magic. The async keyword <em>only</em> enables the await keyword.</p>
+
+<p>The beginning of an async method is executed just like any other method. That is, it runs synchronously until it hits an “await” (or throws an exception).</p>
+
+<p>The “await” keyword is where things can get asynchronous. Await is like a unary operator: it takes a single argument, an <strong>awaitable</strong> (an “awaitable” is an asynchronous operation). Await examines that awaitable to see if it has already completed; if the awaitable has already completed, then the method just continues running (synchronously, just like a regular method).</p>
+
+<p>If “await” sees that the awaitable has not completed, then it acts asynchronously. It tells the awaitable to run the remainder of the method when it completes, and then <em>returns</em> from the async method.</p>
+
+<p>Later on, when the awaitable completes, it will execute the remainder of the async method. If you’re awaiting a built-in awaitable (such as a task), then the remainder of the async method will execute on a “context” that was captured before the “await” returned.</p>
+
+<p>I like to think of “await” as an “asynchronous wait”. That is to say, the async <em>method</em> pauses until the awaitable is complete (so it <em>waits</em>), but the actual <em>thread</em> is not blocked (so it’s <em>asynchronous</em>).</p>
+
+<h2 id="awaitables">Awaitables</h2>
+
+<p>As I mentioned, “await” takes a single argument - an “awaitable” - which is an asynchronous operation. There are two awaitable types already common in the .NET framework: Task&lt;T&gt; and Task.</p>
+
+<p>There are also other awaitable types: special methods such as “Task.Yield” return awaitables that are not Tasks, and the WinRT runtime (coming in Windows 8) has an unmanaged awaitable type. You can also create your own awaitable (usually for performance reasons), or use extension methods to make a non-awaitable type awaitable.</p>
+
+<p>That’s all I’m going to say about making your own awaitables. I’ve only had to write a couple of awaitables in the entire time I’ve used async/await. If you want to know more about writing your own awaitables, see the <a href="http://blogs.msdn.com/b/pfxteam/">Parallel Team Blog</a> or <a href="http://msmvps.com/blogs/jon_skeet/Default.aspx">Jon Skeet’s Blog</a>.</p>
+
+<p>One important point about awaitables is this: it is the <em>type</em> that is awaitable, not the method returning the type. In other words, you can await the result of an async method that returns Task … <em>because the method returns Task, not because it’s async</em>. So you can also await the result of a <em>non-async</em> method that returns Task:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">NewStuffAsync</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="c1">// Use await and have fun with the new stuff.</span>
+  <span class="k">await</span> <span class="p">...</span>
+<span class="p">}</span>
+
+<span class="k">public</span> <span class="n">Task</span> <span class="nf">MyOldTaskParallelLibraryCode</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="c1">// Note that this is not an async method, so we can&#39;t use await in here.</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+
+<span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">ComposeAsync</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="c1">// We can await Tasks, regardless of where they come from.</span>
+  <span class="k">await</span> <span class="nf">NewStuffAsync</span><span class="p">();</span>
+  <span class="k">await</span> <span class="nf">MyOldTaskParallelLibraryCode</span><span class="p">();</span>
+<span class="p">}</span></code></pre></div>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>Tip: If you have a very simple asynchronous method, you may be able to write it without using the await keyword (e.g., using Task.FromResult). If you <em>can</em> write it without await, then you <em>should</em> write it without await, and remove the async keyword from the method. A non-async method returning Task.FromResult is more efficient than an async method returning a value.</p>
+</div>
+
+<h2 id="return-types">Return Types</h2>
+
+<p>Async methods can return Task&lt;T&gt;, Task, or void. In almost all cases, you want to return Task&lt;T&gt; or Task, and return void only when you have to.</p>
+
+<p>Why return Task&lt;T&gt; or Task? Because they’re awaitable, and void is not. So if you have an async method returning Task&lt;T&gt; or Task, then you can pass the result to await. With a void method, you don’t have anything to pass to await.</p>
+
+<p>You have to return void when you have async event handlers.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>You can also use async void for other “top-level” kinds of actions - e.g., a single “static async void MainAsync()” for Console programs. However, this use of async void has its own problem; see <a href="/2012/02/async-console-programs.html" class="alert-link">Async Console Programs</a>. The primary use case for async void methods is event handlers.</p>
+</div>
+
+<h2 id="returning-values">Returning Values</h2>
+
+<p>Async methods returning Task or void do not have a return value. Async methods returning Task&lt;T&gt; must return a value of type T:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">CalculateAnswer</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">100</span><span class="p">);</span> <span class="c1">// (Probably should be longer...)</span>
+
+  <span class="c1">// Return a type of &quot;int&quot;, not &quot;Task&lt;int&gt;&quot;</span>
+  <span class="k">return</span> <span class="m">42</span><span class="p">;</span>
+<span class="p">}</span></code></pre></div>
+
+<p>This is a bit odd to get used to, but there are <a href="/2011/09/async-ctp-why-do-keywords-work-that-way.html">good reasons</a> behind this design.</p>
+
+<h2 id="context">Context</h2>
+
+<p>In the overview, I mentioned that when you await a built-in awaitable, then the awaitable will capture the current “context” and later apply it to the remainder of the async method. What exactly is that “context”?</p>
+
+<p>Simple answer:</p>
+
+<ol>
+  <li>If you’re on a UI thread, then it’s a UI context.</li>
+  <li>If you’re responding to an ASP.NET request, then it’s an ASP.NET request context.</li>
+  <li>Otherwise, it’s usually a thread pool context.</li>
+</ol>
+
+<p>Complex answer:</p>
+
+<ol>
+  <li>If SynchronizationContext.Current is not null, then it’s the current SynchronizationContext. (UI and ASP.NET request contexts are SynchronizationContext contexts).</li>
+  <li>Otherwise, it’s the current TaskScheduler (TaskScheduler.Default is the thread pool context).</li>
+</ol>
+
+<p>What does this mean in the real world? For one thing, capturing (and restoring) the UI/ASP.NET context is done transparently:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="c1">// WinForms example (it works exactly the same for WPF).</span>
+<span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">DownloadFileButton_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="c1">// Since we asynchronously wait, the UI thread is not blocked by the file download.</span>
+  <span class="k">await</span> <span class="nf">DownloadFileAsync</span><span class="p">(</span><span class="n">fileNameTextBox</span><span class="p">.</span><span class="n">Text</span><span class="p">);</span>
+
+  <span class="c1">// Since we resume on the UI context, we can directly access UI elements.</span>
+  <span class="n">resultTextBox</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="s">&quot;File downloaded!&quot;</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// ASP.NET example</span>
+<span class="k">protected</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">MyButton_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="c1">// Since we asynchronously wait, the ASP.NET thread is not blocked by the file download.</span>
+  <span class="c1">// This allows the thread to handle other requests while we&#39;re waiting.</span>
+  <span class="k">await</span> <span class="nf">DownloadFileAsync</span><span class="p">(...);</span>
+
+  <span class="c1">// Since we resume on the ASP.NET context, we can access the current request.</span>
+  <span class="c1">// We may actually be on another *thread*, but we have the same ASP.NET request context.</span>
+  <span class="n">Response</span><span class="p">.</span><span class="n">Write</span><span class="p">(</span><span class="s">&quot;File downloaded!&quot;</span><span class="p">);</span>
+<span class="p">}</span></code></pre></div>
+
+<p>This is great for event handlers, but it turns out to not be what you want for most other code (which is, really, most of the async code you’ll be writing).</p>
+
+<h2 id="avoiding-context">Avoiding Context</h2>
+
+<p>Most of the time, you don’t <em>need</em> to sync back to the “main” context. Most async methods will be designed with composition in mind: they await other operations, and each one represents an asynchronous operation itself (which can be composed by others). In this case, you want to tell the awaiter to <em>not</em> capture the current context by calling <strong>ConfigureAwait</strong> and passing false, e.g.:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">DownloadFileAsync</span><span class="p">(</span><span class="kt">string</span> <span class="n">fileName</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="c1">// Use HttpClient or whatever to download the file contents.</span>
+  <span class="kt">var</span> <span class="n">fileContents</span> <span class="p">=</span> <span class="k">await</span> <span class="n">DownloadFileContentsAsync</span><span class="p">(</span><span class="n">fileName</span><span class="p">).</span><span class="n">ConfigureAwait</span><span class="p">(</span><span class="k">false</span><span class="p">);</span>
+
+  <span class="c1">// Note that because of the ConfigureAwait(false), we are not on the original context here.</span>
+  <span class="c1">// Instead, we&#39;re running on the thread pool.</span>
+
+  <span class="c1">// Write the file contents out to a disk file.</span>
+  <span class="k">await</span> <span class="nf">WriteToDiskAsync</span><span class="p">(</span><span class="n">fileName</span><span class="p">,</span> <span class="n">fileContents</span><span class="p">).</span><span class="n">ConfigureAwait</span><span class="p">(</span><span class="k">false</span><span class="p">);</span>
+
+  <span class="c1">// The second call to ConfigureAwait(false) is not *required*, but it is Good Practice.</span>
+<span class="p">}</span>
+
+<span class="c1">// WinForms example (it works exactly the same for WPF).</span>
+<span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">DownloadFileButton_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="c1">// Since we asynchronously wait, the UI thread is not blocked by the file download.</span>
+  <span class="k">await</span> <span class="nf">DownloadFileAsync</span><span class="p">(</span><span class="n">fileNameTextBox</span><span class="p">.</span><span class="n">Text</span><span class="p">);</span>
+
+  <span class="c1">// Since we resume on the UI context, we can directly access UI elements.</span>
+  <span class="n">resultTextBox</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="s">&quot;File downloaded!&quot;</span><span class="p">;</span>
+<span class="p">}</span></code></pre></div>
+
+<p>The important thing to note with this example is that each “level” of async method calls has its own context. DownloadFileButton_Click started in the UI context, and called DownloadFileAsync. DownloadFileAsync also started in the UI context, but then stepped out of its context by calling ConfigureAwait(false). The rest of DownloadFileAsync runs in the thread pool context. However, when DownloadFileAsync completes and DownloadFileButton_Click resumes, it <em>does</em> resume in the UI context.</p>
+
+<p>A good rule of thumb is to use ConfigureAwait(false) unless you know you <em>do</em> need the context.</p>
+
+<h2 id="async-composition">Async Composition</h2>
+
+<p>So far, we’ve only considered serial composition: an async method waits for one operation at a time. It’s also possible to start several operations and await for one (or all) of them to complete. You can do this by starting the operations but not awaiting them until later:</p>
+
+<pre><code>public async Task DoOperationsConcurrentlyAsync()
+{
+  Task[] tasks = new Task[3];
+  tasks[0] = DoOperation0Async();
+  tasks[1] = DoOperation1Async();
+  tasks[2] = DoOperation2Async();
+
+  // At this point, all three tasks are running at the same time.
+
+  // Now, we await them all.
+  await Task.WhenAll(tasks);
+}
+
+public async Task&lt;int&gt; GetFirstToRespondAsync()
+{
+  // Call two web services; take the first response.
+  Task&lt;int&gt;[] tasks = new[] { WebService1Async(), WebService2Async() };
+
+  // Await for the first one to respond.
+  Task&lt;int&gt; firstTask = await Task.WhenAny(tasks);
+
+  // Return the result.
+  return await firstTask;
+}
+</code></pre>
+
+<p>By using concurrent composition (Task.WhenAll or Task.WhenAny), you can perform simple concurrent operations. You can also use these methods along with Task.Run to do simple parallel computation. However, this is not a substitute for the Task Parallel Library - any advanced CPU-intensive parallel operations should be done with the TPL.</p>
+
+<h2 id="guidelines">Guidelines</h2>
+
+<p>Read the <a href="http://www.microsoft.com/download/en/details.aspx?id=19957">Task-based Asynchronous Pattern (TAP) document</a>. It is extremely well-written, and includes guidance on API design and the proper use of async/await (including cancellation and progress reporting).</p>
+
+<p>There are many new await-friendly techniques that should be used instead of the old blocking techniques. If you have any of these Old examples in your new async code, you’re Doing It Wrong(TM):</p>
+
+<div class="panel panel-default">
+
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Old</th>
+        <th>New</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>task.Wait</td>
+        <td>await task</td>
+        <td>Wait/await for a task to complete</td>
+      </tr>
+      <tr>
+        <td>task.Result</td>
+        <td>await task</td>
+        <td>Get the result of a completed task</td>
+      </tr>
+      <tr>
+        <td>Task.WaitAny</td>
+        <td>await Task.WhenAny</td>
+        <td>Wait/await for one of a collection of tasks to complete</td>
+      </tr>
+      <tr>
+        <td>Task.WaitAll</td>
+        <td>await Task.WhenAll</td>
+        <td>Wait/await for every one of a collection of tasks to complete</td>
+      </tr>
+      <tr>
+        <td>Thread.Sleep</td>
+        <td>await Task.Delay</td>
+        <td>Wait/await for a period of time</td>
+      </tr>
+      <tr>
+        <td>Task constructor</td>
+        <td>Task.Run or TaskFactory.StartNew</td>
+        <td>Create a code-based task</td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+
+<h2 id="next-steps">Next Steps</h2>
+
+<p>I have published an MSDN article <a href="http://msdn.microsoft.com/en-us/magazine/jj991977.aspx">Best Practices in Asynchronous Programming</a>, which further explains the “avoid async void”, “async all the way” and “configure context” guidelines.</p>
+
+<p>The <a href="http://msdn.microsoft.com/en-us/library/hh191443.aspx">official MSDN documentation</a> is quite good; they include an online version of the <a href="http://msdn.microsoft.com/en-us/library/hh873175.aspx">Task-based Asynchronous Pattern document</a> which is excellent, covering the designs of asynchronous methods.</p>
+
+<p>The async team has published an <a href="http://blogs.msdn.com/b/pfxteam/archive/2012/04/12/10293335.aspx">async/await FAQ</a> that is a great place to continue learning about async. They have pointers to the best blog posts and videos on there. Also, pretty much any blog post by <a href="http://blogs.msdn.com/b/pfxteam">Stephen Toub</a> is instructive!</p>
+
+<p>Of course, another resource is my own blog. This blog post is the beginning of a <a href="/2009/01/announcing-release-of-nitoasync.html">series of posts on async</a>.</p>
+
+
+  </article>
+    
+    <footer>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2011/12/out-for-bit.html" title="Out for a Bit">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2012/02/async-console-programs.html" title="Async Console Programs">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2012/02/async-and-await";
+var disqus_title = "Async and Await";
+var disqus_url = "http://localhost:4000/2012/02/async-and-await.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

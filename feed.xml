@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Stephen Cleary (the blog)</title>
+    <description>Stephen Cleary&#39;s blog: async/await, programming, language design, and other sundry computer science topics.</description>
+    <link>http://localhost:4000/</link>
+    <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml" />
+    
+      <item>
+        <title>A Tour of Task, Part 1: Constructors</title>
+        <description>&lt;p&gt;TL;DR: Do not use &lt;code&gt;Task&lt;/code&gt; or &lt;code&gt;Task&amp;lt;T&amp;gt;&lt;/code&gt; constructors.&lt;/p&gt;
+
+&lt;p&gt;I actually debated quite a bit on how to start this series! I finally decided on starting with the constructors, even though the &lt;code&gt;Task&lt;/code&gt; constructors are a red herring.&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;img src=&quot;/assets/miniatus-grouper-247578_640.jpg&quot; alt=&quot;&quot; /&gt;&lt;br /&gt;
+(not actually a red herring)&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;Task&lt;/code&gt; type has a whopping eight constructors:&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskCreationOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskCreationOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskCreationOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskCreationOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;The BCL avoids default parameters because they don’t work well with &lt;a href=&quot;http://haacked.com/archive/2010/08/10/versioning-issues-with-optional-arguments.aspx/&quot;&gt;versioning&lt;/a&gt; and reflection. However, I’m going to rewrite some of the members with optional parameters to reduce the number of overloads that I need to talk about.&lt;/p&gt;
+
+&lt;p&gt;I’m going to call the eight constructors “actual members” because they actually exist. However, these can be reduced to only one “logical member”:&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Action&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;token&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskCreationOptions&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;options&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskCreationOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(),&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;options&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskCreationOptions&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskCreationOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Similarly, the &lt;code&gt;Task&amp;lt;T&amp;gt;&lt;/code&gt; type has eight actual constructors:&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;);&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskCreationOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskCreationOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskCreationOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskCreationOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Which simplify down to a single logical constructor:&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;token&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskCreationOptions&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;options&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskCreationOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;base&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(),&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;options&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskCreationOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;So, we have 16 actual constructors and two logical constructors.&lt;/p&gt;
+
+&lt;h2 id=&quot;what-for&quot;&gt;What For?&lt;/h2&gt;
+
+&lt;p&gt;The use case for the task constructors is extremely small.&lt;/p&gt;
+
+&lt;p&gt;Remember that there are two kinds of tasks: Promise Tasks and Delegate Tasks. The task constructors &lt;em&gt;cannot&lt;/em&gt; create Promise Tasks; they only create Delegate Tasks.&lt;/p&gt;
+
+&lt;p&gt;Task constructors should not be used with &lt;code&gt;async&lt;/code&gt;, and they should only rarely be used with parallel programming.&lt;/p&gt;
+
+&lt;p&gt;Parallel programming can be split into two types: &lt;a href=&quot;http://msdn.microsoft.com/en-us/library/ff963552.aspx&quot;&gt;data&lt;/a&gt; &lt;a href=&quot;http://msdn.microsoft.com/en-us/library/ff963547.aspx&quot;&gt;parallelism&lt;/a&gt; and task parallelism, with the majority of parallel situations calling for data parallelism. Task parallelism can be further split into two types: &lt;a href=&quot;http://msdn.microsoft.com/en-us/library/ff963549.aspx&quot;&gt;static task parallelism&lt;/a&gt; (where the number of work items is known at the beginning of the parallel processing) and &lt;a href=&quot;http://msdn.microsoft.com/en-us/library/ff963551.aspx&quot;&gt;dynamic task parallelism&lt;/a&gt; (where the number of work items changes while they are being processed). The &lt;a href=&quot;http://msdn.microsoft.com/en-us/library/vstudio/system.threading.tasks.parallel&quot;&gt;Parallel class&lt;/a&gt; and &lt;a href=&quot;http://msdn.microsoft.com/en-us/library/dd460688(v=vs.110).aspx&quot;&gt;PLINQ&lt;/a&gt; types in the &lt;a href=&quot;http://msdn.microsoft.com/en-us/library/dd460693(v=vs.110).aspx&quot;&gt;Task Parallel Library&lt;/a&gt; provide higher-level constructs for dealing with data parallelism and static task parallelism. The only reason you should ever create a Delegate Task for parallel code is if you are doing dynamic task parallelism. But even then, you &lt;em&gt;almost never&lt;/em&gt; want to use the task constructors! The task constructors create a task that is not ready to run; it has to be scheduled first. This is almost never necessary; in the real world, most tasks should be scheduled immediately. The only reason you’d want to create a task and then &lt;em&gt;not&lt;/em&gt; schedule it is if you wanted to allow the caller to determine which thread the task actually runs on. And even in that scenario, I’d recommend using &lt;code&gt;Func&amp;lt;Task&amp;gt;&lt;/code&gt; instead of returning an unscheduled task.&lt;/p&gt;
+
+&lt;p&gt;Let me put that another way: if you are doing dynamic task parallelism and need to construct a task that can run on any thread, and leave that scheduling decision up to another part of the code, and for whatever reason cannot use &lt;code&gt;Func&amp;lt;Task&amp;gt;&lt;/code&gt; instead, then (and &lt;em&gt;only&lt;/em&gt; then) you should use a task constructor. I’ve written countless asynchronous and parallel applications, and I have &lt;strong&gt;never&lt;/strong&gt; been in this situation.&lt;/p&gt;
+
+&lt;p&gt;Even shorter version: Do Not Use!&lt;/p&gt;
+
+&lt;h2 id=&quot;what-instead&quot;&gt;What Instead?&lt;/h2&gt;
+
+&lt;p&gt;If you’re writing &lt;code&gt;async&lt;/code&gt; code, the easiest way to create a Promise Task is to use the &lt;code&gt;async&lt;/code&gt; keyword. If you’re wrapping another asynchronous API or event, use &lt;code&gt;Task.Factory.FromAsync&lt;/code&gt; or &lt;code&gt;TaskCompletionSource&amp;lt;T&amp;gt;&lt;/code&gt;. If you need to run some CPU-bound code and treat it asynchronously, use &lt;code&gt;Task.Run&lt;/code&gt;. We’ll look at all of these options and more in future posts.&lt;/p&gt;
+
+&lt;p&gt;If you’re writing parallel code, first try to use &lt;a href=&quot;http://msdn.microsoft.com/en-us/library/vstudio/system.threading.tasks.parallel&quot;&gt;Parallel&lt;/a&gt; or &lt;a href=&quot;http://msdn.microsoft.com/en-us/library/dd460688(v=vs.110).aspx&quot;&gt;PLINQ&lt;/a&gt;. If you actually are doing dynamic task parallelism, use &lt;code&gt;Task.Run&lt;/code&gt; or &lt;code&gt;Task.Factory.StartNew&lt;/code&gt;. We’ll consider these options as well in future posts.&lt;/p&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;Sorry that the first post just boiled down to “don’t use this”, but it is what it is. I’ll cover all the constructor arguments such as &lt;code&gt;CancellationToken&lt;/code&gt; later when I cover &lt;code&gt;Task.Factory.StartNew&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;I think it would be fun to keep a running total of usable members, so here’s the results from today’s post:&lt;/p&gt;
+
+&lt;div class=&quot;panel panel-default&quot;&gt;
+
+  &lt;table class=&quot;table table-striped&quot;&gt;
+    &lt;thead&gt;
+      &lt;tr&gt;
+        &lt;th&gt;Type&lt;/th&gt;
+        &lt;th&gt;Actual Members&lt;/th&gt;
+        &lt;th&gt;Logical Members&lt;/th&gt;
+        &lt;th&gt;Usable for async&lt;/th&gt;
+        &lt;th&gt;Usable for parallel&lt;/th&gt;
+      &lt;/tr&gt;
+    &lt;/thead&gt;
+    &lt;tbody&gt;
+      &lt;tr&gt;
+        &lt;td&gt;Task&lt;/td&gt;
+        &lt;td&gt;8&lt;/td&gt;
+        &lt;td&gt;1&lt;/td&gt;
+        &lt;td&gt;0&lt;/td&gt;
+        &lt;td&gt;0&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+        &lt;td&gt;Task&amp;lt;T&amp;gt;&lt;/td&gt;
+        &lt;td&gt;8&lt;/td&gt;
+        &lt;td&gt;1&lt;/td&gt;
+        &lt;td&gt;0&lt;/td&gt;
+        &lt;td&gt;0&lt;/td&gt;
+      &lt;/tr&gt;
+    &lt;/tbody&gt;
+  &lt;/table&gt;
+
+&lt;/div&gt;
+</description>
+        <pubDate>Thu, 15 May 2014 00:00:00 -0400</pubDate>
+        <link>http://localhost:4000/2014/05/a-tour-of-task-part-1-constructors.html</link>
+        <guid isPermaLink="true">http://localhost:4000/2014/05/a-tour-of-task-part-1-constructors.html</guid>
+      </item>
+    
+      <item>
+        <title>Announcement: Concurrency in C# Early Release Ebook Available</title>
+        <description>&lt;p&gt;My editor at O’Reilly was able to get my book into the O’Reilly’s Early Release program at the last minute. So, you can buy it today through the Early Release program and get the final eBook when it’s completed shortly (it’s really just proofreading and formatting at this point).&lt;/p&gt;
+
+&lt;p&gt;Don’t forget to use &lt;a href=&quot;http://shop.oreilly.com/category/deals/day-against-drm.do&quot;&gt;discount code DRM2014&lt;/a&gt; for 50% off! And thanks to my editor for slipping &lt;a href=&quot;http://tinyurl.com/ConcurrencyCookbook&quot;&gt;my book&lt;/a&gt; into the Early Release program so you can get that sale! :)&lt;/p&gt;
+
+</description>
+        <pubDate>Mon, 05 May 2014 00:00:00 -0400</pubDate>
+        <link>http://localhost:4000/2014/05/announcement-concurrency-in-c-early.html</link>
+        <guid isPermaLink="true">http://localhost:4000/2014/05/announcement-concurrency-in-c-early.html</guid>
+      </item>
+    
+      <item>
+        <title>Announcement: MSDN Article on Async Services</title>
+        <description>&lt;p&gt;My latest MSDN article &lt;a href=&quot;http://msdn.microsoft.com/en-us/magazine/dn683795.aspx&quot;&gt;Patterns for Asynchronous MVVM Applications: Services&lt;/a&gt; is online! The title is a slight misnomer, since the article is actually applicable to asynchronous services in &lt;em&gt;any&lt;/em&gt; kind of application (including Console and ASP.NET apps).&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;img src=&quot;/assets/dd799403.cover_lrg(en-us,MSDN.10).jpg&quot; alt=&quot;&quot; /&gt;  &lt;/p&gt;
+
+&lt;p&gt;I cover a pretty wide range of topics in a single article. It’s kind of like a trimmed-down version of my &lt;a href=&quot;/2013/01/async-oop-0-introduction.html&quot;&gt;async OOP series&lt;/a&gt; from a while ago. Today’s MSDN article considers how &lt;code&gt;async&lt;/code&gt; interacts with inheritance, unit testing, factories, lazy initialization, and constructors.&lt;/p&gt;
+
+</description>
+        <pubDate>Thu, 01 May 2014 00:00:00 -0400</pubDate>
+        <link>http://localhost:4000/2014/05/announcement-msdn-article-on-async.html</link>
+        <guid isPermaLink="true">http://localhost:4000/2014/05/announcement-msdn-article-on-async.html</guid>
+      </item>
+    
+      <item>
+        <title>Announcement: Calculated Properties</title>
+        <description>&lt;p&gt;I am pleased to announce the creation of my latest library: &lt;a href=&quot;https://github.com/StephenCleary/CalculatedProperties&quot;&gt;calculated properties for C# MVVM apps&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;The goal of this library is to be as easy-to-use as possible, and to be an actual &lt;em&gt;library&lt;/em&gt; rather than a &lt;em&gt;framework&lt;/em&gt;. Calculated properties should work just fine with MvvmCross, Caliburn.Micro, or any other framework of choice.&lt;/p&gt;
+
+</description>
+        <pubDate>Mon, 28 Apr 2014 00:00:00 -0400</pubDate>
+        <link>http://localhost:4000/2014/04/announcement-calculated-properties.html</link>
+        <guid isPermaLink="true">http://localhost:4000/2014/04/announcement-calculated-properties.html</guid>
+      </item>
+    
+      <item>
+        <title>A Tour of Task, Part 0: Overview</title>
+        <description>&lt;p&gt;I recently posted a poll on &lt;a href=&quot;https://www.youtube.com/watch?v=VqQrUngBDxU&quot;&gt;The Twitter&lt;/a&gt;; here it is with all the responses:&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;img src=&quot;/assets/Poll.png&quot; alt=&quot;&quot; /&gt;  &lt;/p&gt;
+
+&lt;p&gt;It’s unanimous! This post is the first in a series that will take a look at all the &lt;code&gt;Task&lt;/code&gt; members (as of .NET 4.5).&lt;/p&gt;
+
+&lt;h2 id=&quot;a-bit-of-task-history&quot;&gt;A Bit of Task History&lt;/h2&gt;
+
+&lt;p&gt;One of the biggest stumbling blocks to developers learning &lt;code&gt;async&lt;/code&gt; is actually the &lt;code&gt;Task&lt;/code&gt; type itself. Most developers fall into one of two categories:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Developers who have used &lt;code&gt;Task&lt;/code&gt; and the &lt;a href=&quot;http://msdn.microsoft.com/en-us/library/dd460717(v=vs.110).aspx&quot;&gt;TPL (Task Parallel Library)&lt;/a&gt; since it was introduced in .NET 4.0. These developers are familiar with &lt;code&gt;Task&lt;/code&gt; and &lt;a href=&quot;http://msdn.microsoft.com/en-us/library/ff963553.aspx&quot;&gt;how it is used in parallel processing&lt;/a&gt;. &lt;strong&gt;The danger&lt;/strong&gt; that these developers face is that &lt;code&gt;Task&lt;/code&gt; (as it is used by the TPL) is pretty much &lt;em&gt;completely different&lt;/em&gt; than &lt;code&gt;Task&lt;/code&gt; (as it is used by &lt;code&gt;async&lt;/code&gt;).&lt;/li&gt;
+  &lt;li&gt;Developers who have never heard of &lt;code&gt;Task&lt;/code&gt; until &lt;code&gt;async&lt;/code&gt; came along. To them, &lt;code&gt;Task&lt;/code&gt; is just a part of &lt;code&gt;async&lt;/code&gt; - one more (fairly complicated) thing to learn. “Continuation” is a foreign word. &lt;strong&gt;The danger&lt;/strong&gt; that these developers face is assuming that every member of &lt;code&gt;Task&lt;/code&gt; is applicable to &lt;code&gt;async&lt;/code&gt; programming, which is most certainly not the case.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The &lt;code&gt;async&lt;/code&gt; team at Microsoft did consider writing their own “Promise” type that would act as an asynchronous task, but the &lt;code&gt;Task&lt;/code&gt; type was too tempting. &lt;code&gt;Task&lt;/code&gt; actually did support promise-style asynchronous tasks (somewhat awkwardly) even in .NET 4.0, and it only took a bit of extension for it to support &lt;code&gt;async&lt;/code&gt; fully. Also, by merging this “Promise” with the existing &lt;code&gt;Task&lt;/code&gt; type, we end up with a nice unification: it’s trivially easy to kick off some operation on a background thread and treat it asynchronously. No conversion from &lt;code&gt;Task&lt;/code&gt; to “Promise” is necessary.&lt;/p&gt;
+
+&lt;p&gt;The downside to using the same type is that it does create some developer confusion. As noted above, developers who have used &lt;code&gt;Task&lt;/code&gt; in the past tend to try to use it the same way in the &lt;code&gt;async&lt;/code&gt; world (which is wrong); and developers who have not used &lt;code&gt;Task&lt;/code&gt; in the past face a bewildering selection of &lt;code&gt;Task&lt;/code&gt; members, almost all of which should not be used in the &lt;code&gt;async&lt;/code&gt; world.&lt;/p&gt;
+
+&lt;p&gt;So, that’s how we got to where we are today. This blog series will go through all the various &lt;code&gt;Task&lt;/code&gt; members (yes, &lt;em&gt;all&lt;/em&gt; of them), and explain the purpose behind each one. As we’ll see, the vast majority of &lt;code&gt;Task&lt;/code&gt; members have no place in &lt;code&gt;async&lt;/code&gt; code.&lt;/p&gt;
+
+&lt;h2 id=&quot;two-types-of-task&quot;&gt;Two Types of Task&lt;/h2&gt;
+
+&lt;p&gt;There are two types of tasks. The first type is a Delegate Task; this is a task that has code to run. The second type is a Promise Task; this is a task that represents some kind of event or signal. Promise Tasks are often I/O-based signals (e.g., “the HTTP download has completed”), but they can actually represent anything (e.g., “the 10-second timer has expired”).&lt;/p&gt;
+
+&lt;p&gt;In the TPL world, most tasks were Delegate Tasks (with some support for Promise Tasks). When code does parallel processing, the various Delegate Tasks are divided up among different threads, which then actually &lt;em&gt;execute&lt;/em&gt; the code in those Delegate Tasks. In the &lt;code&gt;async&lt;/code&gt; world, most tasks are Promise Tasks (with some support for Delegate Tasks). When code does an &lt;code&gt;await&lt;/code&gt; on a Promise Task, &lt;a href=&quot;/2013/11/there-is-no-thread.html&quot;&gt;there is no thread&lt;/a&gt; tied up waiting for that promise to complete.&lt;/p&gt;
+
+&lt;p&gt;In the past, I’ve used the terms “code-based Task” and “event-based Task” to describe the two kinds of tasks. In this series, I will try to use the terms “Delegate Task” and “Promise Task” to distinguish the two.&lt;/p&gt;
+
+&lt;!--
+
+&lt;h4&gt;Historical Task Use Cases&lt;/h4&gt;
+
+&lt;p&gt;Before we dive into the &lt;code class=&quot;csharp&quot;&gt;Task&lt;/code&gt; members, I want to briefly describe the use cases for the &lt;code class=&quot;csharp&quot;&gt;Task&lt;/code&gt; type in .NET 4.0 code. If you&#39;re one of the &quot;never heard of &lt;code class=&quot;csharp&quot;&gt;Task&lt;/code&gt;&quot; developers, feel free to skip this section (unless you need to maintain &lt;code class=&quot;csharp&quot;&gt;Task&lt;/code&gt;-based .NET 4.0-era code).&lt;p&gt;
+
+&lt;h5&gt;Queue a Delegate to Another Thread&lt;/h5&gt;
+
+&lt;p&gt;Probably the most common use case was just a one-off &quot;queue this work to another thread&quot; kind of call. Usually, the &quot;another thread&quot; was just &quot;some thread pool thread&quot;, and the code looks something like this:&lt;/p&gt;
+
+&lt;h5&gt;Promise Tasks&lt;/h5&gt;
+
+&lt;h5&gt;Pipelines&lt;/h5&gt; - ?
+
+&lt;h5&gt;Dynamic Task Parallelism&lt;/h5&gt;
+
+&lt;p&gt;Parallel processing can be broadly divided into &lt;a href=&quot;http://msdn.microsoft.com/en-us/library/vstudio/dd537608(v=vs.110).aspx&quot;&gt;data parallelism&lt;/a&gt; and &lt;a href=&quot;http://msdn.microsoft.com/en-us/library/vstudio/dd537609(v=vs.110).aspx&quot;&gt;task parallelism&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Data parallelism is the most common: that&#39;s when you have a sequence of values that you need to process in parallel. Data parallelism is handled quite nicely (and exhaustively) by &lt;a href=&quot;http://msdn.microsoft.com/en-us/library/vstudio/system.threading.tasks.parallel&quot;&gt;&lt;code class=&quot;csharp&quot;&gt;Parallel.For&lt;/code&gt;, &lt;code class=&quot;csharp&quot;&gt;Parallel.ForEach&lt;/code&gt;&lt;/a&gt;, and &lt;a href=&quot;http://msdn.microsoft.com/en-us/library/vstudio/dd460688(v=vs.110).aspx&quot;&gt;Parallel LINQ&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Task parallelism is more rare: that&#39;s when you have a number of delegates that you need to execute in parallel. Basic task parallelism is supported by the &lt;a href=&quot;http://msdn.microsoft.com/en-us/library/vstudio/system.threading.tasks.parallel&quot;&gt;&lt;code class=&quot;csharp&quot;&gt;Parallel.Invoke&lt;/code&gt; methods&lt;/a&gt;. That support is only &quot;basic&quot; because you have to know at the beginning of the parallel call how many delegates to schedule. There&#39;s another scenario called &lt;a href=&quot;http://msdn.microsoft.com/en-us/library/ff963551.aspx&quot;&gt;dynamic task parallelism&lt;/a&gt; that is extremely flexible and enables you to dynamically add more Delegate Tasks to the parallel processing.&lt;/p&gt;
+
+&lt;p&gt;Note how far we got before mentioning Delegate Tasks. The most common parallelism (data parallelism) should be using higher-level abstractions (which do use Delegate Tasks under the covers). The only parallel scenario where you should be dealing with the &lt;code class=&quot;csharp&quot;&gt;Task&lt;/code&gt; type directly is the quite rare dynamic task parallelism scenario. I&#39;ve seen a number of projects in my time that attempted to use &lt;code class=&quot;csharp&quot;&gt;Task&lt;/code&gt; directly instead of &lt;code class=&quot;csharp&quot;&gt;Parallel&lt;/code&gt; or PLINQ, and ended up way overcomplicated as a result.&lt;/p&gt;
+
+--&gt;
+</description>
+        <pubDate>Thu, 24 Apr 2014 00:00:00 -0400</pubDate>
+        <link>http://localhost:4000/2014/04/a-tour-of-task-part-0-overview.html</link>
+        <guid isPermaLink="true">http://localhost:4000/2014/04/a-tour-of-task-part-0-overview.html</guid>
+      </item>
+    
+      <item>
+        <title>Announcement: Book</title>
+        <description>&lt;p&gt;I am very pleased to announce that I have finished writing a &lt;strong&gt;book!&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;The title is quite a mouthful: &lt;a href=&quot;http://tinyurl.com/ConcurrencyCookbook&quot;&gt;Concurrency in C# Cookbook: Asynchronous, Parallel, and Multithreaded Programming&lt;/a&gt;. The goal of this book is to introduce developers to asynchronous, parallel, and reactive code in a way that is helpful and down-to-earth.&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;http://tinyurl.com/ConcurrencyCookbook&quot;&gt;&lt;img src=&quot;/assets/Book.jpg&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;I have to say that writing this book took a lot more time than I originally thought! I should be able to resume a more normal pace of blogging shortly. :)&lt;/p&gt;
+
+</description>
+        <pubDate>Thu, 17 Apr 2014 00:00:00 -0400</pubDate>
+        <link>http://localhost:4000/2014/04/announcement-book.html</link>
+        <guid isPermaLink="true">http://localhost:4000/2014/04/announcement-book.html</guid>
+      </item>
+    
+      <item>
+        <title>Announcement: MSDN &quot;async MVVM&quot; articles</title>
+        <description>&lt;p&gt;Oops, not sure how I missed making this announcement! Sorry for the late notice!&lt;/p&gt;
+
+&lt;p&gt;I have two articles published recently in MSDN magazine, both dealing with patterns for async MVVM applications. The first one is on &lt;a href=&quot;http://msdn.microsoft.com/en-us/magazine/dn605875.aspx&quot;&gt;asynchronous MVVM data-binding&lt;/a&gt;, and the second one is on &lt;a href=&quot;http://msdn.microsoft.com/en-us/magazine/dn630647.aspx&quot;&gt;asynchronous MVVM commands&lt;/a&gt;.&lt;/p&gt;
+
+</description>
+        <pubDate>Tue, 08 Apr 2014 00:00:00 -0400</pubDate>
+        <link>http://localhost:4000/2014/04/announcement-msdn-async-mvvm-articles.html</link>
+        <guid isPermaLink="true">http://localhost:4000/2014/04/announcement-msdn-async-mvvm-articles.html</guid>
+      </item>
+    
+      <item>
+        <title>Announcement: AspNetBackgroundTasks NuGet library</title>
+        <description>&lt;div class=&quot;alert alert-danger&quot;&gt;
+  &lt;p&gt;&lt;i class=&quot;fa fa-exclamation-triangle fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
+
+  &lt;p&gt;&lt;strong&gt;Update, 2014-05-07:&lt;/strong&gt; This library just won the “shortest lifetime” award. One month after I released this library, &lt;a href=&quot;http://msdn.microsoft.com/en-us/library/ms171868(v=vs.110).aspx#v452&quot; class=&quot;alert-link&quot;&gt;.NET Framework 4.5.2 introduced &lt;code&gt;HostingEnvironment.QueueBackgroundWorkItem&lt;/code&gt;&lt;/a&gt;, which effectively rendered this library obsolete. On .NET 4.5.2, you can use the new API instead of the &lt;code&gt;BackgroundTaskManager.Run&lt;/code&gt; in the AspNetBackgroundTasks library. However, it’s still almost always the wrong solution.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Yielding to popular demand - and against my better judgement - I have created a NuGet package for the code &lt;a href=&quot;/2012/12/returning-early-from-aspnet-requests.html&quot;&gt;I previously wrote&lt;/a&gt; for handling “fire-and-forget” tasks in ASP.NET.&lt;/p&gt;
+
+&lt;p&gt;Why is this against my better judgement? Because it’s almost always the wrong solution, and making the wrong solution easy is digging a pit of failure rather than a pit of success. However, a lot of people want to use it anyway (and many people are actually using &lt;em&gt;worse&lt;/em&gt; solutions because I didn’t make this one easy), so I put in plenty of warnings and published it &lt;a href=&quot;https://github.com/StephenCleary/AspNetBackgroundTasks&quot;&gt;on GitHub&lt;/a&gt; and &lt;a href=&quot;https://www.nuget.org/packages/Nito.AspNetBackgroundTasks/&quot;&gt;on NuGet&lt;/a&gt;.&lt;/p&gt;
+
+</description>
+        <pubDate>Mon, 07 Apr 2014 00:00:00 -0400</pubDate>
+        <link>http://localhost:4000/2014/04/announcement-aspnetbackgroundtasks.html</link>
+        <guid isPermaLink="true">http://localhost:4000/2014/04/announcement-aspnetbackgroundtasks.html</guid>
+      </item>
+    
+      <item>
+        <title>Announcement: GRDevDay 2014 slides available</title>
+        <description>&lt;p&gt;This year at &lt;a href=&quot;http://grdevday.org/&quot;&gt;GRDevDay 2014&lt;/a&gt; I was honored to present &lt;em&gt;two&lt;/em&gt; sessions.&lt;/p&gt;
+
+&lt;p&gt;The slides and demo code are now available! Please note that there are some hidden slides with additional information that I had to remove for time considerations, so even if you came to the talks, there’s some helpful stuff in the slides.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/Presentations/tree/master/Async%20Servers&quot;&gt;Introduction to async on ASP.NET&lt;/a&gt; was a pretty well-attended talk (~30 people). It covered how asynchronous requests work in ASP.NET, how async/await work in C#, and how async/await work specifically with ASP.NET.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/Presentations/tree/master/Asynchronous%20Parallel%20Reactive%20-%20HELP!&quot;&gt;Asynchronous? Parallel? Reactive? HELP!&lt;/a&gt; was a &lt;em&gt;very&lt;/em&gt; well-attended talk (~45 people, standing-room only). It was a gentle introduction to various forms of concurrency: parallel processing (using the Parallel class and PLINQ), asynchronous code (using async/await), reactive coding (using Rx), and an overview of TPL Dataflow. If you ever wondered when to use which, take a look at this one.&lt;/p&gt;
+
+&lt;p&gt;I did record both talks, but have not had the time to do post-production. I’ll update here and on Twitter when (if) I get around to it. :)&lt;/p&gt;
+
+</description>
+        <pubDate>Fri, 04 Apr 2014 00:00:00 -0400</pubDate>
+        <link>http://localhost:4000/2014/04/announcement-grdevday-2014-slides.html</link>
+        <guid isPermaLink="true">http://localhost:4000/2014/04/announcement-grdevday-2014-slides.html</guid>
+      </item>
+    
+      <item>
+        <title>A Cross-Domain Singleton</title>
+        <description>&lt;p&gt;In my current position, I’ve had to learn a lot more details about two big aspects of the .NET runtime: AppDomains and COM interop. Until about a year ago, I had learned exactly enough of those technologies to pass the Microsoft certification exams, and that was it! I had never used them in production and never intended doing so. At my current job, however, I have no choice, so I’ve been learning quite a bit about AppDomains and COM interop over the last few months.&lt;/p&gt;
+
+&lt;p&gt;On a side note: blech. I wish I could have remained ignorant. :)&lt;/p&gt;
+
+&lt;p&gt;Anyway, the way our product uses AppDomains, it would benefit from a “cross-AppDomain singleton” for certain lookup operations (including cache). I spent some time playing with this idea over Christmas break, and Googled up several implementations. None of them were quite complete, though; many punted on thread safety, which was an absolute necessity for my scenario.&lt;/p&gt;
+
+&lt;p&gt;So, I wrote my own. Initially I borrowed heavily from other AppDomain-aware singletons, until I had a minor epiphany. Since this was a true application-level singleton, it would never be destroyed, and the correct place to initialize it is &lt;em&gt;in the default AppDomain&lt;/em&gt;. The “default AppDomain” is the first one in a process, and it &lt;a href=&quot;http://blogs.msdn.com/b/cbrumme/archive/2003/06/01/51466.aspx&quot;&gt;can never be unloaded&lt;/a&gt;. All non-default AppDomains then request the instance from the default AppDomain. Those other AppDomains can come and go, but the default AppDomain (including all cross-AppDomain singletons) would remain.&lt;/p&gt;
+
+&lt;p&gt;Once I decided to assign all singletons to the default AppDomain, the implementation simplified significantly. The algorithm is different based on whether an instance is requested from the default or a non-default AppDomain.&lt;/p&gt;
+
+&lt;p&gt;When an instance is requested on a non-default AppDomain, it will first check to see if there is a local, cached copy in the current AppDomain. If there is, then it is returned immediately. Otherwise, it will attempt to get the instance from an AppDomain value stored on the default AppDomain. If that value is not found, then it invokes a method on the default AppDomain that just requests the instance.&lt;/p&gt;
+
+&lt;p&gt;When an instance is requested on the default AppDomain, it will first check to see if the instance has been created, and return it immediately if so. Otherwise, it will create a new instance and set that instance as an AppDomain value on the default AppDomain, and then return the instance.&lt;/p&gt;
+
+&lt;p&gt;This implementation is fully threadsafe, using Lazy&amp;lt;T&amp;gt; for all lazy construction. The only drawback to this solution is that it does use a tiny bit of COM interop to a deprecated interface (ICorRuntimeHost); if anyone knows of a better way to get the default AppDomain, I’m all ears!&lt;/p&gt;
+
+&lt;p&gt;Also, I cheated just a little bit to simplify lifetime management. By default, remote proxies will time out if you don’t use them for 10 minutes, and this is no good since my singleton type caches the proxies locally for each AppDomain. So, my singleton actually creates a &lt;em&gt;wrapper&lt;/em&gt; around the instance, and caches proxies to that wrapper (and the wrapper proxies never expire). However, this means that each time the code accesses the singleton instance, a new proxy is actually created and returned - so it’s ideal for the occasional-access scenario but not so much for the constant-access scenario. If the proxy creation slows you down too much, then you can use the CachedInstance property instead, which will cache the actual (unwrapped) instance; and in that case the responsibility falls back on you to properly handle proxy lifetimes.&lt;/p&gt;
+
+&lt;p&gt;The full public API is quite simple:&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;namespace&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;DomainAwareSingleton&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// A domain-aware singleton. Only one instance of T will exist, belonging to the default AppDomain. All members of this type are threadsafe.&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Singleton&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;T&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;where&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;T&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MarshalByRefObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// Gets the process-wide instance.&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// If the current domain is not the default AppDomain, this property returns a new proxy to the actual instance.&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;T&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Instance&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+        &lt;span class=&quot;c1&quot;&gt;// Gets the process-wide instance.&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// If the current domain is not the default AppDomain, this property returns a cached proxy to the actual instance.&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// It is your responsibility to ensure that the cached proxy does not time out; if you don&amp;#39;t know what this means, use Instance instead.&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;T&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CachedInstance&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;And the &lt;a href=&quot;https://github.com/StephenCleary/CrossDomainSingleton/blob/master/Source/DomainAwareSingleton/Singleton.cs&quot;&gt;code is on GitHub&lt;/a&gt;.&lt;/p&gt;
+
+</description>
+        <pubDate>Thu, 13 Mar 2014 00:00:00 -0400</pubDate>
+        <link>http://localhost:4000/2014/03/a-cross-domain-singleton.html</link>
+        <guid isPermaLink="true">http://localhost:4000/2014/03/a-cross-domain-singleton.html</guid>
+      </item>
+    
+  </channel>
+</rss>

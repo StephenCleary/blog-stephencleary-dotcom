@@ -1,0 +1,1861 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Option Parsing: Argument Parsing</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2011/08/option-parsing-argument-parsing.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Option Parsing: Argument Parsing</h1>
+          <small>Aug 11, 2011 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>This is going to be an in-depth post on how argument parsing works in the <a href="http://nuget.org/List/Packages/Nito.KitchenSink.OptionParsing">Nito.KitchenSink.OptionParsing library</a>, and a couple of ways the parsing can be modified.</p>
+
+<h2 id="general-option-argument-parsing-rules">General Option Argument Parsing Rules</h2>
+
+<p>First, a reminder about terminology; in this example, the “v” is the short option name, and the “3” is the option argument:</p>
+
+<pre><code>&gt; CommandLineTest.exe -v 3
+</code></pre>
+
+<p>Also remember that an option argument may be <em>required</em> for an option, or it may be <em>optional</em>. If you need a refresher, read the earlier post <a href="/2011/07/option-parsing-options-with-optional.html">options with optional arguments</a>.</p>
+
+<p>Required option arguments are allowed to begin with a dash (<strong>-</strong>) or forward-slash (<strong>/</strong>), but optional option arguments are not. To start an optional option argument with these characters, specify the argument using a full-colon (<strong>:</strong>) or equals sign (<strong>=</strong>).</p>
+
+<p>Consider this example program, which just takes two string arguments, one required and one optional:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">class</span> <span class="nc">Program</span>
+<span class="p">{</span>
+  <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Options</span> <span class="p">:</span> <span class="n">OptionArgumentsBase</span>
+  <span class="p">{</span>
+<span class="na">    [Option(&quot;required&quot;, &#39;r&#39;)]</span>
+    <span class="k">public</span> <span class="kt">string</span> <span class="n">RequiredValue</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+<span class="na">    [Option(&quot;optional&quot;, &#39;o&#39;, Argument = OptionArgument.Optional)]</span>
+    <span class="k">public</span> <span class="kt">string</span> <span class="n">OptionalValue</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="k">static</span> <span class="kt">int</span> <span class="nf">Main</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="k">try</span>
+    <span class="p">{</span>
+      <span class="kt">var</span> <span class="n">options</span> <span class="p">=</span> <span class="n">OptionParser</span><span class="p">.</span><span class="n">Parse</span><span class="p">&lt;</span><span class="n">Options</span><span class="p">&gt;();</span>
+
+      <span class="k">if</span> <span class="p">(</span><span class="n">options</span><span class="p">.</span><span class="n">RequiredValue</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Required Value: &quot;</span> <span class="p">+</span> <span class="n">options</span><span class="p">.</span><span class="n">RequiredValue</span><span class="p">);</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">options</span><span class="p">.</span><span class="n">OptionalValue</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Optional Value: &quot;</span> <span class="p">+</span> <span class="n">options</span><span class="p">.</span><span class="n">OptionalValue</span><span class="p">);</span>
+
+      <span class="k">return</span> <span class="m">0</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">OptionParsingException</span> <span class="n">ex</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Console</span><span class="p">.</span><span class="n">Error</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">ex</span><span class="p">.</span><span class="n">Message</span><span class="p">);</span>
+      <span class="k">return</span> <span class="m">2</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Console</span><span class="p">.</span><span class="n">Error</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">ex</span><span class="p">);</span>
+      <span class="k">return</span> <span class="m">1</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<pre><code>&gt; CommandLineParsingTest.exe -r a -o b
+Required Value: a
+Optional Value: b
+
+&gt; CommandLineParsingTest.exe -r /a -o b
+Required Value: /a
+Optional Value: b
+
+&gt; CommandLineParsingTest.exe -r a -o /b
+Unknown option  b  in parameter  /b
+
+&gt; CommandLineParsingTest.exe -o "/b"
+Unknown option  b  in parameter  /b
+
+&gt; CommandLineParsingTest.exe -o:/b
+Optional Value: /b
+
+&gt; CommandLineParsingTest.exe -o=/b
+Optional Value: /b
+</code></pre>
+
+<p>Note that placing the argument in double-quotes does <em>not</em> allow the argument to start with a dash or forward-slash.</p>
+
+<p>Reminder: the command shell has its own set of reserved characters (<code>&amp;</code>, <code>|</code>, <code>(</code>, <code>)</code>, <code>&lt;</code>, <code>&gt;</code>, and <code>^</code>). These can be escaped using <code>^</code>, or they can be wrapped in double-quotes. Command shell escapes are described in more detail in the <a href="/2011/06/option-parsing-lexing.html">post on command-line lexing</a>.</p>
+
+<h2 id="implementing-a-simple-argument-parser">Implementing a Simple Argument Parser</h2>
+
+<p>Parsing an argument option is done in two steps. The first step is to parse that portion of the command line as a string, using the rules above. The second step is to parse the string into an instance of the corresponding property type on the option arguments class. Since the examples above used a property type of string, there was no processing during the second step.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>It is possible to use only a part of the <a href="/2011/06/option-parsing-option-parsing-pipeline.html" class="alert-link">option parsing pipeline</a> to get options and their arguments as strings. Pass a sequence of <strong>OptionDefinition</strong> instancess and a command line into the parser; the result is a sequence of <strong>Option</strong> instances (where each argument is typed as <strong>string</strong>). Details of these types will be covered in a future blog post.</p>
+</div>
+
+<p>The option parsing library uses a collection of “simple parsers” to convert from a string to a known type. By default, the simple parser collection understands how to parse <strong>bool</strong>; signed and unsigned 8-bit, 16-bit, 32-bit, and 64-bit integers; <strong>BigInteger</strong>; single and double-precision floating point; <strong>decimal</strong>; <strong>Guid</strong>; <strong>TimeSpan</strong>; <strong>DateTime</strong>; and <strong>DateTimeOffset</strong>. Strings, enumerations and nullable types are treated specially: strings are never parsed, enumerations use <strong>Enum.Parse</strong>, and nullable types are supported if their corresponding non-nullable types are supported. The built-in parsers all use the standard <strong>TryParse</strong> methods.</p>
+
+<p>Say, for example, we wanted to accept an argument of type <a href="http://msdn.microsoft.com/en-us/library/system.numerics.complex.aspx">Complex</a>. The Complex type is not included in the default simple parser collection (in fact, it does not even have a Parse or TryParse method!).</p>
+
+<p>If we try to add it to our program, then whatever we pass as the argument value will just fail to parse:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">class</span> <span class="nc">Program</span>
+<span class="p">{</span>
+  <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Options</span> <span class="p">:</span> <span class="n">OptionArgumentsBase</span>
+  <span class="p">{</span>
+<span class="na">    [Option(&quot;value&quot;, &#39;v&#39;)]</span>
+    <span class="k">public</span> <span class="n">Complex</span><span class="p">?</span> <span class="n">Value</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="k">static</span> <span class="kt">int</span> <span class="nf">Main</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="k">try</span>
+    <span class="p">{</span>
+      <span class="kt">var</span> <span class="n">options</span> <span class="p">=</span> <span class="n">OptionParser</span><span class="p">.</span><span class="n">Parse</span><span class="p">&lt;</span><span class="n">Options</span><span class="p">&gt;();</span>
+
+      <span class="k">if</span> <span class="p">(</span><span class="n">options</span><span class="p">.</span><span class="n">Value</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Value: &quot;</span> <span class="p">+</span> <span class="n">options</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span>
+
+      <span class="k">return</span> <span class="m">0</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">OptionParsingException</span> <span class="n">ex</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Console</span><span class="p">.</span><span class="n">Error</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">ex</span><span class="p">.</span><span class="n">Message</span><span class="p">);</span>
+      <span class="k">return</span> <span class="m">2</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Console</span><span class="p">.</span><span class="n">Error</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">ex</span><span class="p">);</span>
+      <span class="k">return</span> <span class="m">1</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<pre><code>&gt; CommandLineParsingTest.exe -v (3,5)
+Could not parse  (3,5)  as Complex
+</code></pre>
+
+<p>We can create a parser for the <strong>Complex</strong> type by implementing <strong>ISimpleParser</strong>. This interface only has two members: the type of the result and a <strong>TryParse</strong> method.</p>
+
+<p>Once we’ve implemented our special parser, we need to pass it to the Parse method. To do this, we create a <strong>SimpleParserCollection</strong>, add our special parser, and pass the collection to the Parse method.</p>
+
+<p>Our solution now looks like this:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">class</span> <span class="nc">Program</span>
+<span class="p">{</span>
+  <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">ComplexParser</span> <span class="p">:</span> <span class="n">ISimpleParser</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="n">Type</span> <span class="n">ResultType</span>
+    <span class="p">{</span>
+      <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Complex</span><span class="p">);</span> <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="kt">object</span> <span class="nf">TryParse</span><span class="p">(</span><span class="kt">string</span> <span class="k">value</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="c1">// Match the following pattern: &#39;(&#39; double &#39;,&#39; double &#39;)&#39;</span>
+      <span class="k">if</span> <span class="p">(</span><span class="k">value</span><span class="p">.</span><span class="n">Length</span> <span class="p">&lt;</span> <span class="m">5</span> <span class="p">||</span> <span class="k">value</span><span class="p">[</span><span class="m">0</span><span class="p">]</span> <span class="p">!=</span> <span class="sc">&#39;(&#39;</span> <span class="p">||</span> <span class="k">value</span><span class="p">[</span><span class="k">value</span><span class="p">.</span><span class="n">Length</span> <span class="p">-</span> <span class="m">1</span><span class="p">]</span> <span class="p">!=</span> <span class="sc">&#39;)&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+      <span class="kt">var</span> <span class="n">components</span> <span class="p">=</span> <span class="k">value</span><span class="p">.</span><span class="n">Substring</span><span class="p">(</span><span class="m">1</span><span class="p">,</span> <span class="k">value</span><span class="p">.</span><span class="n">Length</span> <span class="p">-</span> <span class="m">2</span><span class="p">).</span><span class="n">Split</span><span class="p">(</span><span class="sc">&#39;,&#39;</span><span class="p">);</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">components</span><span class="p">.</span><span class="n">Length</span> <span class="p">!=</span> <span class="m">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+      <span class="kt">double</span> <span class="n">real</span><span class="p">,</span> <span class="n">imaginary</span><span class="p">;</span>
+      <span class="k">if</span> <span class="p">(!</span><span class="kt">double</span><span class="p">.</span><span class="n">TryParse</span><span class="p">(</span><span class="n">components</span><span class="p">[</span><span class="m">0</span><span class="p">],</span> <span class="k">out</span> <span class="n">real</span><span class="p">))</span>
+        <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+      <span class="k">if</span> <span class="p">(!</span><span class="kt">double</span><span class="p">.</span><span class="n">TryParse</span><span class="p">(</span><span class="n">components</span><span class="p">[</span><span class="m">1</span><span class="p">],</span> <span class="k">out</span> <span class="n">imaginary</span><span class="p">))</span>
+        <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+      <span class="k">return</span> <span class="k">new</span> <span class="nf">Complex</span><span class="p">(</span><span class="n">real</span><span class="p">,</span> <span class="n">imaginary</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Options</span> <span class="p">:</span> <span class="n">OptionArgumentsBase</span>
+  <span class="p">{</span>
+<span class="na">    [Option(&quot;value&quot;, &#39;v&#39;)]</span>
+    <span class="k">public</span> <span class="n">Complex</span><span class="p">?</span> <span class="n">Value</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="k">static</span> <span class="kt">int</span> <span class="nf">Main</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="k">try</span>
+    <span class="p">{</span>
+      <span class="kt">var</span> <span class="n">parsers</span> <span class="p">=</span> <span class="k">new</span> <span class="n">SimpleParserCollection</span><span class="p">();</span>
+      <span class="n">parsers</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="k">new</span> <span class="n">ComplexParser</span><span class="p">());</span>
+      <span class="kt">var</span> <span class="n">options</span> <span class="p">=</span> <span class="n">OptionParser</span><span class="p">.</span><span class="n">Parse</span><span class="p">&lt;</span><span class="n">Options</span><span class="p">&gt;(</span><span class="n">parserCollection</span><span class="p">:</span> <span class="n">parsers</span><span class="p">);</span>
+
+      <span class="k">if</span> <span class="p">(</span><span class="n">options</span><span class="p">.</span><span class="n">Value</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Value: &quot;</span> <span class="p">+</span> <span class="n">options</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span>
+
+      <span class="k">return</span> <span class="m">0</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">OptionParsingException</span> <span class="n">ex</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Console</span><span class="p">.</span><span class="n">Error</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">ex</span><span class="p">.</span><span class="n">Message</span><span class="p">);</span>
+      <span class="k">return</span> <span class="m">2</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Console</span><span class="p">.</span><span class="n">Error</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">ex</span><span class="p">);</span>
+      <span class="k">return</span> <span class="m">1</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<pre><code>&gt; CommandLineParsingTest.exe -v (3,5)
+Value: (3, 5)
+</code></pre>
+
+<p>We added a custom parser to the collection, and the option parsing library now understands how to parse a new type. We could add any number of <strong>Complex</strong> properties, and they would all use the new parser.</p>
+
+<p>This is a powerful extension point, but what if we want to modify the way an extisting type is parsed?</p>
+
+<h2 id="replacing-a-simple-argument-parser">Replacing a Simple Argument Parser</h2>
+
+<p>The default parsers in a simple parser collection only use the basic <strong>TryParse</strong> methods, which may not be exactly what is needed. <strong>SimpleParserCollection.Add</strong> will actually <em>replace</em> the parser for a given type if there is already a parser for that type.</p>
+
+<p>We’ll use <strong>uint</strong> for our example. We want to allow either decimal numbers or hexadecimal numbers prefixed by “0x”. <strong>System.UInt32.TryParse(string)</strong> does not accept hexadecimal numbers:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">class</span> <span class="nc">Program</span>
+<span class="p">{</span>
+  <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Options</span> <span class="p">:</span> <span class="n">OptionArgumentsBase</span>
+  <span class="p">{</span>
+<span class="na">    [Option(&quot;value&quot;, &#39;v&#39;)]</span>
+    <span class="k">public</span> <span class="kt">uint?</span> <span class="n">Value</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="k">static</span> <span class="kt">int</span> <span class="nf">Main</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="k">try</span>
+    <span class="p">{</span>
+      <span class="kt">var</span> <span class="n">options</span> <span class="p">=</span> <span class="n">OptionParser</span><span class="p">.</span><span class="n">Parse</span><span class="p">&lt;</span><span class="n">Options</span><span class="p">&gt;();</span>
+
+      <span class="k">if</span> <span class="p">(</span><span class="n">options</span><span class="p">.</span><span class="n">Value</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Value: &quot;</span> <span class="p">+</span> <span class="n">options</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span>
+
+      <span class="k">return</span> <span class="m">0</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">OptionParsingException</span> <span class="n">ex</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Console</span><span class="p">.</span><span class="n">Error</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">ex</span><span class="p">.</span><span class="n">Message</span><span class="p">);</span>
+      <span class="k">return</span> <span class="m">2</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Console</span><span class="p">.</span><span class="n">Error</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">ex</span><span class="p">);</span>
+      <span class="k">return</span> <span class="m">1</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<pre><code>&gt; CommandLineParsingTest.exe -v 11
+Value: 11
+
+&gt; CommandLineParsingTest.exe -v 0x11
+Could not parse  0x11  as UInt32
+</code></pre>
+
+<p>Just like the last example, we’ll implement our own parser, and we’ll add it to the parser collection (replacing the default parser).</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">class</span> <span class="nc">Program</span>
+<span class="p">{</span>
+  <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">UInt32HexParser</span> <span class="p">:</span> <span class="n">ISimpleParser</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="n">Type</span> <span class="n">ResultType</span>
+    <span class="p">{</span>
+      <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">uint</span><span class="p">);</span> <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="kt">object</span> <span class="nf">TryParse</span><span class="p">(</span><span class="kt">string</span> <span class="k">value</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="kt">uint</span> <span class="n">ret</span><span class="p">;</span>
+      <span class="k">if</span> <span class="p">(</span><span class="k">value</span><span class="p">.</span><span class="n">StartsWith</span><span class="p">(</span><span class="s">&quot;0x&quot;</span><span class="p">))</span>
+      <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(!</span><span class="kt">uint</span><span class="p">.</span><span class="n">TryParse</span><span class="p">(</span><span class="k">value</span><span class="p">.</span><span class="n">Substring</span><span class="p">(</span><span class="m">2</span><span class="p">),</span> <span class="n">NumberStyles</span><span class="p">.</span><span class="n">AllowHexSpecifier</span><span class="p">,</span> <span class="n">CultureInfo</span><span class="p">.</span><span class="n">InvariantCulture</span><span class="p">,</span> <span class="k">out</span> <span class="n">ret</span><span class="p">))</span>
+          <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+        <span class="k">return</span> <span class="n">ret</span><span class="p">;</span>
+      <span class="p">}</span>
+
+      <span class="k">if</span> <span class="p">(!</span><span class="kt">uint</span><span class="p">.</span><span class="n">TryParse</span><span class="p">(</span><span class="k">value</span><span class="p">,</span> <span class="k">out</span> <span class="n">ret</span><span class="p">))</span>
+        <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+      <span class="k">return</span> <span class="n">ret</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Options</span> <span class="p">:</span> <span class="n">OptionArgumentsBase</span>
+  <span class="p">{</span>
+<span class="na">    [Option(&quot;value&quot;, &#39;v&#39;)]</span>
+    <span class="k">public</span> <span class="kt">uint?</span> <span class="n">Value</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="k">static</span> <span class="kt">int</span> <span class="nf">Main</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="k">try</span>
+    <span class="p">{</span>
+      <span class="kt">var</span> <span class="n">parsers</span> <span class="p">=</span> <span class="k">new</span> <span class="n">SimpleParserCollection</span><span class="p">();</span>
+      <span class="n">parsers</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="k">new</span> <span class="n">UInt32HexParser</span><span class="p">());</span>
+      <span class="kt">var</span> <span class="n">options</span> <span class="p">=</span> <span class="n">OptionParser</span><span class="p">.</span><span class="n">Parse</span><span class="p">&lt;</span><span class="n">Options</span><span class="p">&gt;(</span><span class="n">parserCollection</span><span class="p">:</span> <span class="n">parsers</span><span class="p">);</span>
+
+      <span class="k">if</span> <span class="p">(</span><span class="n">options</span><span class="p">.</span><span class="n">Value</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Value: &quot;</span> <span class="p">+</span> <span class="n">options</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span>
+
+      <span class="k">return</span> <span class="m">0</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">OptionParsingException</span> <span class="n">ex</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Console</span><span class="p">.</span><span class="n">Error</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">ex</span><span class="p">.</span><span class="n">Message</span><span class="p">);</span>
+      <span class="k">return</span> <span class="m">2</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Console</span><span class="p">.</span><span class="n">Error</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">ex</span><span class="p">);</span>
+      <span class="k">return</span> <span class="m">1</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<pre><code>&gt; CommandLineParsingTest.exe -v 11
+Value: 11
+
+&gt; CommandLineParsingTest.exe -v 0x11
+Value: 17
+</code></pre>
+
+<p>Our program now allows decimal or hexadecimal values for all <strong>uint</strong> argument values.</p>
+
+<p>These custom parsers can be written for any type, including types specific for your program. The only type they won’t work on is string, since the simple parser collection just passes string values straight through.</p>
+
+<h2 id="overriding-the-simple-argument-parser">Overriding the Simple Argument Parser</h2>
+
+<p>The examples so far have implemented a custom parser and added it to the parser collection. This changes the parsing behavior for <em>every</em> property of that type. Sometimes we just want to apply a parser to a single property; this can be done by using the <strong>SimpleParserAttribute</strong>.</p>
+
+<p>This example defines a hex parser (without the “0x” prefix) and then uses it for only one of its properties:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">class</span> <span class="nc">Program</span>
+<span class="p">{</span>
+  <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">UInt32HexParser</span> <span class="p">:</span> <span class="n">ISimpleParser</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="n">Type</span> <span class="n">ResultType</span>
+    <span class="p">{</span>
+      <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">uint</span><span class="p">);</span> <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="kt">object</span> <span class="nf">TryParse</span><span class="p">(</span><span class="kt">string</span> <span class="k">value</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="kt">uint</span> <span class="n">ret</span><span class="p">;</span>
+      <span class="k">if</span> <span class="p">(!</span><span class="kt">uint</span><span class="p">.</span><span class="n">TryParse</span><span class="p">(</span><span class="k">value</span><span class="p">,</span> <span class="n">NumberStyles</span><span class="p">.</span><span class="n">AllowHexSpecifier</span><span class="p">,</span> <span class="n">CultureInfo</span><span class="p">.</span><span class="n">InvariantCulture</span><span class="p">,</span> <span class="k">out</span> <span class="n">ret</span><span class="p">))</span>
+        <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+      <span class="k">return</span> <span class="n">ret</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Options</span> <span class="p">:</span> <span class="n">OptionArgumentsBase</span>
+  <span class="p">{</span>
+<span class="na">    [Option(&quot;hex-value&quot;, &#39;h&#39;)]</span>
+<span class="na">    [SimpleParser(typeof(UInt32HexParser))]</span>
+    <span class="k">public</span> <span class="kt">uint?</span> <span class="n">HexValue</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+<span class="na">    [Option(&quot;dec-value&quot;, &#39;d&#39;)]</span>
+    <span class="k">public</span> <span class="kt">uint?</span> <span class="n">DecValue</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="k">static</span> <span class="kt">int</span> <span class="nf">Main</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="k">try</span>
+    <span class="p">{</span>
+      <span class="kt">var</span> <span class="n">options</span> <span class="p">=</span> <span class="n">OptionParser</span><span class="p">.</span><span class="n">Parse</span><span class="p">&lt;</span><span class="n">Options</span><span class="p">&gt;();</span>
+
+      <span class="k">if</span> <span class="p">(</span><span class="n">options</span><span class="p">.</span><span class="n">HexValue</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;HexValue: &quot;</span> <span class="p">+</span> <span class="n">options</span><span class="p">.</span><span class="n">HexValue</span><span class="p">);</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">options</span><span class="p">.</span><span class="n">DecValue</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;DecValue: &quot;</span> <span class="p">+</span> <span class="n">options</span><span class="p">.</span><span class="n">DecValue</span><span class="p">);</span>
+
+      <span class="k">return</span> <span class="m">0</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">OptionParsingException</span> <span class="n">ex</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Console</span><span class="p">.</span><span class="n">Error</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">ex</span><span class="p">.</span><span class="n">Message</span><span class="p">);</span>
+      <span class="k">return</span> <span class="m">2</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Console</span><span class="p">.</span><span class="n">Error</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">ex</span><span class="p">);</span>
+      <span class="k">return</span> <span class="m">1</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<pre><code>&gt; CommandLineParsingTest.exe -h 11 -d 11
+HexValue: 17
+DecValue: 11
+</code></pre>
+
+<h2 id="custom-parsers-for-multiple-argument-values">Custom Parsers for Multiple Argument Values</h2>
+
+<p>Revisiting the problem of <a href="/2011/07/option-parsing-allowing-multiple.html">multiple argument values</a>, we can use a custom parser for a cleaner solution. This example “sequence parser” uses the default simple parser for <strong>int</strong> types, which is easier to deal with than <strong>int.TryParse</strong>:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">class</span> <span class="nc">Program</span>
+<span class="p">{</span>
+  <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Int32SequenceParser</span> <span class="p">:</span> <span class="n">ISimpleParser</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="n">Type</span> <span class="n">ResultType</span>
+    <span class="p">{</span>
+      <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="k">typeof</span><span class="p">(</span><span class="n">IEnumerable</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;);</span> <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="kt">object</span> <span class="nf">TryParse</span><span class="p">(</span><span class="kt">string</span> <span class="k">value</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="kt">var</span> <span class="n">values</span> <span class="p">=</span> <span class="k">value</span><span class="p">.</span><span class="n">Split</span><span class="p">(</span><span class="sc">&#39;,&#39;</span><span class="p">);</span>
+      <span class="n">ISimpleParser</span> <span class="n">defaultParser</span> <span class="p">=</span> <span class="k">new</span> <span class="n">DefaultSimpleParser</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;();</span>
+      <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="n">values</span><span class="p">.</span><span class="n">Select</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="n">defaultParser</span><span class="p">.</span><span class="n">TryParse</span><span class="p">(</span><span class="n">x</span><span class="p">));</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">result</span><span class="p">.</span><span class="n">Any</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="n">x</span> <span class="p">==</span> <span class="k">null</span><span class="p">))</span>
+        <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+      <span class="k">return</span> <span class="n">result</span><span class="p">.</span><span class="n">Cast</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;();</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Options</span> <span class="p">:</span> <span class="n">OptionArgumentsBase</span>
+  <span class="p">{</span>
+<span class="na">    [Option(&quot;values&quot;, &#39;v&#39;)]</span>
+<span class="na">    [SimpleParser(typeof(Int32SequenceParser))]</span>
+    <span class="k">public</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">Values</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="k">static</span> <span class="kt">int</span> <span class="nf">Main</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="k">try</span>
+    <span class="p">{</span>
+      <span class="kt">var</span> <span class="n">options</span> <span class="p">=</span> <span class="n">OptionParser</span><span class="p">.</span><span class="n">Parse</span><span class="p">&lt;</span><span class="n">Options</span><span class="p">&gt;();</span>
+
+      <span class="k">if</span> <span class="p">(</span><span class="n">options</span><span class="p">.</span><span class="n">Values</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Values: &quot;</span> <span class="p">+</span> <span class="kt">string</span><span class="p">.</span><span class="n">Join</span><span class="p">(</span><span class="s">&quot; &quot;</span><span class="p">,</span> <span class="n">options</span><span class="p">.</span><span class="n">Values</span><span class="p">));</span>
+
+      <span class="k">return</span> <span class="m">0</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">OptionParsingException</span> <span class="n">ex</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Console</span><span class="p">.</span><span class="n">Error</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">ex</span><span class="p">.</span><span class="n">Message</span><span class="p">);</span>
+      <span class="k">return</span> <span class="m">2</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Console</span><span class="p">.</span><span class="n">Error</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">ex</span><span class="p">);</span>
+      <span class="k">return</span> <span class="m">1</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<pre><code>&gt; CommandLineParsingTest.exe
+
+&gt; CommandLineParsingTest.exe -v 2,3,5,7
+Values: 2 3 5 7
+
+&gt; CommandLineParsingTest.exe -v 2,3a,5
+Could not parse  2,3a,5  as IEnumerable&lt;Int32&gt;
+
+&gt; CommandLineParsingTest.exe -v 2,3 -v 5,7
+Values: 5 7
+</code></pre>
+
+<p>The last example above shows that the default behavior of the actual property setter is still <em>overwrite</em>, not <em>append</em>. If you want to allow appending sequences, you’ll need to change the setter to append each sequence to an internal collection.</p>
+
+
+  </article>
+    
+    <footer>
+        
+            
+                
+            
+                
+            
+                
+            
+
+            
+            
+            
+                
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                        
+                        
+                        
+                            
+                        
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                        
+                        
+                        
+                            
+                        
+                    
+                
+                    
+                        
+                        
+                        
+                            
+                        
+                    
+                
+                    
+                        
+                        
+                        
+                            
+                        
+                    
+                
+                    
+                        
+                        
+                        
+                            
+                        
+                    
+                
+                    
+                        
+                        
+                        
+                            
+                        
+                    
+                
+                    
+                        
+                        
+                        
+                            
+                        
+                    
+                
+                    
+                
+                    
+                        
+                        
+                        
+                            
+                        
+                    
+                
+                    
+                        
+                        
+                        
+                            
+                        
+                    
+                
+                    
+                        
+                        
+                            
+                            
+                        
+                        
+                    
+                
+                    
+                        
+                            
+                            
+                        
+                        
+                        
+                    
+                
+                    
+                        
+                        
+                        
+                    
+                
+                    
+                
+                    
+                
+                    
+                        
+                        
+                        
+                    
+                
+                    
+                        
+                        
+                        
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+            
+
+            <ul class="pager">
+                <li class="previous"><a href="/2011/08/option-parsing-preventing-multiple.html" title="Option Parsing: Preventing Multiple Argument Values">&larr; Previous in Option Parsing</a></li>
+                <li class="next"><a href="/2011/08/option-parsing-boolean-options.html" title="Option Parsing: Boolean Options">Next in Option Parsing &rarr;</a></li>
+            </ul>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2011/08/option-parsing-preventing-multiple.html" title="Option Parsing: Preventing Multiple Argument Values">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2011/08/option-parsing-boolean-options.html" title="Option Parsing: Boolean Options">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+                
+                    
+                
+                    
+                
+                    
+                
+                <div class="panel panel-primary">
+                    <div class="panel-heading">Option Parsing</div>
+                    <div class="panel-body sidenav">
+                        <ul class="nav nav-pills nav-stacked">
+                            
+                                
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2011/02/option-parsing-introduction.html">Introduction</a></li>
+                                        
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2011/06/option-parsing-option-parsing-pipeline.html">The Option Parsing Pipeline</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2011/06/option-parsing-lexing.html">Lexing</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2011/06/option-parsing-error-handling.html">Error Handling</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2011/06/option-parsing-option-names.html">Option Names</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2011/07/option-parsing-default-and-nullable.html">Default and Nullable Argument Values</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2011/07/option-parsing-options-with-optional.html">Options with Optional Arguments</a></li>
+                                        
+                                    
+                                
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2011/07/option-parsing-allowing-multiple.html">Allowing Multiple Argument Values</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2011/08/option-parsing-preventing-multiple.html">Preventing Multiple Argument Values</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="active sidenavitem"><a href="/2011/08/option-parsing-argument-parsing.html">Argument Parsing</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2011/08/option-parsing-boolean-options.html">Boolean Options</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2011/08/option-parsing-validation.html">Validation</a></li>
+                                        
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2011/10/option-parsing-positional-arguments.html">Positional Arguments</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2011/10/option-parsing-case-sensitivity.html">Case Sensitivity</a></li>
+                                        
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                            
+                        </ul>
+                    </div>
+                </div>
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+<script src="/lib/jquery.scrollTo.min.js"></script>
+<script type="text/javascript">
+(function ($) {
+    $(function () {
+        var container = $('.affix').filter(function() { return $(this).css('position') == 'fixed'; });
+        var target = container.find('.active');
+        container.scrollTo(target, { offset: - (container.height() / 2 - target.height() / 2) });
+    });
+})(window.jQuery);
+</script>
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2011/08/option-parsing-argument-parsing";
+var disqus_title = "Option Parsing: Argument Parsing";
+var disqus_url = "http://localhost:4000/2011/08/option-parsing-argument-parsing.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

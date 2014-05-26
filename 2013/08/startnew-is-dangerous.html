@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>StartNew is Dangerous</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2013/08/startnew-is-dangerous.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>StartNew is Dangerous</h1>
+          <small>Aug 29, 2013 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>I see a lot of code on blogs and in SO questions that use Task.Factory.StartNew to spin up work on a background thread. Stephen Toub has an <a href="http://blogs.msdn.com/b/pfxteam/archive/2011/10/24/10229468.aspx">excellent blog article that explains why Task.Run is better than Task.Factory.StartNew</a>, but I think a lot of people just haven’t read it (or don’t understand it). So, I’ve taken the same arguments, added some more forceful language, and we’ll see how this goes. :)</p>
+
+<p>StartNew does offer many more options than Task.Run, but it is quite dangerous, as we’ll see. You should prefer Task.Run over Task.Factory.StartNew in async code.</p>
+
+<h2 id="why-use-taskfactorystartnew">Why Use Task.Factory.StartNew?</h2>
+
+<p>There are only four reasons that you would <em>ever</em> want to use Task.Factory.StartNew in async code:</p>
+
+<ol>
+  <li>You need a task that represents only the first (synchronous) part of an asynchronous method, instead of a task representing the entire method.</li>
+  <li>You need to specify a custom TaskScheduler, instead of using the thread pool scheduler.</li>
+  <li>You need to specify custom TaskCreationOptions.</li>
+  <li>You need to pass a state object to the delegate to reduce memory pressure from lambda variable capture.</li>
+</ol>
+
+<p>Let’s consider each of these in turn.</p>
+
+<ol>
+  <li>
+    <p><em>You need a task that represents only the first (synchronous) part of an asynchronous method, instead of a task representing the entire method.</em> This can be useful if you’re writing something like a task scheduler. In which case, you should ask yourself why you’re writing Yet Another Task Scheduler in the first place. The vast majority of the time, you want a task that represents the entire asynchronous method instead of just the first bit.</p>
+  </li>
+  <li>
+    <p><em>You need to specify a custom TaskScheduler, instead of using the thread pool scheduler.</em> If you need to pass a specialized TaskScheduler to StartNew, then reconsider your API design. There are better ways of creating tasks for a specific context (e.g., TaskFactory).</p>
+  </li>
+  <li>
+    <p><em>You need to specify custom TaskCreationOptions.</em> Let’s consider <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.taskcreationoptions.aspx">each of the options</a>. AttachedToParent shouldn’t be used in async tasks, so that’s out. DenyChildAttach should <em>always</em> be used with async tasks (hint: if you didn’t already know that, then StartNew isn’t the tool you need). DenyChildAttach is passed by Task.Run. HideScheduler might be useful in some really obscure scheduling scenarios but in general should be avoided for async tasks. That only leaves LongRunning and PreferFairness, which are both optimization hints that <strong>should only be specified after application profiling</strong>. I often see LongRunning misused in particular. In the vast majority of situations, the threadpool will adjust to any long-running task in 0.5 seconds - <em>without</em> the LongRunning flag. Most likely, you don’t really need it.</p>
+  </li>
+  <li>
+    <p><em>You need to pass a state object to the delegate to reduce memory pressure from lambda variable capture.</em> Again, avoid the premature optimization. You should discover that you need this after doing memory profiling.</p>
+  </li>
+</ol>
+
+<p>Now, I’m not saying to <em>never</em> use Task.Factory.StartNew. If you’re writing a low-level, general-purpose async library, then there are some rare situations where you do want to use StartNew. But for the vast majority of async code, Task.Factory.StartNew is a mistake.</p>
+
+<div class="alert alert-info">
+  <p>As a side note, the context of this discussion is <em>async code</em>. If you’re writing <em>parallel code</em> (e.g., <a href="http://msdn.microsoft.com/en-us/library/ff963551.aspx" class="alert-link">dynamic task-based parallelism</a>), then StartNew is the tool you want to use.</p>
+</div>
+
+<h2 id="why-not-to-use-taskfactorystartnew">Why Not to Use Task.Factory.StartNew?</h2>
+
+<p>We’ve covered some (very obscure) situations where Task.Factory.StartNew could be useful. Now, let’s take a look at why you <em>shouldn’t</em> use Task.Factory.StartNew:</p>
+
+<ol>
+  <li>Does not understand async delegates.</li>
+  <li>Confusing default scheduler.</li>
+</ol>
+
+<p>Let’s consider each of these in turn.</p>
+
+<ol>
+  <li>
+    <p><em>Does not understand async delegates.</em> This is actually the same as point 1 in the reasons why you <em>would</em> want to use StartNew. The problem is that when you pass an async delegate to StartNew, it’s natural to assume that the returned task represents that delegate. However, since StartNew does not understand async delegates, what that task actually represents is just the beginning of that delegate. This is one of the first pitfalls that coders encounter when using StartNew in async code.</p>
+  </li>
+  <li>
+    <p><em>Confusing default scheduler.</em> OK, trick question time: in the code below, what thread does the method “A” run on?</p>
+  </li>
+</ol>
+
+<div class="highlight"><pre><code class="csharp"><span class="n">Task</span><span class="p">.</span><span class="n">Factory</span><span class="p">.</span><span class="n">StartNew</span><span class="p">(</span><span class="n">A</span><span class="p">);</span>
+
+<span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">A</span><span class="p">()</span> <span class="p">{</span> <span class="p">}</span></code></pre></div>
+
+<p>Well, you know it’s a trick question, eh? If you answered “a thread pool thread”, I’m sorry, but that’s not correct. “A” will run on whatever TaskScheduler is currently executing! OK, so let’s give a bit of context to the question: in the code below, what thread does the method “A” run on?</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="k">void</span> <span class="nf">Form1_Load</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">Task</span><span class="p">.</span><span class="n">Factory</span><span class="p">.</span><span class="n">StartNew</span><span class="p">(</span><span class="n">A</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">A</span><span class="p">()</span> <span class="p">{</span> <span class="p">}</span></code></pre></div>
+
+<p>In this case, “A” <em>will</em> run on a thread pool thread! But it’s important to understand <em>why</em>: Task.Factory.StartNew will first examine the current TaskScheduler. There is none, so it uses the thread pool TaskScheduler. Easy enough for the simple case, but let’s consider a more realistic example:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="k">void</span> <span class="nf">Form1_Load</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">Compute</span><span class="p">(</span><span class="m">3</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">private</span> <span class="k">void</span> <span class="nf">Compute</span><span class="p">(</span><span class="kt">int</span> <span class="n">counter</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// If we&#39;re done computing, just return.</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">counter</span> <span class="p">==</span> <span class="m">0</span><span class="p">)</span>
+        <span class="k">return</span><span class="p">;</span>
+
+    <span class="kt">var</span> <span class="n">ui</span> <span class="p">=</span> <span class="n">TaskScheduler</span><span class="p">.</span><span class="n">FromCurrentSynchronizationContext</span><span class="p">();</span>
+    <span class="n">Task</span><span class="p">.</span><span class="n">Factory</span><span class="p">.</span><span class="n">StartNew</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">A</span><span class="p">(</span><span class="n">counter</span><span class="p">))</span>
+        <span class="p">.</span><span class="n">ContinueWith</span><span class="p">(</span><span class="n">t</span> <span class="p">=&gt;</span>
+        <span class="p">{</span>
+            <span class="n">Text</span> <span class="p">=</span> <span class="n">t</span><span class="p">.</span><span class="n">Result</span><span class="p">.</span><span class="n">ToString</span><span class="p">();</span> <span class="c1">// Update UI with results.</span>
+
+            <span class="c1">// Continue working.</span>
+            <span class="n">Compute</span><span class="p">(</span><span class="n">counter</span> <span class="p">-</span> <span class="m">1</span><span class="p">);</span>
+        <span class="p">},</span> <span class="n">ui</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">private</span> <span class="kt">int</span> <span class="nf">A</span><span class="p">(</span><span class="kt">int</span> <span class="k">value</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="k">value</span><span class="p">;</span> <span class="c1">// CPU-intensive work.</span>
+<span class="p">}</span></code></pre></div>
+
+<p>This is a bit more complex, but it uses a pattern common in older code that used tasks before async was introduced. The “Compute” method first checks to see if it’s done computing; if it is, then it returns. If there’s more work to do, then it throws “A” onto the thread pool to do the CPU-intensive calculations. “Compute” also registers a continuation, so that when “A” is complete, it will marshal back to the UI thread, update the UI with the results so far, and then continue computing.</p>
+
+<p>Now, the question returns: what thread does “A” run on? Go ahead and walk through it; you should have enough knowledge at this point to figure out the answer.</p>
+
+<p>Ready? The method “A” runs on a thread pool thread the first time, and then it runs on the UI thread the last two times.</p>
+
+<p>Here’s why: the first time through “Compute”, there’s no task scheduler and StartNew schedules “A” to a thread pool thread. However, when the first continuation runs, it <em>is</em> running inside a task scheduler: the TaskScheduler.FromCurrentSynchronizationContext, which is the UI task scheduler. So when “Compute” executes the <em>second</em> time, there <em>is</em> a current task scheduler <em>which is picked up by StartNew</em>, and StartNew schedules “A” to that task scheduler (i.e., the UI thread). The same thing happens the third time through.</p>
+
+<p>This is some pretty dangerous and unexpected behavior, IMO. In fact, many software teams have implemented rules for their source that <em>disallow StartNew unless you pass an explicit TaskScheduler</em>. And I think that’s a great idea.</p>
+
+<p>Unfortunately, the only overloads for StartNew that take a TaskScheduler also require you to specify the CancellationToken and TaskCreationOptions. This means that in order to use Task.Factory.StartNew to reliably, predictably queue work to the thread pool, you have to use an overload like this:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="n">Task</span><span class="p">.</span><span class="n">Factory</span><span class="p">.</span><span class="n">StartNew</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">.</span><span class="n">None</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">.</span><span class="n">DenyChildAttach</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">.</span><span class="n">Default</span><span class="p">);</span></code></pre></div>
+
+<p>And really, that’s kind of ridiculous. Just use <code>Task.Run(() =&gt; A());</code>.</p>
+
+
+  </article>
+    
+    <footer>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2013/08/slides-available-thatconference-2013.html" title="Slides Available: ThatConference 2013">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2013/09/taskrun-vs-backgroundworker-round-4.html" title="Task.Run vs BackgroundWorker, Round 4: Cancellation">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2013/08/startnew-is-dangerous";
+var disqus_title = "StartNew is Dangerous";
+var disqus_url = "http://localhost:4000/2013/08/startnew-is-dangerous.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

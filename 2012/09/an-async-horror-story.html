@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>An Async Horror Story</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2012/09/an-async-horror-story.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>An Async Horror Story</h1>
+          <small>Sep 12, 2012 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>Congratulations to the Async/Await team on their RTW release!</p>
+
+<p>This is a <strong>huge</strong> milestone for .NET. Personally, I think Async will have a monumental impact on how we write code. It makes <em>maintainable asynchronous code</em> a reality.</p>
+
+<p>Today, I will <strong>not</strong> write a long blog post about how to use Async or some obscure synchronization pitfall. Instead, I will tell a horror story from long ago… a story that has never before been told, but I assure you it is true. For I was there.</p>
+
+<p>Sit back, young programmers, and listen to a tale of Async… from the Dark Ages!!! [lightning, thunder]</p>
+
+<h2 id="the-setting">The Setting</h2>
+
+<p>The year was 2000. I was a young programmer at that time: only three years of work experience, all at a small engineering company. But I had several successful projects under my belt, I had contributed to <a href="http://www.boost.org">Boost</a>, and I felt confident that I could tackle anything. In this pre-September 11th world, optimism reigned.</p>
+
+<h2 id="the-client">The Client</h2>
+
+<p class="pull-right"><img src="/assets/Building.jpg" alt="" style="width:380px;height=252px;" /></p>
+
+<p>A certain large newspaper was expanding. They built a new press building and had plans to outfit it to the tune of $40 million. Their new Swiss printing press was 750 tons; and was capable of printing 70,000 pages per hour, moving the paper through at 30 mph. The paper was delivered at the bottom of the presses and traveled up through 27 feet of machinery. It was quite a sight!</p>
+
+<p>But the press was only $25 million of the story. Besides the building and all of the planning software, they needed a way to get the paper to the press on time, and that’s where we came in.</p>
+
+<p>My company had recently hired a “rock star” developer, who had already been assigned another newsprint project. He assured the software department heads that this new newsprint project would only require minor tweaks and configuration changes to the software he was developing for the other client (which was his first project for our company). Unlike our traditional procedural design, the Rock Star’s code reveled in “abstraction” and “OOP.” As the only other programmer in the company who had “done OOP,” I was slated to work as the Rock Star’s assistant programmer.</p>
+
+<div class="alert alert-info">
+
+  <p>In one conversation around this time, I was opposing what I saw as unnecessary complexity in the system (I had been asked to abstract the IoC component by using DI). The Rock Star responded by giving me an additional assignment: a module which would continuously check memory for errors while the system was running. At that point, the conversation had just gotten too ridiculous; I walked away without saying a word.</p>
+
+  <p>The software was sufficiently complex to require its own program for modifying the configuration (called, unsurprisingly, “The Configurator”).</p>
+
+  <p>Long-time readers of <a href="http://thedailywtf.com" class="alert-link">The Daily WTF</a> will immediately realize what will happen to these projects.</p>
+</div>
+
+<p>I was nominally assigned to the new newspaper project (in addition to my other tasks). The Rock Star assured me that the project would be easy, once he actually gave me the holy grail code base.</p>
+
+<h2 id="clouds-on-the-horizon">Clouds on the Horizon</h2>
+
+<p>Deadlines slipped. Weeks became months. It was now 2001. More deadlines slipped. I was routinely assured that the code would be there, and that it would be better than my wildest imagination. The software department heads hung on the Rock Star’s every word, and I had no option but to go along. I had no code to work with, so after finishing my other projects, I played around with alternative programming styles. I was experimenting with something I called “single-threaded concurrency,” and began exploring how the newsprint project would look if it was coded in that fashion.</p>
+
+<p>Finally, the time came for the installation. Ordinarily, the projects at my company would run for 6-9 months followed by a 3-week on-site installation. Inevitably, many minor issues were brought up during the installation, and having a programmer on-site encouraged quick resolutions.</p>
+
+<p>I was very nervous on my first flight out to the job site for the install, since I was flying without any code. But I was super-seriously assured that the code would be in my inbox when I got there.</p>
+
+<p>Of course, it wasn’t. I was given instructions to go to the customer site and “look busy” every day while the Rock Star put the finishing touches on his masterpiece.</p>
+
+<p>Another week went by. I continued my “single-threaded concurrency” experiment. Another week or two went by. I came home for the weekend and then returned to the job site - very unusual for my company’s projects. More weeks went by.</p>
+
+<p>Excuse after excuse was given for the lack of code. The most memorable one was that the Rock Star’s hard drive had crashed, and he was working day and night (at home, naturally) to recover it.</p>
+
+<p>Fortunately, the other vendors for the newsprint system were even later than we were with their deliverables, so the client didn’t blame us for the delays.</p>
+
+<h2 id="the-storm">The Storm</h2>
+
+<p class="pull-right"><img src="/assets/Press.jpg" alt="" style="width:174px;height=428px;" /></p>
+
+<p>Finally, some six weeks after the official contract deadline, the Rock Star delivered the code base. It was a steaming pile of useless nonsense. It did not even compile. I took a few hours to go through it, and it contained a ton of hard-coded logic for the Rock Star’s newsprint project that would have to be changed to work for any other newsprint system. In short, it was a disaster, and almost completely useless for our new client.</p>
+
+<p>Terrorists attacked the World Trade Center.</p>
+
+<p>And the Rock Star quit, taking the glowing recommendations of our software department heads with him. He had not completed a single project, but - amazingly - they still believed him when he said we just had to “snap together a few components” to complete both of his projects.</p>
+
+<p>The new newsprint project was officially turned over to me. The Rock Star’s former project was passed off to an Unsuspecting Teammate, who truly had no idea of the mess he was getting into - but he was (and still is) the best programmer I’ve ever worked with, so I didn’t worry too much about him. I had big enough problems of my own.</p>
+
+<p>The Rock Star’s code base was downright unusable. My only options were to restart the project from scratch, or to expand my single-threaded concurrency experiment into an actual solution. I knew the rewrite would take many months, and the ire of the client would fall on us in full force. I was also tempted by my curiosity: <em>could</em> I, in fact, create a full solution using these techniques?</p>
+
+<p>I chose to continue my experiment. It was my choice to bring it to life.</p>
+
+<h2 id="the-monster">The Monster</h2>
+
+<p>I will now attempt to explain my “single-threaded concurrency” experiment. I leave it to the reader to judge whether it was inherently evil, or whether it was merely born at the wrong time and in the wrong place.</p>
+
+<p>Please do keep in mind that this was written in unmanaged C++ with the NT4 API: there were no spin locks, no thread pool, no garbage collection, or many other things that programmers can take for granted these days.</p>
+
+<p>In the unmanaged world at that time, the most common type of asynchronous operation was overlapped I/O. My early experiment used overlapped I/O exclusively, with some APCs thrown in for good measure, but I quickly discovered how difficult it was to <em>extend</em>. I shifted to using HANDLEs.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>For my .NET-only readers, you can think of a HANDLE as like a Task.</p>
+</div>
+
+<p>The entire system was conceptually built around a single thread. The main loop of this thread essentially just called WaitForMultipleObjects on a dynamic array of HANDLEs and executed completion callbacks. Completion callbacks would add and remove HANDLEs from the main array as necessary. This approach was fully extensible using the monkey wrench of synchronization primitives: the Manual Reset Event.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>For my .NET-only readers: A Manual Reset Event is analogous to a TaskCompletionSource. There was no thread pool, so I used WaitForMultipleObjects to make a “thread pool” that would only ever have one thread.</p>
+</div>
+
+<p>There is one major limitation with this approach: everything <strong>must</strong> be asynchronous. I was fairly sure, however, that I could <em>make</em> everything asynchronous, one way or another.</p>
+
+<p>As the system grew, I encountered the 64-HANDLE limit: WaitForMultipleObjects could only wait for 64 HANDLEs at a time. This was insufficient, so I wrote the <em>most complex</em> software component I have ever written: The Event Demultiplexer!</p>
+
+<p>The Event Demultiplexer, conceptually, was quite simple. It was a WaitForMultipleObjects loop that was unlimited in its number of HANDLEs. That’s it. When it came to implementation, however, it was considerably difficult. It had to manage its own threads (no thread pool, remember?), and doing all of that in a thread-safe way was not trivial.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>Curiously, the 64-handle limitation still exists in .NET (in WaitHandle.WaitAll/WaitAny). I had thought they would abstract it away! It’s not so important anymore, though: Task’s WaitAll/WhenAll/WaitAny/WhenAny do not use the same mechanism and are not subject to a 64-task limit.</p>
+</div>
+
+<p>Of course, there were many external problems as well. The remote database driver had a nasty habit of crashing its host process every time the server was unreachable. The local database did not support asynchronous operations (and required regular offline compaction). The robot controlled via RS232 did not like commands sent too quickly (apparently, they only tested with slow-typing humans). The press communications used an underdocumented protocol over an unusual bus. Pretty much the only thing that worked perfectly was the PLC talking over OPC.</p>
+
+<p class="center"><img src="/assets/Operator.jpg" alt="" /></p>
+
+<p>Every problem was eventually solved. The remote database driver was encapsulated into its own child process and restarted whenever it crashed. The local database got its own dedicated thread which exposed an asynchronous API to the core system. I added delays to the RS232 interface, using the wonderful Waitable Timer (interestingly, not available in .NET). The press communications were developed “by observation.”</p>
+
+<p>At the end, I had a working system. It was the first 100% asynchronous system I had ever written; possibly the first (non-trivial) 100% asynchronous system ever.</p>
+
+<p>I was proud of my creation.</p>
+
+<h2 id="darkness-falls">Darkness Falls</h2>
+
+<p>For many years, I was proud of my accomplishment. The client <em>did</em> discover that I essentially wrote the entire system on-site, but we were not responsible for any major delays, so we didn’t get nailed. Also, I learned a <em>lot</em> about asynchronous programming: you have to turn your code “inside out” to do it right. This valuable experience enabled me to create a fully-asynchronous component a couple of years later when our communications system changed from serial to TCP/IP.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>Note: Only old-school async requires you to write your code “inside out.” The new async/await support in .NET does the rewriting for you, so you can write asynchronous code <em>so much easier!</em></p>
+</div>
+
+<p>However, it gradually became apparent that I was too proud of my creation. Being a fully asynchronous system (and therefore completely different than any of our other systems), it was difficult for me to maintain. And, as difficult as it was for me to maintain it, it was near-impossible for anyone else to maintain it!</p>
+
+<p>True, I had pulled off a working system in a bad situation. But that system wouldn’t last - <em>couldn’t</em> last. It was years later when I admitted to myself that it was, in fact, <a href="http://thedailywtf.com/Articles/Avoiding-Development-Disasters.aspx">a</a> <a href="http://thedailywtf.com/Articles/What_Could_Possibly_Be_Worse_Than_Failure_0x3f_.aspx">failure</a>.</p>
+
+<p>I had created a monster.</p>
+
+<p>Time passed. My company moved to Detroit, and I stayed here. The software department got absorbed by another company, and then the entire company got bought by yet another company.</p>
+
+<p>Now, many years later, I still occasionally wonder about my creation - my first fully-asynchronous system. Is it still living in that server room, sending out commands to move rolls of paper hither and yon? Does it horrify innocent maintenance programmers? Or has it been replaced by another system that is easier to understand and maintain?</p>
+
+<p>Sometimes, late at night, I feel a profound sense of guilt. My professional pride wants me to go back… to replace it with a system that would not shame me any more… to kill the monster.</p>
+
+<p>Perhaps someday I will be brave enough to face my creation again.</p>
+
+<p>Perhaps it is too late. Too late for me.</p>
+
+<p>Yet, I have a ray of hope.</p>
+
+<p>My hope is that all programmers will learn the new way of async. With the new async support in .NET, no one should ever have to create another monster.</p>
+
+<p>There is always hope.</p>
+
+
+  </article>
+    
+    <footer>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2012/09/a-new-web-site.html" title="A New Web Site">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2012/09/introduction-to-dataflow-part-1.html" title="Introduction to Dataflow, Part 1">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2012/09/an-async-horror-story";
+var disqus_title = "An Async Horror Story";
+var disqus_url = "http://localhost:4000/2012/09/an-async-horror-story.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

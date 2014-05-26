@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Async OOP 2: Constructors</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2013/01/async-oop-2-constructors.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Async OOP 2: Constructors</h1>
+          <small>Jan 17, 2013 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>Asynchronous construction poses an interesting problem. It would be useful to be able to use <code>await</code> in a constructor, but this would mean that the constructor would have to return a <code>Task&lt;T&gt;</code> representing a value that will be constructed in the future, instead of a constructed value. This kind of concept would be very difficult to work into the existing language.</p>
+
+<p>The bottom line is that <code>async</code> constructors are not allowed, so let’s explore some alternatives.</p>
+
+<h2 id="factory-pattern">Factory Pattern</h2>
+
+<p>Constructors cannot be <code>async</code>, but static methods can. It’s pretty easy to have a static creation method, making the type its own factory:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span>
+<span class="p">{</span>
+  <span class="k">private</span> <span class="n">MyData</span> <span class="n">asyncData</span><span class="p">;</span>
+  <span class="k">private</span> <span class="nf">MyClass</span><span class="p">()</span> <span class="p">{</span> <span class="p">...</span> <span class="p">}</span>
+
+  <span class="k">private</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">MyClass</span><span class="p">&gt;</span> <span class="n">InitializeAsync</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="n">asyncData</span> <span class="p">=</span> <span class="k">await</span> <span class="n">GetDataAsync</span><span class="p">();</span>
+    <span class="k">return</span> <span class="k">this</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="k">public</span> <span class="k">static</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">MyClass</span><span class="p">&gt;</span> <span class="n">CreateAsync</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="kt">var</span> <span class="n">ret</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MyClass</span><span class="p">();</span>
+    <span class="k">return</span> <span class="n">ret</span><span class="p">.</span><span class="n">InitializeAsync</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">public</span> <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">UseMyClassAsync</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="n">MyClass</span> <span class="n">instance</span> <span class="p">=</span> <span class="k">await</span> <span class="n">MyClass</span><span class="p">.</span><span class="n">CreateAsync</span><span class="p">();</span>
+  <span class="p">...</span>
+<span class="p">}</span></code></pre></div>
+
+<p>It’s possible to have <code>Create</code> do all the initialization work, but I prefer to have the <code>async InitializeAsync</code> method.</p>
+
+<p>The factory method is the most common approach to asynchronous construction, but there are other approaches that are useful in some situations.</p>
+
+<h2 id="asynclazy-for-resources">AsyncLazy (for Resources)</h2>
+
+<p>If the instance you’re creating is a <em>shared resource</em>, then you can use <a href="/2012/08/asynchronous-lazy-initialization.html">asynchronous lazy initialization</a> to create your shared instance:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="k">static</span> <span class="n">AsyncLazy</span><span class="p">&lt;</span><span class="n">MyResource</span><span class="p">&gt;</span> <span class="n">resource</span> <span class="p">=</span> <span class="k">new</span> <span class="n">AsyncLazy</span><span class="p">&lt;</span><span class="n">MyResource</span><span class="p">&gt;(</span><span class="k">async</span> <span class="p">()</span> <span class="p">=&gt;</span>
+<span class="p">{</span>
+  <span class="kt">var</span> <span class="n">data</span> <span class="p">=</span> <span class="k">await</span> <span class="n">GetResource</span><span class="p">();</span>
+  <span class="k">return</span> <span class="k">new</span> <span class="nf">MyResource</span><span class="p">(</span><span class="n">data</span><span class="p">);</span>
+<span class="p">});</span>
+
+<span class="k">public</span> <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">UseResourceAsync</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="n">MyResource</span> <span class="n">res</span> <span class="p">=</span> <span class="k">await</span> <span class="n">resource</span><span class="p">;</span>
+<span class="p">}</span></code></pre></div>
+
+<p><code>AsyncLazy&lt;T&gt;</code> is a great fit for <em>resources</em>; in this example, <code>resource</code> will start being constructed the first time it’s <code>await</code>ed. Any other methods that <code>await</code> it will tie into the same construction, and when the construction is complete, all waiters are released. Any <code>await</code>s after the construction is complete continue immediately since the value is already available.</p>
+
+<p>This approach does <em>not</em> work well if the instance is not used as a shared resource. If the instance is not a shared resource, you should another approach instead.</p>
+
+<h2 id="the-asynchronous-initialization-pattern">The Asynchronous Initialization Pattern</h2>
+
+<p>The best approaches to asynchronous construction have already been covered: asynchronous factory methods and <code>AsyncLazy&lt;T&gt;</code>. These are the best approaches because you never expose an uninitialized instance.</p>
+
+<p>However, there are times when you really <em>need</em> a constructor, e.g., when some other component is using reflection to create an instance of your type. This includes data binding, IoC and DI frameworks, <code>Activator.CreateInstance</code>, etc.</p>
+
+<p>In these cases, you <em>must</em> return an uninitialized instance, but you can mitigate this by applying a common pattern: each object that needs asynchronous initialization will expose a property <code>Task Initialization { get; }</code> that will contain the results of the asynchronous initialization.</p>
+
+<h3 id="the-pattern">The Pattern</h3>
+
+<p>If you want to treat asynchronous initialization as an implementation detail, you can (optionally) define a “marker” interface for types that use asynchronous initialization:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="c1">/// &lt;summary&gt;</span>
+<span class="c1">/// Marks a type as requiring asynchronous initialization and provides the result of that initialization.</span>
+<span class="c1">/// &lt;/summary&gt;</span>
+<span class="k">public</span> <span class="k">interface</span> <span class="n">IAsyncInitialization</span>
+<span class="p">{</span>
+    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">/// The result of the asynchronous initialization of this instance.</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="n">Task</span> <span class="n">Initialization</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>The pattern for asynchronous initialization then looks like this:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyFundamentalType</span> <span class="p">:</span> <span class="n">IAsyncInitialization</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="nf">MyFundamentalType</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="n">Initialization</span> <span class="p">=</span> <span class="n">InitializeAsync</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="n">Task</span> <span class="n">Initialization</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+    <span class="k">private</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">InitializeAsync</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="c1">// Asynchronously initialize this instance.</span>
+        <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>This pattern is quite simple, but it gives us some important semantics:</p>
+
+<ul>
+  <li>The initialization is started in the constructor (when we call <code>InitializeAsync</code>).</li>
+  <li>The completion of the initialization is exposed (via the <code>Initialization</code> property).</li>
+  <li>Any exceptions raised from the asynchronous initialization will be captured and placed on the <code>Initialization</code> property.</li>
+</ul>
+
+<p>An instance of this type can be (manually) constructed like this:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="kt">var</span> <span class="n">myInstance</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MyFundamentalType</span><span class="p">();</span>
+<span class="c1">// Danger: the instance is not initialized here!</span>
+<span class="k">await</span> <span class="n">myInstance</span><span class="p">.</span><span class="n">Initialization</span><span class="p">;</span>
+<span class="c1">// OK: the instance is initialized now.</span></code></pre></div>
+
+<h3 id="composing-with-asynchronous-initialization">Composing with Asynchronous Initialization</h3>
+
+<p>It’s easy to create another type that depends on this fundamental type (i.e., asynchronous composition):</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyComposedType</span> <span class="p">:</span> <span class="n">IAsyncInitialization</span>
+<span class="p">{</span>
+    <span class="k">private</span> <span class="k">readonly</span> <span class="n">MyFundamentalType</span> <span class="n">_fundamental</span><span class="p">;</span>
+
+    <span class="k">public</span> <span class="nf">MyComposedType</span><span class="p">(</span><span class="n">MyFundamentalType</span> <span class="n">fundamental</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">_fundamental</span> <span class="p">=</span> <span class="n">fundamental</span><span class="p">;</span>
+        <span class="n">Initialization</span> <span class="p">=</span> <span class="n">InitializeAsync</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="n">Task</span> <span class="n">Initialization</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+    <span class="k">private</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">InitializeAsync</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="c1">// Asynchronously wait for the fundamental instance to initialize.</span>
+        <span class="k">await</span> <span class="n">_fundamental</span><span class="p">.</span><span class="n">Initialization</span><span class="p">;</span>
+
+        <span class="c1">// Do our own initialization (synchronous or asynchronous).</span>
+        <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>The main difference is that we wait for all of our components to initialize before we proceed with our initialization. Alternatively, you could proceed with some initialization and only wait on particular components when you need those particular ones to complete. However, every component should be initialized by the end of <code>InitializeAsync</code>.</p>
+
+<p>There are a few key semantics that we get from this pattern when composing:</p>
+
+<ul>
+  <li>A composed type’s initialization isn’t complete until all its components’ initializations are complete.</li>
+  <li>Any errors from component initializations are surfaced up through the composed type.</li>
+  <li>A composed type supports asynchronous initialization, and can be composed in turn just like any other type supporting asynchronous initialization.</li>
+</ul>
+
+<p>In addition, if you’re using the <code>IAsyncInitialization</code> “marker” interface, you can test for that and asynchronously initialize instances that are provided to you by IoC/DI. This slightly complicates your <code>InitializeAsync</code> but allows you to treat asynchronous initialization as an implementation detail. For example, if <code>_fundamental</code> is of type <code>IMyFundamentalType</code>:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">InitializeAsync</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="c1">// Asynchronously wait for the fundamental instance to initialize if necessary.</span>
+    <span class="kt">var</span> <span class="n">asyncFundamental</span> <span class="p">=</span> <span class="n">_fundamental</span> <span class="k">as</span> <span class="n">IAsyncInitialization</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">asyncFundamental</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+        <span class="k">await</span> <span class="n">asyncFundamental</span><span class="p">.</span><span class="n">Initialization</span><span class="p">;</span>
+
+    <span class="c1">// Do our own initialization (synchronous or asynchronous).</span>
+    <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
+<span class="p">}</span></code></pre></div>
+
+<h3 id="top-level-handling">Top-Level Handling</h3>
+
+<p>We’ve covered how to write “fundamental” types with asynchronous initialization and how to “compose” them into other types with asynchronous initialization. Eventually, you’ll need to consume the high-level types that support asynchronous initialization.</p>
+
+<p>In many dynamic-creation scenarios (such as IoC/DI/<code>Activator.CreateInstance</code>), you can just check for <code>IAsyncInitialization</code> and initialize it directly:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="kt">object</span> <span class="n">myInstance</span> <span class="p">=</span> <span class="p">...;</span>
+<span class="kt">var</span> <span class="n">asyncInstance</span> <span class="p">=</span> <span class="n">myInstance</span> <span class="k">as</span> <span class="n">IAsyncInitialization</span><span class="p">;</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">asyncInstance</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">asyncInstance</span><span class="p">.</span><span class="n">Initialization</span><span class="p">;</span></code></pre></div>
+
+<p>However, if you’re creating a type by data binding, or using IoC/DI to inject your view models into your view’s data context, then you don’t really have a place where you interact with the top-level instance. Data binding will take care of updating the UI when the initialization completes <em>unless the initialization fails</em>, so you’ll need to surface failures. Unfortunately, <code>Task</code> does not implement <code>INotifyPropertyChanged</code>, so the task completion is not surfaced automatically. You can use a type like <a href="http://nitoasyncex.codeplex.com/wikipage?title=NotifyTaskCompletion">NotifyTaskCompletion type in the AsyncEx library</a> to make this easy:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyViewModel</span> <span class="p">:</span> <span class="n">INotifyPropertyChanged</span><span class="p">,</span> <span class="n">IAsyncInitialization</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="nf">MyViewModel</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="n">InitializationNotifier</span> <span class="p">=</span> <span class="n">NotifyTaskCompletion</span><span class="p">.</span><span class="n">Create</span><span class="p">(</span><span class="n">InitializeAsync</span><span class="p">());</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="n">INotifyTaskCompletion</span> <span class="n">InitializationNotifier</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+    <span class="k">public</span> <span class="n">Task</span> <span class="n">Initialization</span> <span class="p">{</span> <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="n">InitializationNotifier</span><span class="p">.</span><span class="n">Task</span><span class="p">;</span> <span class="p">}</span> <span class="p">}</span>
+
+    <span class="k">private</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">InitializeAsync</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">100</span><span class="p">);</span> <span class="c1">// asynchronous initialization</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>Your data-binding code can use paths like <code>InitializationNotifier.IsCompleted</code> and <code>InitializationNotifier.ErrorMessage</code> to respond to the completion of the initialization task.</p>
+
+<h3 id="asynchronous-initialization-conclusion">Asynchronous Initialization: Conclusion</h3>
+
+<p>I do prefer the asynchronous factory approach over the asynchronous initialization pattern. The asynchronous initialization pattern <em>does</em> expose instances before they are initialized, and depends on the programmer to correctly use <code>Initialization</code>. But there are some situations where you can’t use asynchronous factory methods, and asynchronous initialization is a decent workaround.</p>
+
+<h2 id="what-not-to-do">What NOT To Do</h2>
+
+<p>Here’s an example of what <strong>not</strong> to do:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span>
+<span class="p">{</span>
+  <span class="k">private</span> <span class="n">MyData</span> <span class="n">asyncData</span><span class="p">;</span>
+  <span class="k">public</span> <span class="nf">MyClass</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="n">InitializeAsync</span><span class="p">();</span>
+  <span class="p">}</span>
+
+  <span class="c1">// BAD CODE!!</span>
+  <span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">InitializeAsync</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="n">asyncData</span> <span class="p">=</span> <span class="k">await</span> <span class="n">GetDataAsync</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>At first glance, this seems like a reasonable approach: you get a regular constructor that kicks off an asynchronous operation; however, there are several drawbacks that are due to the use of <code>async void</code>.</p>
+
+<p>The first problem is that when the constructor completes, the instance is still being asynchronously initialized, and there isn’t an obvious way to determine when the asynchronous initialization has completed.</p>
+
+<p>The second problem is with error handling: any exceptions raised from <code>InitializeAsync</code> will be thrown directly on the <code>SynchronizationContext</code> that was current when the instance was constructed. The exception won’t get caught by any <code>catch</code> clauses surrounding the object construction. Most applications treat this as a fatal error.</p>
+
+<p>The first two solutions in this post (asynchronous factory method and <code>AsyncLazy&lt;T&gt;</code>) do not have these problems. They do not provide an instance until it has been asynchronously initialized, and exception handling is more natural. The third solution (asynchronous initialization) does return an instance before it has been initialized (which I don’t like), but it mitigates this by providing a standard way to detect when initialization has completed as well as reasonable exception handling.</p>
+
+
+  </article>
+    
+    <footer>
+        
+            
+                
+            
+                
+            
+                
+            
+
+            
+            
+            
+                
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                        
+                        
+                        
+                            
+                        
+                    
+                
+                    
+                        
+                        
+                        
+                            
+                        
+                    
+                
+                    
+                        
+                        
+                            
+                            
+                        
+                        
+                    
+                
+                    
+                        
+                            
+                            
+                        
+                        
+                        
+                    
+                
+                    
+                        
+                        
+                        
+                    
+                
+                    
+                        
+                        
+                        
+                    
+                
+                    
+                
+                    
+                
+                    
+                        
+                        
+                        
+                    
+                
+                    
+                        
+                        
+                        
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+            
+
+            <ul class="pager">
+                <li class="previous"><a href="/2013/01/async-oop-1-inheritance-and-interfaces.html" title="Async OOP 1: Inheritance and Interfaces">&larr; Previous in Async OOP</a></li>
+                <li class="next"><a href="/2013/01/async-oop-3-properties.html" title="Async OOP 3: Properties">Next in Async OOP &rarr;</a></li>
+            </ul>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2013/01/async-oop-1-inheritance-and-interfaces.html" title="Async OOP 1: Inheritance and Interfaces">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2013/01/async-oop-3-properties.html" title="Async OOP 3: Properties">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+                
+                    
+                
+                    
+                
+                    
+                
+                <div class="panel panel-primary">
+                    <div class="panel-heading">Async OOP</div>
+                    <div class="panel-body sidenav">
+                        <ul class="nav nav-pills nav-stacked">
+                            
+                                
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2013/01/async-oop-0-introduction.html">Introduction</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2013/01/async-oop-1-inheritance-and-interfaces.html">Inheritance and Interfaces</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="active sidenavitem"><a href="/2013/01/async-oop-2-constructors.html">Constructors</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2013/01/async-oop-3-properties.html">Properties</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2013/01/async-oop-4-state.html">State</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2013/02/async-oop-5-events.html">Events</a></li>
+                                        
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2013/03/async-oop-6-disposal.html">Disposal</a></li>
+                                        
+                                    
+                                
+                                    
+                                        
+                                            <li class="sidenavitem"><a href="/2013/03/async-oop-7-design.html">Design</a></li>
+                                        
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                            
+                        </ul>
+                    </div>
+                </div>
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+<script src="/lib/jquery.scrollTo.min.js"></script>
+<script type="text/javascript">
+(function ($) {
+    $(function () {
+        var container = $('.affix').filter(function() { return $(this).css('position') == 'fixed'; });
+        var target = container.find('.active');
+        container.scrollTo(target, { offset: - (container.height() / 2 - target.height() / 2) });
+    });
+})(window.jQuery);
+</script>
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2013/01/async-oop-2-constructors";
+var disqus_title = "Async OOP 2: Constructors";
+var disqus_url = "http://localhost:4000/2013/01/async-oop-2-constructors.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

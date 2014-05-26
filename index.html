@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Stephen Cleary (the blog)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div>
+    
+    <h1>All Blog Posts</h1>
+    <div class="list-group">
+        
+        <a href="/2014/05/a-tour-of-task-part-1-constructors.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 15, 2014</small></h2><h2>A Tour of Task, Part 1: Constructors</h2></a>
+        
+        <a href="/2014/05/announcement-concurrency-in-c-early.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 5, 2014</small></h2><h2>Announcement: Concurrency in C# Early Release Ebook Available</h2></a>
+        
+        <a href="/2014/05/announcement-msdn-article-on-async.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 1, 2014</small></h2><h2>Announcement: MSDN Article on Async Services</h2></a>
+        
+        <a href="/2014/04/announcement-calculated-properties.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Apr 28, 2014</small></h2><h2>Announcement: Calculated Properties</h2></a>
+        
+        <a href="/2014/04/a-tour-of-task-part-0-overview.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Apr 24, 2014</small></h2><h2>A Tour of Task, Part 0: Overview</h2></a>
+        
+        <a href="/2014/04/announcement-book.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Apr 17, 2014</small></h2><h2>Announcement: Book</h2></a>
+        
+        <a href="/2014/04/announcement-msdn-async-mvvm-articles.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Apr 8, 2014</small></h2><h2>Announcement: MSDN "async MVVM" articles</h2></a>
+        
+        <a href="/2014/04/announcement-aspnetbackgroundtasks.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Apr 7, 2014</small></h2><h2>Announcement: AspNetBackgroundTasks NuGet library</h2></a>
+        
+        <a href="/2014/04/announcement-grdevday-2014-slides.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Apr 4, 2014</small></h2><h2>Announcement: GRDevDay 2014 slides available</h2></a>
+        
+        <a href="/2014/03/a-cross-domain-singleton.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Mar 13, 2014</small></h2><h2>A Cross-Domain Singleton</h2></a>
+        
+        <a href="/2014/02/guidelines-for-lock-free-programming.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Feb 27, 2014</small></h2><h2>Guidelines for Lock-free Programming</h2></a>
+        
+        <a href="/2014/02/synchronous-and-asynchronous-delegate.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Feb 20, 2014</small></h2><h2>Synchronous and Asynchronous Delegate Types</h2></a>
+        
+        <a href="/2014/01/achievement-unlocked-speak-at-codemash.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jan 9, 2014</small></h2><h2>Achievement Unlocked: Speak at CodeMash</h2></a>
+        
+        <a href="/2014/01/announcement-speaking-at-codemash-2014.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jan 2, 2014</small></h2><h2>Announcement: Speaking at CodeMash 2014</h2></a>
+        
+        <a href="/2013/12/azure-cache-serialization-with-json.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Dec 12, 2013</small></h2><h2>Azure Cache Serialization (with JSON!)</h2></a>
+        
+        <a href="/2013/11/there-is-no-thread.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Nov 21, 2013</small></h2><h2>There Is No Thread</h2></a>
+        
+        <a href="/2013/11/announcement-nitoasyncex-200.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Nov 14, 2013</small></h2><h2>Announcement: Nito.AsyncEx 2.0.0</h2></a>
+        
+        <a href="/2013/11/announcement-asyncdiagnostics-101.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Nov 11, 2013</small></h2><h2>Announcement: AsyncDiagnostics 1.0.1 Prerelease</h2></a>
+        
+        <a href="/2013/11/taskrun-etiquette-examples-even-in.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Nov 8, 2013</small></h2><h2>Task.Run Etiquette Examples: Even in the Complex Case, Don't Use Task.Run in the Implementation</h2></a>
+        
+        <a href="/2013/11/taskrun-etiquette-examples-dont-use.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Nov 7, 2013</small></h2><h2>Task.Run Etiquette Examples: Don't Use Task.Run in the Implementation</h2></a>
+        
+        <a href="/2013/11/taskrun-etiquette-examples-using.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Nov 6, 2013</small></h2><h2>Task.Run Etiquette Examples: Don't Use Task.Run for the Wrong Thing</h2></a>
+        
+        <a href="/2013/10/taskrun-etiquette-and-proper-usage.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Oct 17, 2013</small></h2><h2>Task.Run Etiquette and Proper Usage</h2></a>
+        
+        <a href="/2013/10/managed-services-roundup.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Oct 10, 2013</small></h2><h2>Managed Services Roundup</h2></a>
+        
+        <a href="/2013/10/continuewith-is-dangerous-too.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Oct 3, 2013</small></h2><h2>ContinueWith is Dangerous, Too</h2></a>
+        
+        <a href="/2013/09/taskrun-vs-backgroundworker-conclusion.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Sep 26, 2013</small></h2><h2>Task.Run vs BackgroundWorker: Conclusion</h2></a>
+        
+        <a href="/2013/09/taskrun-vs-backgroundworker-round-5.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Sep 19, 2013</small></h2><h2>Task.Run vs BackgroundWorker, Round 5: Reporting Progress</h2></a>
+        
+        <a href="/2013/09/taskrun-vs-backgroundworker-round-4.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Sep 12, 2013</small></h2><h2>Task.Run vs BackgroundWorker, Round 4: Cancellation</h2></a>
+        
+        <a href="/2013/08/startnew-is-dangerous.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Aug 29, 2013</small></h2><h2>StartNew is Dangerous</h2></a>
+        
+        <a href="/2013/08/slides-available-thatconference-2013.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Aug 13, 2013</small></h2><h2>Slides Available: ThatConference 2013</h2></a>
+        
+        <a href="/2013/08/taskrun-vs-backgroundworker-round-3.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Aug 1, 2013</small></h2><h2>Task.Run vs BackgroundWorker, Round 3: Returning Results</h2></a>
+        
+        <a href="/2013/07/taskrun-vs-backgroundworker-round-2.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jul 26, 2013</small></h2><h2>Task.Run vs BackgroundWorker, Round 2: Error Handling</h2></a>
+        
+        <a href="/2013/05/announcement-async-diagnostics.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 17, 2013</small></h2><h2>Announcement: Async Diagnostics</h2></a>
+        
+        <a href="/2013/05/announcement-c-mvp.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 16, 2013</small></h2><h2>Announcement: C# MVP</h2></a>
+        
+        <a href="/2013/05/announcement-asyncex-stable-release.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 15, 2013</small></h2><h2>Announcement: AsyncEx Stable Release</h2></a>
+        
+        <a href="/2013/05/announcement-speaking-at-thatconference.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 14, 2013</small></h2><h2>Announcement: Speaking at ThatConference</h2></a>
+        
+        <a href="/2013/05/announcement-over-200-posts.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 13, 2013</small></h2><h2>Announcement: Over 200 Posts!</h2></a>
+        
+        <a href="/2013/05/taskrun-vs-backgroundworker-round-1.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 9, 2013</small></h2><h2>Task.Run vs BackgroundWorker, Round 1: The Basic Pattern</h2></a>
+        
+        <a href="/2013/05/taskrun-vs-backgroundworker-intro.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 2, 2013</small></h2><h2>Task.Run vs BackgroundWorker: Intro</h2></a>
+        
+        <a href="/2013/04/recursive-re-entrant-locks.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Apr 25, 2013</small></h2><h2>Recursive (Re-entrant) Locks</h2></a>
+        
+        <a href="/2013/04/ui-guidelines-for-async.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Apr 18, 2013</small></h2><h2>UI Guidelines for Async</h2></a>
+        
+        <a href="/2013/04/cancellationtoken-behavior-with-asyncex.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Apr 11, 2013</small></h2><h2>CancellationToken Behavior with AsyncEx Coordination Primitives</h2></a>
+        
+        <a href="/2013/04/implicit-async-context-asynclocal.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Apr 4, 2013</small></h2><h2>Implicit Async Context ("AsyncLocal")</h2></a>
+        
+        <a href="/2013/03/taskcurrentid-in-async-methods.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Mar 28, 2013</small></h2><h2>Task.CurrentId in Async Methods</h2></a>
+        
+        <a href="/2013/03/a-few-words-on-taskid-and.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Mar 21, 2013</small></h2><h2>A Few Words on Task.Id (and TaskScheduler.Id)</h2></a>
+        
+        <a href="/2013/03/async-oop-7-design.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Mar 14, 2013</small></h2><h2>Async OOP 7: Design</h2></a>
+        
+        <a href="/2013/03/async-oop-6-disposal.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Mar 7, 2013</small></h2><h2>Async OOP 6: Disposal</h2></a>
+        
+        <a href="/2013/03/grdevday-slides-and-code.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Mar 2, 2013</small></h2><h2>GRDevDay Slides and Code</h2></a>
+        
+        <a href="/2013/03/msdn-article-and-grdevday.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Mar 1, 2013</small></h2><h2>MSDN Article and GRDevDay</h2></a>
+        
+        <a href="/2013/02/async-oop-5-events.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Feb 28, 2013</small></h2><h2>Async OOP 5: Events</h2></a>
+        
+        <a href="/2013/01/async-oop-4-state.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jan 31, 2013</small></h2><h2>Async OOP 4: State</h2></a>
+        
+        <a href="/2013/01/async-oop-3-properties.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jan 24, 2013</small></h2><h2>Async OOP 3: Properties</h2></a>
+        
+        <a href="/2013/01/async-oop-2-constructors.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jan 17, 2013</small></h2><h2>Async OOP 2: Constructors</h2></a>
+        
+        <a href="/2013/01/async-oop-1-inheritance-and-interfaces.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jan 10, 2013</small></h2><h2>Async OOP 1: Inheritance and Interfaces</h2></a>
+        
+        <a href="/2013/01/async-oop-0-introduction.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jan 3, 2013</small></h2><h2>Async OOP 0: Introduction</h2></a>
+        
+        <a href="/2012/12/async-producer-consumer-queue-3-more.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Dec 27, 2012</small></h2><h2>Async Producer-Consumer Queue 3: More Flexibility</h2></a>
+        
+        <a href="/2012/12/async-producer-consumer-queue-2-more.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Dec 20, 2012</small></h2><h2>Async Producer-Consumer Queue 2: More Portability</h2></a>
+        
+        <a href="/2012/12/returning-early-from-aspnet-requests.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Dec 13, 2012</small></h2><h2>Returning Early from ASP.NET Requests</h2></a>
+        
+        <a href="/2012/12/dont-block-in-asynchronous-code.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Dec 6, 2012</small></h2><h2>Don't Block in Asynchronous Code</h2></a>
+        
+        <a href="/2012/11/portable-class-library-enlightenment.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Nov 15, 2012</small></h2><h2>Portable Class Library Enlightenment / Adaptation</h2></a>
+        
+        <a href="/2012/11/async-producerconsumer-queue-using.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Nov 8, 2012</small></h2><h2>Async Producer/Consumer Queue using Dataflow</h2></a>
+        
+        <a href="/2012/11/and-im-back.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Nov 8, 2012</small></h2><h2>And I'm Back!</h2></a>
+        
+        <a href="/2012/10/introduction-to-dataflow-part-3.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Oct 4, 2012</small></h2><h2>Introduction to Dataflow, Part 3</h2></a>
+        
+        <a href="/2012/09/introduction-to-dataflow-part-2.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Sep 27, 2012</small></h2><h2>Introduction to Dataflow, Part 2</h2></a>
+        
+        <a href="/2012/09/introduction-to-dataflow-part-1.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Sep 20, 2012</small></h2><h2>Introduction to Dataflow, Part 1</h2></a>
+        
+        <a href="/2012/09/an-async-horror-story.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Sep 12, 2012</small></h2><h2>An Async Horror Story</h2></a>
+        
+        <a href="/2012/09/a-new-web-site.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Sep 10, 2012</small></h2><h2>A New Web Site</h2></a>
+        
+        <a href="/2012/08/async-coroutines.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Aug 30, 2012</small></h2><h2>Async Coroutines</h2></a>
+        
+        <a href="/2012/08/async-and-scheduled-concurrency.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Aug 23, 2012</small></h2><h2>Async and Scheduled Concurrency</h2></a>
+        
+        <a href="/2012/08/windows-8-boot-to-differencing-vhd.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Aug 16, 2012</small></h2><h2>Windows 8 Boot to Differencing VHD</h2></a>
+        
+        <a href="/2012/08/asynchronous-lazy-initialization.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Aug 16, 2012</small></h2><h2>Asynchronous Lazy Initialization</h2></a>
+        
+        <a href="/2012/08/async-doesnt-change-http-protocol.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Aug 9, 2012</small></h2><h2>Async Doesn't Change the HTTP Protocol</h2></a>
+        
+        <a href="/2012/08/async-wcf-today-and-tomorrow.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Aug 2, 2012</small></h2><h2>Async WCF Today and Tomorrow</h2></a>
+        
+        <a href="/2012/07/async-interop-with-iasyncresult.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jul 26, 2012</small></h2><h2>Async Interop with IAsyncResult</h2></a>
+        
+        <a href="/2012/07/thread-is-dead.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jul 19, 2012</small></h2><h2>Thread is Dead</h2></a>
+        
+        <a href="/2012/07/dont-block-on-async-code.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jul 12, 2012</small></h2><h2>Don't Block on Async Code</h2></a>
+        
+        <a href="/2012/06/arraysegments-library-available.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jun 21, 2012</small></h2><h2>ArraySegments Library Available</h2></a>
+        
+        <a href="/2012/05/framework-profiles-in-net.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 17, 2012</small></h2><h2>Framework Profiles in .NET</h2></a>
+        
+        <a href="/2012/02/thinking-about-async-tasks.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Feb 23, 2012</small></h2><h2>Thinking about Async Tasks</h2></a>
+        
+        <a href="/2012/02/reporting-progress-from-async-tasks.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Feb 16, 2012</small></h2><h2>Reporting Progress from Async Tasks</h2></a>
+        
+        <a href="/2012/02/creating-tasks.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Feb 9, 2012</small></h2><h2>Creating Tasks</h2></a>
+        
+        <a href="/2012/02/async-unit-tests-part-2-right-way.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Feb 7, 2012</small></h2><h2>Async Unit Tests, Part 2: The Right Way</h2></a>
+        
+        <a href="/2012/02/async-unit-tests-part-1-wrong-way.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Feb 6, 2012</small></h2><h2>Async Unit Tests, Part 1: The Wrong Way</h2></a>
+        
+        <a href="/2012/02/async-console-programs.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Feb 3, 2012</small></h2><h2>Async Console Programs</h2></a>
+        
+        <a href="/2012/02/async-and-await.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Feb 2, 2012</small></h2><h2>Async and Await</h2></a>
+        
+        <a href="/2011/12/out-for-bit.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Dec 1, 2011</small></h2><h2>Out for a Bit</h2></a>
+        
+        <a href="/2011/11/virtualizing-two-machines-over.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Nov 26, 2011</small></h2><h2>Virtualizing Two Machines over Thanksgiving</h2></a>
+        
+        <a href="/2011/10/option-parsing-case-sensitivity.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Oct 13, 2011</small></h2><h2>Option Parsing: Case Sensitivity</h2></a>
+        
+        <a href="/2011/10/option-parsing-positional-arguments.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Oct 6, 2011</small></h2><h2>Option Parsing: Positional Arguments</h2></a>
+        
+        <a href="/2011/09/nitoasyncex-available.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Sep 9, 2011</small></h2><h2>Nito.AsyncEx Available</h2></a>
+        
+        <a href="/2011/09/async-ctp-why-do-keywords-work-that-way.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Sep 1, 2011</small></h2><h2>The Async CTP "Why Do the Keywords Work THAT Way" Unofficial FAQ</h2></a>
+        
+        <a href="/2011/08/option-parsing-validation.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Aug 25, 2011</small></h2><h2>Option Parsing: Validation</h2></a>
+        
+        <a href="/2011/08/option-parsing-boolean-options.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Aug 18, 2011</small></h2><h2>Option Parsing: Boolean Options</h2></a>
+        
+        <a href="/2011/08/option-parsing-argument-parsing.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Aug 11, 2011</small></h2><h2>Option Parsing: Argument Parsing</h2></a>
+        
+        <a href="/2011/08/option-parsing-preventing-multiple.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Aug 4, 2011</small></h2><h2>Option Parsing: Preventing Multiple Argument Values</h2></a>
+        
+        <a href="/2011/07/option-parsing-allowing-multiple.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jul 28, 2011</small></h2><h2>Option Parsing: Allowing Multiple Argument Values</h2></a>
+        
+        <a href="/2011/07/systemthreadingtimer-constructor-and.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jul 21, 2011</small></h2><h2>System.Threading.Timer Constructor and Garbage Collection</h2></a>
+        
+        <a href="/2011/07/option-parsing-options-with-optional.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jul 14, 2011</small></h2><h2>Option Parsing: Options with Optional Arguments</h2></a>
+        
+        <a href="/2011/07/option-parsing-default-and-nullable.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jul 7, 2011</small></h2><h2>Option Parsing: Default and Nullable Argument Values</h2></a>
+        
+        <a href="/2011/06/option-parsing-option-names.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jun 30, 2011</small></h2><h2>Option Parsing: Option Names</h2></a>
+        
+        <a href="/2011/06/option-parsing-error-handling.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jun 23, 2011</small></h2><h2>Option Parsing: Error Handling</h2></a>
+        
+        <a href="/2011/06/option-parsing-lexing.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jun 16, 2011</small></h2><h2>Option Parsing: Lexing</h2></a>
+        
+        <a href="/2011/06/option-parsing-option-parsing-pipeline.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jun 9, 2011</small></h2><h2>Option Parsing: The Option Parsing Pipeline</h2></a>
+        
+        <a href="/2011/06/how-to-run-processes-remotely.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jun 2, 2011</small></h2><h2>How to Run Processes Remotely</h2></a>
+        
+        <a href="/2011/05/getting-objectcontext-from-entityobject.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 26, 2011</small></h2><h2>Getting the ObjectContext from an EntityObject</h2></a>
+        
+        <a href="/2011/05/signed-and-unsigned-comparisons-in-c-c.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 19, 2011</small></h2><h2>Signed and Unsigned Comparisons in C, C#, and T-SQL</h2></a>
+        
+        <a href="/2011/05/managed-services-and-uis.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 12, 2011</small></h2><h2>Managed Services and UIs</h2></a>
+        
+        <a href="/2011/05/simple-and-easy-entity-framework-sql.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 5, 2011</small></h2><h2>Simple and Easy Entity Framework SQL Tracing</h2></a>
+        
+        <a href="/2011/04/unmanaged-blocking.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Apr 28, 2011</small></h2><h2>Unmanaged Blocking</h2></a>
+        
+        <a href="/2011/04/nuget-no-longer-supports-code-contracts.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Apr 26, 2011</small></h2><h2>NuGet No Longer Supports Code Contracts</h2></a>
+        
+        <a href="/2011/03/exception-types.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Mar 28, 2011</small></h2><h2>Exception Types</h2></a>
+        
+        <a href="/2011/03/border-case-of-abs.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Mar 24, 2011</small></h2><h2>The Border Case of Abs</h2></a>
+        
+        <a href="/2011/02/synchronizationcontext-odds-and-ends.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Feb 20, 2011</small></h2><h2>SynchronizationContext Odds and Ends</h2></a>
+        
+        <a href="/2011/02/option-parsing-introduction.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Feb 11, 2011</small></h2><h2>Option Parsing: Introduction</h2></a>
+        
+        <a href="/2011/02/nuget-packages-for-nitokitchensink.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Feb 3, 2011</small></h2><h2>NuGet Packages for Nito.KitchenSink</h2></a>
+        
+        <a href="/2011/02/msdn-article-on-synchronizationcontext.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Feb 1, 2011</small></h2><h2>MSDN Article on SynchronizationContext Published</h2></a>
+        
+        <a href="/2011/01/new-library-connectedproperties.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jan 21, 2011</small></h2><h2>New Library: ConnectedProperties</h2></a>
+        
+        <a href="/2011/01/simple-and-easy-code-contracts.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jan 19, 2011</small></h2><h2>Simple and Easy Code Contracts</h2></a>
+        
+        <a href="/2011/01/sharp-corner-reference-types-value.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jan 14, 2011</small></h2><h2>Sharp Corner: Reference Types, Value Types, and Weirdos</h2></a>
+        
+        <a href="/2010/12/simple-and-easy-tracing-in-net.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Dec 30, 2010</small></h2><h2>Simple and Easy Tracing in .NET</h2></a>
+        
+        <a href="/2010/12/on-lighter-note-wii-me.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Dec 24, 2010</small></h2><h2>On a Lighter Note: "Wii Me"?</h2></a>
+        
+        <a href="/2010/12/conditionalweaktable.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Dec 21, 2010</small></h2><h2>ConditionalWeakTable</h2></a>
+        
+        <a href="/2010/11/its-girl.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Nov 20, 2010</small></h2><h2>It's a Girl!</h2></a>
+        
+        <a href="/2010/11/few-words-on-guids.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Nov 16, 2010</small></h2><h2>A Few Words on GUIDs</h2></a>
+        
+        <a href="/2010/10/grand-rapids-day-of-dotnet-slides.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Oct 23, 2010</small></h2><h2>Grand Rapids Day of DotNET Slides Available</h2></a>
+        
+        <a href="/2010/10/implementing-gccs-builtin-functions.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Oct 18, 2010</small></h2><h2>Implementing GCC's Builtin Functions</h2></a>
+        
+        <a href="/2010/10/firmware.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Oct 15, 2010</small></h2><h2>Firmware???</h2></a>
+        
+        <a href="/2010/09/using-ilmerge-with-net-40-andor-rx.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Sep 16, 2010</small></h2><h2>Using ILMerge with .NET 4.0 and/or Rx</h2></a>
+        
+        <a href="/2010/08/various-implementations-of-asynchronous.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Aug 16, 2010</small></h2><h2>Various Implementations of Asynchronous Background Tasks</h2></a>
+        
+        <a href="/2010/08/using-rx-for-stream-encoding-and.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Aug 5, 2010</small></h2><h2>Using Rx for Stream Encoding and Decoding</h2></a>
+        
+        <a href="/2010/08/reminder-about-asynchronous-filestreams.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Aug 2, 2010</small></h2><h2>A Reminder about Asynchronous FileStreams</h2></a>
+        
+        <a href="/2010/07/asynchronous-contexts-in-rx.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jul 31, 2010</small></h2><h2>Asynchronous Contexts in Rx</h2></a>
+        
+        <a href="/2010/07/resharper-and-obscure-cts-corner-case.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jul 16, 2010</small></h2><h2>ReSharper and the Obscure CTS Corner Case</h2></a>
+        
+        <a href="/2010/06/on-lighter-note-socketflagsmaxiovectorl.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jun 25, 2010</small></h2><h2>On A Lighter Note: SocketFlags.MaxIOVectorLength</h2></a>
+        
+        <a href="/2010/06/sqlite-and-entity-framework-4.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jun 21, 2010</small></h2><h2>SQLite and Entity Framework 4</h2></a>
+        
+        <a href="/2010/06/reporting-progress-from-tasks.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jun 18, 2010</small></h2><h2>Reporting Progress from Tasks</h2></a>
+        
+        <a href="/2010/06/transactionscope-has-default-timeout.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jun 2, 2010</small></h2><h2>TransactionScope Has a Default Timeout</h2></a>
+        
+        <a href="/2010/05/russian-translation-of-implementing.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 1, 2010</small></h2><h2>Russian Translation of "Implementing IDisposable and Finalizers: 3 Simple Rules"</h2></a>
+        
+        <a href="/2010/05/ms-bug-mvcbuildviews-with-one-click.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 1, 2010</small></h2><h2>MS Bug: MvcBuildViews with One-Click Publish</h2></a>
+        
+        <a href="/2010/04/dynamically-binding-to-static-class.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Apr 30, 2010</small></h2><h2>Dynamically Binding to Static (Class-Scoped) Members</h2></a>
+        
+        <a href="/2010/04/innovations-are-great-but-content-is.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Apr 26, 2010</small></h2><h2>Innovations Are Great, but Content Is Necessary</h2></a>
+        
+        <a href="/2010/04/generic-methods-with-dynamic.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Apr 23, 2010</small></h2><h2>Generic Methods with Dynamic Implementations</h2></a>
+        
+        <a href="/2010/04/svn-source-indexing-to-codeplex.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Apr 19, 2010</small></h2><h2>SVN Source Indexing to CodePlex</h2></a>
+        
+        <a href="/2010/04/declarative-programming-languages.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Apr 15, 2010</small></h2><h2>Declarative Programming Languages</h2></a>
+        
+        <a href="/2010/04/vs2010-without-web-deployment-projects.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Apr 13, 2010</small></h2><h2>VS2010 Without Web Deployment Projects</h2></a>
+        
+        <a href="/2010/04/vs2010-webdeploy-and-vs2010-web.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Apr 13, 2010</small></h2><h2>VS2010 WebDeploy and VS2010 Web Deployment Projects Beta 1</h2></a>
+        
+        <a href="/2010/04/t4-almost-complete.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Apr 13, 2010</small></h2><h2>T4: Almost Complete</h2></a>
+        
+        <a href="/2010/04/sharp-corners-ilist-isreadonly.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Apr 6, 2010</small></h2><h2>Sharp Corners: IList<T>.IsReadOnly != IList.IsReadOnly</h2></a>
+        
+        <a href="/2010/03/xmldocs-linking-to-overloads-page.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Mar 27, 2010</small></h2><h2>XmlDocs: Linking to the Overloads Page</h2></a>
+        
+        <a href="/2010/03/xml-documentation-basics.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Mar 27, 2010</small></h2><h2>XML Documentation: The Basics</h2></a>
+        
+        <a href="/2010/03/inheritance-in-general-and-deriving.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Mar 20, 2010</small></h2><h2>Inheritance in General, and Deriving from HashAlgorithm in Particular</h2></a>
+        
+        <a href="/2010/03/io-limitation-in-windows.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Mar 17, 2010</small></h2><h2>I/O Limitation in Windows</h2></a>
+        
+        <a href="/2010/03/sharp-corner-value-types-are-never.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Mar 14, 2010</small></h2><h2>Sharp Corner: Value Types Are Never Reference-Equal</h2></a>
+        
+        <a href="/2010/03/introducing-sharp-corners.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Mar 13, 2010</small></h2><h2>Introducing Sharp Corners</h2></a>
+        
+        <a href="/2010/02/crazy-saturday.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Feb 23, 2010</small></h2><h2>Crazy Saturday</h2></a>
+        
+        <a href="/2010/02/q-should-i-set-variables-to-null-to.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Feb 17, 2010</small></h2><h2>Q&A: Should I Set Variables to Null to Assist Garbage Collection?</h2></a>
+        
+        <a href="/2010/02/interop-multidimensional-arrays-of.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Feb 16, 2010</small></h2><h2>Interop: Multidimensional Arrays of Characters in a Structure</h2></a>
+        
+        <a href="/2010/02/how-to-implement-idisposable-and.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Feb 16, 2010</small></h2><h2>How to Implement IDisposable and Finalizers: Matrix and Flowchart</h2></a>
+        
+        <a href="/2010/02/evolution-of-framework-design.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Feb 15, 2010</small></h2><h2>Evolution of Framework Design Guidelines?</h2></a>
+        
+        <a href="/2010/02/aspnet-slides-available.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Feb 15, 2010</small></h2><h2>ASP.NET Slides Available</h2></a>
+        
+        <a href="/2010/02/nitoassimilation-assembly-manipulator.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Feb 6, 2010</small></h2><h2>Nito.Assimilation - the Assembly Manipulator</h2></a>
+        
+        <a href="/2010/02/jquery-hosted-on-googles-cdn-with.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Feb 1, 2010</small></h2><h2>jQuery hosted on Google's CDN with IntelliSense</h2></a>
+        
+        <a href="/2010/02/cross-browser-silverlight.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Feb 1, 2010</small></h2><h2>Cross-browser Silverlight</h2></a>
+        
+        <a href="/2010/01/aspnet-mvc-faking-web-services.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jan 18, 2010</small></h2><h2>ASP.NET MVC Faking Web Services</h2></a>
+        
+        <a href="/2010/01/extension-based-types.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jan 5, 2010</small></h2><h2>Extension-Based Types</h2></a>
+        
+        <a href="/2010/01/view-of-2010.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jan 2, 2010</small></h2><h2>View of 2010</h2></a>
+        
+        <a href="/2010/01/best-computer-programming-book-ever.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jan 2, 2010</small></h2><h2>Best Computer Programming Book Ever</h2></a>
+        
+        <a href="/2009/12/preannouncement-of-nitolinq.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Dec 18, 2009</small></h2><h2>(Pre)Announcement of Nito.Linq!</h2></a>
+        
+        <a href="/2009/12/slides-from-nmnug-available.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Dec 3, 2009</small></h2><h2>Slides from nmNUG Available</h2></a>
+        
+        <a href="/2009/11/rx-release-brings-nice-surprises.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Nov 28, 2009</small></h2><h2>Rx Release Brings Nice Surprises!</h2></a>
+        
+        <a href="/2009/11/unit-testing-without-design-suicide.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Nov 18, 2009</small></h2><h2>Unit Testing Without Design Suicide</h2></a>
+        
+        <a href="/2009/11/generic-generics-and-method-overloads.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Nov 18, 2009</small></h2><h2>Generic Generics and Method Overloads</h2></a>
+        
+        <a href="/2009/11/icollection-isreadonly-and-arrays.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Nov 17, 2009</small></h2><h2>ICollection.IsReadOnly (and Arrays)</h2></a>
+        
+        <a href="/2009/11/reverse-compiling-windows-forms.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Nov 16, 2009</small></h2><h2>Reverse Compiling Windows Forms</h2></a>
+        
+        <a href="/2009/10/windows-services-and-network.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Oct 22, 2009</small></h2><h2>Windows Services and the Network</h2></a>
+        
+        <a href="/2009/10/managed-windows-services-basics.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Oct 21, 2009</small></h2><h2>Managed Windows Services - The Basics</h2></a>
+        
+        <a href="/2009/10/synchronizationcontext-properties.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Oct 20, 2009</small></h2><h2>SynchronizationContext Properties Summary</h2></a>
+        
+        <a href="/2009/10/dynamicexecute-now-official.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Oct 7, 2009</small></h2><h2>DynamicExecute Now Official</h2></a>
+        
+        <a href="/2009/10/threading-in-business-layer.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Oct 1, 2009</small></h2><h2>Threading in the Business Layer</h2></a>
+        
+        <a href="/2009/09/mcpd-achieved.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Sep 26, 2009</small></h2><h2>MCPD Achieved</h2></a>
+        
+        <a href="/2009/09/nitoasync-14-released.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Sep 22, 2009</small></h2><h2>Nito.Async 1.4 Released</h2></a>
+        
+        <a href="/2009/09/another-synchronizationcontext-gotcha.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Sep 22, 2009</small></h2><h2>Another SynchronizationContext Gotcha: InvokeRequired?</h2></a>
+        
+        <a href="/2009/09/minor-improvements-for-language-design.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Sep 21, 2009</small></h2><h2>Minor Improvements for Language Design</h2></a>
+        
+        <a href="/2009/09/if-pusleevent-is-broken-what-about.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Sep 18, 2009</small></h2><h2>If PusleEvent is broken, what about Monitor.Pulse?</h2></a>
+        
+        <a href="/2009/09/iasyncresultasyncwaithandle-and.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Sep 16, 2009</small></h2><h2>IAsyncResult.AsyncWaitHandle and ThreadPool.RegisterWaitForSingleObject</h2></a>
+        
+        <a href="/2009/09/preventing-undesired-side-effects-in.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Sep 14, 2009</small></h2><h2>Preventing Undesired Side-Effects in Enumerators</h2></a>
+        
+        <a href="/2009/09/on-lighter-note-infinite-visual-studio.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Sep 14, 2009</small></h2><h2>On a Lighter Note: Infinite Visual Studio Error</h2></a>
+        
+        <a href="/2009/09/70-536-in-bag.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Sep 12, 2009</small></h2><h2>70-536 In the Bag</h2></a>
+        
+        <a href="/2009/09/notes-from-rx-talk.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Sep 3, 2009</small></h2><h2>Notes from the Rx talk</h2></a>
+        
+        <a href="/2009/09/naming-unit-tests.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Sep 1, 2009</small></h2><h2>Naming Unit Tests</h2></a>
+        
+        <a href="/2009/08/q-is-call-to-gckeepalivethis-required.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Aug 28, 2009</small></h2><h2>Q&A: Is a call to GC.KeepAlive(this) required in Dispose?</h2></a>
+        
+        <a href="/2009/08/q-if-dispose-calls-suppressfinalize-is.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Aug 28, 2009</small></h2><h2>Q&A: If Dispose calls SuppressFinalize, is KeepAlive required?</h2></a>
+        
+        <a href="/2009/08/q-can-gcsuppressfinalizethis-be-called.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Aug 28, 2009</small></h2><h2>Q&A: Can GC.SuppressFinalize(this) be called at any time?</h2></a>
+        
+        <a href="/2009/08/third-rule-of-implementing-idisposable.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Aug 27, 2009</small></h2><h2>The Third Rule of Implementing IDisposable and Finalizers</h2></a>
+        
+        <a href="/2009/08/second-rule-of-implementing-idisposable.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Aug 27, 2009</small></h2><h2>The Second Rule of Implementing IDisposable and Finalizers</h2></a>
+        
+        <a href="/2009/08/how-to-implement-idisposable-and.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Aug 27, 2009</small></h2><h2>How to Implement IDisposable and Finalizers: 3 Easy Rules</h2></a>
+        
+        <a href="/2009/08/first-rule-of-implementing-idisposable.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Aug 27, 2009</small></h2><h2>The First Rule of Implementing IDisposable and Finalizers</h2></a>
+        
+        <a href="/2009/08/finalizers-at-process-exit.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Aug 27, 2009</small></h2><h2>Finalizers at Process Exit</h2></a>
+        
+        <a href="/2009/08/where-has-steve-been.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Aug 20, 2009</small></h2><h2>Where Has Steve Been?</h2></a>
+        
+        <a href="/2009/08/barcampgr4-slides-available.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Aug 20, 2009</small></h2><h2>BarCampGR4 Slides Available</h2></a>
+        
+        <a href="/2009/08/alternative-guids-for-mobile-devices.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Aug 17, 2009</small></h2><h2>Alternative GUIDs for mobile devices using SQL Server Compact</h2></a>
+        
+        <a href="/2009/08/gotchas-from-synchronizationcontext.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Aug 14, 2009</small></h2><h2>Gotchas from SynchronizationContext!</h2></a>
+        
+        <a href="/2009/07/this-post-illustrates-one-of-several.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jul 28, 2009</small></h2><h2>SimplePropertyPath: A Poor Man's Binding</h2></a>
+        
+        <a href="/2009/07/first-codeproject-article-on-nitomvvm.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jul 21, 2009</small></h2><h2>First CodeProject Article on Nito.MVVM</h2></a>
+        
+        <a href="/2009/07/interpreting-notifycollectionchangedeve.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jul 16, 2009</small></h2><h2>Interpreting NotifyCollectionChangedEventArgs</h2></a>
+        
+        <a href="/2009/07/nitoweakreference-and.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jul 10, 2009</small></h2><h2>Nito.WeakReference and Nito.WeakCollection</h2></a>
+        
+        <a href="/2009/07/xml-over-tcpip.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jul 1, 2009</small></h2><h2>XML over TCP/IP</h2></a>
+        
+        <a href="/2009/06/application-protocol-specifications.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jun 30, 2009</small></h2><h2>Application Protocol Specifications</h2></a>
+        
+        <a href="/2009/06/threadsafe-events.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jun 19, 2009</small></h2><h2>Threadsafe Events</h2></a>
+        
+        <a href="/2009/06/using-socket-as-connected-socket.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jun 13, 2009</small></h2><h2>Using Socket as a Connected Socket</h2></a>
+        
+        <a href="/2009/06/msbuildextensionpack-accepts.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jun 12, 2009</small></h2><h2>MSBuild.ExtensionPack Accepts DynamicExecute Task</h2></a>
+        
+        <a href="/2009/06/msbuild-real-world-recursive.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jun 2, 2009</small></h2><h2>MSBuild: A Real-World Recursive Application</h2></a>
+        
+        <a href="/2009/05/msbuild-itemgroup-metadata-inversion.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 28, 2009</small></h2><h2>MSBuild: ItemGroup Metadata Inversion</h2></a>
+        
+        <a href="/2009/05/msbuild-factorial.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 28, 2009</small></h2><h2>MSBuild: Factorial!</h2></a>
+        
+        <a href="/2009/05/using-socket-as-server-listening-socket.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 27, 2009</small></h2><h2>Using Socket as a Server (Listening) Socket</h2></a>
+        
+        <a href="/2009/05/msbuild-filtering-itemgroup-based-on.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 27, 2009</small></h2><h2>MSBuild: Filtering an ItemGroup based on a Property</h2></a>
+        
+        <a href="/2009/05/using-socket-as-client-socket.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 23, 2009</small></h2><h2>Using Socket as a Client Socket</h2></a>
+        
+        <a href="/2009/05/on-lighter-note-airport-error.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 23, 2009</small></h2><h2>On a Lighter Note: Airport Error</h2></a>
+        
+        <a href="/2009/05/ini-file-reader-in-c.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 23, 2009</small></h2><h2>INI File Reader in C#</h2></a>
+        
+        <a href="/2009/05/wix-version-lying-take-two.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 18, 2009</small></h2><h2>WiX Version Lying, Take Two</h2></a>
+        
+        <a href="/2009/05/on-lighter-note-internet-explorer-msdn.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 18, 2009</small></h2><h2>On a Lighter Note: Internet Explorer / MSDN Forums Error Message</h2></a>
+        
+        <a href="/2009/05/getting-local-ip-addresses.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 18, 2009</small></h2><h2>Sample Code: Getting the Local IP Addresses</h2></a>
+        
+        <a href="/2009/05/getting-local-ip-address.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 18, 2009</small></h2><h2>Getting the Local IP Address</h2></a>
+        
+        <a href="/2009/05/on-lighter-note-interesting-message-in.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 16, 2009</small></h2><h2>On a Lighter Note: Interesting Message in AutoChk</h2></a>
+        
+        <a href="/2009/05/detection-of-half-open-dropped.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 16, 2009</small></h2><h2>Detection of Half-Open (Dropped) Connections</h2></a>
+        
+        <a href="/2009/05/error-handling.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 14, 2009</small></h2><h2>Error Handling</h2></a>
+        
+        <a href="/2009/05/dealing-with-wix-data-files.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 12, 2009</small></h2><h2>Dealing with WiX data files</h2></a>
+        
+        <a href="/2009/05/socket-operations.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 5, 2009</small></h2><h2>Socket Operations</h2></a>
+        
+        <a href="/2009/05/tcpip-resources.html" class="list-group-item clearfix"><h2 class="pull-right"><small>May 4, 2009</small></h2><h2>TCP/IP Resources</h2></a>
+        
+        <a href="/2009/04/tcpip-net-sockets-faq.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Apr 30, 2009</small></h2><h2>TCP/IP .NET Sockets FAQ</h2></a>
+        
+        <a href="/2009/04/sample-code-length-prefix-message.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Apr 30, 2009</small></h2><h2>Sample code: Length-prefix message framing for streams</h2></a>
+        
+        <a href="/2009/04/message-framing.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Apr 30, 2009</small></h2><h2>Message Framing</h2></a>
+        
+        <a href="/2009/04/asynchronous-callback-contexts.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Apr 24, 2009</small></h2><h2>Asynchronous Callback Contexts</h2></a>
+        
+        <a href="/2009/01/announcing-release-of-nitoasync.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jan 24, 2009</small></h2><h2>Announcing the release of Nito.Async</h2></a>
+        
+        <a href="/2008/09/idisposable-article-published.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Sep 21, 2008</small></h2><h2>IDisposable article published</h2></a>
+        
+        <a href="/2008/09/openssl-098i-binaries.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Sep 16, 2008</small></h2><h2>OpenSSL 0.9.8i Binaries</h2></a>
+        
+        <a href="/2008/07/interop-documentation-pointers.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jul 24, 2008</small></h2><h2>Interop documentation pointers</h2></a>
+        
+        <a href="/2008/07/software-only-device-drivers-whats-in.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jul 11, 2008</small></h2><h2>Software-only device drivers: What's in a name?</h2></a>
+        
+        <a href="/2008/07/soyo-widescreen-monitor-inf-available.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jul 8, 2008</small></h2><h2>Soyo widescreen monitor inf available</h2></a>
+        
+        <a href="/2008/07/free-ioctl-decoder.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jul 3, 2008</small></h2><h2>Free IOCTL Decoder</h2></a>
+        
+        <a href="/2008/06/interop-on-64-bit-platforms.html" class="list-group-item clearfix"><h2 class="pull-right"><small>Jun 20, 2008</small></h2><h2>Dynamically loading 32-bit or 64-bit code from a platform-agnostic executable</h2></a>
+        
+    </div>
+    
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "index";
+var disqus_title = "Stephen Cleary (the blog)";
+var disqus_url = "http://localhost:4000/";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

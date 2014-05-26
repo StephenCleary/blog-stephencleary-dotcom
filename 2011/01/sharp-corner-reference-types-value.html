@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Sharp Corner: Reference Types, Value Types, and Weirdos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2011/01/sharp-corner-reference-types-value.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Sharp Corner: Reference Types, Value Types, and Weirdos</h1>
+          <small>Jan 14, 2011 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>This week I was writing some code that had to respond differently depending on whether a generic argument was a <em>reference type</em> or a <em>value type</em>. This was bit complex, since “reference type” and “value type” do not have very specific meanings - which was actually a good thing because it forced me to consider <em>exactly</em> what my code requirements were, and it turned out that I was using just slightly different meanings of “reference type” in different places.</p>
+
+<p>During this exploration, I developed a few tests to evaluate the type system (code at the end of this post). The results are summarized below, along with some of my thoughts on the weirdos (types which are sort-of reference and sort-of value, depending on your definition of “reference” and “value”).</p>
+
+<p>One way of defining a “reference type” is whether <a href="http://msdn.microsoft.com/en-us/library/system.type.isclass.aspx">Type.IsClass</a> is true; another way of defining a “reference type” is whether it satisfies a <a href="http://msdn.microsoft.com/en-us/library/d5x73970.aspx">generic class constraint</a> (e.g., <em>void Test&lt;T&gt;() where T : class</em>). Likewise, value types have <a href="http://msdn.microsoft.com/en-us/library/system.type.isvaluetype.aspx">Type.IsValueType</a> and generic struct constraints.</p>
+
+<p>The table below includes tests on a variety of types, grouped into “mostly reference types” and “mostly value types”. The types that are more clearly reference/value types are at the top of each group, with the weirdos at the bottom.</p>
+
+<div class="panel panel-default">
+
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Category</th>
+        <th>Example Type</th>
+        <th>IsClass</th>
+        <th>Satisfies class Constraint</th>
+        <th>IsValueType</th>
+        <th>Satisfies struct Constraint</th>
+        <th>Satisfies Without Constraints</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Classes</td>
+        <td>class Class {}</td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+      </tr>
+      <tr>
+        <td>Arrays</td>
+        <td>int[]</td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+      </tr>
+      <tr>
+        <td>Delegates</td>
+        <td>delegate void DelegateT();</td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+      </tr>
+      <tr>
+        <td>Interfaces</td>
+        <td>interface Interface {}</td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+      </tr>
+      <tr>
+        <td>Pointers</td>
+        <td>int*</td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+      </tr>
+    </tbody>
+    <tbody>
+      <tr>
+        <td>Value types</td>
+        <td>int</td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+      </tr>
+      <tr>
+        <td>Enumerations</td>
+        <td>enum EnumT {}</td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+      </tr>
+      <tr>
+        <td>Nullable value types</td>
+        <td>int?</td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+      </tr>
+      <tr>
+        <td>Void</td>
+        <td>void</td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+
+<h2 id="interfaces-are-a-bit-weird">Interfaces are a Bit Weird</h2>
+
+<p>Interfaces return false for both <strong>IsClass</strong> and <strong>IsValueType</strong>. This makes sense, since either reference types or value types may inherit from an interface. However, interface variables may be declared and act like reference types (boxing value types as necessary), so interfaces do satisfy generic <strong>class</strong> constraints.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>Take-home point: If <strong>IsClass</strong> is false but <strong>IsInterface</strong> is true, the type will still satisfy a generic <strong>class</strong> constraint.</p>
+</div>
+
+<h2 id="nullable-value-types-are-a-bit-weird">Nullable Value Types are a Bit Weird</h2>
+
+<p>Nullable types return true for <strong>IsValueType</strong>, but do not satisfy generic <strong>struct</strong> constraints (nor <strong>class</strong> constraints). They can only be used as generic parameters without <strong>class</strong> or <strong>struct</strong> constraints.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>Take-home point: Nullable types <strong>(type.IsGenericType &amp;&amp; type.GetGenericTypeDefinition() == typeof(Nullable&lt;&gt;))</strong> will not satisfy a generic <strong>struct</strong> constraint, even though <strong>IsValueType</strong> is true.</p>
+</div>
+
+<h2 id="pointers-are-definitely-weird">Pointers are Definitely Weird</h2>
+
+<p>To be honest, I don’t know <a href="http://stackoverflow.com/questions/3317587/why-are-pointers-reference-types">why IsClass is true for pointers</a> (the spec says they are, but without any reason given). They act exactly like value types, and they can’t satisfy a generic <strong>class</strong> constraint. In fact, they can’t be used as any kind of generic argument. This makes pointer types a corner case: they only have to be dealt with if the user is passing a Type instance rather than a generic type argument.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>Take-home point: If <strong>IsPointer</strong> is true, then the type cannot be used as a generic type parameter at all (and therefore cannot satisfy a <strong>class</strong> constraint, even though <strong>IsClass</strong> is true).</p>
+</div>
+
+<h2 id="void-is-definitely-weird">Void is Definitely Weird</h2>
+
+<p>Void claims to be a value type (<strong>IsValueType</strong> is true) - which sort of makes sense, if we think of it as a value type that cannot have a value - but it cannot satisfy a <strong>struct</strong> constraint. In fact, like pointers, <strong>void</strong> cannot be used as a generic type argument at all. This makes <strong>void</strong> another corner case: they only have to be dealt with if the user is passing a Type instance rather than a generic type argument.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>Take-home point: The <strong>void</strong> type <strong>(type == typeof(void))</strong> cannot be used as a generic type parameter at all (and therefore cannot satisfy a <strong>struct</strong> constraint, even though <strong>IsValueType</strong> is true).</p>
+</div>
+
+<h2 id="test-code">Test Code</h2>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Text</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Collections.Generic</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Linq</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">Microsoft.VisualStudio.TestTools.UnitTesting</span><span class="p">;</span>
+
+<span class="k">namespace</span> <span class="nn">TypeSystemTests</span>
+<span class="p">{</span>
+    <span class="k">internal</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">TypeEx</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="n">NoConstraint</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;()</span> <span class="p">{</span> <span class="p">}</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="n">StructConstraint</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;()</span> <span class="k">where</span> <span class="n">T</span> <span class="p">:</span> <span class="k">struct</span> <span class="err">{ }</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="n">ClassConstraint</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;()</span> <span class="k">where</span> <span class="n">T</span> <span class="p">:</span> <span class="k">class</span> <span class="err">{ }</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">CanBeUsedAsGenericParameter</span><span class="p">(</span><span class="k">this</span> <span class="n">Type</span> <span class="n">type</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">try</span>
+            <span class="p">{</span>
+                <span class="k">typeof</span><span class="p">(</span><span class="n">TypeEx</span><span class="p">).</span><span class="n">GetMethod</span><span class="p">(</span><span class="s">&quot;NoConstraint&quot;</span><span class="p">).</span><span class="n">MakeGenericMethod</span><span class="p">(</span><span class="n">type</span><span class="p">).</span><span class="n">Invoke</span><span class="p">(</span><span class="k">null</span><span class="p">,</span> <span class="k">null</span><span class="p">);</span>
+                <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="k">catch</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">SatisfiesGenericStructConstraint</span><span class="p">(</span><span class="k">this</span> <span class="n">Type</span> <span class="n">type</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">try</span>
+            <span class="p">{</span>
+                <span class="k">typeof</span><span class="p">(</span><span class="n">TypeEx</span><span class="p">).</span><span class="n">GetMethod</span><span class="p">(</span><span class="s">&quot;StructConstraint&quot;</span><span class="p">).</span><span class="n">MakeGenericMethod</span><span class="p">(</span><span class="n">type</span><span class="p">).</span><span class="n">Invoke</span><span class="p">(</span><span class="k">null</span><span class="p">,</span> <span class="k">null</span><span class="p">);</span>
+                <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="k">catch</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">SatisfiesGenericClassConstraint</span><span class="p">(</span><span class="k">this</span> <span class="n">Type</span> <span class="n">type</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">try</span>
+            <span class="p">{</span>
+                <span class="k">typeof</span><span class="p">(</span><span class="n">TypeEx</span><span class="p">).</span><span class="n">GetMethod</span><span class="p">(</span><span class="s">&quot;ClassConstraint&quot;</span><span class="p">).</span><span class="n">MakeGenericMethod</span><span class="p">(</span><span class="n">type</span><span class="p">).</span><span class="n">Invoke</span><span class="p">(</span><span class="k">null</span><span class="p">,</span> <span class="k">null</span><span class="p">);</span>
+                <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="k">catch</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">IsVoid</span><span class="p">(</span><span class="k">this</span> <span class="n">Type</span> <span class="n">type</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">type</span> <span class="p">==</span> <span class="k">typeof</span><span class="p">(</span><span class="k">void</span><span class="p">));</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">IsNullable</span><span class="p">(</span><span class="k">this</span> <span class="n">Type</span> <span class="n">type</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsGenericType</span> <span class="p">&amp;&amp;</span> <span class="n">type</span><span class="p">.</span><span class="n">GetGenericTypeDefinition</span><span class="p">()</span> <span class="p">==</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Nullable</span><span class="p">&lt;&gt;));</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+<span class="na">    [TestClass]</span>
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">UnitTests</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">class</span> <span class="nc">Class</span> <span class="p">{</span> <span class="p">}</span>
+<span class="na">        [TestMethod]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Classes</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">type</span> <span class="p">=</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Class</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsClass</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">SatisfiesGenericClassConstraint</span><span class="p">());</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsValueType</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">SatisfiesGenericStructConstraint</span><span class="p">());</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">CanBeUsedAsGenericParameter</span><span class="p">());</span>
+
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsArray</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsEnum</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsInterface</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsPointer</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsVoid</span><span class="p">());</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsNullable</span><span class="p">());</span>
+        <span class="p">}</span>
+
+<span class="na">        [TestMethod]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Arrays</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">type</span> <span class="p">=</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">int</span><span class="p">[]);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsClass</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">SatisfiesGenericClassConstraint</span><span class="p">());</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsValueType</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">SatisfiesGenericStructConstraint</span><span class="p">());</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">CanBeUsedAsGenericParameter</span><span class="p">());</span>
+
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsArray</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsEnum</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsInterface</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsPointer</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsVoid</span><span class="p">());</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsNullable</span><span class="p">());</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">delegate</span> <span class="k">void</span> <span class="nf">DelegateT</span><span class="p">();</span>
+<span class="na">        [TestMethod]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Delegates</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">type</span> <span class="p">=</span> <span class="k">typeof</span><span class="p">(</span><span class="n">DelegateT</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsClass</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">SatisfiesGenericClassConstraint</span><span class="p">());</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsValueType</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">SatisfiesGenericStructConstraint</span><span class="p">());</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">CanBeUsedAsGenericParameter</span><span class="p">());</span>
+
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsArray</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsEnum</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsInterface</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsPointer</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsVoid</span><span class="p">());</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsNullable</span><span class="p">());</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">interface</span> <span class="n">Interface</span> <span class="p">{</span> <span class="p">}</span>
+<span class="na">        [TestMethod]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Interfaces</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">type</span> <span class="p">=</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Interface</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsClass</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">SatisfiesGenericClassConstraint</span><span class="p">());</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsValueType</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">SatisfiesGenericStructConstraint</span><span class="p">());</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">CanBeUsedAsGenericParameter</span><span class="p">());</span>
+
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsArray</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsEnum</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsInterface</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsPointer</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsVoid</span><span class="p">());</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsNullable</span><span class="p">());</span>
+        <span class="p">}</span>
+
+<span class="na">        [TestMethod]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Pointers</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">unsafe</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">type</span> <span class="p">=</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">int</span><span class="p">*);</span>
+                <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsClass</span><span class="p">);</span>
+                <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">SatisfiesGenericClassConstraint</span><span class="p">());</span>
+                <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsValueType</span><span class="p">);</span>
+                <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">SatisfiesGenericStructConstraint</span><span class="p">());</span>
+                <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">CanBeUsedAsGenericParameter</span><span class="p">());</span>
+
+                <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsArray</span><span class="p">);</span>
+                <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsEnum</span><span class="p">);</span>
+                <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsInterface</span><span class="p">);</span>
+                <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsPointer</span><span class="p">);</span>
+                <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsVoid</span><span class="p">());</span>
+                <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsNullable</span><span class="p">());</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+<span class="na">        [TestMethod]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">ValueTypes</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">type</span> <span class="p">=</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">int</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsClass</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">SatisfiesGenericClassConstraint</span><span class="p">());</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsValueType</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">SatisfiesGenericStructConstraint</span><span class="p">());</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">CanBeUsedAsGenericParameter</span><span class="p">());</span>
+
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsArray</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsEnum</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsInterface</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsPointer</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsVoid</span><span class="p">());</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsNullable</span><span class="p">());</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">enum</span> <span class="n">EnumT</span> <span class="p">{</span> <span class="p">}</span>
+<span class="na">        [TestMethod]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Enums</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">type</span> <span class="p">=</span> <span class="k">typeof</span><span class="p">(</span><span class="n">EnumT</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsClass</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">SatisfiesGenericClassConstraint</span><span class="p">());</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsValueType</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">SatisfiesGenericStructConstraint</span><span class="p">());</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">CanBeUsedAsGenericParameter</span><span class="p">());</span>
+
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsArray</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsEnum</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsInterface</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsPointer</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsVoid</span><span class="p">());</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsNullable</span><span class="p">());</span>
+        <span class="p">}</span>
+
+<span class="na">        [TestMethod]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">NullableValueTypes</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">type</span> <span class="p">=</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">int?</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsClass</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">SatisfiesGenericClassConstraint</span><span class="p">());</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsValueType</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">SatisfiesGenericStructConstraint</span><span class="p">());</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">CanBeUsedAsGenericParameter</span><span class="p">());</span>
+
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsArray</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsEnum</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsInterface</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsPointer</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsVoid</span><span class="p">());</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsNullable</span><span class="p">());</span>
+        <span class="p">}</span>
+
+<span class="na">        [TestMethod]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Void</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">type</span> <span class="p">=</span> <span class="k">typeof</span><span class="p">(</span><span class="k">void</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsClass</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">SatisfiesGenericClassConstraint</span><span class="p">());</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsValueType</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">SatisfiesGenericStructConstraint</span><span class="p">());</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">CanBeUsedAsGenericParameter</span><span class="p">());</span>
+
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsArray</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsEnum</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsInterface</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsPointer</span><span class="p">);</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsVoid</span><span class="p">());</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">IsNullable</span><span class="p">());</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+  </article>
+    
+    <footer>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2010/12/simple-and-easy-tracing-in-net.html" title="Simple and Easy Tracing in .NET">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2011/01/simple-and-easy-code-contracts.html" title="Simple and Easy Code Contracts">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2011/01/sharp-corner-reference-types-value";
+var disqus_title = "Sharp Corner: Reference Types, Value Types, and Weirdos";
+var disqus_url = "http://localhost:4000/2011/01/sharp-corner-reference-types-value.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

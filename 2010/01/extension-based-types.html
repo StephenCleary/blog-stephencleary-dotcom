@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Extension-Based Types</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2010/01/extension-based-types.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Extension-Based Types</h1>
+          <small>Jan 5, 2010 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>There’s a new paradign rising in .NET: <em>extension-based types (EBTs)</em>.</p>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>It’s an exciting time to be a .NET developer. I’m reminded of the time when Boost was young, and programmers were first starting to realize the capabilities of templates. Generic programming became a powerful mainstream paradign, producing techniques now described in <a href="http://www.amazon.com/gp/product/0201734842?ie=UTF8&amp;tag=stepheclearys-20&amp;linkCode=as2&amp;camp=1789&amp;creative=390957&amp;creativeASIN=0201734842">C++ Templates</a> and <a href="http://www.amazon.com/gp/product/0321227255?ie=UTF8&amp;tag=stepheclearys-20&amp;linkCode=as2&amp;camp=1789&amp;creative=390957&amp;creativeASIN=0321227255">C++ Template Metaprogramming</a>.</p>
+
+<p>Currently, we’re seeing a similar transformation taking place with C# generics. The adoption of generics is just beginning to reach a critical mass, where new and inventive approches are discovered. The thrust towards generic programming is driven by a desire for higher levels of <em>abstraction</em> and <em>extensibility</em>.</p>
+
+<p>The EBT approach allows writing .NET libraries that permit an unprecedented level of end-user extensibility while discouraging leaky abstractions. This approach combines the clean abstraction of “programming to an interface” with the convenience of additional, more complex operations (some of which may be contributed by end-user code).</p>
+
+<h2 id="extension-based-types">Extension-Based Types</h2>
+
+<p>An EBT is a type that is primarily defined through extension methods on interfaces. Only a few core methods are defined on the interfaces themselves. Properly-designed EBTs have the minimal set of methods defined in their interface (often only one, and sometimes none).</p>
+
+<p>EBTs are useful for end-user extensibility (and raising the level of abstraction), but they also have a few “gotchas” since they are dependent on the compile-time nature of method overload resolution.</p>
+
+<p>Here’s an example of an EBT that defines a single method, MethodA:</p>
+
+<pre><code>public interface IMyInterface { }
+public sealed class MyImplementation : IMyInterface { }
+
+public static class MyMethods
+{
+    public static void MethodA(this IMyInterface @this) { Console.WriteLine("IMyInterface.MethodA()"); }
+}
+
+class Program
+{
+    static void Main()
+    {
+        var obj = new MyImplementation();
+        obj.MethodA(); // Prints: "IMyInterface.MethodA()"
+
+        Console.ReadKey();
+    }
+}
+</code></pre>
+
+<h2 id="simple-inheritance">Simple Inheritance</h2>
+
+<p>EBT inheritance is performed using interface inheritance. Here’s an example of a base interface that defines MethodA and a derived interface defining MethodB; the derived interface ends up supporting both methods:</p>
+
+<pre><code>public interface IBase { }
+public interface IDerived : IBase { }
+public sealed class Derived : IDerived { }
+
+public static class MyMethods
+{
+    public static void MethodA(this IBase @this) { Console.WriteLine("IBase.MethodA()"); }
+    public static void MethodB(this IDerived @this) { Console.WriteLine("IDerived.MethodB()"); }
+}
+
+class Program
+{
+    static void Main()
+    {
+        var obj = new Derived();
+        obj.MethodA(); // Prints: "IBase.MethodA()"
+        obj.MethodB(); // Prints: "IDerived.MethodB()"
+
+        Console.ReadKey();
+    }
+}
+</code></pre>
+
+<h2 id="overriding-inherited-methods-simple-overriding">Overriding Inherited Methods: Simple Overriding</h2>
+
+<p>A derived EBT may override a base EBT method by defining its own method with an identical signature. Here’s a derived type that overrides the MethodA defined by its base type:</p>
+
+<pre><code>public interface IBase { }
+public sealed class Base : IBase { }
+public interface IDerived : IBase { }
+public sealed class Derived : IDerived { }
+
+public static class MyMethods
+{
+    public static void MethodA(this IBase @this) { Console.WriteLine("IBase.MethodA()"); }
+    public static void MethodA(this IDerived @this) { Console.WriteLine("IDerived.MethodA()"); }
+}
+
+class Program
+{
+    static void Main()
+    {
+        var obj1 = new Base();
+        obj1.MethodA(); // Prints: "IBase.MethodA()"
+
+        var obj2 = new Derived();
+        obj2.MethodA(); // Prints: "IDerived.MethodA()"
+
+        Console.ReadKey();
+    }
+}
+</code></pre>
+
+<h2 id="overriding-inherited-methods-invoking-the-base-method">Overriding Inherited Methods: Invoking the Base Method</h2>
+
+<p>In order to invoke the base method when the derived EBT overrides it, the compile-time type of the variable must explicitly be the base type. Here’s an example that invokes the derived and base MethodA implementations on the same object:</p>
+
+<pre><code>public interface IBase { }
+public interface IDerived : IBase { }
+public sealed class Derived : IDerived { }
+
+public static class MyMethods
+{
+    public static void MethodA(this IBase @this) { Console.WriteLine("IBase.MethodA()"); }
+    public static void MethodA(this IDerived @this) { Console.WriteLine("IDerived.MethodA()"); }
+}
+
+class Program
+{
+    static void Main()
+    {
+        var d = new Derived();
+        d.MethodA(); // Prints: "IDerived.MethodA()"
+
+        IBase b = d;
+        b.MethodA(); // Prints: "IBase.MethodA()"
+
+        Console.ReadKey();
+    }
+}
+</code></pre>
+
+<p>For convenience, an “identity transformation method” is usually provided that restricts the type of a subexpression; this way, a separate variable is not necessary. By convention, the identity transformation method is named “As{I}”. The following example shows how an “AsBase” method removes the need for the IBase variable:</p>
+
+<pre><code>public interface IBase { }
+public interface IDerived : IBase { }
+public sealed class Derived : IDerived { }
+
+public static class MyMethods
+{
+    public static IBase AsBase(this IBase @this) { return @this; }
+    public static void MethodA(this IBase @this) { Console.WriteLine("IBase.MethodA()"); }
+    public static void MethodA(this IDerived @this) { Console.WriteLine("IDerived.MethodA()"); }
+}
+
+class Program
+{
+    static void Main()
+    {
+        var obj = new Derived().AsBase();
+        obj.MethodA(); // Prints: "IBase.MethodA()"
+
+        Console.ReadKey();
+    }
+}
+</code></pre>
+
+<h2 id="overriding-inherited-methods-the-importance-of-compile-time-types">Overriding Inherited Methods: The Importance of Compile-Time Types</h2>
+
+<p>It’s important to note that the compile-time type of the expression is what’s used for method overloading, so the EBT style of overriding inherited methods is <em>not</em> like object-oriented virtual function overriding:</p>
+
+<pre><code>public interface IBase { }
+public interface IDerived : IBase { }
+public sealed class Derived : IDerived { }
+
+public static class MyMethods
+{
+    public static IBase AsBase(this IBase @this) { return @this; }
+    public static void MethodA(this IBase @this) { Console.WriteLine("IBase.MethodA()"); }
+    public static void MethodA(this IDerived @this) { Console.WriteLine("IDerived.MethodA()"); }
+}
+
+class Program
+{
+    static void Main()
+    {
+        IBase obj = new Derived();
+        obj.MethodA(); // Prints: "IBase.MethodA()", NOT "IDervied.MethodA()"
+
+        Console.ReadKey();
+    }
+}
+</code></pre>
+
+<p>In fact, even something as minor as missing a “using” statement could cause the wrong method to be called. Consider the case where “MethodA(this IDerived)” is defined in a class in a different namespace. It must be brought into scope via a “using” statement before it could be considered by method resolution.</p>
+
+<h2 id="multiple-inheritance">Multiple Inheritance</h2>
+
+<p>Multiple inheritance is supported for EBTs; any ambiguity causes a compiler error:</p>
+
+<pre><code>public interface IBaseA { }
+public interface IBaseB { }
+public interface IDerived : IBaseA, IBaseB { }
+public sealed class Derived : IDerived { }
+
+public static class MyMethods
+{
+    public static void MethodA(this IBaseA @this) { Console.WriteLine("IBaseA.MethodA()"); }
+    public static void MethodA(this IBaseB @this) { Console.WriteLine("IBaseB.MethodA()"); }
+}
+
+class Program
+{
+    static void Main()
+    {
+        var obj = new Derived();
+        obj.MethodA(); // Compiler error: ambiguous
+
+        Console.ReadKey();
+    }
+}
+</code></pre>
+
+<p>Ambiguity may be resolved by overriding the method in the derived EBT, or by constraining the compile-time type using the identity transformation method. The second approach is more flexible, since it allows any user-defined extensions. This example uses the second approach:</p>
+
+<pre><code>public interface IBaseA { }
+public interface IBaseB { }
+public interface IDerived : IBaseA, IBaseB { }
+public sealed class Derived : IDerived { }
+
+public static class MyMethods
+{
+    public static IBaseA AsBaseA(this IBaseA @this) { return @this; }
+    public static void MethodA(this IBaseA @this) { Console.WriteLine("IBaseA.MethodA()"); }
+    public static IBaseB AsBaseB(this IBaseB @this) { return @this; }
+    public static void MethodA(this IBaseB @this) { Console.WriteLine("IBaseB.MethodA()"); }
+}
+
+class Program
+{
+    static void Main()
+    {
+        var obj = new Derived();
+        obj.AsBaseA().MethodA(); // Prints: "IBaseA.MethodA()"
+        obj.AsBaseB().MethodA(); // Prints: "IBaseB.MethodA()"
+
+        Console.ReadKey();
+    }
+}
+</code></pre>
+
+<h2 id="properties">Properties</h2>
+
+<p>Due to .NET limitations, properties may only be defined on interfaces (there’s no such thing as an “extension property”). However, they may be simulated:</p>
+
+<pre><code>public interface IBase { int Property { get; } }
+public interface IDerived : IBase { }
+public sealed class Derived : IDerived
+{
+    int IBase.Property
+    {
+        get { return this.GetProperty(); }
+    }
+}
+
+public static class MyMethods
+{
+    public static IBase AsBase(this IBase @this) { return @this; }
+    public static int GetProperty(this IDerived @this) { Console.WriteLine("IDerived.GetProperty()"); return 13; }
+}
+
+class Program
+{
+    static void Main()
+    {
+        var obj = new Derived();
+        obj.GetProperty(); // Prints: "IDerived.GetProperty()"
+        int test = obj.AsBase().Property; // Prints: "IDerived.GetProperty()"
+
+        Console.ReadKey();
+    }
+}
+</code></pre>
+
+<p>One may think of this as the interface holding the property <em>declaration</em> while the extension methods (derived EBT methods) hold the property <em>definition</em>.</p>
+
+<p>Note that the property getter will always call the same derived method, regardless of whether it is accessed through an IBase interface. However, the extension method “GetProperty” (if it were defined on IBase) would call either the IBase or IDerived implementation, depending on the compile-time type.</p>
+
+<h2 id="limitations-inability-to-override-interface-methods">Limitations: Inability to Override Interface Methods</h2>
+
+<p>If a method is defined in the interface instead of as an extension method, then that method may never be overridden by a derived EBT type:</p>
+
+<pre><code>public interface IBase { }
+public interface IDerived : IBase { void MethodA(); }
+public sealed class Derived : IDerived
+{
+    public void MethodA() { Console.WriteLine("Derived.MethodA()"); }
+}
+
+public static class MyMethods
+{
+    public static IBase AsBase(this IBase @this) { return @this; }
+    public static void MethodA(this IBase @this) { Console.WriteLine("IBase.MethodA()"); }
+    public static IDerived AsDerived(this IDerived @this) { return @this; }
+    public static void MethodA(this IDerived @this) { Console.WriteLine("IDerived.MethodA()"); }
+}
+
+class Program
+{
+    static void Main()
+    {
+        var obj = new Derived();
+        obj.MethodA(); // Prints: "Derived.MethodA()"
+        obj.AsBase().MethodA(); // Prints: "IBase.MethodA()"
+        obj.AsDerived().MethodA(); // Prints: "Derived.MethodA()" (NOT "IDerived.MethodA")
+
+        Console.ReadKey();
+    }
+}
+</code></pre>
+
+<p>For this reason, it is important to distill as many methods as possible out of the interface that defines the EBT.</p>
+
+<h2 id="limitations-dependency-on-compile-time-types">Limitations: Dependency on Compile-Time Types</h2>
+
+<p>Code that uses EBTs must “see” all the associated methods in order for overridden derived methods to work properly. The parallel problem for C++ templates eventually resulted in “header file libraries”, where libraries transitioned from dlls to source code that was included in the program using the library.</p>
+
+<p>A similar transition will probably occur if EBTs are embraced. Currently, if EBTs are compiled into a library (e.g., System.Core.dll), then end-user code may supplement but not replace existing behavior.</p>
+
+<h2 id="real-world-examples-from-linq">Real-World Examples from LINQ</h2>
+
+<p>As LINQ continues to evolve, it approaches EBTs. In particular, the <a href="http://msdn.microsoft.com/en-us/library/9eekhta0.aspx">IEnumerable&lt;T&gt;</a> interface is extended by the <a href="http://msdn.microsoft.com/en-us/library/system.linq.enumerable.aspx">Enumerable</a> class, including an <a href="http://msdn.microsoft.com/en-us/library/bb335435.aspx">AsEnumerable</a> identity transformation method. <a href="http://msdn.microsoft.com/en-us/library/bb534852.aspx">IOrderedEnumerable&lt;T&gt;</a> is one derived type; the interface adds no methods, but the Enumerable class does. The rarely-used <a href="http://msdn.microsoft.com/en-us/library/bb351562.aspx">IQueryable&lt;T&gt;</a> derived type is extended by <a href="http://msdn.microsoft.com/en-us/library/system.linq.queryable.aspx">Queryable</a>. Grouping and ordering follow the same pattern.</p>
+
+<p>The new PLINQ has a similar structure (though the derived <a href="http://msdn.microsoft.com/en-us/library/dd383736(VS.100).aspx">ParallelQuery&lt;T&gt;</a> is a class instead of an interface).</p>
+
+<p><a href="http://msdn.microsoft.com/en-us/devlabs/ee794896.aspx">Rx</a> (a.k.a. “LINQ to Events”) continues the tradition. IObservable&lt;T&gt;, IObserver&lt;T&gt;, and IScheduler&lt;T&gt; provide basic definitions of types, with extension methods in the Observable, Observer, and Scheduler classes. Rx follows the EBT pattern in defining minimal interfaces; for example, IObservable&lt;T&gt; only defines one method (Subscribe), and extension methods are used to provide 5 overloads for Subscribe. The Rx team has a <a href="http://channel9.msdn.com/posts/J.Van.Gogh/Controlling-concurrency-in-Rx/">video</a> in which they describe some of the design behind IScheduler/Scheduler.</p>
+
+<h2 id="future-blog-posts">Future Blog Posts</h2>
+
+<p>In the (hopefully near) future, I’ll be showing how to use EBTs to do compile-time generic specialization (including partial specialization, generic method specialization, and inheritance specialization). I also intend to cover “namespaces” and wrapper objects. Lots of fun! :)</p>
+
+
+  </article>
+    
+    <footer>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2010/01/view-of-2010.html" title="View of 2010">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2010/01/aspnet-mvc-faking-web-services.html" title="ASP.NET MVC Faking Web Services">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2010/01/extension-based-types";
+var disqus_title = "Extension-Based Types";
+var disqus_url = "http://localhost:4000/2010/01/extension-based-types.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

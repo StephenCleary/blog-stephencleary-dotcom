@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Reporting Progress from Tasks</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2010/06/reporting-progress-from-tasks.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Reporting Progress from Tasks</h1>
+          <small>Jun 18, 2010 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <div class="alert alert-danger">
+  <p><i class="fa fa-exclamation-triangle fa-2x pull-left"></i></p>
+
+  <p><strong>Update, 2012-02-16:</strong> The information in this post is old. See the new post <a href="" class="alert-link">Reporting Progress from Async Tasks</a> for a better solution.</p>
+</div>
+
+<p>The .NET 4.0 <a href="http://msdn.microsoft.com/en-us/library/dd460717.aspx">Task Parallel Library</a> respresents a huge shift in the way future multithreaded code will be written. The TPL and higher-level abstractions (such as the <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.parallel.aspx">Parallel class</a>, <a href="http://msdn.microsoft.com/en-us/library/dd460688.aspx">Parallel LINQ</a>, and the <a href="http://msdn.microsoft.com/en-us/devlabs/ee794896.aspx">Reactive Extensions</a>) will (hopefully) become the default approach for handling all multithreading situations. There is (almost) no reason to use the old <a href="http://msdn.microsoft.com/en-us/library/system.threading.thread.aspx">Thread class</a> anymore.</p>
+
+<p>Similarly, the <a href="http://msdn.microsoft.com/en-us/library/system.componentmodel.backgroundworker.aspx">BackgroundWorker class</a> has seen its heyday. It is time for this old class to retire as well. However, BGW does have one benefit over the TPL: it is easier to use for background tasks that need to report progress to the UI.</p>
+
+<p>Background tasks come in two basic flavors. Some of them update the UI infrequently, and can be easily broken into separate tasks which only update at each “checkpoint.” Other background tasks update the UI more frequently, and cannot be easily divided this way.</p>
+
+<p>For the background tasks that infrequently update the UI, the common approach is to split them into separate Tasks with “checkpoints” in-between. At these “checkpoints,” a <a href="http://msdn.microsoft.com/en-us/library/ee372288.aspx">task continuation</a> is used to update the UI. The C# FAQ blog has <a href="http://blogs.msdn.com/b/csharpfaq/archive/2010/06/18/parallel-programming-task-schedulers-and-synchronization-context.aspx">an entry</a> describing this approach.</p>
+
+<p>For the background tasks that need to frequently update the UI (and can’t be easily split into “checkpointed” Tasks), another approach is necessary. The easiest solution is to create an inner Task to update the UI.</p>
+
+<p>This post introduces the ProgressReporter type, which greatly simplifies background tasks that need to do frequent progress reporting. The goal for ProgressReporter is to allow update code that is as simple as <a href="http://msdn.microsoft.com/en-us/library/system.componentmodel.backgroundworker.progresschanged.aspx">BackgroundWorker.ProgressChanged</a>.</p>
+
+<h2 id="the-example-framework">The Example Framework</h2>
+
+<p>The UI is a single form with 3 buttons and a progress bar. The three buttons are Start, Error, and Cancel. The buttons are enabled and disabled based on whether the background task is running. The progress bar shows the progress of the task.</p>
+
+<p>The background task runs for 3 seconds, counting from 0 to 99, updating the progress bar every 30 milliseconds. The task will then produce a result of 42. If the Error button is used to start the task, then the task will throw an exception instead of producing a result. The task is also cancelable, checking for cancellation each time it reports progress.</p>
+
+<p>This is a rather complex example; it covers each background task scenario (successful completion, error conditions, and cancellation).</p>
+
+<p>The UI framework is the same regardless of whether a BackgroundWorker or Task object is used for the background task:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Windows.Forms</span><span class="p">;</span>
+
+<span class="k">public</span> <span class="k">sealed</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">MainForm</span> <span class="p">:</span> <span class="n">Form</span>
+<span class="p">{</span>
+  <span class="k">private</span> <span class="k">readonly</span> <span class="n">Button</span> <span class="n">startButton</span><span class="p">;</span>
+  <span class="k">private</span> <span class="k">readonly</span> <span class="n">Button</span> <span class="n">errorButton</span><span class="p">;</span>
+  <span class="k">private</span> <span class="k">readonly</span> <span class="n">Button</span> <span class="n">cancelButton</span><span class="p">;</span>
+  <span class="k">private</span> <span class="k">readonly</span> <span class="n">ProgressBar</span> <span class="n">progressBar</span><span class="p">;</span>
+
+  <span class="k">public</span> <span class="nf">MainForm</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">startButton</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Button</span>
+    <span class="p">{</span>
+      <span class="n">Text</span> <span class="p">=</span> <span class="s">&quot;Start&quot;</span><span class="p">,</span>
+      <span class="n">Height</span> <span class="p">=</span> <span class="m">23</span><span class="p">,</span> <span class="n">Width</span> <span class="p">=</span> <span class="m">75</span><span class="p">,</span>
+      <span class="n">Left</span> <span class="p">=</span> <span class="m">12</span><span class="p">,</span> <span class="n">Top</span> <span class="p">=</span> <span class="m">12</span><span class="p">,</span>
+    <span class="p">};</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">errorButton</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Button</span>
+    <span class="p">{</span>
+      <span class="n">Text</span> <span class="p">=</span> <span class="s">&quot;Error&quot;</span><span class="p">,</span>
+      <span class="n">Height</span> <span class="p">=</span> <span class="m">23</span><span class="p">,</span> <span class="n">Width</span> <span class="p">=</span> <span class="m">75</span><span class="p">,</span>
+      <span class="n">Left</span> <span class="p">=</span> <span class="k">this</span><span class="p">.</span><span class="n">startButton</span><span class="p">.</span><span class="n">Right</span> <span class="p">+</span> <span class="m">6</span><span class="p">,</span>
+      <span class="n">Top</span> <span class="p">=</span> <span class="m">12</span><span class="p">,</span>
+    <span class="p">};</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">cancelButton</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Button</span>
+    <span class="p">{</span>
+      <span class="n">Text</span> <span class="p">=</span> <span class="s">&quot;Cancel&quot;</span><span class="p">,</span>
+      <span class="n">Enabled</span> <span class="p">=</span> <span class="k">false</span><span class="p">,</span>
+      <span class="n">Height</span> <span class="p">=</span> <span class="m">23</span><span class="p">,</span> <span class="n">Width</span> <span class="p">=</span> <span class="m">75</span><span class="p">,</span>
+      <span class="n">Left</span> <span class="p">=</span> <span class="k">this</span><span class="p">.</span><span class="n">errorButton</span><span class="p">.</span><span class="n">Right</span> <span class="p">+</span> <span class="m">6</span><span class="p">,</span>
+      <span class="n">Top</span> <span class="p">=</span> <span class="m">12</span><span class="p">,</span>
+    <span class="p">};</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">progressBar</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ProgressBar</span>
+    <span class="p">{</span>
+      <span class="n">Width</span> <span class="p">=</span> <span class="k">this</span><span class="p">.</span><span class="n">cancelButton</span><span class="p">.</span><span class="n">Right</span> <span class="p">-</span> <span class="m">12</span><span class="p">,</span>
+      <span class="n">Height</span> <span class="p">=</span> <span class="m">23</span><span class="p">,</span>
+      <span class="n">Left</span> <span class="p">=</span> <span class="m">12</span><span class="p">,</span>
+      <span class="n">Top</span> <span class="p">=</span> <span class="k">this</span><span class="p">.</span><span class="n">startButton</span><span class="p">.</span><span class="n">Bottom</span> <span class="p">+</span> <span class="m">6</span><span class="p">,</span>
+    <span class="p">};</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">startButton</span><span class="p">.</span><span class="n">Click</span> <span class="p">+=</span>
+      <span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="k">this</span><span class="p">.</span><span class="n">startButton_Click</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">e</span><span class="p">);</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">errorButton</span><span class="p">.</span><span class="n">Click</span> <span class="p">+=</span>
+      <span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="k">this</span><span class="p">.</span><span class="n">errorButton_Click</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">e</span><span class="p">);</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">cancelButton</span><span class="p">.</span><span class="n">Click</span> <span class="p">+=</span>
+      <span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="k">this</span><span class="p">.</span><span class="n">cancelButton_Click</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">e</span><span class="p">);</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">Controls</span><span class="p">.</span><span class="n">AddRange</span><span class="p">(</span><span class="k">new</span> <span class="n">Control</span><span class="p">[]</span>
+    <span class="p">{</span>
+      <span class="k">this</span><span class="p">.</span><span class="n">startButton</span><span class="p">,</span>
+      <span class="k">this</span><span class="p">.</span><span class="n">errorButton</span><span class="p">,</span>
+      <span class="k">this</span><span class="p">.</span><span class="n">cancelButton</span><span class="p">,</span>
+      <span class="k">this</span><span class="p">.</span><span class="n">progressBar</span><span class="p">,</span>
+    <span class="p">});</span>
+  <span class="p">}</span>
+
+  <span class="k">partial</span> <span class="k">void</span> <span class="nf">startButton_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">);</span>
+  <span class="k">partial</span> <span class="k">void</span> <span class="nf">errorButton_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">);</span>
+  <span class="k">partial</span> <span class="k">void</span> <span class="nf">cancelButton_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">);</span>
+
+  <span class="k">private</span> <span class="k">void</span> <span class="nf">TaskIsRunning</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="c1">// Update UI to reflect background task.</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">startButton</span><span class="p">.</span><span class="n">Enabled</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">errorButton</span><span class="p">.</span><span class="n">Enabled</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">cancelButton</span><span class="p">.</span><span class="n">Enabled</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="k">private</span> <span class="k">void</span> <span class="nf">TaskIsComplete</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="c1">// Reset UI.</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">progressBar</span><span class="p">.</span><span class="n">Value</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">startButton</span><span class="p">.</span><span class="n">Enabled</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">errorButton</span><span class="p">.</span><span class="n">Enabled</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">cancelButton</span><span class="p">.</span><span class="n">Enabled</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">class</span> <span class="nc">Program</span>
+<span class="p">{</span>
+<span class="na">  [STAThread]</span>
+  <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="c1">// Run the UI.</span>
+    <span class="n">Application</span><span class="p">.</span><span class="n">Run</span><span class="p">(</span><span class="k">new</span> <span class="n">MainForm</span><span class="p">());</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>This defines a form called MainForm that has the UI described above. The two methods TaskIsRunning and TaskIsComplete handle the enabling and disabling of the buttons. There are also partial methods as placeholders for the button click events; these are used by the sample code below.</p>
+
+<p>You can copy the code above by double-clicking it and then pressing Ctrl-C; then paste it into the Program.cs of a Windows Forms project. It should compile and run, displaying the form, but the buttons don’t do anything yet.</p>
+
+<h2 id="a-bgw-that-updates-progress-frequently">A BGW That Updates Progress Frequently</h2>
+
+<p>Here’s what the code looks like for a BGW that checks in frequently:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.ComponentModel</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Threading</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Windows.Forms</span><span class="p">;</span>
+
+<span class="k">partial</span> <span class="k">class</span> <span class="nc">MainForm</span>
+<span class="p">{</span>
+  <span class="k">private</span> <span class="n">BackgroundWorker</span> <span class="n">backgroundWorker</span><span class="p">;</span>
+
+  <span class="k">partial</span> <span class="k">void</span> <span class="nf">startButton_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="c1">// Start the background task without error.</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">StartBackgroundTask</span><span class="p">(</span><span class="k">false</span><span class="p">);</span>
+
+    <span class="c1">// Update UI to reflect background task.</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">TaskIsRunning</span><span class="p">();</span>
+  <span class="p">}</span>
+
+  <span class="k">partial</span> <span class="k">void</span> <span class="nf">errorButton_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="c1">// Start the background task with error.</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">StartBackgroundTask</span><span class="p">(</span><span class="k">true</span><span class="p">);</span>
+
+    <span class="c1">// Update UI to reflect background task.</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">TaskIsRunning</span><span class="p">();</span>
+  <span class="p">}</span>
+
+  <span class="k">partial</span> <span class="k">void</span> <span class="nf">cancelButton_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="c1">// Cancel the background task.</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">backgroundWorker</span><span class="p">.</span><span class="n">CancelAsync</span><span class="p">();</span>
+
+    <span class="c1">// The UI will be updated by the cancellation handler.</span>
+  <span class="p">}</span>
+
+  <span class="k">private</span> <span class="k">void</span> <span class="nf">StartBackgroundTask</span><span class="p">(</span><span class="kt">bool</span> <span class="n">causeError</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">backgroundWorker</span> <span class="p">=</span> <span class="k">new</span> <span class="n">BackgroundWorker</span><span class="p">();</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">backgroundWorker</span><span class="p">.</span><span class="n">WorkerReportsProgress</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">backgroundWorker</span><span class="p">.</span><span class="n">WorkerSupportsCancellation</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">backgroundWorker</span><span class="p">.</span><span class="n">DoWork</span> <span class="p">+=</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span> <span class="p">=&gt;</span>
+    <span class="p">{</span>
+      <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">!=</span> <span class="m">100</span><span class="p">;</span> <span class="p">++</span><span class="n">i</span><span class="p">)</span>
+      <span class="p">{</span>
+        <span class="c1">// Check for cancellation.</span>
+        <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">backgroundWorker</span><span class="p">.</span><span class="n">CancellationPending</span><span class="p">)</span>
+        <span class="p">{</span>
+          <span class="n">args</span><span class="p">.</span><span class="n">Cancel</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+          <span class="k">return</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="n">Thread</span><span class="p">.</span><span class="n">Sleep</span><span class="p">(</span><span class="m">30</span><span class="p">);</span> <span class="c1">// Do some work.</span>
+
+        <span class="c1">// Report progress of the work.</span>
+        <span class="k">this</span><span class="p">.</span><span class="n">backgroundWorker</span><span class="p">.</span><span class="n">ReportProgress</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>
+      <span class="p">}</span>
+
+      <span class="c1">// After all that work, cause the error if requested.</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">causeError</span><span class="p">)</span>
+      <span class="p">{</span>
+        <span class="k">throw</span> <span class="k">new</span> <span class="nf">InvalidOperationException</span><span class="p">(</span><span class="s">&quot;Oops...&quot;</span><span class="p">);</span>
+      <span class="p">}</span>
+
+      <span class="c1">// The answer, at last!</span>
+      <span class="n">args</span><span class="p">.</span><span class="n">Result</span> <span class="p">=</span> <span class="m">42</span><span class="p">;</span>
+    <span class="p">};</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">backgroundWorker</span><span class="p">.</span><span class="n">ProgressChanged</span> <span class="p">+=</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span> <span class="p">=&gt;</span>
+    <span class="p">{</span>
+      <span class="c1">// Update UI to reflect the progress.</span>
+      <span class="k">this</span><span class="p">.</span><span class="n">progressBar</span><span class="p">.</span><span class="n">Value</span> <span class="p">=</span> <span class="n">args</span><span class="p">.</span><span class="n">ProgressPercentage</span><span class="p">;</span>
+    <span class="p">};</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">backgroundWorker</span><span class="p">.</span><span class="n">RunWorkerCompleted</span> <span class="p">+=</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span> <span class="p">=&gt;</span>
+    <span class="p">{</span>
+      <span class="c1">// Update UI to reflect completion.</span>
+      <span class="k">this</span><span class="p">.</span><span class="n">progressBar</span><span class="p">.</span><span class="n">Value</span> <span class="p">=</span> <span class="m">100</span><span class="p">;</span>
+
+      <span class="c1">// Display results.</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">args</span><span class="p">.</span><span class="n">Error</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+        <span class="n">MessageBox</span><span class="p">.</span><span class="n">Show</span><span class="p">(</span><span class="s">&quot;Background task error: &quot;</span> <span class="p">+</span> <span class="n">args</span><span class="p">.</span><span class="n">Error</span><span class="p">.</span><span class="n">ToString</span><span class="p">());</span>
+      <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">args</span><span class="p">.</span><span class="n">Cancelled</span><span class="p">)</span>
+        <span class="n">MessageBox</span><span class="p">.</span><span class="n">Show</span><span class="p">(</span><span class="s">&quot;Background task cancelled&quot;</span><span class="p">);</span>
+      <span class="k">else</span>
+        <span class="n">MessageBox</span><span class="p">.</span><span class="n">Show</span><span class="p">(</span><span class="s">&quot;Background task result: &quot;</span> <span class="p">+</span> <span class="n">args</span><span class="p">.</span><span class="n">Result</span><span class="p">);</span>
+
+      <span class="c1">// Reset UI.</span>
+      <span class="k">this</span><span class="p">.</span><span class="n">TaskIsComplete</span><span class="p">();</span>
+    <span class="p">};</span>
+
+    <span class="c1">// Kick off the background task.</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">backgroundWorker</span><span class="p">.</span><span class="n">RunWorkerAsync</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>You can copy and paste this code into a cs file in the Windows Forms solution, such as MainForm.cs. The solution should then build, and you can play with the buttons to test all three scenarios (successful completion, error condition, and cancellation).</p>
+
+<h2 id="a-task-that-updates-progress-frequently">A Task That Updates Progress Frequently</h2>
+
+<p>Using the ProgressReporter class (defined below), translating this BGW code to Task code is rather easy; no explicit continuation scheduling is needed:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Threading</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Windows.Forms</span><span class="p">;</span>
+
+<span class="k">partial</span> <span class="k">class</span> <span class="nc">MainForm</span>
+<span class="p">{</span>
+  <span class="k">private</span> <span class="n">CancellationTokenSource</span> <span class="n">cancellationTokenSource</span><span class="p">;</span>
+
+  <span class="k">partial</span> <span class="k">void</span> <span class="nf">startButton_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="c1">// Start the background task without error.</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">StartBackgroundTask</span><span class="p">(</span><span class="k">false</span><span class="p">);</span>
+
+    <span class="c1">// Update UI to reflect background task.</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">TaskIsRunning</span><span class="p">();</span>
+  <span class="p">}</span>
+
+  <span class="k">partial</span> <span class="k">void</span> <span class="nf">errorButton_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="c1">// Start the background task with error.</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">StartBackgroundTask</span><span class="p">(</span><span class="k">true</span><span class="p">);</span>
+
+    <span class="c1">// Update UI to reflect background task.</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">TaskIsRunning</span><span class="p">();</span>
+  <span class="p">}</span>
+
+  <span class="k">partial</span> <span class="k">void</span> <span class="nf">cancelButton_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="c1">// Cancel the background task.</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">cancellationTokenSource</span><span class="p">.</span><span class="n">Cancel</span><span class="p">();</span>
+
+    <span class="c1">// The UI will be updated by the cancellation handler.</span>
+  <span class="p">}</span>
+
+  <span class="k">private</span> <span class="k">void</span> <span class="nf">StartBackgroundTask</span><span class="p">(</span><span class="kt">bool</span> <span class="n">causeError</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">cancellationTokenSource</span> <span class="p">=</span> <span class="k">new</span> <span class="n">CancellationTokenSource</span><span class="p">();</span>
+    <span class="kt">var</span> <span class="n">cancellationToken</span> <span class="p">=</span> <span class="k">this</span><span class="p">.</span><span class="n">cancellationTokenSource</span><span class="p">.</span><span class="n">Token</span><span class="p">;</span>
+    <span class="kt">var</span> <span class="n">progressReporter</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ProgressReporter</span><span class="p">();</span>
+    <span class="kt">var</span> <span class="n">task</span> <span class="p">=</span> <span class="n">Task</span><span class="p">.</span><span class="n">Factory</span><span class="p">.</span><span class="n">StartNew</span><span class="p">(()</span> <span class="p">=&gt;</span>
+    <span class="p">{</span>
+      <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">!=</span> <span class="m">100</span><span class="p">;</span> <span class="p">++</span><span class="n">i</span><span class="p">)</span>
+      <span class="p">{</span>
+        <span class="c1">// Check for cancellation </span>
+        <span class="n">cancellationToken</span><span class="p">.</span><span class="n">ThrowIfCancellationRequested</span><span class="p">();</span>
+
+        <span class="n">Thread</span><span class="p">.</span><span class="n">Sleep</span><span class="p">(</span><span class="m">30</span><span class="p">);</span> <span class="c1">// Do some work. </span>
+
+        <span class="c1">// Report progress of the work. </span>
+        <span class="n">progressReporter</span><span class="p">.</span><span class="n">ReportProgress</span><span class="p">(()</span> <span class="p">=&gt;</span>
+        <span class="p">{</span>
+          <span class="c1">// Note: code passed to &quot;ReportProgress&quot; can access UI elements freely. </span>
+          <span class="k">this</span><span class="p">.</span><span class="n">progressBar</span><span class="p">.</span><span class="n">Value</span> <span class="p">=</span> <span class="n">i</span><span class="p">;</span>
+        <span class="p">});</span>
+      <span class="p">}</span>
+
+      <span class="c1">// After all that work, cause the error if requested.</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">causeError</span><span class="p">)</span>
+      <span class="p">{</span>
+        <span class="k">throw</span> <span class="k">new</span> <span class="nf">InvalidOperationException</span><span class="p">(</span><span class="s">&quot;Oops...&quot;</span><span class="p">);</span>
+      <span class="p">}</span>
+
+      <span class="c1">// The answer, at last! </span>
+      <span class="k">return</span> <span class="m">42</span><span class="p">;</span>
+    <span class="p">},</span> <span class="n">cancellationToken</span><span class="p">);</span>
+
+    <span class="c1">// ProgressReporter can be used to report successful completion,</span>
+    <span class="c1">//  cancelation, or failure to the UI thread. </span>
+    <span class="n">progressReporter</span><span class="p">.</span><span class="n">RegisterContinuation</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="p">()</span> <span class="p">=&gt;</span>
+    <span class="p">{</span>
+      <span class="c1">// Update UI to reflect completion.</span>
+      <span class="k">this</span><span class="p">.</span><span class="n">progressBar</span><span class="p">.</span><span class="n">Value</span> <span class="p">=</span> <span class="m">100</span><span class="p">;</span>
+
+      <span class="c1">// Display results.</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">task</span><span class="p">.</span><span class="n">Exception</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+        <span class="n">MessageBox</span><span class="p">.</span><span class="n">Show</span><span class="p">(</span><span class="s">&quot;Background task error: &quot;</span> <span class="p">+</span> <span class="n">task</span><span class="p">.</span><span class="n">Exception</span><span class="p">.</span><span class="n">ToString</span><span class="p">());</span>
+      <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">task</span><span class="p">.</span><span class="n">IsCanceled</span><span class="p">)</span>
+        <span class="n">MessageBox</span><span class="p">.</span><span class="n">Show</span><span class="p">(</span><span class="s">&quot;Background task cancelled&quot;</span><span class="p">);</span>
+      <span class="k">else</span>
+        <span class="n">MessageBox</span><span class="p">.</span><span class="n">Show</span><span class="p">(</span><span class="s">&quot;Background task result: &quot;</span> <span class="p">+</span> <span class="n">task</span><span class="p">.</span><span class="n">Result</span><span class="p">);</span>
+
+      <span class="c1">// Reset UI.</span>
+      <span class="k">this</span><span class="p">.</span><span class="n">TaskIsComplete</span><span class="p">();</span>
+    <span class="p">});</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>You can copy and paste this code into a cs file in the Windows Forms solution, such as MainForm.cs. The solution won’t build until you add the code for the ProgressReporter class below.</p>
+
+<h2 id="the-progressreporter-class">The ProgressReporter Class</h2>
+
+<p>The ProgressReporter class is responsible for two things: the reporting of <em>progress</em> by a background task, and the reporting of a <em>final result</em> by the background task.</p>
+
+<p>A background Task calls ProgressReporter.ReportProgress to report progress to the UI thread. This method will pause the background task until the UI has finished updating; if the task does not need to wait, then it can call ProgressReporter.ReportProgressAsync.</p>
+
+<p>The code starting the background Task can also use ProgressReporter to retrieve the final result of the background task. This is done by calling the ProgressReporter.RegisterContinuation method. The delegate passed to this method is executed in the UI thread context after the background task completes. The delegate can then examine the Task object for its status (see the example code above).</p>
+
+<p>In addition to the RegisterContinuation method, the ProgressReporter provides RegisterSucceededHandler, RegisterFaultedHandler, and RegisterCancelledHandler methods if it is easier to handle these situations separately.</p>
+
+<p>The code for this class is not very complex:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Threading</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
+
+<span class="c1">/// &lt;summary&gt; </span>
+<span class="c1">/// A class used by Tasks to report progress or completion updates back to the UI. </span>
+<span class="c1">/// &lt;/summary&gt; </span>
+<span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">ProgressReporter</span>
+<span class="p">{</span>
+  <span class="c1">/// &lt;summary&gt; </span>
+  <span class="c1">/// The underlying scheduler for the UI&#39;s synchronization context. </span>
+  <span class="c1">/// &lt;/summary&gt; </span>
+  <span class="k">private</span> <span class="k">readonly</span> <span class="n">TaskScheduler</span> <span class="n">scheduler</span><span class="p">;</span>
+
+  <span class="c1">/// &lt;summary&gt; </span>
+  <span class="c1">/// Initializes a new instance of the &lt;see cref=&quot;ProgressReporter&quot;/&gt; class.</span>
+  <span class="c1">/// This should be run on a UI thread. </span>
+  <span class="c1">/// &lt;/summary&gt; </span>
+  <span class="k">public</span> <span class="nf">ProgressReporter</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">scheduler</span> <span class="p">=</span> <span class="n">TaskScheduler</span><span class="p">.</span><span class="n">FromCurrentSynchronizationContext</span><span class="p">();</span>
+  <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt; </span>
+  <span class="c1">/// Gets the task scheduler which executes tasks on the UI thread. </span>
+  <span class="c1">/// &lt;/summary&gt; </span>
+  <span class="k">public</span> <span class="n">TaskScheduler</span> <span class="n">Scheduler</span>
+  <span class="p">{</span>
+    <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="n">scheduler</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt; </span>
+  <span class="c1">/// Reports the progress to the UI thread. This method should be called from the task.</span>
+  <span class="c1">/// Note that the progress update is asynchronous with respect to the reporting Task.</span>
+  <span class="c1">/// For a synchronous progress update, wait on the returned &lt;see cref=&quot;Task&quot;/&gt;. </span>
+  <span class="c1">/// &lt;/summary&gt; </span>
+  <span class="c1">/// &lt;param name=&quot;action&quot;&gt;The action to perform in the context of the UI thread.</span>
+  <span class="c1">/// Note that this action is run asynchronously on the UI thread.&lt;/param&gt; </span>
+  <span class="c1">/// &lt;returns&gt;The task queued to the UI thread.&lt;/returns&gt; </span>
+  <span class="k">public</span> <span class="n">Task</span> <span class="nf">ReportProgressAsync</span><span class="p">(</span><span class="n">Action</span> <span class="n">action</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="n">Task</span><span class="p">.</span><span class="n">Factory</span><span class="p">.</span><span class="n">StartNew</span><span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">.</span><span class="n">None</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">.</span><span class="n">None</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="n">scheduler</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt; </span>
+  <span class="c1">/// Reports the progress to the UI thread, and waits for the UI thread to process</span>
+  <span class="c1">/// the update before returning. This method should be called from the task. </span>
+  <span class="c1">/// &lt;/summary&gt; </span>
+  <span class="c1">/// &lt;param name=&quot;action&quot;&gt;The action to perform in the context of the UI thread.&lt;/param&gt; </span>
+  <span class="k">public</span> <span class="k">void</span> <span class="nf">ReportProgress</span><span class="p">(</span><span class="n">Action</span> <span class="n">action</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">ReportProgressAsync</span><span class="p">(</span><span class="n">action</span><span class="p">).</span><span class="n">Wait</span><span class="p">();</span>
+  <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt; </span>
+  <span class="c1">/// Registers a UI thread handler for when the specified task finishes execution,</span>
+  <span class="c1">/// whether it finishes with success, failiure, or cancellation. </span>
+  <span class="c1">/// &lt;/summary&gt; </span>
+  <span class="c1">/// &lt;param name=&quot;task&quot;&gt;The task to monitor for completion.&lt;/param&gt; </span>
+  <span class="c1">/// &lt;param name=&quot;action&quot;&gt;The action to take when the task has completed, in the context of the UI thread.&lt;/param&gt; </span>
+  <span class="c1">/// &lt;returns&gt;The continuation created to handle completion. This is normally ignored.&lt;/returns&gt; </span>
+  <span class="k">public</span> <span class="n">Task</span> <span class="nf">RegisterContinuation</span><span class="p">(</span><span class="n">Task</span> <span class="n">task</span><span class="p">,</span> <span class="n">Action</span> <span class="n">action</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="n">task</span><span class="p">.</span><span class="n">ContinueWith</span><span class="p">(</span><span class="n">_</span> <span class="p">=&gt;</span> <span class="n">action</span><span class="p">(),</span> <span class="n">CancellationToken</span><span class="p">.</span><span class="n">None</span><span class="p">,</span> <span class="n">TaskContinuationOptions</span><span class="p">.</span><span class="n">None</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="n">scheduler</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt; </span>
+  <span class="c1">/// Registers a UI thread handler for when the specified task finishes execution,</span>
+  <span class="c1">/// whether it finishes with success, failiure, or cancellation. </span>
+  <span class="c1">/// &lt;/summary&gt; </span>
+  <span class="c1">/// &lt;typeparam name=&quot;TResult&quot;&gt;The type of the task result.&lt;/typeparam&gt; </span>
+  <span class="c1">/// &lt;param name=&quot;task&quot;&gt;The task to monitor for completion.&lt;/param&gt; </span>
+  <span class="c1">/// &lt;param name=&quot;action&quot;&gt;The action to take when the task has completed, in the context of the UI thread.&lt;/param&gt; </span>
+  <span class="c1">/// &lt;returns&gt;The continuation created to handle completion. This is normally ignored.&lt;/returns&gt; </span>
+  <span class="k">public</span> <span class="n">Task</span> <span class="n">RegisterContinuation</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">task</span><span class="p">,</span> <span class="n">Action</span> <span class="n">action</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="n">task</span><span class="p">.</span><span class="n">ContinueWith</span><span class="p">(</span><span class="n">_</span> <span class="p">=&gt;</span> <span class="n">action</span><span class="p">(),</span> <span class="n">CancellationToken</span><span class="p">.</span><span class="n">None</span><span class="p">,</span> <span class="n">TaskContinuationOptions</span><span class="p">.</span><span class="n">None</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="n">scheduler</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt; </span>
+  <span class="c1">/// Registers a UI thread handler for when the specified task successfully finishes execution. </span>
+  <span class="c1">/// &lt;/summary&gt; </span>
+  <span class="c1">/// &lt;param name=&quot;task&quot;&gt;The task to monitor for successful completion.&lt;/param&gt; </span>
+  <span class="c1">/// &lt;param name=&quot;action&quot;&gt;The action to take when the task has successfully completed, in the context of the UI thread.&lt;/param&gt; </span>
+  <span class="c1">/// &lt;returns&gt;The continuation created to handle successful completion. This is normally ignored.&lt;/returns&gt; </span>
+  <span class="k">public</span> <span class="n">Task</span> <span class="nf">RegisterSucceededHandler</span><span class="p">(</span><span class="n">Task</span> <span class="n">task</span><span class="p">,</span> <span class="n">Action</span> <span class="n">action</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="n">task</span><span class="p">.</span><span class="n">ContinueWith</span><span class="p">(</span><span class="n">_</span> <span class="p">=&gt;</span> <span class="n">action</span><span class="p">(),</span> <span class="n">CancellationToken</span><span class="p">.</span><span class="n">None</span><span class="p">,</span> <span class="n">TaskContinuationOptions</span><span class="p">.</span><span class="n">OnlyOnRanToCompletion</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="n">scheduler</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt; </span>
+  <span class="c1">/// Registers a UI thread handler for when the specified task successfully finishes execution</span>
+  <span class="c1">/// and returns a result. </span>
+  <span class="c1">/// &lt;/summary&gt; </span>
+  <span class="c1">/// &lt;typeparam name=&quot;TResult&quot;&gt;The type of the task result.&lt;/typeparam&gt; </span>
+  <span class="c1">/// &lt;param name=&quot;task&quot;&gt;The task to monitor for successful completion.&lt;/param&gt; </span>
+  <span class="c1">/// &lt;param name=&quot;action&quot;&gt;The action to take when the task has successfully completed, in the context of the UI thread.</span>
+  <span class="c1">/// The argument to the action is the return value of the task.&lt;/param&gt; </span>
+  <span class="c1">/// &lt;returns&gt;The continuation created to handle successful completion. This is normally ignored.&lt;/returns&gt; </span>
+  <span class="k">public</span> <span class="n">Task</span> <span class="n">RegisterSucceededHandler</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">task</span><span class="p">,</span> <span class="n">Action</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">action</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="n">task</span><span class="p">.</span><span class="n">ContinueWith</span><span class="p">(</span><span class="n">t</span> <span class="p">=&gt;</span> <span class="n">action</span><span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="n">Result</span><span class="p">),</span> <span class="n">CancellationToken</span><span class="p">.</span><span class="n">None</span><span class="p">,</span> <span class="n">TaskContinuationOptions</span><span class="p">.</span><span class="n">OnlyOnRanToCompletion</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="n">Scheduler</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt; </span>
+  <span class="c1">/// Registers a UI thread handler for when the specified task becomes faulted. </span>
+  <span class="c1">/// &lt;/summary&gt; </span>
+  <span class="c1">/// &lt;param name=&quot;task&quot;&gt;The task to monitor for faulting.&lt;/param&gt; </span>
+  <span class="c1">/// &lt;param name=&quot;action&quot;&gt;The action to take when the task has faulted, in the context of the UI thread.&lt;/param&gt; </span>
+  <span class="c1">/// &lt;returns&gt;The continuation created to handle faulting. This is normally ignored.&lt;/returns&gt; </span>
+  <span class="k">public</span> <span class="n">Task</span> <span class="nf">RegisterFaultedHandler</span><span class="p">(</span><span class="n">Task</span> <span class="n">task</span><span class="p">,</span> <span class="n">Action</span><span class="p">&lt;</span><span class="n">Exception</span><span class="p">&gt;</span> <span class="n">action</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="n">task</span><span class="p">.</span><span class="n">ContinueWith</span><span class="p">(</span><span class="n">t</span> <span class="p">=&gt;</span> <span class="n">action</span><span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="n">Exception</span><span class="p">),</span> <span class="n">CancellationToken</span><span class="p">.</span><span class="n">None</span><span class="p">,</span> <span class="n">TaskContinuationOptions</span><span class="p">.</span><span class="n">OnlyOnFaulted</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="n">Scheduler</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt; </span>
+  <span class="c1">/// Registers a UI thread handler for when the specified task becomes faulted. </span>
+  <span class="c1">/// &lt;/summary&gt; </span>
+  <span class="c1">/// &lt;typeparam name=&quot;TResult&quot;&gt;The type of the task result.&lt;/typeparam&gt; </span>
+  <span class="c1">/// &lt;param name=&quot;task&quot;&gt;The task to monitor for faulting.&lt;/param&gt; </span>
+  <span class="c1">/// &lt;param name=&quot;action&quot;&gt;The action to take when the task has faulted, in the context of the UI thread.&lt;/param&gt; </span>
+  <span class="c1">/// &lt;returns&gt;The continuation created to handle faulting. This is normally ignored.&lt;/returns&gt; </span>
+  <span class="k">public</span> <span class="n">Task</span> <span class="n">RegisterFaultedHandler</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">task</span><span class="p">,</span> <span class="n">Action</span><span class="p">&lt;</span><span class="n">Exception</span><span class="p">&gt;</span> <span class="n">action</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="n">task</span><span class="p">.</span><span class="n">ContinueWith</span><span class="p">(</span><span class="n">t</span> <span class="p">=&gt;</span> <span class="n">action</span><span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="n">Exception</span><span class="p">),</span> <span class="n">CancellationToken</span><span class="p">.</span><span class="n">None</span><span class="p">,</span> <span class="n">TaskContinuationOptions</span><span class="p">.</span><span class="n">OnlyOnFaulted</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="n">Scheduler</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt; </span>
+  <span class="c1">/// Registers a UI thread handler for when the specified task is cancelled. </span>
+  <span class="c1">/// &lt;/summary&gt; </span>
+  <span class="c1">/// &lt;param name=&quot;task&quot;&gt;The task to monitor for cancellation.&lt;/param&gt; </span>
+  <span class="c1">/// &lt;param name=&quot;action&quot;&gt;The action to take when the task is cancelled, in the context of the UI thread.&lt;/param&gt; </span>
+  <span class="c1">/// &lt;returns&gt;The continuation created to handle cancellation. This is normally ignored.&lt;/returns&gt; </span>
+  <span class="k">public</span> <span class="n">Task</span> <span class="nf">RegisterCancelledHandler</span><span class="p">(</span><span class="n">Task</span> <span class="n">task</span><span class="p">,</span> <span class="n">Action</span> <span class="n">action</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="n">task</span><span class="p">.</span><span class="n">ContinueWith</span><span class="p">(</span><span class="n">_</span> <span class="p">=&gt;</span> <span class="n">action</span><span class="p">(),</span> <span class="n">CancellationToken</span><span class="p">.</span><span class="n">None</span><span class="p">,</span> <span class="n">TaskContinuationOptions</span><span class="p">.</span><span class="n">OnlyOnCanceled</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="n">Scheduler</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt; </span>
+  <span class="c1">/// Registers a UI thread handler for when the specified task is cancelled. </span>
+  <span class="c1">/// &lt;/summary&gt; </span>
+  <span class="c1">/// &lt;typeparam name=&quot;TResult&quot;&gt;The type of the task result.&lt;/typeparam&gt; </span>
+  <span class="c1">/// &lt;param name=&quot;task&quot;&gt;The task to monitor for cancellation.&lt;/param&gt; </span>
+  <span class="c1">/// &lt;param name=&quot;action&quot;&gt;The action to take when the task is cancelled, in the context of the UI thread.&lt;/param&gt; </span>
+  <span class="c1">/// &lt;returns&gt;The continuation created to handle cancellation. This is normally ignored.&lt;/returns&gt; </span>
+  <span class="k">public</span> <span class="n">Task</span> <span class="n">RegisterCancelledHandler</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">task</span><span class="p">,</span> <span class="n">Action</span> <span class="n">action</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="n">task</span><span class="p">.</span><span class="n">ContinueWith</span><span class="p">(</span><span class="n">_</span> <span class="p">=&gt;</span> <span class="n">action</span><span class="p">(),</span> <span class="n">CancellationToken</span><span class="p">.</span><span class="n">None</span><span class="p">,</span> <span class="n">TaskContinuationOptions</span><span class="p">.</span><span class="n">OnlyOnCanceled</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="n">Scheduler</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>You can copy and paste this code into a cs file in the Windows Forms solution, such as ProgressReporter.cs. The solution should then build, and you can play with the buttons to test all three scenarios (successful completion, error condition, and cancellation).</p>
+
+
+  </article>
+    
+    <footer>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2010/06/transactionscope-has-default-timeout.html" title="TransactionScope Has a Default Timeout">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2010/06/sqlite-and-entity-framework-4.html" title="SQLite and Entity Framework 4">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2010/06/reporting-progress-from-tasks";
+var disqus_title = "Reporting Progress from Tasks";
+var disqus_url = "http://localhost:4000/2010/06/reporting-progress-from-tasks.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

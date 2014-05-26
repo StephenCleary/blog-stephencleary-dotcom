@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Various Implementations of Asynchronous Background Tasks</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2010/08/various-implementations-of-asynchronous.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Various Implementations of Asynchronous Background Tasks</h1>
+          <small>Aug 16, 2010 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>This is going to be a long blog post, because there’s plenty of ground to cover. Executive summary: there are lots of ways to do background tasks in .NET, but use the new Task class if possible because it’s the best. :D</p>
+
+<p>Many user interface applications find that they need to support some kind of an asynchronous “background” task. The exact requirements vary, but most applications need some kind of ability to kick off an operation that will run without blocking the user interface; and have that operation report back to the user interface thread when completed.</p>
+
+<h2 id="common-requirements">Common Requirements</h2>
+
+<p>Not all applications need all of these, but some common requirements are:</p>
+
+<ul>
+  <li><strong>Results.</strong> Usually, the purpose of the asynchronous operation is to determine some value or set of values that is then used to update the state of the program.</li>
+  <li><strong>Errors.</strong> If there is an exception during the background processing, then it’s nice to have that exception preserved, including its original call stack.</li>
+  <li><strong>Progress.</strong> In addition to just updating program state upon completion (or error), it’s often useful to incrementally report progress.</li>
+  <li><strong>Cancellation.</strong> For long-running operations (especially of the CPU-intensive variety), one should include some kind of cancellation mechanism. If possible, the background operation should have a way to detect when cancellation has been requested and respond properly.</li>
+  <li><strong>Nesting.</strong> A commonly-overlooked requirement is the ability to nest background operations. This is not needed for simple UI-layer background operations, but it becomes more important when designing business-layer background operations.</li>
+  <li><strong>Synchronization.</strong> Usually there is some UI that must be updated when a background task reports progress, completes with a result, completes with an error, or is cancelled.</li>
+</ul>
+
+<h2 id="tasks-async-methods">Tasks (Async Methods)</h2>
+
+<p>The best overall method is to use <a href="/2012/02/async-and-await.html">Task-returning asynchronous methods</a>, new in .NET 4.5 and C# 5.0. They naturally support all of the common requirements:</p>
+
+<ul>
+  <li><strong>Results.</strong> Any asynchronous method returning Task&lt;TResult&gt; can just return its result directly. The result is retrieved by awaiting the Task&lt;TResult&gt;.</li>
+  <li><strong>Errors.</strong> Any exceptions thrown by a task are rethrown when the task is awaited. The call stack is properly preserved.</li>
+  <li><strong>Progress.</strong> Asynchronous methods use a progress reporting abstraction (IProgress&lt;T&gt;) to report progress. The caller of the asynchronous method determines what happens to the progress updates.</li>
+  <li><strong>Cancellation.</strong> Asynchronous methods integrate with the <a href="http://msdn.microsoft.com/en-us/library/dd997364.aspx">unified cancellation framework</a>, which provides exhaustive cancellation support.</li>
+  <li><strong>Nesting.</strong> Asynchronous methods naturally nest by awaiting the results of other asynchronous methods. Exceptions from inner methods are correctly propagated out. Cancellation can easily be propagated by passing the CancellationToken down to the inner method.</li>
+  <li><strong>Synchronization.</strong> Asynchronous methods by default will capture and resume their context automatically.</li>
+</ul>
+
+<h2 id="tasks-task-parallel-library">Tasks (Task Parallel Library)</h2>
+
+<p>You can also use tasks without asynchronous methods. Tasks were introduced in the <a href="http://msdn.microsoft.com/en-us/library/dd537609.aspx">Task Parallel 
+Library</a> (.NET 4.0). The following requirements are fully supported:</p>
+
+<ul>
+  <li><strong>Results.</strong> The Task&lt;TResult&gt; class allows the natural returning of the result. The result is retrieved by reading Task&lt;TResult&gt;.Result.</li>
+  <li><strong>Errors.</strong> Any exceptions thrown by a task are rethrown when the task is <a href="http://msdn.microsoft.com/en-us/library/dd997415.aspx">observed</a>. The original exception is wrapped in an AggregateException, so the outer exception no longer carries the correct call stack.</li>
+  <li><strong>Cancellation.</strong> .NET 4.0 includes a <a href="http://msdn.microsoft.com/en-us/library/dd997364.aspx">unified cancellation framework</a> that provides exhaustive cancellation support.</li>
+  <li><strong>Nesting.</strong> Tasks can be <a href="http://msdn.microsoft.com/en-us/library/dd997417.aspx">nested</a> if desired; child tasks properly propagate any exceptions upward, and parent tasks may optionally propagate cancellation downward. Nesting is not automatic, so this ability should be exposed by any business-layer API that is Task-based.</li>
+  <li><strong>Synchronization.</strong> Tasks introduce a very flexible model of synchronization by separating the actual operation from how it is <a href="http://msdn.microsoft.com/en-us/library/dd997402.aspx">scheduled</a>. Synchronization with the user interface is only slightly awkward; a user interface task scheduler can be retrieved by calling TaskScheduler.FromCurrentSynchronizationContext while on the UI thread. This scheduler <a href="http://msdn.microsoft.com/en-us/library/dd997394.aspx">can then be used</a> to schedule a <a href="http://msdn.microsoft.com/en-us/library/ee372288.aspx">task continuation</a> to marshal the result, error, or cancellation update to the UI thread.</li>
+</ul>
+
+<p>Progress reporting is a bit complex for tasks:</p>
+
+<ul>
+  <li><strong>Progress.</strong> One way to report progress from a task is to create another task (to update the UI), schedule it to the UI thread, and wait for it to complete. There is a <a href="/2010/06/reporting-progress-from-tasks.html">ProgressReporter wrapper class on this blog</a> which helps simplify the code.</li>
+</ul>
+
+<h2 id="backgroundworker">BackgroundWorker</h2>
+
+<p>Before .NET 4.0 was released, <a href="http://msdn.microsoft.com/en-us/library/8xs8549b.aspx">BackgroundWorker</a> was the de-facto standard. It supports most of the requirements:</p>
+
+<ul>
+  <li><strong>Results.</strong> Supporting a result is slightly awkward; the DoWork delegate has to set the DoWorkEventArgs.Result property of its argument. This value is then passed to the RunWorkerCompleted delegate, as the RunWorkerCompletedEventArgs.Result property.</li>
+  <li><strong>Errors.</strong> Exceptions thrown by DoWork are caught and passed to the RunWorkerCompleted delgate, as the RunWorkerCompletedEventArgs.Error property. That exception object does include the correct call stack; however, if the RunWorkerCompleteEventArgs.Result property is accessed when the operation completed with an error, then the original exception is wrapped in a TargetInvocationException, so the outer exception no longer carries the correct call stack.</li>
+  <li><strong>Progress.</strong> Any BackgroundWorker whose WorkerSupportsProgress property is true may report progress. The DoWork delegate invokes ReportProgress, which causes the ProgressChanged event to fire. Progress reporting is always asynchronous, so DoWork will continue to run before the ProgressChanged event actually executes.</li>
+  <li><strong>Cancellation.</strong> Any BackgroundWorker whose WorkerSupportsCancellation property is true may be cancelled. The cancelling thread first calls BackgroundWorker.CancelAsync. This causes the BackgroundWorker.CancellationPending property to become true. The DoWork delegate should monitor that property (checking it on a regular basis), and set DoWorkEventArgs.Cancel to true and return if the operation is cancelled. The RunWorkerCompleted delegate detects a cancelled result by checking RunWorkerCompletedEventArgs.Cancelled.</li>
+  <li><strong>Synchronization.</strong> The biggest benefit of BackgroundWorker is its support for automatic synchronization. The ProgressChanged and RunWorkerCompleted events are synchronized to the SynchronizationContext that was in place when RunWorkerAsync was called. In most situations, RunWorkerAsync is called from a UI thread, and so the ProgressChanged and RunWorkerCompleted events are invoked on the UI thread.</li>
+</ul>
+
+<p>BackgroundWorker does have one rather significant drawback. It works perfectly for less complex systems, but does not nest easily.</p>
+
+<ul>
+  <li><strong>Nesting.</strong> BackgroundWorker’s problem with nesting is because the DoWork delegate is not given a SynchronizationContext in which to run. Because of this, any time RunWorkerAsync is called from DoWork, the ProgressChanged and RunWorkerCompleted events on the child BackgroundWorker are <em>not</em> synchronized to the UI thread (or to the parent BackgroundWorker). This can be solved one of two ways:
+    <ul>
+      <li>If the child BackgroundWorker should synchronize to the UI, then the parent BackgroundWorker can manually install the UI SynchronizationContext in its DoWork delegate by calling SynchronizationContext.SetSynchronizationContext.</li>
+      <li>If the child BackgroundWorker should synchronize to the parent BackgroundWorker (not the UI), then the parent BackgroundWorker can run a synchronization loop using an object like <a href="http://nitoasync.codeplex.com/">Nito.Async.ActionDispatcher</a>. Alternatively, the parent BackgroundWorker could be replaced entirely by a <a href="http://nitoasync.codeplex.com/">Nito.Async.ActionThread</a>.</li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="delegatebegininvoke">Delegate.BeginInvoke</h2>
+
+<p>Every delegate in .NET supports <a href="http://msdn.microsoft.com/en-us/library/2e08f6yc.aspx">asynchronous invocation</a>. This is a lower-level technique that does not require a separate object (e.g., Task or BackgroundWorker) to define an asynchronous operation. Because it is at a lower level, it supports fewer of the standard requirements:</p>
+
+<ul>
+  <li><strong>Results.</strong> The result of the delegate may be retrieved by calling Delegate.EndInvoke, even if the asynchronous delegate has already completed.</li>
+  <li><strong>Errors.</strong> Any exception thrown by the delegate is preserved and rethrown by Delegate.EndInvoke, properly preserving the call stack.</li>
+</ul>
+
+<p>This lower-level approach does not cleanly support these requirements:</p>
+
+<ul>
+  <li><strong>Progress.</strong> A delegate must be designed to support progress reporting; one way to do this is to have the method take another delegate as one of its arguments and invoke that delegate to report progress.</li>
+  <li><strong>Cancellation.</strong> There is no built-in cancellation support, but a delegate may regularly check for a cancellation signal (e.g., a volatile bool or ManualResetEvent).</li>
+  <li><strong>Nesting.</strong> Delegates may of course asynchronously invoke other delegates; however, there is no concept of “parent” and “child” asynchronous delegates. Propagation of errors is automatic, but propagation of cancellation is not.</li>
+  <li><strong>Synchronization.</strong> There is no automatic synchronization for asynchronous delegates. There are two common solutions:
+    <ul>
+      <li>Use the AsyncOperation and AsyncOperationManager classes. These types provide a thin wrapper around SynchronizationContext, allowing for simple (asynchronous) synchronization of progress and completion. The disadvantage of these classes is that they do not support nesting. [Note: BackgroundWorker just uses these classes with an asynchronous delegate, so if you need synchronization, it’s usually just best to use Tasks or BackgroundWorker]</li>
+      <li>Use the SynchronizationContext class directly. The synchronization code is a bit more complex, but it is possible to support nesting.</li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="threadpoolqueueuserworkitem">ThreadPool.QueueUserWorkItem</h2>
+
+<p>One of the lowest-level approaches is to queue the work directly to the ThreadPool. Unfortunately, this approach does not support <em>any</em> of the requirements directly; every requirement needs a fair amount of work:</p>
+
+<ul>
+  <li><strong>Results.</strong> The delegate passed to ThreadPool.QueueUserWorkItem cannot return a value. To return a result, one must either use a child object of an argument (similar to BackgroundWorker) or pass a lambda expression bound to a variable holding the return value.</li>
+  <li><strong>Errors.</strong> If a delegate queued to the ThreadPool allows an exception to propagate, then the entire process is killed. If any errors are possible, then they should be wrapped in a try…catch and the exception object “returned” to the calling thread (either using a child object of an argument, or using a bound variable of a lambda expression). The exception could be rethrown with the correct stack trace by calling PrepareForRethrow from the <a href="http://msdn.microsoft.com/en-us/devlabs/ee794896.aspx">Rx library</a>.</li>
+</ul>
+
+<p>The other requirements have the same problems (and mitigating solutions) as the Delegate.BeginInvoke approach above.</p>
+
+<h2 id="thread">Thread</h2>
+
+<p>Of course, one obvious approach is to place a background operation in its own thread. This is often a sub-optimal solution, since the ThreadPool is designed to handle varying loads. There is almost never a need to manually create background Thread objects. However, many programmers naturally turn to the Thread class as an obvious solution.</p>
+
+<p>Just like the ThreadPool.QueueUserWorkItem approach, the manual Thread approach does not support <em>any</em> of the requirements out of the box. Manual threads have the same problems (and mitigating solutions) as the ones listed under ThreadPool.QueueUserWorkItem. In addition, manual Thread objects almost always are less efficient than the built-in ThreadPool.</p>
+
+
+  </article>
+    
+    <footer>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2010/08/using-rx-for-stream-encoding-and.html" title="Using Rx for Stream Encoding and Decoding">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2010/09/using-ilmerge-with-net-40-andor-rx.html" title="Using ILMerge with .NET 4.0 and/or Rx">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2010/08/various-implementations-of-asynchronous";
+var disqus_title = "Various Implementations of Asynchronous Background Tasks";
+var disqus_url = "http://localhost:4000/2010/08/various-implementations-of-asynchronous.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

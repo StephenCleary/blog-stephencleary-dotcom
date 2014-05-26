@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>How to Run Processes Remotely</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2011/06/how-to-run-processes-remotely.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>How to Run Processes Remotely</h1>
+          <small>Jun 2, 2011 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>Today I’m going to delve deeply into something I discovered many years ago (c. 2003). It’s an interesting little trick that hopefully no one will ever have to use.</p>
+
+<p>When a process running on one computer needs to perform some operation on <em>another</em> computer, the common solution is to actually have two processes that use interprocess communication. The one process sends its commands to the other process, which executes them on behalf of the first process. Normally, one must install a server on one computer and a client on the other. So, if someone needs to perform an operation on another computer, then that computer must <em>already have</em> the software installed.</p>
+
+<p>However, there <em>is</em> a way to send a program to a remote computer and run it, without having any special existing software on the target machine. This approach doesn’t work in every situation, but it’s useful to know. The command line programs in the famous <a href="http://technet.microsoft.com/en-us/sysinternals/bb896649">PSTools suite</a> use the approach documented here to “inject” copies of themselves onto remote computers; this allows a simple form of remote administration. The white paper <a href="http://www.ntkernel.com/?White_papers:PsExec_Internals">PsExec Internals</a> (<a href="http://www.webcitation.org/5yUALT8gw">webcite</a>) includes the specific details for PsExec.</p>
+
+<h2 id="step-1-establish-an-authenticated-connection">Step 1: Establish an Authenticated Connection</h2>
+
+<h3 id="about-connections">About Connections</h3>
+
+<p>A user session on one computer may have network connections to other computers. One common example is network drives; each network drive is a connection to another computer. Network connections may also exist without mapping a drive letter.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>Network connections may be examined and modified using the <a href="http://msdn.microsoft.com/en-us/library/aa385406.aspx" class="alert-link">Windows Networking (WNet) API</a> or the <strong>net</strong> command. Unfortunately, there are no .NET wrappers for this API in the BCL.</p>
+</div>
+
+<h3 id="about-authentication">About Authentication</h3>
+
+<p>Each network connection has to be authenticated, but there are situations where this happens automatically. When you map a network drive using Explorer, by default Windows will use your local logon to attempt to log onto the remote machine, and if it’s accepted, you won’t actually get prompted for credentials. This is particularly common in Domain environments.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>The <strong>net use</strong> command allows you to display current connections to other computers, and add or remove those connections.</p>
+</div>
+
+<h3 id="authentication-quirks">Authentication Quirks</h3>
+
+<p>Microsoft made the design decision that any number of network connections may exist between two different computers, but that the same credentials must be used for all those connections. You may use different credentials for connections to two different servers, but all connections to the same server must use the same credentials. According to a rather dated <a href="http://support.microsoft.com/kb/106211">KB106211</a> (<a href="http://www.webcitation.org/5yelY3I5Z">webcite</a>), this is done “for security purposes.” The newer <a href="http://support.microsoft.com/kb/183366">KB183366</a> (<a href="http://www.webcitation.org/5yemC7rC8">webcite</a>) documents the limitation in more detail, but does not give a reason.</p>
+
+<p>If you do attempt to use different credentials for different connections to the same server, you’ll get a 1219 error: “Multiple connections to a server or shared resource by the same user, using more than one user name, are not allowed. Disconnect all previous connections to the server or shared resource and try again.” I’ve also seen this error when Explorer tries to auto-reconnect its mapped drives and it gets confused; it appears to happen more commonly on wireless networks when resuming from a low-power state.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>There’s a “greybeard” trick used to get around this limitation: connect to the IP address instead of the hostname (or, if you want more work, set up multiple hostnames for that server). The logic behind “the same server” appears to be just a string comparison. This workaround has been documented in <a href="http://support.microsoft.com/kb/938120" class="alert-link">KB938120</a> (<a href="http://www.webcitation.org/5yemWypLb" class="alert-link">webcite</a>).</p>
+</div>
+
+<p>There are some notable situations where it’s not possible to establish an authenticated connection:</p>
+
+<ul>
+  <li>If the target (server) machine is running a client OS “Home” edition (e.g., XP Home, Vista Home Basic, Vista Home Premium, Windows 7 Home Basic, Windows 7 Home Premium), then no authenticated connections are possible.</li>
+  <li>If the target (server) machine is running a client OS “Professional” edition (e.g., XP Professional, Vista Business/Enterprise/Ultimate, Windows 7 Professional/Enterprise/Ultimate), then that machine must <em>either</em> be a member of a domain <em>or</em> turn off “simple file sharing” to support authenticated connections.</li>
+</ul>
+
+<p>Note that if you’re working in a domain enviroment, Everything Just Works. For the rest of us, we have to turn off “simple file sharing.”</p>
+
+<p>If the server is running a Home edition, or if it is not connected to a domain and is using simple file sharing, then it does not support authenticated connections. Instead, every incoming network connection is authenticated with the Guest account; see <a href="http://support.microsoft.com/kb/300489">KB300489</a> (<a href="http://www.webcitation.org/5yenW0M9U">webcite</a>).</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>Another non-authenticated approach is to use <em>null sessions</em>, which are truly anonymous. This means they work even if the Guest account is disabled. Null sessions are disabled by default and considered a security risk.</p>
+</div>
+
+<p>To send a program to a remote computer, you’ll need an authenticated connection. A Guest authentication (or null session) is insufficient.</p>
+
+<h3 id="common-shares">Common Shares</h3>
+
+<p>There are some hidden network shares for Windows systems. They are recreated automatically on reboot if they’ve been deleted.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>Hidden shares are not shown in the normal GUI, but they can be displayed by the command <strong>net share</strong>.</p>
+</div>
+
+<p>The standard hidden share names that are important to us are:</p>
+
+<ul>
+  <li><strong>IPC$</strong> - An share that is used only for authentication.</li>
+  <li><strong>ADMIN$</strong> - The equivalent of <strong>%SYSTEMROOT%</strong> (usually “C:\Windows”).</li>
+</ul>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>You can create your own hidden shares: <a href="http://support.microsoft.com/kb/314984" class="alert-link">KB314984</a> (<a href="http://www.webcitation.org/5yep2mpjH" class="alert-link">webcite</a>). You can also prevent the automatic creation of the standard hidden shares: <a href="http://support.microsoft.com/kb/954422" class="alert-link">KB954422</a> (<a href="http://www.webcitation.org/5yep4SjDH" class="alert-link">webcite</a>), but this may cause lots of problems: <a href="http://support.microsoft.com/kb/842715" class="alert-link">KB842715</a> (<a href="http://www.webcitation.org/5yepDm7Rl" class="alert-link">webcite</a>).</p>
+</div>
+
+<p>With all of that background information, our first step is to actually establish the authenticated connection to <strong>\computer\IPC$</strong>. The other steps are quite simple in comparison!</p>
+
+<h2 id="step-2-copy-the-program-to-the-target">Step 2: Copy the Program to the Target</h2>
+
+<p>Just copy the program to <strong>\computer\ADMIN$</strong>, right into the Windows directory. I recommend renaming the file during the copy to a unique name, to avoid conflicts. You don’t need to explicitly establish a network connection to <strong>\computer\ADMIN$</strong>; the existing connection to <strong>\computer\IPC$</strong> will be your authentication.</p>
+
+<h2 id="step-3-register-and-execute-the-program">Step 3: Register and Execute the Program</h2>
+
+<p>This step makes use of the little-known fact that Win32 services may be <em>installed</em> remotely. The <a href="http://msdn.microsoft.com/en-us/library/ms685148(v=VS.85).aspx">service configuration API</a> can be used to install the service on the remote computer and then start it.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>The .NET <a href="http://msdn.microsoft.com/en-us/library/system.serviceprocess.servicecontroller.aspx" class="alert-link">ServiceController class</a> does expose remote <em>control</em> of services (starting, stopping, etc), but it does not expose remote <em>installation</em> of services.</p>
+</div>
+
+<h2 id="step-4-securely-communicate">Step 4: Securely Communicate</h2>
+
+<p>Once the service is running on the remote computer, it is simple matter to communicate with the original process and carry out its instructions. It’s not quite as simple to do so in a secure manner, though; strongly consider <em>encrypting</em> all network communication and using <em>impersonation</em> in the service.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>Also remember that - as a service - you <a href="/2009/10/windows-services-and-network.html" class="alert-link">are limited</a> in what you can do.</p>
+</div>
+
+<h2 id="enjoy">Enjoy!</h2>
+
+<p>There aren’t too many good use cases for this technique. Remote administration is one, as demonstrated by the PsTools suite from Microsoft TechNet Systems Internals.</p>
+
+<p>Another possible application is to inject an installer for remote control software, such as VNC or pcAnywhere. This could be useful in the rare case where a computer is physically inaccessible.</p>
+
+
+  </article>
+    
+    <footer>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2011/05/getting-objectcontext-from-entityobject.html" title="Getting the ObjectContext from an EntityObject">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2011/06/option-parsing-option-parsing-pipeline.html" title="Option Parsing: The Option Parsing Pipeline">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2011/06/how-to-run-processes-remotely";
+var disqus_title = "How to Run Processes Remotely";
+var disqus_url = "http://localhost:4000/2011/06/how-to-run-processes-remotely.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

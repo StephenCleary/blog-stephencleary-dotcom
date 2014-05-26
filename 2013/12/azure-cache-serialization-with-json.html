@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Azure Cache Serialization (with JSON!)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2013/12/azure-cache-serialization-with-json.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Azure Cache Serialization (with JSON!)</h1>
+          <small>Dec 12, 2013 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>I’m building an Azure service that will rely somewhat heavily on Azure in-role caching; this post documents some of my findings.</p>
+
+<h2 id="serialization-options">Serialization Options</h2>
+
+<p>Azure caching is a form of distributed cache, so it uses serialization to store object instances. When you install the NuGet Azure Caching package, you get a .config that looks like this:</p>
+
+<pre><code>&lt;dataCacheClients&gt;
+  &lt;dataCacheClient name="default"&gt;
+  &lt;/dataCacheClient&gt;
+&lt;/dataCacheClients&gt;
+</code></pre>
+
+<p>Most of the settings are documented <a href="http://msdn.microsoft.com/en-us/library/windowsazure/jj658973.aspx">on MSDN</a>.</p>
+
+<p>With the default settings like this, Azure Caching will use <a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.netdatacontractserializer.aspx">NetDataContractSerializer</a>. As we’ll see, this is not exactly the most efficient setting.</p>
+
+<p>First, let’s consider alternative serializers. You can add a <code>serializationProperties</code> element to your config and specify <a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.formatters.binary.binaryformatter.aspx">BinaryFormatter</a> as such:</p>
+
+<pre><code>&lt;dataCacheClients&gt;
+  &lt;dataCacheClient name="default"&gt;
+    &lt;serializationProperties serializer="BinaryFormatter" /&gt;
+  &lt;/dataCacheClient&gt;
+&lt;/dataCacheClients&gt;
+</code></pre>
+
+<p>You can also specify a custom serializer as such:</p>
+
+<pre><code>&lt;dataCacheClients&gt;
+  &lt;dataCacheClient name="default"&gt;
+    &lt;serializationProperties serializer="CustomSerializer" customSerializerType="MyType,MyAssembly" /&gt;
+  &lt;/dataCacheClient&gt;
+&lt;/dataCacheClients&gt;
+</code></pre>
+
+<p>There’s also another knob you can tweak: you can turn on compression (i.e., <code>DeflateStream</code>) by setting <code>isCompressionEnabled</code> as such:</p>
+
+<pre><code>&lt;dataCacheClients&gt;
+  &lt;dataCacheClient name="default" isCompressionEnabled="true"&gt;
+  &lt;/dataCacheClient&gt;
+&lt;/dataCacheClients&gt;
+</code></pre>
+
+<h2 id="under-the-covers">Under the Covers</h2>
+
+<p>There are actually seven different serializers that can be used, as of the time of this writing. Each serialized object is prepended with a tiny prefix that identifies the serializer used and whether the object stream is compressed.</p>
+
+<p>If you specify <code>CustomSerializer</code> for the serializer type, then your custom serializer is <em>always</em> used. However, if you’re using <code>NetDataContractSerializer</code> or <code>BinaryFormatter</code>, then Azure Caching automatically switches to optimized serializers if your objects are already binary arrays (<code>byte[]</code>), primitive types (<code>string</code>, <code>int</code>, <code>uint</code>, <code>long</code>, <code>ulong</code>, <code>short</code>, <code>ushort</code>, <code>double</code>, <code>float</code>, <code>decimal</code>, <code>bool</code>, <code>byte</code>, <code>sbyte</code>), or <code>SessionStoreProviderData</code>.</p>
+
+<p>Note that the prefix for a custom serializer only indicates that a custom serializer was used; it does not store the actual type of the custom serializer.</p>
+
+<h2 id="changing-serialization-options">Changing Serialization Options</h2>
+
+<p>Since Azure Caching stores a prefix, you can change the <code>isCompressionEnabled</code> during a rolling upgrade without any problems. Similarly, you can change <code>serializer</code> back and forth between <code>NetDataContractSerializer</code> and <code>BinaryFormatter</code>.</p>
+
+<p>You can also change <code>serializer</code> to <code>CustomSerializer</code> during a rolling upgrade, but you can’t change back. This is because Azure Caching will not use a custom deserializer unless it is configured to use a custom serializer.</p>
+
+<p>Also, note that once a custom serializer is specified, it is <em>always</em> used. So your custom serializer should at least have versioning logic built-in; otherwise you won’t ever be able to change your custom serialization during a rolling upgrade.</p>
+
+<h2 id="performance">Performance</h2>
+
+<p>I wrote up a simple test to compare these serializers and see what kind of effect compression has. This test only covers the actual serialization used by Azure Caching without actually putting the items in the cache.</p>
+
+<p>In my Azure service, I’ll be mostly storing small custom objects with 3-4 string properties, so that’s what I’m testing here. The type looks like this:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">MyTypeNSer</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="kt">string</span> <span class="n">FirstName</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+    <span class="k">public</span> <span class="kt">string</span> <span class="n">LastName</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+    <span class="k">public</span> <span class="kt">string</span> <span class="n">Description</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>There’s a matching type called <code>MyTypeYSer</code> which is identical except it is marked with <code>[Serializable]</code>, which is required by <code>BinaryFormatter</code>.</p>
+
+<p>All instances have <code>FirstName</code> set to <code>"Christopher"</code>, <code>LastName</code> set to <code>"Dombrowski"</code>, and <code>Description</code> set to <code>"This is a generic string solely for the purpose of searching."</code>. This is representative of the kinds of data I’ll be storing in the cache in my project; if your object structure is quite different, then your results may be different as well.</p>
+
+<p>I ran through serializing with each of the built-in serializers, as well as JSON and BSON (binary JSON) serializers from JSON.NET; and with/without compression for each one. Each test serialized the object instance and then deserialized it, and compared the deserialized object with the original to ensure there were no errors.</p>
+
+<p>First, the default serializer (<code>NetDataContractSerializer</code>), which is XML-based. When serialized, the <code>MyTypeNSer</code> instance took up 521 bytes (312 compressed). The serialized data looks like this:</p>
+
+<pre><code>&lt;MyTypeNSer z:Id="1" z:Type="AzureCacheSizeTest.MyTypeNSer" z:Assembly="AzureCacheSizeTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" xmlns="http://schemas.datacontract.org/2004/07/AzureCacheSizeTest" xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:z="http://schemas.microsoft.com/2003/10/Serialization/"&gt;&lt;Description z:Id="2"&gt;This is a generic string solely for the purpose of searching.&lt;/Description&gt;&lt;FirstName z:Id="3"&gt;Christopher&lt;/FirstName&gt;&lt;LastName z:Id="4"&gt;Dombrowski&lt;/LastName&gt;&lt;/MyTypeNSer&gt;
+</code></pre>
+
+<p>During my testing, I discovered that the default serializer acts differently when used on a <code>[Serializable]</code> type. Instead of serializing the properties directly, it looks like it serializes their backing fields:</p>
+
+<pre><code>&lt;MyTypeYSer z:Id="1" z:Type="AzureCacheSizeTest.MyTypeYSer" z:Assembly="AzureCacheSizeTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" xmlns="http://schemas.datacontract.org/2004/07/AzureCacheSizeTest" xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:z="http://schemas.microsoft.com/2003/10/Serialization/"&gt;&lt;_x003C_Description_x003E_k__BackingField z:Id="2"&gt;This is a generic string solely for the purpose of searching.&lt;/_x003C_Description_x003E_k__BackingField&gt;&lt;_x003C_FirstName_x003E_k__BackingField z:Id="3"&gt;Christopher&lt;/_x003C_FirstName_x003E_k__BackingField&gt;&lt;_x003C_LastName_x003E_k__BackingField z:Id="4"&gt;Dombrowski&lt;/_x003C_LastName_x003E_k__BackingField&gt;&lt;/MyTypeYSer&gt;
+</code></pre>
+
+<p>In this case (with automatic backing fields), this bloats the serialized size to 695 bytes (340 compressed). Here’s a side-by-side comparison of how the data looks:</p>
+
+<pre><code>&lt;MyTypeNSer z:Id="1" z:Type="AzureCacheSizeTest.MyTypeNSer" z:Assembly="AzureCacheSizeTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" xmlns="http://schemas.datacontract.org/2004/07/AzureCacheSizeTest" xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:z="http://schemas.microsoft.com/2003/10/Serialization/"&gt;&lt;Description z:Id="2"&gt;This is a generic string solely for the purpose of searching.&lt;/Description&gt;&lt;FirstName z:Id="3"&gt;Christopher&lt;/FirstName&gt;&lt;LastName z:Id="4"&gt;Dombrowski&lt;/LastName&gt;&lt;/MyTypeNSer&gt;
+&lt;MyTypeYSer z:Id="1" z:Type="AzureCacheSizeTest.MyTypeYSer" z:Assembly="AzureCacheSizeTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" xmlns="http://schemas.datacontract.org/2004/07/AzureCacheSizeTest" xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:z="http://schemas.microsoft.com/2003/10/Serialization/"&gt;&lt;_x003C_Description_x003E_k__BackingField z:Id="2"&gt;This is a generic string solely for the purpose of searching.&lt;/_x003C_Description_x003E_k__BackingField&gt;&lt;_x003C_FirstName_x003E_k__BackingField z:Id="3"&gt;Christopher&lt;/_x003C_FirstName_x003E_k__BackingField&gt;&lt;_x003C_LastName_x003E_k__BackingField z:Id="4"&gt;Dombrowski&lt;/_x003C_LastName_x003E_k__BackingField&gt;&lt;/MyTypeYSer&gt;
+</code></pre>
+
+<p>Next up is the <code>BinaryFormatter</code>. As expected, the binary serializer results in a smaller object size: 325 bytes (229 compressed). The serialized data looks like this (using <code>\xx</code> for binary hex values):</p>
+
+<pre><code>\00\01\00\00\00\FF\FF\FF\FF\01\00\00\00\00\00\00\00\0C\02\00\00\00IAzureCacheSizeTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null\05\01\00\00\00\1DAzureCacheSizeTest.MyTypeYSer\03\00\00\00\1A&lt;FirstName&gt;k__BackingField\19&lt;LastName&gt;k__BackingField\1C&lt;Description&gt;k__BackingField\01\01\01\02\00\00\00\06\03\00\00\00\0BChristopher\06\04\00\00\00\0ADombrowski\06\05\00\00\00=This is a generic string solely for the purpose of searching.\0B
+</code></pre>
+
+<p>Finally, I wanted to try JSON, since practically any modern Azure service <em>already</em> has a reference to JSON.NET anyway. JSON performed quite well: 189 bytes (140 compressed). The serialized instance looks like this:</p>
+
+<pre><code>{"$type":"AzureCacheSizeTest.MyTypeNSer, AzureCacheSizeTest","FirstName":"Christopher","LastName":"Dombrowski","Description":"This is a generic string solely for the purpose of searching."}
+</code></pre>
+
+<p>However, I was also aware that JSON.NET supports BSON (Binary JSON), so I was curious to see whether there were any further space savings that I could squeeze out. BSON was slightly <em>less</em> efficient than JSON, weighing in at 197 bytes (152 compressed). As it turns out, BSON is not a “compressed JSON” format as much as it is a “fast and traversable” JSON, as <a href="http://bsonspec.org/#/faq">described in their FAQ</a>. For completeness, here’s the same instance as it appears in BSON:</p>
+
+<pre><code>\C5\00\00\00\02$type\002\00\00\00AzureCacheSizeTest.MyTypeNSer, AzureCacheSizeTest\00\02FirstName\00\0C\00\00\00Christopher\00\02LastName\00\0B\00\00\00Dombrowski\00\02Description\00&gt;\00\00\00This is a generic string solely for the purpose of searching.\00\00
+</code></pre>
+
+<p>Note that BSON would perform better than JSON if I was storing more binary data, e.g., profile images of the people. But my use case is just strings, and there JSON wins out.</p>
+
+<h2 id="the-graph">The Graph</h2>
+
+<p>Here’s all the results in a more visual format, from most efficient to least efficient:</p>
+
+<p class="center"><img src="/assets/Serialization+sizes.png" alt="" />  </p>
+
+<h2 id="lessons-learned">Lessons Learned</h2>
+
+<p>At the very least, you should turn on compression (a 40% savings over the default settings). You can do this at any time, even with a rolling upgrade.</p>
+
+<p>Also consider compressed <code>BinaryFormatter</code> (a 55% savings). Unfortunately, <code>BinaryFormatter</code> does require your types to be <code>[Serializable]</code>, which can be tedious or impossible. Switching to <code>BinaryFormatter</code> can also be done with a rolling upgrade.</p>
+
+<p>For myself, I’m going all-out with a JSON-based custom serializer that handles its own versioning. This offers the most compact representation of the ones I tried (&gt;70%, or 3.5 times smaller). However, once you switch to <code>CustomSerializer</code>, you can never switch back with a rolling upgrade (you’d need to fully stop your service, clearing the cache, and then start again).</p>
+
+<h2 id="note-on-json-and-type-names">Note on JSON and Type Names</h2>
+
+<p>By default, JSON doesn’t store the type names of the objects it’s serializing. If the type name isn’t stored, the deserializer can’t know the type of the serialized object, and it will just create a <code>JObject</code> and return that.</p>
+
+<p>You can <a href="http://james.newtonking.com/json/help/index.html?topic=html/SerializationGuide.htm">instruct JSON.NET to emit type names</a>. I chose <code>TypeNameHandling.Auto</code>, which means that the type name is only serialized if it doesn’t match the declared type. This meant I also had to call the <code>JsonSerializer.Serialize</code> overload that took a <code>Type</code> argument, passing <code>typeof(object)</code>. This sounds weird, but what I’m actually doing is explicitly telling JSON.NET that my instance was declared as type <code>object</code> and therefore needs a type name emitted at the root.</p>
+
+<h2 id="the-code">The Code</h2>
+
+<p>This is a simple console app <a href="https://gist.github.com/StephenCleary/7890983">up on Gist</a> that displays the sizes to the console and trace-writes the actual streams to the debugger.</p>
+
+<script src="https://gist.github.com/StephenCleary/7890983.js"></script>
+
+
+  </article>
+    
+    <footer>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2013/11/there-is-no-thread.html" title="There Is No Thread">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2014/01/announcement-speaking-at-codemash-2014.html" title="Announcement: Speaking at CodeMash 2014">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2013/12/azure-cache-serialization-with-json";
+var disqus_title = "Azure Cache Serialization (with JSON!)";
+var disqus_url = "http://localhost:4000/2013/12/azure-cache-serialization-with-json.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

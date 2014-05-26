@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Introduction to Dataflow, Part 1</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2012/09/introduction-to-dataflow-part-1.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Introduction to Dataflow, Part 1</h1>
+          <small>Sep 20, 2012 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>So far, we’ve been learning quite a bit about the core <code>async</code> / <code>await</code> support that was added to C# in VS2012. Today, we’ll start with a conceptual overview of the first large, useful library built with <code>async</code> in mind: <a href="http://msdn.microsoft.com/en-us/devlabs/gg585582.aspx">TPL Dataflow</a>.</p>
+
+<p>TPL Dataflow allows you to easily create a <em>mesh</em> through which your data flows. The simplest meshes are pipelines (very similar to pipelines in PowerShell). More complex meshes can split and join the data flows, and even contain data flow loops!</p>
+
+<p>Every mesh is composed of a number of <em>blocks</em> which are linked together. TPL Dataflow provides quite a few blocks which address different needs; we will just use the most basic blocks for our examples, but you can see the <a href="http://www.microsoft.com/en-us/download/details.aspx?id=14782">Introduction to TPL Dataflow document</a> for a full description of the different types of blocks.</p>
+
+<h2 id="the-block">The Block</h2>
+
+<p>A block is a part of a dataflow mesh through which data can flow. The block usually processes the data in some way, but it doesn’t have to.</p>
+
+<p>Blocks themselves have components: usually a <em>buffer</em> component and a <em>task</em> component. Buffers hold data (either data that has been sent to this block but which has not yet been processed, or data that has been processed and is waiting to leave the block).</p>
+
+<p>Different block types have different configurations of buffers and tasks. Some blocks have multiple buffers (e.g., “join” blocks). Tasks have two purposes. Most blocks use a task to push data out of the block; some blocks also use a task to do the processing of the data.</p>
+
+<h2 id="basic-data-flow">Basic Data Flow</h2>
+
+<p>You can push data to a block by calling <a href="http://msdn.microsoft.com/en-us/library/hh194836.aspx"><code>Post(item)</code></a> or <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.dataflow.dataflowblock.sendasync.aspx"><code>await SendAsync(item)</code></a>. Normally, you could just use <code>Post(item)</code> to (synchronously) place the data into the block’s input buffer. However, it’s possible to throttle a block by limiting its buffer size; in this case, you could use <code>SendAsync</code> to (asynchronously) wait for space to be available and then place the data into the block’s input buffer.</p>
+
+<p>Getting data out at first appears pretty easy: you can call <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.dataflow.dataflowblock.receive.aspx"><code>Receive</code></a>, <a href="http://msdn.microsoft.com/en-us/library/hh194808.aspx"><code>TryReceive</code></a>, or <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.dataflow.dataflowblock.receiveasync.aspx"><code>ReceiveAsync</code></a> to retrieve the next item, and there’s an <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.dataflow.dataflowblock.outputavailableasync.aspx"><code>OutputAvailableAsync</code></a> that lets you know when the next item is ready to be retrieved. However, there are a couple of “gotchas”:</p>
+
+<ol>
+  <li>When a block finishes processing, <code>Receive</code> and <code>await ReceiveAsync</code> will both throw exceptions. This is not ideal.</li>
+  <li><code>OutputAvailableAsync</code> is not very useful if there are multiple receivers reading from the same block.</li>
+</ol>
+
+<p>From a procedural perspective, it would be great if we had a <code>Tuple&lt;bool, T&gt; TryReceiveAsync</code> that would either retrieve the item or return false, rather than raising an exception.</p>
+
+<p>But if you look at the problem from a <em>dataflow</em> perspective, there is already a solution: <a href="http://msdn.microsoft.com/en-us/library/hh194684.aspx"><code>ActionBlock&lt;T&gt;</code></a> will execute a callback for any data pushed to it. This is the “dataflowish” way of getting the results out of a dataflow mesh: just <em>link</em> your block to an <code>ActionBlock</code>.</p>
+
+<h2 id="linking">Linking</h2>
+
+<p>You can connect two blocks by linking them together. The actual negotiation of data transfer is fairly complex (to allow scenarios such as “join” blocks) - but you usually don’t have to think about it. Just link from source to target (<a href="http://msdn.microsoft.com/en-us/library/hh160311.aspx"><code>source.LinkTo(target);</code></a>), and the library takes care of propagating the data.</p>
+
+<p>There’s no limit to what you can link. It is possible to have a loop in your dataflow mesh.</p>
+
+<p>There are several options you have when setting up a link. You can have the link disengage after so many data items, or specify a filter so only certain data items will be propagated along the link, etc.</p>
+
+<p>A lot of my dataflow “meshes” end up being “pipelines”, so one option I use more than others is <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.dataflow.dataflowlinkoptions.propagatecompletion.aspx"><code>PropagateCompletion</code></a>, which propagates completion as well as data items.</p>
+
+<h2 id="completion">Completion</h2>
+
+<p>Eventually, you’re going to finish sending data to your dataflow mesh, and you’re going to want to know when the mesh is done processing it. Each block supports an asynchronous form of completion: you call <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.dataflow.idataflowblock.complete.aspx"><code>Complete</code></a> and some time later, the block’s <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.dataflow.idataflowblock.completion.aspx"><code>Completion</code></a> task will complete.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>Side note: you should <em>always</em> assume that <code>Completion</code> might be signaled asynchronously, even if there are no data items to process.</p>
+</div>
+
+<p>If you have a simple dataflow mesh (like a pipeline), then you can tell the blocks to propagate their completion when you link them together. Then when you’re finished, you can just complete the first block and await the completion of the last block.</p>
+
+<p>If your dataflow mesh is more complex, then you may have to propagate completion manually. The common tools for this are <a href="http://msdn.microsoft.com/en-us/library/hh160384.aspx"><code>Task.WhenAll</code></a> and <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.task.continuewith.aspx"><code>Task.ContinueWith</code></a>. If you do have to do this, I recommend that you wrap your dataflow mesh into a separate class (possibly exposing the blocks as properties) and implement your own <code>Complete</code> and <code>Completion</code> members just like a dataflow block does.</p>
+
+
+  </article>
+    
+    <footer>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2012/09/an-async-horror-story.html" title="An Async Horror Story">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2012/09/introduction-to-dataflow-part-2.html" title="Introduction to Dataflow, Part 2">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2012/09/introduction-to-dataflow-part-1";
+var disqus_title = "Introduction to Dataflow, Part 1";
+var disqus_url = "http://localhost:4000/2012/09/introduction-to-dataflow-part-1.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

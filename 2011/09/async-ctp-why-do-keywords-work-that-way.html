@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>The Async CTP "Why Do the Keywords Work THAT Way" Unofficial FAQ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2011/09/async-ctp-why-do-keywords-work-that-way.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>The Async CTP "Why Do the Keywords Work THAT Way" Unofficial FAQ</h1>
+          <small>Sep 1, 2011 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>There’s a lot of interest in the <a href="http://msdn.microsoft.com/en-US/vstudio/async">Async CTP</a>, with good reason. The Async CTP will make asynchronous programming much, much easier than it has ever been. It’s somewhat less powerful but much easier to learn than <a href="http://msdn.microsoft.com/en-us/data/gg577609">Rx</a>.</p>
+
+<p>The Async CTP introduces two new keywords, <strong>async</strong> and <strong>await</strong>. Asynchronous methods (or lambda expressions) must return <strong>void</strong>, <strong>Task</strong>, or <strong>Task&lt;TResult&gt;</strong>.</p>
+
+<p>This post is not an introduction to the Async CTP; there’s plenty of tutorial resources available out there (including <a href="/2012/02/async-and-await.html">one by yours truly</a>). This post is an attempt to bring together the answers to a few common questions that programmers have when they start using the Async CTP.</p>
+
+<h2 id="inferring-the-return-type">Inferring the Return Type</h2>
+
+<p>When returning a value from an <strong>async</strong> method, the method body returns the value directly, but the method itself is declared as returning a <strong>Task&lt;TResult&gt;</strong>. There is a bit of “disconnect” when you declare a method returning one type and have to return another type:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="c1">// Actual syntax</span>
+<span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">GetValue</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="k">await</span> <span class="n">TaskEx</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
+  <span class="k">return</span> <span class="m">13</span><span class="p">;</span> <span class="c1">// Return type is &quot;int&quot;, not &quot;Task&lt;int&gt;&quot;</span>
+<span class="p">}</span></code></pre></div>
+
+<p>Question: Why can’t I write this:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="c1">// Hypothetical syntax</span>
+<span class="k">public</span> <span class="k">async</span> <span class="kt">int</span> <span class="nf">GetValue</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="k">await</span> <span class="n">TaskEx</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
+  <span class="k">return</span> <span class="m">13</span><span class="p">;</span> <span class="c1">// Return type is &quot;int&quot;</span>
+<span class="p">}</span></code></pre></div>
+
+<p>Consider: How will the method signature look to callers? Async methods that return a value must have an actual result type of <strong>Task&lt;TResult&gt;</strong>. So <strong>GetValue</strong> will show up in IntelliSense as returning <strong>Task&lt;TResult&gt;</strong> (this would also be true for the object browser, Reflector, etc).</p>
+
+<p>Inferring the return type <a href="http://social.msdn.microsoft.com/Forums/en-US/async/thread/0ee0af6a-3034-4ac3-aa82-cb6bd62a9ab9#8d1826a5-d603-4b74-8c64-2a9b32d6af24">was considered</a> during the initial design, but the team concluded that the keeping the “disconnect” within the <strong>async</strong> method was better than spreading the “disconnect” throughout the code base. The “disconnect” is still there, but it’s smaller than it could be. The consensus is that a consistent method signature is preferred.</p>
+
+<p>Consider: There is a difference between <strong>async void</strong> and <strong>async Task</strong>.</p>
+
+<p>An <strong>async Task</strong> method is just like any other asynchronous operation, only without a return value. An <strong>async void</strong> method acts as a “top-level” asynchronous operation. An <strong>async Task</strong> method may be composed into other async methods using <strong>await</strong>. An <strong>async void</strong> method may be used as an event handler. An <strong>async void</strong> method also has another important property: in an ASP.NET context, it informs the web server that the page is not completed until it returns (see <a href="http://msdn.microsoft.com/en-us/magazine/gg598924.aspx">my MSDN article</a> for more information on how this works).</p>
+
+<p>Inferring the return type would remove the distinction between <strong>async void</strong> and <strong>async Task</strong>; either all async methods would be <strong>async void</strong> (preventing composability), or they would all be <strong>async Task</strong> (preventing them from being event handlers, and requiring an alternative solution for ASP.NET support).</p>
+
+<h2 id="async-return">Async Return</h2>
+
+<p>There is still a “disconnect” between the method declaration return type and the method body return type. Another option that <a href="http://gauravsmathur.wordpress.com/2010/11/04/something-wrong-with-async-await-and-the-tasktask/">has been suggested</a> is to add a keyword to <strong>return</strong> to indicate that the value given to <strong>return</strong> is not really what’s being returned, e.g.:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="c1">// Hypothetical syntax</span>
+<span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">GetValue</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="k">await</span> <span class="n">TaskEx</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
+  <span class="k">async</span> <span class="k">return</span> <span class="m">13</span><span class="p">;</span> <span class="c1">// &quot;async return&quot; means the value will be wrapped in a Task</span>
+<span class="p">}</span></code></pre></div>
+
+<p>Consider: Converting large amounts of code from synchronous to asynchronous.</p>
+
+<p>The <strong>async return</strong> keyword <a href="http://social.msdn.microsoft.com/Forums/en-US/async/thread/75493675-4a39-4958-a493-ad8a96f8a19d">was also considered</a>, but it wasn’t compelling enough. This is particularly true when converting a lot of synchronous code to asynchronous code (which will be common over the next few years); forcing people to add <strong>async</strong> to every <strong>return</strong> statement just seemed like “needless busy-work.” It’s easier to get used to the “disconnect”.</p>
+
+<h2 id="inferring-async">Inferring “async”</h2>
+
+<p>The <strong>async</strong> keyword <em>must</em> be applied to a method that makes use of <strong>await</strong>. However, it also gives a warning if it is applied to a method that does <em>not</em> make use of <strong>await</strong>.</p>
+
+<p>Question: Why can’t <strong>async</strong> be inferred based on the presence of <strong>await</strong>:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="c1">// Hypothetical syntax</span>
+<span class="k">public</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">GetValue</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="c1">// The presence of &quot;await&quot; implies that this is an &quot;async&quot; method.</span>
+  <span class="k">await</span> <span class="n">TaskEx</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
+  <span class="k">return</span> <span class="m">13</span><span class="p">;</span>
+<span class="p">}</span></code></pre></div>
+
+<p>Consider: Backwards compatibility and code readability.</p>
+
+<p>Eric Lippert has the <a href="http://blogs.msdn.com/b/ericlippert/archive/2010/11/11/whither-async.aspx">definitive post</a> on the subject. It’s also been discussed in <a href="http://blogs.msdn.com/b/ericlippert/archive/2010/10/29/asynchronous-programming-in-c-5-0-part-two-whence-await.aspx">blog comments</a>, <a href="http://channel9.msdn.com/Forums/Coffeehouse/Why-is-the-async-keyword-needed">Channel9</a>, <a href="http://social.msdn.microsoft.com/Forums/en-US/async/thread/75493675-4a39-4958-a493-ad8a96f8a19d">forums</a>, and <a href="http://stackoverflow.com/questions/9225748/why-does-the-async-keyword-exist">Stack Overflow</a>.</p>
+
+<p>To summarize, a single-word <strong>await</strong> keyword would be too big of a breaking change. The choice was between a multi-word await (e.g., <strong>await for</strong>) or a keyword on the method (<strong>async</strong>) that would enable the <strong>await</strong> keyword just within that method. Explicitly marking methods <strong>async</strong> is easier for both humans and computers to parse, so they decided to go with the <strong>async</strong>/<strong>await</strong> pair.</p>
+
+<h2 id="inferring-await">Inferring “await”</h2>
+
+<p>Question: Since it makes sense to explicitly include <strong>async</strong> (see above), why can’t <strong>await</strong> be inferred based on the presence of <strong>async</strong>:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="c1">// Hypothetical syntax</span>
+<span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">GetValue</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="c1">// &quot;await&quot; is implied, since this is an &quot;async&quot; method.</span>
+  <span class="n">TaskEx</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
+  <span class="k">return</span> <span class="m">13</span><span class="p">;</span>
+<span class="p">}</span></code></pre></div>
+
+<p>Consider: Parallel composition of asynchronous operations.</p>
+
+<p>At first glance, inferring <strong>await</strong> appears to simplify basic asynchronous operations. As long as all waiting is done in serial (i.e., one operation is awaited, then another, and then another), this works fine. However, it falls apart when one considers parallel composition.</p>
+
+<p>Parallel composition in the Async CTP is done using <strong>TaskEx.WhenAny</strong> and <strong>TaskEx.WhenAll</strong> methods. Here’s a simple example which starts two operations immediately and asynchronously waits for both of them to complete:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="c1">// Actual syntax</span>
+<span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">GetValue</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="c1">// Asynchronously retrieve two partial values.</span>
+  <span class="c1">// Note that these are *not* awaited at this time.</span>
+  <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">part1</span> <span class="p">=</span> <span class="n">GetValuePart1</span><span class="p">();</span>
+  <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">part2</span> <span class="p">=</span> <span class="n">GetValuePart2</span><span class="p">();</span>
+
+  <span class="c1">// Wait for both values to arrive.</span>
+  <span class="k">await</span> <span class="n">TaskEx</span><span class="p">.</span><span class="n">WhenAll</span><span class="p">(</span><span class="n">part1</span><span class="p">,</span> <span class="n">part2</span><span class="p">);</span>
+
+  <span class="c1">// Calculate our result.</span>
+  <span class="kt">int</span> <span class="n">value1</span> <span class="p">=</span> <span class="k">await</span> <span class="n">part1</span><span class="p">;</span> <span class="c1">// Does not actually wait.</span>
+  <span class="kt">int</span> <span class="n">value2</span> <span class="p">=</span> <span class="k">await</span> <span class="n">part2</span><span class="p">;</span> <span class="c1">// Does not actually wait.</span>
+  <span class="k">return</span> <span class="n">value1</span> <span class="p">+</span> <span class="n">value2</span><span class="p">;</span>
+<span class="p">}</span></code></pre></div>
+
+<p>In order to do parallel composition, we must have the ability to say we’re <em>not</em> going to <strong>await</strong> an expression.</p>
+
+
+  </article>
+    
+    <footer>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2011/08/option-parsing-validation.html" title="Option Parsing: Validation">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2011/09/nitoasyncex-available.html" title="Nito.AsyncEx Available">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2011/09/async-ctp-why-do-keywords-work-that-way";
+var disqus_title = "The Async CTP &quot;Why Do the Keywords Work THAT Way&quot; Unofficial FAQ";
+var disqus_url = "http://localhost:4000/2011/09/async-ctp-why-do-keywords-work-that-way.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>

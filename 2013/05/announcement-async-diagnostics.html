@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html>
+
+  ﻿<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Announcement: Async Diagnostics</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://localhost:4000/2013/05/announcement-async-diagnostics.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <ul class="nav navbar-nav navbar-left">
+                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+            </ul>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-left">
+                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
+                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
+                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
+                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                
+                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                
+            </ul>
+                    
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form google google-searchbox" role="search">
+                        <gcse:searchbox></gcse:searchbox>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Announcement: Async Diagnostics</h1>
+          <small>May 17, 2013 &bull; <a href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>It is with greatest pleasure that I announce the public (pre)release of Async Diagnostics.</p>
+
+<p>Currently, diagnostics can be a bit… difficult… when dealing with <code>async</code> code. In particular, the call stack is not very useful for diagnostics in asynchronous code.</p>
+
+<h2 id="a-brief-digression-on-call-stacks-and-causality-stacks">A Brief Digression on Call Stacks and Causality Stacks</h2>
+
+<p>I’ll cut to the chase: the call stack is about <em>where you’re going next</em>, not <em>where you came from</em>. This means that you should not look to the call stack to find out how your code got into that situation. What you <em>really</em> want is a “causality stack”.</p>
+
+<p>This is counter-intuitive to many developers because in the synchronous world, the call stack <em>is</em> the causality stack. But in the asynchronous world, they are very different. Eric Lippert has some great SO answers (<a href="http://stackoverflow.com/a/15368508/263693">1</a>, <a href="http://stackoverflow.com/a/6597522/263693">2</a>) that clarify what the call stack <em>really</em> is.</p>
+
+<p>There’s also a recent <a href="http://msdn.microsoft.com/en-us/magazine/jj891052.aspx">MSDN article</a> that explains why call stacks aren’t causality stacks. That article includes a fairly involved way to build causality chains that works for Windows Store applications but does not properly handle fork/join scenarios (e.g., <code>Task.WhenAll</code>).</p>
+
+<h2 id="introducing-async-diagnostics">Introducing Async Diagnostics</h2>
+
+<p>You can now <a href="https://nuget.org/packages/Nito.AsyncEx.AsyncDiagnostics/">download a library</a> into your project from NuGet, follow the simple instructions, and you’ll get asynchronous diagnostic (causality) stacks for all exceptions thrown in (or through) your assembly.</p>
+
+<h2 id="example">Example</h2>
+
+<p>Consider the following example program. It has reasonably realistic asynchronous method usage; the <code>MainAsync</code> method calls the <code>MyMethodAsync</code> method, which is overloaded to allow cancellation. <code>MyMethodAsync</code> in turn spins up a couple of parallel asynchronous tasks and waits for them both to complete. One of these tasks will throw an exception.</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Threading</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
+
+<span class="k">class</span> <span class="nc">Program</span>
+<span class="p">{</span>
+    <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">MainAsync</span><span class="p">(</span><span class="n">args</span><span class="p">).</span><span class="n">Wait</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">MainAsync</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">try</span>
+        <span class="p">{</span>
+            <span class="k">await</span> <span class="nf">MyMethodAsync</span><span class="p">(</span><span class="s">&quot;I&#39;m an asynchronous exception! Locate me if you can!&quot;</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">ex</span><span class="p">.</span><span class="n">ToString</span><span class="p">());</span>
+            <span class="n">Console</span><span class="p">.</span><span class="n">ReadKey</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">static</span> <span class="n">Task</span> <span class="nf">MyMethodAsync</span><span class="p">(</span><span class="kt">string</span> <span class="n">message</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="nf">MyMethodAsync</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">.</span><span class="n">None</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">MyMethodAsync</span><span class="p">(</span><span class="kt">string</span> <span class="n">message</span><span class="p">,</span> <span class="n">CancellationToken</span> <span class="n">token</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="kt">var</span> <span class="n">task1</span> <span class="p">=</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">1000</span><span class="p">);</span>
+        <span class="kt">var</span> <span class="n">task2</span> <span class="p">=</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="p">{</span> <span class="k">throw</span> <span class="k">new</span> <span class="n">InvalidOperationException</span><span class="p">(</span><span class="n">message</span><span class="p">);</span> <span class="p">});</span> <span class="c1">// (line 33)</span>
+        <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">WhenAll</span><span class="p">(</span><span class="n">task1</span><span class="p">,</span> <span class="n">task2</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>If you run this program, you’ll see output like this:</p>
+
+<pre><code>System.InvalidOperationException: I'm an asynchronous exception! Locate me if you can!
+   at Program.&lt;&gt;c__DisplayClass4.&lt;MyMethodAsync&gt;b__3() in e:\work_\projects\ConsoleApplication8\ConsoleApplication8\Program.cs:line 33
+   at System.Threading.Tasks.Task`1.InnerInvoke()
+   at System.Threading.Tasks.Task.Execute()
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.GetResult()
+   at Program.&lt;MyMethodAsync&gt;d__6.MoveNext() in e:\work_\projects\ConsoleApplication8\ConsoleApplication8\Program.cs:line 34
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.GetResult()
+   at Program.&lt;MainAsync&gt;d__0.MoveNext() in e:\work_\projects\ConsoleApplication8\ConsoleApplication8\Program.cs:line 16
+</code></pre>
+
+<p>If you’re familiar with mangled call stacks, you can see from the first entry that the exception was raised from a lambda expression in <code>MyMethodAsync</code>, and you even get the file name and line number. But the real question is: <em>how did the program get in this state?</em> You can often answer that question by answering the closely related questions: <em>what called this method, and what called the calling method, etc?</em> A regular call stack just isn’t sufficient to answer those questions for asynchronous code. You need a causality stack.</p>
+
+<p>First, add the <a href="https://nuget.org/packages/Nito.AsyncEx.AsyncDiagnostics/">Nito.AsyncEx.AsyncDiagnostics</a> package to the solution. Be sure to include Prerelease packages:</p>
+
+<p class="center"><img src="/assets/AsyncDiagnostics.NuGet.png" alt="" /></p>
+
+<p>Once it’s installed, it’ll bring up some installation/usage instructions. First, in one of your source files, apply the <code>AsyncDiagnosticAspect</code> to your assembly. Then, locate the place where you display or log your exceptions, and change <code>ToString</code> to <code>ToAsyncDiagnosticString</code>:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Threading</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">Nito.AsyncEx.AsyncDiagnostics</span><span class="p">;</span>
+
+<span class="na">[assembly: AsyncDiagnosticAspect]</span>
+
+<span class="k">class</span> <span class="nc">Program</span>
+<span class="p">{</span>
+    <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">MainAsync</span><span class="p">(</span><span class="n">args</span><span class="p">).</span><span class="n">Wait</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">MainAsync</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">try</span>
+        <span class="p">{</span>
+            <span class="k">await</span> <span class="nf">MyMethodAsync</span><span class="p">(</span><span class="s">&quot;I&#39;m an asynchronous exception! Locate me if you can!&quot;</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">ex</span><span class="p">.</span><span class="n">ToAsyncDiagnosticString</span><span class="p">());</span>
+            <span class="n">Console</span><span class="p">.</span><span class="n">ReadKey</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">static</span> <span class="n">Task</span> <span class="nf">MyMethodAsync</span><span class="p">(</span><span class="kt">string</span> <span class="n">message</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="nf">MyMethodAsync</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">.</span><span class="n">None</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">MyMethodAsync</span><span class="p">(</span><span class="kt">string</span> <span class="n">message</span><span class="p">,</span> <span class="n">CancellationToken</span> <span class="n">token</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="kt">var</span> <span class="n">task1</span> <span class="p">=</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">1000</span><span class="p">);</span>
+        <span class="kt">var</span> <span class="n">task2</span> <span class="p">=</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="p">{</span> <span class="k">throw</span> <span class="k">new</span> <span class="n">InvalidOperationException</span><span class="p">(</span><span class="n">message</span><span class="p">);</span> <span class="p">});</span>
+        <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">WhenAll</span><span class="p">(</span><span class="n">task1</span><span class="p">,</span> <span class="n">task2</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>With these few changes, the new output is the same, except for some additional information printed at the end of the exception stack trace:</p>
+
+<pre><code>System.InvalidOperationException: I'm an asynchronous exception! Locate me if you can!
+   at Program.&lt;&gt;c__DisplayClass4.&lt;MyMethodAsync&gt;b__3() in e:\work_\projects\ConsoleApplication8\ConsoleApplication8\Program.cs:line 36
+   at System.Threading.Tasks.Task`1.InnerInvoke()
+   at System.Threading.Tasks.Task.Execute()
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.GetResult()
+   at Program.&lt;MyMethodAsync&gt;d__6.&lt;MoveNext&gt;z__OriginalMethod() in e:\work_\projects\ConsoleApplication8\ConsoleApplication8\Program.cs:line 37
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.GetResult()
+   at Program.&lt;MainAsync&gt;d__0.&lt;MoveNext&gt;z__OriginalMethod() in e:\work_\projects\ConsoleApplication8\ConsoleApplication8\Program.cs:line 19
+Logical stack:
+   async Program.MyMethodAsync(String message, CancellationToken token)
+   Program.MyMethodAsync(String message)
+   async Program.MainAsync(String[] args)
+   Program.Main(String[] args)
+</code></pre>
+
+<p>Now there’s a nice “logical stack” stuck on the end of the exception dump. Unlike the exception call stack, the “logical stack” is actually a causality stack, which is much more useful when debugging asynchronous code. As you can see, the logical stack leads us directly to the location of the exception, and (more importantly) shows <em>how we got there</em>.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>Side note: the original exception details are included in <code>ToAsyncDiagnosticString</code> because it does contain some information that is <em>not</em> tracked by the async diagnostic stack. For example, you can look at the top frame in the (synchronous) call stack (<code>Program.&lt;&gt;c__DisplayClass4.&lt;MyMethodAsync&gt;b__3()</code>) and infer that in fact the exception is thrown from a lambda expression and not directly from <code>MyMethodAsync</code>. The synchronous call stack also includes other information such as file names and line numbers that is not (currently) included in the logical stack.</p>
+</div>
+
+<p>Ready to go one step further? You can tie into the diagnostic stack and add whatever additional data you want:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Threading</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">Nito.AsyncEx.AsyncDiagnostics</span><span class="p">;</span>
+
+<span class="na">[assembly: AsyncDiagnosticAspect]</span>
+
+<span class="k">class</span> <span class="nc">Program</span>
+<span class="p">{</span>
+    <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">MainAsync</span><span class="p">(</span><span class="n">args</span><span class="p">).</span><span class="n">Wait</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">MainAsync</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">try</span>
+        <span class="p">{</span>
+            <span class="k">await</span> <span class="nf">MyMethodAsync</span><span class="p">(</span><span class="s">&quot;I&#39;m an asynchronous exception! Locate me if you can!&quot;</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">ex</span><span class="p">.</span><span class="n">ToAsyncDiagnosticString</span><span class="p">());</span>
+            <span class="n">Console</span><span class="p">.</span><span class="n">ReadKey</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">static</span> <span class="n">Task</span> <span class="nf">MyMethodAsync</span><span class="p">(</span><span class="kt">string</span> <span class="n">message</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">using</span> <span class="p">(</span><span class="n">AsyncDiagnosticStack</span><span class="p">.</span><span class="n">Enter</span><span class="p">(</span><span class="s">&quot;  My message is: &quot;</span> <span class="p">+</span> <span class="n">message</span><span class="p">))</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="nf">MyMethodAsync</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">.</span><span class="n">None</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">MyMethodAsync</span><span class="p">(</span><span class="kt">string</span> <span class="n">message</span><span class="p">,</span> <span class="n">CancellationToken</span> <span class="n">token</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="kt">var</span> <span class="n">task1</span> <span class="p">=</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">1000</span><span class="p">);</span>
+        <span class="kt">var</span> <span class="n">task2</span> <span class="p">=</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="p">{</span> <span class="k">throw</span> <span class="k">new</span> <span class="n">InvalidOperationException</span><span class="p">(</span><span class="n">message</span><span class="p">);</span> <span class="p">});</span>
+        <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">WhenAll</span><span class="p">(</span><span class="n">task1</span><span class="p">,</span> <span class="n">task2</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>And whatever string you give it gets included in the logical stack:</p>
+
+<pre><code>Logical stack:
+   async Program.MyMethodAsync(String message, CancellationToken token)
+     My message is: I'm an asynchronous exception! Locate me if you can!
+   Program.MyMethodAsync(String message)
+   async Program.MainAsync(String[] args)
+   Program.Main(String[] args)
+</code></pre>
+
+<h2 id="limitations">Limitations</h2>
+
+<p>Async Diagnostics only works on the full .NET framework. So it’s great for WPF or ASP.NET apps, but won’t work for Windows Store, Phone, or Silverlight.</p>
+
+<p>Async Diagnostics works best when you build in Debug mode. In Release mode, the compiler may inline method calls, and then they don’t show up in the logical stack. However, any data you explicitly add to the diagnostic stack will always be included.</p>
+
+<p>Async Diagnostics requires full trust. There is no support for partial trust.</p>
+
+<p>There is a definite runtime impact. Your code will certainly run slower with async diagnostics active. Currently, there is no way to turn async diagnostics on or off at runtime; it is a compile-time-only option. However, you can reduce the runtime impact by only applying <code>AsyncDiagnosticAspect</code> to certain types or namespaces (either by placing the attribute only on the type(s) that need it or by using <a href="http://doc.postsharp.net/postsharp-3.0/##PostSharp-3.0.chm/html/1B05CE59-61DE-4043-8E7C-12C130B1ACBB.htm">PostSharp multicasting</a>).</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>I do attempt to minimize the runtime impact of Async Diagnostics. I do as much processing as possible at compile time. At runtime, I use immutable collections exclusively to maximize memory sharing. However, the runtime impact is still non-trivial. It is <em>possible</em> to leave Async Diagnostics on in production, but you’ll want to do performance testing before making that decision.</p>
+</div>
+
+<p><code>AsyncDiagnosticAspect</code> may be applied to assemblies or types. It does <em>not</em> work correctly when multicast onto methods. I expect this will be fixed after PostSharp 3.1 is released.</p>
+
+<p>Async Diagnostics currently requires a paid version of PostSharp (Professional or higher). If you don’t have a PostSharp Professional license, you can evaluate it for free for 45 days. I expect PostSharp 3.1 will allow Async Diagnostics to work with the Community (free) version of PostSharp.</p>
+
+<h2 id="how-it-works">How It Works</h2>
+
+<p>It’s actually quite simple. Async Diagnostics is <a href="/2013/04/implicit-async-context-asynclocal.html">an implicit async context containing a stack of strings (very similar to the example in this blog post)</a> and uses <a href="http://www.postsharp.net/">PostSharp</a> to inject pushes and pops into your methods at compile time.</p>
+
+<h2 id="error-logging-frameworks">Error Logging Frameworks</h2>
+
+<p>Async Diagnostics works by capturing the diagnostic stack at the time the exception is thrown, and placing it on the <code>Exception.Data</code> dictionary. Many error logging frameworks ignore the <code>Data</code> property, but if you Google around you’ll find some solutions for <a href="http://stackoverflow.com/a/7791660/263693">log4net</a> and hacks for <a href="http://stackoverflow.com/a/9406947/263693">ELMAH</a> and <a href="http://blog.paulhadfield.net/2011/10/nlog-updating-exceptionlayoutrenderer.html">nLog</a>. As of this writing, Microsoft’s Enterprise Library is the only logging framework I know of that does include <code>Data</code> values by default.</p>
+
+<h2 id="call-to-action">Call to Action</h2>
+
+<p>Please download Async Diagnostics and take it for a spin! I’ve run a number of tests but haven’t tried it on really complex code bases. Let me know (in the <a href="https://nitoasyncex.codeplex.com/discussions">AsyncEx library discussions</a>) if it doesn’t work!</p>
+
+
+  </article>
+    
+    <footer>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2013/05/announcement-c-mvp.html" title="Announcement: C# MVP">&larr; Previous Post</a></li>
+            <li class="next"><a href="/2013/07/taskrun-vs-backgroundworker-round-2.html" title="Task.Run vs BackgroundWorker, Round 2: Error Handling">Next Post &rarr;</a></li>
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+        </div>
+        <div class="col-sm-2 col-md-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+(function($) {
+    $(function() {
+        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+        }
+    });
+})(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-8910661-5', 'stephencleary.com');
+  ga('send', 'pageview');
+</script>
+
+<!-- Google custom search -->
+<script type="text/javascript">
+(function() {
+    var cx = '012743255334612885637:mpmjhgx9bfg';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+})();
+</script>
+
+
+
+
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+var disqus_shortname = 'stephencleary';
+(function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>
+
+<!-- Disqus comment section, lazy-loaded -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
+<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<script type="text/javascript">
+var disqus_loaded = false;
+var disqus_identifier = "/2013/05/announcement-async-diagnostics";
+var disqus_title = "Announcement: Async Diagnostics";
+var disqus_url = "http://localhost:4000/2013/05/announcement-async-diagnostics.html";
+(function($) {
+    $('.pager').waypoint({
+        offset: 'bottom-in-view',
+        handler: function () {
+            if (disqus_loaded)
+                return;
+            disqus_loaded = true;
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }
+    });
+})(window.jQuery);
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+</body>
+</html>
