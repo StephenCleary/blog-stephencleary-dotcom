@@ -5,7 +5,7 @@ title: "Returning Early from ASP.NET Requests"
 <div class="alert alert-danger" markdown="1">
 <i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
 
-**Update, 2014-05-07:** The [.NET Framework 4.5.2 introduced `HostingEnvironment.QueueBackgroundWorkItem`](http://msdn.microsoft.com/en-us/library/ms171868(v=vs.110).aspx#v452){.alert-link}, which effectively rendered the code below obsolete. On .NET 4.5.2, you can use the new API instead of the `BackgroundTaskManager.Run` described below. However, the same safety warnings apply.
+**Update, 2014-05-07:** The [.NET Framework 4.5.2 introduced `HostingEnvironment.QueueBackgroundWorkItem`](http://msdn.microsoft.com/en-us/library/ms171868(v=vs.110).aspx#v452){:.alert-link}, which effectively rendered the code below obsolete. On .NET 4.5.2, you can use the new API instead of the `BackgroundTaskManager.Run` described below. However, the same safety warnings apply.
 </div>
 
 I have great reservations about writing this blog post. Pretty much everything I'm going to describe here is a bad idea and you should strongly avoid putting it into production, but there _are_ just a few situations where this technique can be really helpful.
