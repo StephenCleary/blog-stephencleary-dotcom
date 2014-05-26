@@ -7,29 +7,29 @@
     <title>Async Producer-Consumer Queue 3: More Flexibility</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
-    <link rel="canonical" href="http://localhost:4000/2012/12/async-producer-consumer-queue-3-more.html" />
+    <link rel="canonical" href="http://blog.stephencleary.com/2012/12/async-producer-consumer-queue-3-more.html" />
     
-    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="/feed.xml" />
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
     <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/spacelab/bootstrap.min.css" rel="stylesheet" />
     <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="http://localhost:4001/css/main.css" />
+    <link rel="stylesheet" href="http://stephencleary.com/css/main.css" />
     <meta name="application-name" content="Stephen Cleary" />
-    <link rel="apple-touch-icon" sizes="57x57" href="http://localhost:4001/icons/apple-touch-icon-57x57.png">
-    <link rel="apple-touch-icon" sizes="114x114" href="http://localhost:4001/icons/apple-touch-icon-114x114.png">
-    <link rel="apple-touch-icon" sizes="72x72" href="http://localhost:4001/icons/apple-touch-icon-72x72.png">
-    <link rel="apple-touch-icon" sizes="144x144" href="http://localhost:4001/icons/apple-touch-icon-144x144.png">
-    <link rel="apple-touch-icon" sizes="60x60" href="http://localhost:4001/icons/apple-touch-icon-60x60.png">
-    <link rel="apple-touch-icon" sizes="120x120" href="http://localhost:4001/icons/apple-touch-icon-120x120.png">
-    <link rel="apple-touch-icon" sizes="76x76" href="http://localhost:4001/icons/apple-touch-icon-76x76.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="http://localhost:4001/icons/apple-touch-icon-152x152.png">
-    <link rel="apple-touch-icon" href="http://localhost:4001/icons/apple-touch-icon.png"/>
-    <link rel="apple-touch-icon-precomposed" href="http://localhost:4001/icons/apple-touch-icon-precomposed.png"/>
-    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-196x196.png" sizes="196x196">
-    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-160x160.png" sizes="160x160">
-    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-96x96.png" sizes="96x96">
-    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-16x16.png" sizes="16x16">
-    <link rel="icon" type="image/png" href="http://localhost:4001/icons/favicon-32x32.png" sizes="32x32">
+    <link rel="apple-touch-icon" sizes="57x57" href="http://stephencleary.com/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://stephencleary.com/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://stephencleary.com/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://stephencleary.com/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://stephencleary.com/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://stephencleary.com/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://stephencleary.com/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://stephencleary.com/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://stephencleary.com/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://stephencleary.com/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-32x32.png" sizes="32x32">
 </head>
 
 <body>
@@ -43,18 +43,18 @@
                 <span class="icon-bar"></span>
             </button>
             <ul class="nav navbar-nav navbar-left">
-                <li  ><a class="navbar-brand" href="http://localhost:4001">Stephen Cleary</a></li>
+                <li  ><a class="navbar-brand" href="http://stephencleary.com">Stephen Cleary</a></li>
             </ul>
         </div>
 
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
             <ul class="nav navbar-nav navbar-left">
-                <li  class="active"  ><a href="http://localhost:4000">Blog</a></li>
-                <li  ><a href="http://localhost:4001/projects/">Projects</a></li>
-                <li  ><a href="http://localhost:4001/publications/">Publications</a></li>
-                <li  ><a href="http://localhost:4001/contact/">Contact</a></li>
+                <li  class="active"  ><a href="http://blog.stephencleary.com">Blog</a></li>
+                <li  ><a href="http://stephencleary.com/projects/">Projects</a></li>
+                <li  ><a href="http://stephencleary.com/publications/">Publications</a></li>
+                <li  ><a href="http://stephencleary.com/contact/">Contact</a></li>
                 
-                <li><a href="/feed.xml"><i class="fa fa-rss-square fa-lg"></i></a></li>
+                <li><a href="http://feeds.feedburner.com/NitoPrograms"><i class="fa fa-rss-square fa-lg"></i></a></li>
                 
             </ul>
                     
@@ -172,15 +172,15 @@
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">
-                    <div class="center"><img src="http://localhost:4001/www.assets/Me-large.jpg"/></div>
+                    <div class="center"><img src="http://stephencleary.com/www.assets/Me-large.jpg"/></div>
                     <div class="center">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
-                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://localhost:4001/www.assets/MVP.png"/></a></div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://stephencleary.com/www.assets/MVP.png"/></a></div>
                 </div>
             </div>
             <div class="panel panel-primary">
                 <div class="panel-heading">My book</div>
                 <div class="panel-body center">
-                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://localhost:4001/www.assets/Book-small.jpg"/></a></div>
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://stephencleary.com/www.assets/Book-small.jpg"/></a></div>
                     <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
                 </div>
             </div>
@@ -303,7 +303,7 @@ var disqus_shortname = 'stephencleary';
 var disqus_loaded = false;
 var disqus_identifier = "/2012/12/async-producer-consumer-queue-3-more";
 var disqus_title = "Async Producer-Consumer Queue 3: More Flexibility";
-var disqus_url = "http://localhost:4000/2012/12/async-producer-consumer-queue-3-more.html";
+var disqus_url = "http://blog.stephencleary.com/2012/12/async-producer-consumer-queue-3-more.html";
 (function($) {
     $('.pager').waypoint({
         offset: 'bottom-in-view',
