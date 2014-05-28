@@ -8,37 +8,45 @@ I'm building an Azure service that will rely somewhat heavily on Azure in-role c
 
 Azure caching is a form of distributed cache, so it uses serialization to store object instances. When you install the NuGet Azure Caching package, you get a .config that looks like this:
 
-    <dataCacheClients>
-      <dataCacheClient name="default">
-      </dataCacheClient>
-    </dataCacheClients>
+{% highlight xml %}
+<dataCacheClients>
+    <dataCacheClient name="default">
+    </dataCacheClient>
+</dataCacheClients>
+{% endhighlight %}
 
 Most of the settings are documented [on MSDN](http://msdn.microsoft.com/en-us/library/windowsazure/jj658973.aspx).
 
-With the default settings like this, Azure Caching will use [NetDataContractSerializer](http://msdn.microsoft.com/en-us/library/system.runtime.serialization.netdatacontractserializer.aspx). As we'll see, this is not exactly the most efficient setting.
+With the default settings like this, Azure Caching will use [`NetDataContractSerializer`](http://msdn.microsoft.com/en-us/library/system.runtime.serialization.netdatacontractserializer.aspx). As we'll see, this is not exactly the most efficient setting.
 
-First, let's consider alternative serializers. You can add a `serializationProperties` element to your config and specify [BinaryFormatter](http://msdn.microsoft.com/en-us/library/system.runtime.serialization.formatters.binary.binaryformatter.aspx) as such:
+First, let's consider alternative serializers. You can add a `serializationProperties` element to your config and specify [`BinaryFormatter`](http://msdn.microsoft.com/en-us/library/system.runtime.serialization.formatters.binary.binaryformatter.aspx) as such:
 
-    <dataCacheClients>
-      <dataCacheClient name="default">
-        <serializationProperties serializer="BinaryFormatter" />
-      </dataCacheClient>
-    </dataCacheClients>
+{% highlight xml %}
+<dataCacheClients>
+    <dataCacheClient name="default">
+    <serializationProperties serializer="BinaryFormatter" />
+    </dataCacheClient>
+</dataCacheClients>
+{% endhighlight %}
 
 You can also specify a custom serializer as such:
 
-    <dataCacheClients>
-      <dataCacheClient name="default">
-        <serializationProperties serializer="CustomSerializer" customSerializerType="MyType,MyAssembly" />
-      </dataCacheClient>
-    </dataCacheClients>
+{% highlight xml %}
+<dataCacheClients>
+    <dataCacheClient name="default">
+    <serializationProperties serializer="CustomSerializer" customSerializerType="MyType,MyAssembly" />
+    </dataCacheClient>
+</dataCacheClients>
+{% endhighlight %}
 
 There's also another knob you can tweak: you can turn on compression (i.e., `DeflateStream`) by setting `isCompressionEnabled` as such:
 
-    <dataCacheClients>
-      <dataCacheClient name="default" isCompressionEnabled="true">
-      </dataCacheClient>
-    </dataCacheClients>
+{% highlight xml %}
+<dataCacheClients>
+    <dataCacheClient name="default" isCompressionEnabled="true">
+    </dataCacheClient>
+</dataCacheClients>
+{% endhighlight %}
 
 ## Under the Covers
 
@@ -79,16 +87,22 @@ I ran through serializing with each of the built-in serializers, as well as JSON
 
 First, the default serializer (`NetDataContractSerializer`), which is XML-based. When serialized, the `MyTypeNSer` instance took up 521 bytes (312 compressed). The serialized data looks like this:
 
-    <MyTypeNSer z:Id="1" z:Type="AzureCacheSizeTest.MyTypeNSer" z:Assembly="AzureCacheSizeTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" xmlns="http://schemas.datacontract.org/2004/07/AzureCacheSizeTest" xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:z="http://schemas.microsoft.com/2003/10/Serialization/"><Description z:Id="2">This is a generic string solely for the purpose of searching.</Description><FirstName z:Id="3">Christopher</FirstName><LastName z:Id="4">Dombrowski</LastName></MyTypeNSer>
+{% highlight xml %}
+<MyTypeNSer z:Id="1" z:Type="AzureCacheSizeTest.MyTypeNSer" z:Assembly="AzureCacheSizeTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" xmlns="http://schemas.datacontract.org/2004/07/AzureCacheSizeTest" xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:z="http://schemas.microsoft.com/2003/10/Serialization/"><Description z:Id="2">This is a generic string solely for the purpose of searching.</Description><FirstName z:Id="3">Christopher</FirstName><LastName z:Id="4">Dombrowski</LastName></MyTypeNSer>
+{% endhighlight %}
 
 During my testing, I discovered that the default serializer acts differently when used on a `[Serializable]` type. Instead of serializing the properties directly, it looks like it serializes their backing fields:
 
-    <MyTypeYSer z:Id="1" z:Type="AzureCacheSizeTest.MyTypeYSer" z:Assembly="AzureCacheSizeTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" xmlns="http://schemas.datacontract.org/2004/07/AzureCacheSizeTest" xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:z="http://schemas.microsoft.com/2003/10/Serialization/"><_x003C_Description_x003E_k__BackingField z:Id="2">This is a generic string solely for the purpose of searching.</_x003C_Description_x003E_k__BackingField><_x003C_FirstName_x003E_k__BackingField z:Id="3">Christopher</_x003C_FirstName_x003E_k__BackingField><_x003C_LastName_x003E_k__BackingField z:Id="4">Dombrowski</_x003C_LastName_x003E_k__BackingField></MyTypeYSer>
+{% highlight xml %}
+<MyTypeYSer z:Id="1" z:Type="AzureCacheSizeTest.MyTypeYSer" z:Assembly="AzureCacheSizeTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" xmlns="http://schemas.datacontract.org/2004/07/AzureCacheSizeTest" xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:z="http://schemas.microsoft.com/2003/10/Serialization/"><_x003C_Description_x003E_k__BackingField z:Id="2">This is a generic string solely for the purpose of searching.</_x003C_Description_x003E_k__BackingField><_x003C_FirstName_x003E_k__BackingField z:Id="3">Christopher</_x003C_FirstName_x003E_k__BackingField><_x003C_LastName_x003E_k__BackingField z:Id="4">Dombrowski</_x003C_LastName_x003E_k__BackingField></MyTypeYSer>
+{% endhighlight %}
 
 In this case (with automatic backing fields), this bloats the serialized size to 695 bytes (340 compressed). Here's a side-by-side comparison of how the data looks:
 
-    <MyTypeNSer z:Id="1" z:Type="AzureCacheSizeTest.MyTypeNSer" z:Assembly="AzureCacheSizeTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" xmlns="http://schemas.datacontract.org/2004/07/AzureCacheSizeTest" xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:z="http://schemas.microsoft.com/2003/10/Serialization/"><Description z:Id="2">This is a generic string solely for the purpose of searching.</Description><FirstName z:Id="3">Christopher</FirstName><LastName z:Id="4">Dombrowski</LastName></MyTypeNSer>
-    <MyTypeYSer z:Id="1" z:Type="AzureCacheSizeTest.MyTypeYSer" z:Assembly="AzureCacheSizeTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" xmlns="http://schemas.datacontract.org/2004/07/AzureCacheSizeTest" xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:z="http://schemas.microsoft.com/2003/10/Serialization/"><_x003C_Description_x003E_k__BackingField z:Id="2">This is a generic string solely for the purpose of searching.</_x003C_Description_x003E_k__BackingField><_x003C_FirstName_x003E_k__BackingField z:Id="3">Christopher</_x003C_FirstName_x003E_k__BackingField><_x003C_LastName_x003E_k__BackingField z:Id="4">Dombrowski</_x003C_LastName_x003E_k__BackingField></MyTypeYSer>
+{% highlight xml %}
+<MyTypeNSer z:Id="1" z:Type="AzureCacheSizeTest.MyTypeNSer" z:Assembly="AzureCacheSizeTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" xmlns="http://schemas.datacontract.org/2004/07/AzureCacheSizeTest" xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:z="http://schemas.microsoft.com/2003/10/Serialization/"><Description z:Id="2">This is a generic string solely for the purpose of searching.</Description><FirstName z:Id="3">Christopher</FirstName><LastName z:Id="4">Dombrowski</LastName></MyTypeNSer>
+<MyTypeYSer z:Id="1" z:Type="AzureCacheSizeTest.MyTypeYSer" z:Assembly="AzureCacheSizeTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" xmlns="http://schemas.datacontract.org/2004/07/AzureCacheSizeTest" xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:z="http://schemas.microsoft.com/2003/10/Serialization/"><_x003C_Description_x003E_k__BackingField z:Id="2">This is a generic string solely for the purpose of searching.</_x003C_Description_x003E_k__BackingField><_x003C_FirstName_x003E_k__BackingField z:Id="3">Christopher</_x003C_FirstName_x003E_k__BackingField><_x003C_LastName_x003E_k__BackingField z:Id="4">Dombrowski</_x003C_LastName_x003E_k__BackingField></MyTypeYSer>
+{% endhighlight %}
 
 Next up is the `BinaryFormatter`. As expected, the binary serializer results in a smaller object size: 325 bytes (229 compressed). The serialized data looks like this (using `\xx` for binary hex values):
 
@@ -96,7 +110,9 @@ Next up is the `BinaryFormatter`. As expected, the binary serializer results in 
 
 Finally, I wanted to try JSON, since practically any modern Azure service _already_ has a reference to JSON.NET anyway. JSON performed quite well: 189 bytes (140 compressed). The serialized instance looks like this:
 
-    {"$type":"AzureCacheSizeTest.MyTypeNSer, AzureCacheSizeTest","FirstName":"Christopher","LastName":"Dombrowski","Description":"This is a generic string solely for the purpose of searching."}
+{% highlight javascript %}
+{"$type":"AzureCacheSizeTest.MyTypeNSer, AzureCacheSizeTest","FirstName":"Christopher","LastName":"Dombrowski","Description":"This is a generic string solely for the purpose of searching."}
+{% endhighlight %}
 
 However, I was also aware that JSON.NET supports BSON (Binary JSON), so I was curious to see whether there were any further space savings that I could squeeze out. BSON was slightly _less_ efficient than JSON, weighing in at 197 bytes (152 compressed). As it turns out, BSON is not a "compressed JSON" format as much as it is a "fast and traversable" JSON, as [described in their FAQ]( http://bsonspec.org/#/faq). For completeness, here's the same instance as it appears in BSON:
 

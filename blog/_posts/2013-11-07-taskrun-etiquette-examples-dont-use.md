@@ -209,5 +209,5 @@ private async void MyButton_Click(object sender, EventArgs e)
 
 Now the service API is clean (it exposes a synchronous API for a naturally-synchronous, CPU-bound method), it works for all consumers (e.g., ASP.NET), and the _UI_ layer is responsible for not blocking the _UI_ thread.
 
-Conclusion: **do not use Task.Run in the _implementation_ of the method; instead, use Task.Run to _call_ the method**.
+Conclusion: **do not use `Task.Run` in the _implementation_ of the method; instead, use `Task.Run` to _call_ the method**.
 
