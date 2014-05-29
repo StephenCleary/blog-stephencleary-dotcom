@@ -7,6 +7,84 @@
     <atom:link href="http://blog.stephencleary.com/feed.xml" rel="self" type="application/rss+xml" />
     
       <item>
+        <title>A Tour of Task, Part 2: AsyncState and CreationOptions</title>
+        <description>&lt;p&gt;I skipped last week’s blog post (since I was working on the site redesign), so today is a 2-for-1 deal! :)&lt;/p&gt;
+
+&lt;h2 id=&quot;asyncstate&quot;&gt;AsyncState&lt;/h2&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;csharp&quot;&gt;&lt;span class=&quot;kt&quot;&gt;object&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;AsyncState&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// implements IAsyncResult.AsyncState&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;The &lt;code&gt;AsyncState&lt;/code&gt; property implements &lt;code&gt;IAsyncResult.AsyncState&lt;/code&gt;. This member was useful back in the day, but not so much in modern applications.&lt;/p&gt;
+
+&lt;p&gt;When asynchronous programming was going through its awkward teen stage, &lt;code&gt;AsyncState&lt;/code&gt; was an important part of the &lt;a href=&quot;http://msdn.microsoft.com/en-us/library/ms228963(v=vs.110).aspx&quot;&gt;Asynchronous Programming Model (APM)&lt;/a&gt;. The &lt;code&gt;Begin*&lt;/code&gt; method would take a &lt;code&gt;state&lt;/code&gt; parameter, which is assigned to the &lt;code&gt;IAsyncResult.AsyncState&lt;/code&gt; member. Later, when the application code’s callback is invoked, it could access the &lt;code&gt;AsyncState&lt;/code&gt; value to determine which asynchronous operation completed.&lt;/p&gt;
+
+&lt;div class=&quot;alert alert-info&quot;&gt;
+  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
+
+  &lt;p&gt;&lt;code&gt;IAsyncResult.AsyncState&lt;/code&gt; (and other “state”-like parameters) are no longer necessary these days; a lambda callback can easily capture any number of local variables in a type-safe way. I prefer the lambda approach; it is more expressive, less brittle, and more flexible than a single &lt;code&gt;object state&lt;/code&gt; parameter. However, the &lt;code&gt;state&lt;/code&gt; parameter approach avoids memory allocation, so it is still sometimes used in performance-sensitive code.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;p&gt;In modern code, the &lt;code&gt;Task.AsyncState&lt;/code&gt; member is mainly used for &lt;a href=&quot;http://msdn.microsoft.com/en-us/library/hh873178(v=vs.110).aspx#TapToApm&quot;&gt;interoperation from &lt;code&gt;Task&lt;/code&gt; to APM&lt;/a&gt;. This is only necessary if you’re writing &lt;code&gt;async&lt;/code&gt;/&lt;code&gt;await&lt;/code&gt; code that must exist within an older asynchronous framework (a rare situation these days). In that scenario, you’re implementing the &lt;code&gt;Begin*&lt;/code&gt;/&lt;code&gt;End*&lt;/code&gt; methods and using a &lt;code&gt;Task&lt;/code&gt; instance as your implementation of &lt;code&gt;IAsyncResult&lt;/code&gt;. The standard approach is to create a &lt;code&gt;Task&amp;lt;T&amp;gt;&lt;/code&gt; using &lt;code&gt;TaskCompletionSource&amp;lt;T&amp;gt;&lt;/code&gt;, and you pass the &lt;code&gt;state&lt;/code&gt; parameter into the &lt;code&gt;TaskCompletionSource&amp;lt;T&amp;gt;&lt;/code&gt; constructor:&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IAsyncResult&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;BeginOperation&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AsyncCallback&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;callback&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;object&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;state&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tcs&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskCompletionSource&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;state&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// start operation, and complete &amp;quot;tcs&amp;quot; when operation completes&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tcs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;There really isn’t a need to read &lt;code&gt;AsyncState&lt;/code&gt; in modern code; it’s mainly important just because it implements &lt;code&gt;IAsyncResult.AsyncState&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;creationoptions&quot;&gt;CreationOptions&lt;/h2&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;TaskCreationOptions&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CreationOptions&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;code&gt;CreationOptions&lt;/code&gt; merely allows you to read the task creation options that were used to create this task. You can specify these options when you create a task using &lt;a href=&quot;&quot;&gt;the task constructor&lt;/a&gt;, &lt;code&gt;Task.Factory.StartNew&lt;/code&gt;, or &lt;code&gt;TaskCompletionSource&amp;lt;T&amp;gt;&lt;/code&gt;. I’ll cover the meanings of these options later, when we cover &lt;code&gt;Task.Factory.StartNew&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;However, there’s almost no reason to &lt;em&gt;read&lt;/em&gt; the task creation options once the task has been created. This would only be necessary if you were doing some really funky work with parent/child tasks or task scheduling - &lt;em&gt;far&lt;/em&gt; beyond the normal scenarios for asynchronous or parallel tasks.&lt;/p&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;The running total of useful members:&lt;/p&gt;
+
+&lt;div class=&quot;panel panel-default&quot;&gt;
+
+  &lt;table class=&quot;table table-striped&quot;&gt;
+    &lt;thead&gt;
+      &lt;tr&gt;
+        &lt;th&gt;Type&lt;/th&gt;
+        &lt;th&gt;Actual Members&lt;/th&gt;
+        &lt;th&gt;Logical Members&lt;/th&gt;
+        &lt;th&gt;Useful for async&lt;/th&gt;
+        &lt;th&gt;Useful for parallel&lt;/th&gt;
+      &lt;/tr&gt;
+    &lt;/thead&gt;
+    &lt;tbody&gt;
+      &lt;tr&gt;
+        &lt;td&gt;&lt;code&gt;Task&lt;/code&gt;&lt;/td&gt;
+        &lt;td&gt;10&lt;/td&gt;
+        &lt;td&gt;3&lt;/td&gt;
+        &lt;td&gt;0&lt;/td&gt;
+        &lt;td&gt;0&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+        &lt;td&gt;&lt;code&gt;Task&amp;lt;T&amp;gt;&lt;/code&gt;&lt;/td&gt;
+        &lt;td&gt;10&lt;/td&gt;
+        &lt;td&gt;3&lt;/td&gt;
+        &lt;td&gt;0&lt;/td&gt;
+        &lt;td&gt;0&lt;/td&gt;
+      &lt;/tr&gt;
+    &lt;/tbody&gt;
+  &lt;/table&gt;
+
+&lt;/div&gt;
+</description>
+        <pubDate>Thu, 29 May 2014 00:00:00 -0400</pubDate>
+        <link>http://blog.stephencleary.com/2014/05/a-tour-of-task-part-2-asyncstate-and-creationoptions.html</link>
+        <guid isPermaLink="true">http://blog.stephencleary.com/2014/05/a-tour-of-task-part-2-asyncstate-and-creationoptions.html</guid>
+      </item>
+    
+      <item>
         <title>A Tour of Task, Part 1: Constructors</title>
         <description>&lt;p&gt;TL;DR: Do not use &lt;code&gt;Task&lt;/code&gt; or &lt;code&gt;Task&amp;lt;T&amp;gt;&lt;/code&gt; constructors.&lt;/p&gt;
 
@@ -77,7 +155,7 @@
 
 &lt;p&gt;Sorry that the first post just boiled down to “don’t use this”, but it is what it is. I’ll cover all the constructor arguments such as &lt;code&gt;CancellationToken&lt;/code&gt; later when I cover &lt;code&gt;Task.Factory.StartNew&lt;/code&gt;.&lt;/p&gt;
 
-&lt;p&gt;I think it would be fun to keep a running total of usable members, so here’s the results from today’s post:&lt;/p&gt;
+&lt;p&gt;I think it would be fun to keep a running total of useful members, so here’s the results from today’s post:&lt;/p&gt;
 
 &lt;div class=&quot;panel panel-default&quot;&gt;
 
@@ -87,20 +165,20 @@
         &lt;th&gt;Type&lt;/th&gt;
         &lt;th&gt;Actual Members&lt;/th&gt;
         &lt;th&gt;Logical Members&lt;/th&gt;
-        &lt;th&gt;Usable for async&lt;/th&gt;
-        &lt;th&gt;Usable for parallel&lt;/th&gt;
+        &lt;th&gt;Useful for async&lt;/th&gt;
+        &lt;th&gt;Useful for parallel&lt;/th&gt;
       &lt;/tr&gt;
     &lt;/thead&gt;
     &lt;tbody&gt;
       &lt;tr&gt;
-        &lt;td&gt;Task&lt;/td&gt;
+        &lt;td&gt;&lt;code&gt;Task&lt;/code&gt;&lt;/td&gt;
         &lt;td&gt;8&lt;/td&gt;
         &lt;td&gt;1&lt;/td&gt;
         &lt;td&gt;0&lt;/td&gt;
         &lt;td&gt;0&lt;/td&gt;
       &lt;/tr&gt;
       &lt;tr&gt;
-        &lt;td&gt;Task&amp;lt;T&amp;gt;&lt;/td&gt;
+        &lt;td&gt;&lt;code&gt;Task&amp;lt;T&amp;gt;&lt;/code&gt;&lt;/td&gt;
         &lt;td&gt;8&lt;/td&gt;
         &lt;td&gt;1&lt;/td&gt;
         &lt;td&gt;0&lt;/td&gt;
@@ -278,52 +356,6 @@
         <pubDate>Fri, 04 Apr 2014 00:00:00 -0400</pubDate>
         <link>http://blog.stephencleary.com/2014/04/announcement-grdevday-2014-slides.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2014/04/announcement-grdevday-2014-slides.html</guid>
-      </item>
-    
-      <item>
-        <title>A Cross-Domain Singleton</title>
-        <description>&lt;p&gt;In my current position, I’ve had to learn a lot more details about two big aspects of the .NET runtime: AppDomains and COM interop. Until about a year ago, I had learned exactly enough of those technologies to pass the Microsoft certification exams, and that was it! I had never used them in production and never intended doing so. At my current job, however, I have no choice, so I’ve been learning quite a bit about AppDomains and COM interop over the last few months.&lt;/p&gt;
-
-&lt;p&gt;On a side note: blech. I wish I could have remained ignorant. :)&lt;/p&gt;
-
-&lt;p&gt;Anyway, the way our product uses AppDomains, it would benefit from a “cross-AppDomain singleton” for certain lookup operations (including cache). I spent some time playing with this idea over Christmas break, and Googled up several implementations. None of them were quite complete, though; many punted on thread safety, which was an absolute necessity for my scenario.&lt;/p&gt;
-
-&lt;p&gt;So, I wrote my own. Initially I borrowed heavily from other AppDomain-aware singletons, until I had a minor epiphany. Since this was a true application-level singleton, it would never be destroyed, and the correct place to initialize it is &lt;em&gt;in the default AppDomain&lt;/em&gt;. The “default AppDomain” is the first one in a process, and it &lt;a href=&quot;http://blogs.msdn.com/b/cbrumme/archive/2003/06/01/51466.aspx&quot;&gt;can never be unloaded&lt;/a&gt;. All non-default AppDomains then request the instance from the default AppDomain. Those other AppDomains can come and go, but the default AppDomain (including all cross-AppDomain singletons) would remain.&lt;/p&gt;
-
-&lt;p&gt;Once I decided to assign all singletons to the default AppDomain, the implementation simplified significantly. The algorithm is different based on whether an instance is requested from the default or a non-default AppDomain.&lt;/p&gt;
-
-&lt;p&gt;When an instance is requested on a non-default AppDomain, it will first check to see if there is a local, cached copy in the current AppDomain. If there is, then it is returned immediately. Otherwise, it will attempt to get the instance from an AppDomain value stored on the default AppDomain. If that value is not found, then it invokes a method on the default AppDomain that just requests the instance.&lt;/p&gt;
-
-&lt;p&gt;When an instance is requested on the default AppDomain, it will first check to see if the instance has been created, and return it immediately if so. Otherwise, it will create a new instance and set that instance as an AppDomain value on the default AppDomain, and then return the instance.&lt;/p&gt;
-
-&lt;p&gt;This implementation is fully threadsafe, using Lazy&amp;lt;T&amp;gt; for all lazy construction. The only drawback to this solution is that it does use a tiny bit of COM interop to a deprecated interface (ICorRuntimeHost); if anyone knows of a better way to get the default AppDomain, I’m all ears!&lt;/p&gt;
-
-&lt;p&gt;Also, I cheated just a little bit to simplify lifetime management. By default, remote proxies will time out if you don’t use them for 10 minutes, and this is no good since my singleton type caches the proxies locally for each AppDomain. So, my singleton actually creates a &lt;em&gt;wrapper&lt;/em&gt; around the instance, and caches proxies to that wrapper (and the wrapper proxies never expire). However, this means that each time the code accesses the singleton instance, a new proxy is actually created and returned - so it’s ideal for the occasional-access scenario but not so much for the constant-access scenario. If the proxy creation slows you down too much, then you can use the CachedInstance property instead, which will cache the actual (unwrapped) instance; and in that case the responsibility falls back on you to properly handle proxy lifetimes.&lt;/p&gt;
-
-&lt;p&gt;The full public API is quite simple:&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;namespace&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;DomainAwareSingleton&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;c1&quot;&gt;// A domain-aware singleton. Only one instance of T will exist, belonging to the default AppDomain. All members of this type are threadsafe.&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Singleton&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;T&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;where&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;T&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MarshalByRefObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;c1&quot;&gt;// Gets the process-wide instance.&lt;/span&gt;
-        &lt;span class=&quot;c1&quot;&gt;// If the current domain is not the default AppDomain, this property returns a new proxy to the actual instance.&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;T&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Instance&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-
-        &lt;span class=&quot;c1&quot;&gt;// Gets the process-wide instance.&lt;/span&gt;
-        &lt;span class=&quot;c1&quot;&gt;// If the current domain is not the default AppDomain, this property returns a cached proxy to the actual instance.&lt;/span&gt;
-        &lt;span class=&quot;c1&quot;&gt;// It is your responsibility to ensure that the cached proxy does not time out; if you don&amp;#39;t know what this means, use Instance instead.&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;T&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CachedInstance&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;And the &lt;a href=&quot;https://github.com/StephenCleary/CrossDomainSingleton/blob/master/Source/DomainAwareSingleton/Singleton.cs&quot;&gt;code is on GitHub&lt;/a&gt;.&lt;/p&gt;
-
-</description>
-        <pubDate>Thu, 13 Mar 2014 00:00:00 -0400</pubDate>
-        <link>http://blog.stephencleary.com/2014/03/a-cross-domain-singleton.html</link>
-        <guid isPermaLink="true">http://blog.stephencleary.com/2014/03/a-cross-domain-singleton.html</guid>
       </item>
     
   </channel>

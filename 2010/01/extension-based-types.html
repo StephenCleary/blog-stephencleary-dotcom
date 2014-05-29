@@ -98,292 +98,282 @@
 
 <p>EBTs are useful for end-user extensibility (and raising the level of abstraction), but they also have a few “gotchas” since they are dependent on the compile-time nature of method overload resolution.</p>
 
-<p>Here’s an example of an EBT that defines a single method, MethodA:</p>
+<p>Here’s an example of an EBT that defines a single method, <code>MethodA</code>:</p>
 
-<pre><code>public interface IMyInterface { }
-public sealed class MyImplementation : IMyInterface { }
-
-public static class MyMethods
-{
-    public static void MethodA(this IMyInterface @this) { Console.WriteLine("IMyInterface.MethodA()"); }
-}
-
-class Program
-{
-    static void Main()
-    {
-        var obj = new MyImplementation();
-        obj.MethodA(); // Prints: "IMyInterface.MethodA()"
-
-        Console.ReadKey();
-    }
-}
-</code></pre>
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">interface</span> <span class="n">IMyInterface</span> <span class="p">{</span> <span class="p">}</span>
+<span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyImplementation</span> <span class="p">:</span> <span class="n">IMyInterface</span> <span class="p">{</span> <span class="p">}</span>
+    
+<span class="k">public</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">MyMethods</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">MethodA</span><span class="p">(</span><span class="k">this</span> <span class="n">IMyInterface</span> <span class="n">@this</span><span class="p">)</span> <span class="p">{</span> <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;IMyInterface.MethodA()&quot;</span><span class="p">);</span> <span class="p">}</span>
+<span class="p">}</span>
+    
+<span class="k">class</span> <span class="nc">Program</span>
+<span class="p">{</span>
+    <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="kt">var</span> <span class="n">obj</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MyImplementation</span><span class="p">();</span>
+        <span class="n">obj</span><span class="p">.</span><span class="n">MethodA</span><span class="p">();</span> <span class="c1">// Prints: &quot;IMyInterface.MethodA()&quot;</span>
+    
+        <span class="n">Console</span><span class="p">.</span><span class="n">ReadKey</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
 
 <h2 id="simple-inheritance">Simple Inheritance</h2>
 
-<p>EBT inheritance is performed using interface inheritance. Here’s an example of a base interface that defines MethodA and a derived interface defining MethodB; the derived interface ends up supporting both methods:</p>
+<p>EBT inheritance is performed using interface inheritance. Here’s an example of a base interface that defines <code>MethodA</code> and a derived interface defining <code>MethodB</code>; the derived interface ends up supporting both methods:</p>
 
-<pre><code>public interface IBase { }
-public interface IDerived : IBase { }
-public sealed class Derived : IDerived { }
-
-public static class MyMethods
-{
-    public static void MethodA(this IBase @this) { Console.WriteLine("IBase.MethodA()"); }
-    public static void MethodB(this IDerived @this) { Console.WriteLine("IDerived.MethodB()"); }
-}
-
-class Program
-{
-    static void Main()
-    {
-        var obj = new Derived();
-        obj.MethodA(); // Prints: "IBase.MethodA()"
-        obj.MethodB(); // Prints: "IDerived.MethodB()"
-
-        Console.ReadKey();
-    }
-}
-</code></pre>
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">interface</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
+<span class="k">public</span> <span class="k">interface</span> <span class="n">IDerived</span> <span class="p">:</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
+<span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Derived</span> <span class="p">:</span> <span class="n">IDerived</span> <span class="p">{</span> <span class="p">}</span>
+    
+<span class="k">public</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">MyMethods</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">MethodA</span><span class="p">(</span><span class="k">this</span> <span class="n">IBase</span> <span class="n">@this</span><span class="p">)</span> <span class="p">{</span> <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;IBase.MethodA()&quot;</span><span class="p">);</span> <span class="p">}</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">MethodB</span><span class="p">(</span><span class="k">this</span> <span class="n">IDerived</span> <span class="n">@this</span><span class="p">)</span> <span class="p">{</span> <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;IDerived.MethodB()&quot;</span><span class="p">);</span> <span class="p">}</span>
+<span class="p">}</span>
+    
+<span class="k">class</span> <span class="nc">Program</span>
+<span class="p">{</span>
+    <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="kt">var</span> <span class="n">obj</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Derived</span><span class="p">();</span>
+        <span class="n">obj</span><span class="p">.</span><span class="n">MethodA</span><span class="p">();</span> <span class="c1">// Prints: &quot;IBase.MethodA()&quot;</span>
+        <span class="n">obj</span><span class="p">.</span><span class="n">MethodB</span><span class="p">();</span> <span class="c1">// Prints: &quot;IDerived.MethodB()&quot;</span>
+    
+        <span class="n">Console</span><span class="p">.</span><span class="n">ReadKey</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
 
 <h2 id="overriding-inherited-methods-simple-overriding">Overriding Inherited Methods: Simple Overriding</h2>
 
-<p>A derived EBT may override a base EBT method by defining its own method with an identical signature. Here’s a derived type that overrides the MethodA defined by its base type:</p>
+<p>A derived EBT may override a base EBT method by defining its own method with an identical signature. Here’s a derived type that overrides the <code>MethodA</code> defined by its base type:</p>
 
-<pre><code>public interface IBase { }
-public sealed class Base : IBase { }
-public interface IDerived : IBase { }
-public sealed class Derived : IDerived { }
-
-public static class MyMethods
-{
-    public static void MethodA(this IBase @this) { Console.WriteLine("IBase.MethodA()"); }
-    public static void MethodA(this IDerived @this) { Console.WriteLine("IDerived.MethodA()"); }
-}
-
-class Program
-{
-    static void Main()
-    {
-        var obj1 = new Base();
-        obj1.MethodA(); // Prints: "IBase.MethodA()"
-
-        var obj2 = new Derived();
-        obj2.MethodA(); // Prints: "IDerived.MethodA()"
-
-        Console.ReadKey();
-    }
-}
-</code></pre>
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">interface</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
+<span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Base</span> <span class="p">:</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
+<span class="k">public</span> <span class="k">interface</span> <span class="n">IDerived</span> <span class="p">:</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
+<span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Derived</span> <span class="p">:</span> <span class="n">IDerived</span> <span class="p">{</span> <span class="p">}</span>
+    
+<span class="k">public</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">MyMethods</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">MethodA</span><span class="p">(</span><span class="k">this</span> <span class="n">IBase</span> <span class="n">@this</span><span class="p">)</span> <span class="p">{</span> <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;IBase.MethodA()&quot;</span><span class="p">);</span> <span class="p">}</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">MethodA</span><span class="p">(</span><span class="k">this</span> <span class="n">IDerived</span> <span class="n">@this</span><span class="p">)</span> <span class="p">{</span> <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;IDerived.MethodA()&quot;</span><span class="p">);</span> <span class="p">}</span>
+<span class="p">}</span>
+    
+<span class="k">class</span> <span class="nc">Program</span>
+<span class="p">{</span>
+    <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="kt">var</span> <span class="n">obj1</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Base</span><span class="p">();</span>
+        <span class="n">obj1</span><span class="p">.</span><span class="n">MethodA</span><span class="p">();</span> <span class="c1">// Prints: &quot;IBase.MethodA()&quot;</span>
+    
+        <span class="kt">var</span> <span class="n">obj2</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Derived</span><span class="p">();</span>
+        <span class="n">obj2</span><span class="p">.</span><span class="n">MethodA</span><span class="p">();</span> <span class="c1">// Prints: &quot;IDerived.MethodA()&quot;</span>
+    
+        <span class="n">Console</span><span class="p">.</span><span class="n">ReadKey</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
 
 <h2 id="overriding-inherited-methods-invoking-the-base-method">Overriding Inherited Methods: Invoking the Base Method</h2>
 
-<p>In order to invoke the base method when the derived EBT overrides it, the compile-time type of the variable must explicitly be the base type. Here’s an example that invokes the derived and base MethodA implementations on the same object:</p>
+<p>In order to invoke the base method when the derived EBT overrides it, the compile-time type of the variable must explicitly be the base type. Here’s an example that invokes the derived and base <code>MethodA</code> implementations on the same object:</p>
 
-<pre><code>public interface IBase { }
-public interface IDerived : IBase { }
-public sealed class Derived : IDerived { }
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">interface</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
+<span class="k">public</span> <span class="k">interface</span> <span class="n">IDerived</span> <span class="p">:</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
+<span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Derived</span> <span class="p">:</span> <span class="n">IDerived</span> <span class="p">{</span> <span class="p">}</span>
+    
+<span class="k">public</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">MyMethods</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">MethodA</span><span class="p">(</span><span class="k">this</span> <span class="n">IBase</span> <span class="n">@this</span><span class="p">)</span> <span class="p">{</span> <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;IBase.MethodA()&quot;</span><span class="p">);</span> <span class="p">}</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">MethodA</span><span class="p">(</span><span class="k">this</span> <span class="n">IDerived</span> <span class="n">@this</span><span class="p">)</span> <span class="p">{</span> <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;IDerived.MethodA()&quot;</span><span class="p">);</span> <span class="p">}</span>
+<span class="p">}</span>
+    
+<span class="k">class</span> <span class="nc">Program</span>
+<span class="p">{</span>
+    <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="kt">var</span> <span class="n">d</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Derived</span><span class="p">();</span>
+        <span class="n">d</span><span class="p">.</span><span class="n">MethodA</span><span class="p">();</span> <span class="c1">// Prints: &quot;IDerived.MethodA()&quot;</span>
+    
+        <span class="n">IBase</span> <span class="n">b</span> <span class="p">=</span> <span class="n">d</span><span class="p">;</span>
+        <span class="n">b</span><span class="p">.</span><span class="n">MethodA</span><span class="p">();</span> <span class="c1">// Prints: &quot;IBase.MethodA()&quot;</span>
+    
+        <span class="n">Console</span><span class="p">.</span><span class="n">ReadKey</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
 
-public static class MyMethods
-{
-    public static void MethodA(this IBase @this) { Console.WriteLine("IBase.MethodA()"); }
-    public static void MethodA(this IDerived @this) { Console.WriteLine("IDerived.MethodA()"); }
-}
+<p>For convenience, an “identity transformation method” is usually provided that restricts the type of a subexpression; this way, a separate variable is not necessary. By convention, the identity transformation method is named <code>As{I}</code>. The following example shows how an <code>AsBase</code> method removes the need for the <code>IBase</code> variable:</p>
 
-class Program
-{
-    static void Main()
-    {
-        var d = new Derived();
-        d.MethodA(); // Prints: "IDerived.MethodA()"
-
-        IBase b = d;
-        b.MethodA(); // Prints: "IBase.MethodA()"
-
-        Console.ReadKey();
-    }
-}
-</code></pre>
-
-<p>For convenience, an “identity transformation method” is usually provided that restricts the type of a subexpression; this way, a separate variable is not necessary. By convention, the identity transformation method is named “As{I}”. The following example shows how an “AsBase” method removes the need for the IBase variable:</p>
-
-<pre><code>public interface IBase { }
-public interface IDerived : IBase { }
-public sealed class Derived : IDerived { }
-
-public static class MyMethods
-{
-    public static IBase AsBase(this IBase @this) { return @this; }
-    public static void MethodA(this IBase @this) { Console.WriteLine("IBase.MethodA()"); }
-    public static void MethodA(this IDerived @this) { Console.WriteLine("IDerived.MethodA()"); }
-}
-
-class Program
-{
-    static void Main()
-    {
-        var obj = new Derived().AsBase();
-        obj.MethodA(); // Prints: "IBase.MethodA()"
-
-        Console.ReadKey();
-    }
-}
-</code></pre>
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">interface</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
+<span class="k">public</span> <span class="k">interface</span> <span class="n">IDerived</span> <span class="p">:</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
+<span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Derived</span> <span class="p">:</span> <span class="n">IDerived</span> <span class="p">{</span> <span class="p">}</span>
+    
+<span class="k">public</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">MyMethods</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="n">IBase</span> <span class="nf">AsBase</span><span class="p">(</span><span class="k">this</span> <span class="n">IBase</span> <span class="n">@this</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">@this</span><span class="p">;</span> <span class="p">}</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">MethodA</span><span class="p">(</span><span class="k">this</span> <span class="n">IBase</span> <span class="n">@this</span><span class="p">)</span> <span class="p">{</span> <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;IBase.MethodA()&quot;</span><span class="p">);</span> <span class="p">}</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">MethodA</span><span class="p">(</span><span class="k">this</span> <span class="n">IDerived</span> <span class="n">@this</span><span class="p">)</span> <span class="p">{</span> <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;IDerived.MethodA()&quot;</span><span class="p">);</span> <span class="p">}</span>
+<span class="p">}</span>
+    
+<span class="k">class</span> <span class="nc">Program</span>
+<span class="p">{</span>
+    <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="kt">var</span> <span class="n">obj</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Derived</span><span class="p">().</span><span class="n">AsBase</span><span class="p">();</span>
+        <span class="n">obj</span><span class="p">.</span><span class="n">MethodA</span><span class="p">();</span> <span class="c1">// Prints: &quot;IBase.MethodA()&quot;</span>
+    
+        <span class="n">Console</span><span class="p">.</span><span class="n">ReadKey</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
 
 <h2 id="overriding-inherited-methods-the-importance-of-compile-time-types">Overriding Inherited Methods: The Importance of Compile-Time Types</h2>
 
 <p>It’s important to note that the compile-time type of the expression is what’s used for method overloading, so the EBT style of overriding inherited methods is <em>not</em> like object-oriented virtual function overriding:</p>
 
-<pre><code>public interface IBase { }
-public interface IDerived : IBase { }
-public sealed class Derived : IDerived { }
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">interface</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
+<span class="k">public</span> <span class="k">interface</span> <span class="n">IDerived</span> <span class="p">:</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
+<span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Derived</span> <span class="p">:</span> <span class="n">IDerived</span> <span class="p">{</span> <span class="p">}</span>
+    
+<span class="k">public</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">MyMethods</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="n">IBase</span> <span class="nf">AsBase</span><span class="p">(</span><span class="k">this</span> <span class="n">IBase</span> <span class="n">@this</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">@this</span><span class="p">;</span> <span class="p">}</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">MethodA</span><span class="p">(</span><span class="k">this</span> <span class="n">IBase</span> <span class="n">@this</span><span class="p">)</span> <span class="p">{</span> <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;IBase.MethodA()&quot;</span><span class="p">);</span> <span class="p">}</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">MethodA</span><span class="p">(</span><span class="k">this</span> <span class="n">IDerived</span> <span class="n">@this</span><span class="p">)</span> <span class="p">{</span> <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;IDerived.MethodA()&quot;</span><span class="p">);</span> <span class="p">}</span>
+<span class="p">}</span>
+    
+<span class="k">class</span> <span class="nc">Program</span>
+<span class="p">{</span>
+    <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="n">IBase</span> <span class="n">obj</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Derived</span><span class="p">();</span>
+        <span class="n">obj</span><span class="p">.</span><span class="n">MethodA</span><span class="p">();</span> <span class="c1">// Prints: &quot;IBase.MethodA()&quot;, NOT &quot;IDervied.MethodA()&quot;</span>
+    
+        <span class="n">Console</span><span class="p">.</span><span class="n">ReadKey</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
 
-public static class MyMethods
-{
-    public static IBase AsBase(this IBase @this) { return @this; }
-    public static void MethodA(this IBase @this) { Console.WriteLine("IBase.MethodA()"); }
-    public static void MethodA(this IDerived @this) { Console.WriteLine("IDerived.MethodA()"); }
-}
-
-class Program
-{
-    static void Main()
-    {
-        IBase obj = new Derived();
-        obj.MethodA(); // Prints: "IBase.MethodA()", NOT "IDervied.MethodA()"
-
-        Console.ReadKey();
-    }
-}
-</code></pre>
-
-<p>In fact, even something as minor as missing a “using” statement could cause the wrong method to be called. Consider the case where “MethodA(this IDerived)” is defined in a class in a different namespace. It must be brought into scope via a “using” statement before it could be considered by method resolution.</p>
+<p>In fact, even something as minor as missing a <code>using</code> declaration could cause the wrong method to be called. Consider the case where <code>MethodA(this IDerived)</code> is defined in a class in a different namespace. It must be brought into scope via a <code>using</code> declaration before it could be considered by method resolution.</p>
 
 <h2 id="multiple-inheritance">Multiple Inheritance</h2>
 
 <p>Multiple inheritance is supported for EBTs; any ambiguity causes a compiler error:</p>
 
-<pre><code>public interface IBaseA { }
-public interface IBaseB { }
-public interface IDerived : IBaseA, IBaseB { }
-public sealed class Derived : IDerived { }
-
-public static class MyMethods
-{
-    public static void MethodA(this IBaseA @this) { Console.WriteLine("IBaseA.MethodA()"); }
-    public static void MethodA(this IBaseB @this) { Console.WriteLine("IBaseB.MethodA()"); }
-}
-
-class Program
-{
-    static void Main()
-    {
-        var obj = new Derived();
-        obj.MethodA(); // Compiler error: ambiguous
-
-        Console.ReadKey();
-    }
-}
-</code></pre>
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">interface</span> <span class="n">IBaseA</span> <span class="p">{</span> <span class="p">}</span>
+<span class="k">public</span> <span class="k">interface</span> <span class="n">IBaseB</span> <span class="p">{</span> <span class="p">}</span>
+<span class="k">public</span> <span class="k">interface</span> <span class="n">IDerived</span> <span class="p">:</span> <span class="n">IBaseA</span><span class="p">,</span> <span class="n">IBaseB</span> <span class="p">{</span> <span class="p">}</span>
+<span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Derived</span> <span class="p">:</span> <span class="n">IDerived</span> <span class="p">{</span> <span class="p">}</span>
+    
+<span class="k">public</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">MyMethods</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">MethodA</span><span class="p">(</span><span class="k">this</span> <span class="n">IBaseA</span> <span class="n">@this</span><span class="p">)</span> <span class="p">{</span> <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;IBaseA.MethodA()&quot;</span><span class="p">);</span> <span class="p">}</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">MethodA</span><span class="p">(</span><span class="k">this</span> <span class="n">IBaseB</span> <span class="n">@this</span><span class="p">)</span> <span class="p">{</span> <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;IBaseB.MethodA()&quot;</span><span class="p">);</span> <span class="p">}</span>
+<span class="p">}</span>
+    
+<span class="k">class</span> <span class="nc">Program</span>
+<span class="p">{</span>
+    <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="kt">var</span> <span class="n">obj</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Derived</span><span class="p">();</span>
+        <span class="n">obj</span><span class="p">.</span><span class="n">MethodA</span><span class="p">();</span> <span class="c1">// Compiler error: ambiguous</span>
+    
+        <span class="n">Console</span><span class="p">.</span><span class="n">ReadKey</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
 
 <p>Ambiguity may be resolved by overriding the method in the derived EBT, or by constraining the compile-time type using the identity transformation method. The second approach is more flexible, since it allows any user-defined extensions. This example uses the second approach:</p>
 
-<pre><code>public interface IBaseA { }
-public interface IBaseB { }
-public interface IDerived : IBaseA, IBaseB { }
-public sealed class Derived : IDerived { }
-
-public static class MyMethods
-{
-    public static IBaseA AsBaseA(this IBaseA @this) { return @this; }
-    public static void MethodA(this IBaseA @this) { Console.WriteLine("IBaseA.MethodA()"); }
-    public static IBaseB AsBaseB(this IBaseB @this) { return @this; }
-    public static void MethodA(this IBaseB @this) { Console.WriteLine("IBaseB.MethodA()"); }
-}
-
-class Program
-{
-    static void Main()
-    {
-        var obj = new Derived();
-        obj.AsBaseA().MethodA(); // Prints: "IBaseA.MethodA()"
-        obj.AsBaseB().MethodA(); // Prints: "IBaseB.MethodA()"
-
-        Console.ReadKey();
-    }
-}
-</code></pre>
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">interface</span> <span class="n">IBaseA</span> <span class="p">{</span> <span class="p">}</span>
+<span class="k">public</span> <span class="k">interface</span> <span class="n">IBaseB</span> <span class="p">{</span> <span class="p">}</span>
+<span class="k">public</span> <span class="k">interface</span> <span class="n">IDerived</span> <span class="p">:</span> <span class="n">IBaseA</span><span class="p">,</span> <span class="n">IBaseB</span> <span class="p">{</span> <span class="p">}</span>
+<span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Derived</span> <span class="p">:</span> <span class="n">IDerived</span> <span class="p">{</span> <span class="p">}</span>
+    
+<span class="k">public</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">MyMethods</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="n">IBaseA</span> <span class="nf">AsBaseA</span><span class="p">(</span><span class="k">this</span> <span class="n">IBaseA</span> <span class="n">@this</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">@this</span><span class="p">;</span> <span class="p">}</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">MethodA</span><span class="p">(</span><span class="k">this</span> <span class="n">IBaseA</span> <span class="n">@this</span><span class="p">)</span> <span class="p">{</span> <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;IBaseA.MethodA()&quot;</span><span class="p">);</span> <span class="p">}</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="n">IBaseB</span> <span class="nf">AsBaseB</span><span class="p">(</span><span class="k">this</span> <span class="n">IBaseB</span> <span class="n">@this</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">@this</span><span class="p">;</span> <span class="p">}</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">MethodA</span><span class="p">(</span><span class="k">this</span> <span class="n">IBaseB</span> <span class="n">@this</span><span class="p">)</span> <span class="p">{</span> <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;IBaseB.MethodA()&quot;</span><span class="p">);</span> <span class="p">}</span>
+<span class="p">}</span>
+    
+<span class="k">class</span> <span class="nc">Program</span>
+<span class="p">{</span>
+    <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="kt">var</span> <span class="n">obj</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Derived</span><span class="p">();</span>
+        <span class="n">obj</span><span class="p">.</span><span class="n">AsBaseA</span><span class="p">().</span><span class="n">MethodA</span><span class="p">();</span> <span class="c1">// Prints: &quot;IBaseA.MethodA()&quot;</span>
+        <span class="n">obj</span><span class="p">.</span><span class="n">AsBaseB</span><span class="p">().</span><span class="n">MethodA</span><span class="p">();</span> <span class="c1">// Prints: &quot;IBaseB.MethodA()&quot;</span>
+    
+        <span class="n">Console</span><span class="p">.</span><span class="n">ReadKey</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
 
 <h2 id="properties">Properties</h2>
 
 <p>Due to .NET limitations, properties may only be defined on interfaces (there’s no such thing as an “extension property”). However, they may be simulated:</p>
 
-<pre><code>public interface IBase { int Property { get; } }
-public interface IDerived : IBase { }
-public sealed class Derived : IDerived
-{
-    int IBase.Property
-    {
-        get { return this.GetProperty(); }
-    }
-}
-
-public static class MyMethods
-{
-    public static IBase AsBase(this IBase @this) { return @this; }
-    public static int GetProperty(this IDerived @this) { Console.WriteLine("IDerived.GetProperty()"); return 13; }
-}
-
-class Program
-{
-    static void Main()
-    {
-        var obj = new Derived();
-        obj.GetProperty(); // Prints: "IDerived.GetProperty()"
-        int test = obj.AsBase().Property; // Prints: "IDerived.GetProperty()"
-
-        Console.ReadKey();
-    }
-}
-</code></pre>
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">interface</span> <span class="n">IBase</span> <span class="p">{</span> <span class="kt">int</span> <span class="n">Property</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">}</span>
+<span class="k">public</span> <span class="k">interface</span> <span class="n">IDerived</span> <span class="p">:</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
+<span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Derived</span> <span class="p">:</span> <span class="n">IDerived</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">IBase</span><span class="p">.</span><span class="n">Property</span>
+    <span class="p">{</span>
+        <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="n">GetProperty</span><span class="p">();</span> <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+    
+<span class="k">public</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">MyMethods</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="n">IBase</span> <span class="nf">AsBase</span><span class="p">(</span><span class="k">this</span> <span class="n">IBase</span> <span class="n">@this</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">@this</span><span class="p">;</span> <span class="p">}</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="kt">int</span> <span class="nf">GetProperty</span><span class="p">(</span><span class="k">this</span> <span class="n">IDerived</span> <span class="n">@this</span><span class="p">)</span> <span class="p">{</span> <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;IDerived.GetProperty()&quot;</span><span class="p">);</span> <span class="k">return</span> <span class="m">13</span><span class="p">;</span> <span class="p">}</span>
+<span class="p">}</span>
+    
+<span class="k">class</span> <span class="nc">Program</span>
+<span class="p">{</span>
+    <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="kt">var</span> <span class="n">obj</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Derived</span><span class="p">();</span>
+        <span class="n">obj</span><span class="p">.</span><span class="n">GetProperty</span><span class="p">();</span> <span class="c1">// Prints: &quot;IDerived.GetProperty()&quot;</span>
+        <span class="kt">int</span> <span class="n">test</span> <span class="p">=</span> <span class="n">obj</span><span class="p">.</span><span class="n">AsBase</span><span class="p">().</span><span class="n">Property</span><span class="p">;</span> <span class="c1">// Prints: &quot;IDerived.GetProperty()&quot;</span>
+    
+        <span class="n">Console</span><span class="p">.</span><span class="n">ReadKey</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
 
 <p>One may think of this as the interface holding the property <em>declaration</em> while the extension methods (derived EBT methods) hold the property <em>definition</em>.</p>
 
-<p>Note that the property getter will always call the same derived method, regardless of whether it is accessed through an IBase interface. However, the extension method “GetProperty” (if it were defined on IBase) would call either the IBase or IDerived implementation, depending on the compile-time type.</p>
+<p>Note that the property getter will always call the same derived method, regardless of whether it is accessed through an <code>IBase</code> interface. However, the extension method <code>GetProperty</code> (if it were defined on <code>IBase</code>) would call either the <code>IBase</code> or <code>IDerived</code> implementation, depending on the compile-time type.</p>
 
 <h2 id="limitations-inability-to-override-interface-methods">Limitations: Inability to Override Interface Methods</h2>
 
 <p>If a method is defined in the interface instead of as an extension method, then that method may never be overridden by a derived EBT type:</p>
 
-<pre><code>public interface IBase { }
-public interface IDerived : IBase { void MethodA(); }
-public sealed class Derived : IDerived
-{
-    public void MethodA() { Console.WriteLine("Derived.MethodA()"); }
-}
-
-public static class MyMethods
-{
-    public static IBase AsBase(this IBase @this) { return @this; }
-    public static void MethodA(this IBase @this) { Console.WriteLine("IBase.MethodA()"); }
-    public static IDerived AsDerived(this IDerived @this) { return @this; }
-    public static void MethodA(this IDerived @this) { Console.WriteLine("IDerived.MethodA()"); }
-}
-
-class Program
-{
-    static void Main()
-    {
-        var obj = new Derived();
-        obj.MethodA(); // Prints: "Derived.MethodA()"
-        obj.AsBase().MethodA(); // Prints: "IBase.MethodA()"
-        obj.AsDerived().MethodA(); // Prints: "Derived.MethodA()" (NOT "IDerived.MethodA")
-
-        Console.ReadKey();
-    }
-}
-</code></pre>
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">interface</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
+<span class="k">public</span> <span class="k">interface</span> <span class="n">IDerived</span> <span class="p">:</span> <span class="n">IBase</span> <span class="p">{</span> <span class="k">void</span> <span class="n">MethodA</span><span class="p">();</span> <span class="p">}</span>
+<span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Derived</span> <span class="p">:</span> <span class="n">IDerived</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">void</span> <span class="nf">MethodA</span><span class="p">()</span> <span class="p">{</span> <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Derived.MethodA()&quot;</span><span class="p">);</span> <span class="p">}</span>
+<span class="p">}</span>
+    
+<span class="k">public</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">MyMethods</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="n">IBase</span> <span class="nf">AsBase</span><span class="p">(</span><span class="k">this</span> <span class="n">IBase</span> <span class="n">@this</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">@this</span><span class="p">;</span> <span class="p">}</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">MethodA</span><span class="p">(</span><span class="k">this</span> <span class="n">IBase</span> <span class="n">@this</span><span class="p">)</span> <span class="p">{</span> <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;IBase.MethodA()&quot;</span><span class="p">);</span> <span class="p">}</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="n">IDerived</span> <span class="nf">AsDerived</span><span class="p">(</span><span class="k">this</span> <span class="n">IDerived</span> <span class="n">@this</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">@this</span><span class="p">;</span> <span class="p">}</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">MethodA</span><span class="p">(</span><span class="k">this</span> <span class="n">IDerived</span> <span class="n">@this</span><span class="p">)</span> <span class="p">{</span> <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;IDerived.MethodA()&quot;</span><span class="p">);</span> <span class="p">}</span>
+<span class="p">}</span>
+    
+<span class="k">class</span> <span class="nc">Program</span>
+<span class="p">{</span>
+    <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="kt">var</span> <span class="n">obj</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Derived</span><span class="p">();</span>
+        <span class="n">obj</span><span class="p">.</span><span class="n">MethodA</span><span class="p">();</span> <span class="c1">// Prints: &quot;Derived.MethodA()&quot;</span>
+        <span class="n">obj</span><span class="p">.</span><span class="n">AsBase</span><span class="p">().</span><span class="n">MethodA</span><span class="p">();</span> <span class="c1">// Prints: &quot;IBase.MethodA()&quot;</span>
+        <span class="n">obj</span><span class="p">.</span><span class="n">AsDerived</span><span class="p">().</span><span class="n">MethodA</span><span class="p">();</span> <span class="c1">// Prints: &quot;Derived.MethodA()&quot; (NOT &quot;IDerived.MethodA&quot;)</span>
+    
+        <span class="n">Console</span><span class="p">.</span><span class="n">ReadKey</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
 
 <p>For this reason, it is important to distill as many methods as possible out of the interface that defines the EBT.</p>
 
@@ -395,11 +385,11 @@ class Program
 
 <h2 id="real-world-examples-from-linq">Real-World Examples from LINQ</h2>
 
-<p>As LINQ continues to evolve, it approaches EBTs. In particular, the <a href="http://msdn.microsoft.com/en-us/library/9eekhta0.aspx">IEnumerable&lt;T&gt;</a> interface is extended by the <a href="http://msdn.microsoft.com/en-us/library/system.linq.enumerable.aspx">Enumerable</a> class, including an <a href="http://msdn.microsoft.com/en-us/library/bb335435.aspx">AsEnumerable</a> identity transformation method. <a href="http://msdn.microsoft.com/en-us/library/bb534852.aspx">IOrderedEnumerable&lt;T&gt;</a> is one derived type; the interface adds no methods, but the Enumerable class does. The rarely-used <a href="http://msdn.microsoft.com/en-us/library/bb351562.aspx">IQueryable&lt;T&gt;</a> derived type is extended by <a href="http://msdn.microsoft.com/en-us/library/system.linq.queryable.aspx">Queryable</a>. Grouping and ordering follow the same pattern.</p>
+<p>As LINQ continues to evolve, it approaches EBTs. In particular, the <a href="http://msdn.microsoft.com/en-us/library/9eekhta0.aspx"><code>IEnumerable&lt;T&gt;</code></a> interface is extended by the <a href="http://msdn.microsoft.com/en-us/library/system.linq.enumerable.aspx"><code>Enumerable</code></a> class, including an <a href="http://msdn.microsoft.com/en-us/library/bb335435.aspx"><code>AsEnumerable</code></a> identity transformation method. <a href="http://msdn.microsoft.com/en-us/library/bb534852.aspx"><code>IOrderedEnumerable&lt;T&gt;</code></a> is one derived type; the interface adds no methods, but the <code>Enumerable</code> class does. The <a href="http://msdn.microsoft.com/en-us/library/bb351562.aspx"><code>IQueryable&lt;T&gt;</code></a> derived type is extended by <a href="http://msdn.microsoft.com/en-us/library/system.linq.queryable.aspx"><code>Queryable</code></a>. Grouping and ordering follow the same pattern.</p>
 
-<p>The new PLINQ has a similar structure (though the derived <a href="http://msdn.microsoft.com/en-us/library/dd383736(VS.100).aspx">ParallelQuery&lt;T&gt;</a> is a class instead of an interface).</p>
+<p>The new PLINQ has a similar structure (though the derived <a href="http://msdn.microsoft.com/en-us/library/dd383736(VS.100).aspx"><code>ParallelQuery&lt;T&gt;</code></a> is a class instead of an interface).</p>
 
-<p><a href="http://msdn.microsoft.com/en-us/devlabs/ee794896.aspx">Rx</a> (a.k.a. “LINQ to Events”) continues the tradition. IObservable&lt;T&gt;, IObserver&lt;T&gt;, and IScheduler&lt;T&gt; provide basic definitions of types, with extension methods in the Observable, Observer, and Scheduler classes. Rx follows the EBT pattern in defining minimal interfaces; for example, IObservable&lt;T&gt; only defines one method (Subscribe), and extension methods are used to provide 5 overloads for Subscribe. The Rx team has a <a href="http://channel9.msdn.com/posts/J.Van.Gogh/Controlling-concurrency-in-Rx/">video</a> in which they describe some of the design behind IScheduler/Scheduler.</p>
+<p><a href="http://msdn.microsoft.com/en-us/devlabs/ee794896.aspx">Rx</a> (a.k.a. “LINQ to Events”) continues the tradition. <code>IObservable&lt;T&gt;</code>, <code>IObserver&lt;T&gt;</code>, and <code>IScheduler&lt;T&gt;</code> provide basic definitions of types, with extension methods in the <code>Observable</code>, <code>Observer</code>, and <code>Scheduler</code> classes. Rx follows the EBT pattern in defining minimal interfaces; for example, <code>IObservable&lt;T&gt;</code> only defines one method (<code>Subscribe</code>), and extension methods are used to provide 5 overloads for <code>Subscribe</code>. The Rx team has a <a href="http://channel9.msdn.com/posts/J.Van.Gogh/Controlling-concurrency-in-Rx/">video</a> in which they describe some of the design behind <code>IScheduler</code>/<code>Scheduler</code>.</p>
 
 <h2 id="future-blog-posts">Future Blog Posts</h2>
 

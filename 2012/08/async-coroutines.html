@@ -92,7 +92,7 @@
   <p>Please note: this is only “playing around” code. Do not use this in production!</p>
 </div>
 
-<p>There isn’t that much to it. We define three co-routines with slightly different behavior to make it a little interesting: FirstCoroutine yields twice, SecondCoroutine yields three times, and ThirdCoroutine yields once.</p>
+<p>There isn’t that much to it. We define three co-routines with slightly different behavior to make it a little interesting: <code>FirstCoroutine</code> yields twice, <code>SecondCoroutine</code> yields three times, and <code>ThirdCoroutine</code> yields once.</p>
 
 <div class="highlight"><pre><code class="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
@@ -151,7 +151,7 @@
     <span class="p">}</span>
 <span class="p">}</span></code></pre></div>
 
-<p>To run the co-routines exclusively, we create a TaskFactory wrapping a ConcurrentExclusiveSchedulerPair.ExclusiveScheduler. We also create a convenience method RunCoroutineAsync, which takes a co-routine delegate and executes it on that scheduler.</p>
+<p>To run the co-routines exclusively, we create a <code>TaskFactory</code> wrapping a <code>ConcurrentExclusiveSchedulerPair.ExclusiveScheduler</code>. We also create a convenience method <code>RunCoroutineAsync</code>, which takes a co-routine delegate and executes it on that scheduler.</p>
 
 <div class="highlight"><pre><code class="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
@@ -194,9 +194,9 @@
     <span class="p">}</span>
 <span class="p">}</span></code></pre></div>
 
-<p>The tricky part in this code is the double-await in RunCoroutineAsync. This is a <a href="http://blogs.msdn.com/b/pfxteam/archive/2011/10/24/10229468.aspx">normal pattern</a> when you use TaskFactory.StartNew with asynchronous delegates (alternatively, you could use Task.Unwrap).</p>
+<p>The tricky part in this code is the double-<code>await</code> in <code>RunCoroutineAsync</code>. This is a <a href="http://blogs.msdn.com/b/pfxteam/archive/2011/10/24/10229468.aspx">normal pattern</a> when you use <code>TaskFactory.StartNew</code> with asynchronous delegates (alternatively, you could use <code>Task.Unwrap</code>).</p>
 
-<p>Logically, the “coroutine” parameter to RunCoroutineAsync is an asynchronous delegate (referring to one of the async co-routine methods). When we pass it to StartNew, we get back a Task&lt;Task&gt; representing the <em>starting</em> of that asynchronous delegate on our exclusive scheduler. The inner Task represents the <em>completion</em> of that asynchronous delegate. So the “await await” is used because we want RunCoroutineAsync to complete only when the asynchronous delegate completes.</p>
+<p>Logically, the “coroutine” parameter to <code>RunCoroutineAsync</code> is an asynchronous delegate (referring to one of the async co-routine methods). When we pass it to <code>StartNew</code>, we get back a <code>Task&lt;Task&gt;</code> representing the <em>starting</em> of that asynchronous delegate on our exclusive scheduler. The inner task represents the <em>completion</em> of that asynchronous delegate. So the <code>await await</code> is used because we want <code>RunCoroutineAsync</code> to complete only when the asynchronous delegate completes.</p>
 
 <p>If we execute this program, we can clearly see the co-routine behavior:</p>
 
@@ -220,7 +220,7 @@ Finished FirstCoroutine
   Finished SecondCoroutine
 </code></pre>
 
-<p>Just one final word. There are benign race conditions in this code: e.g., it’s possible that FirstCoroutine may run and yield to itself before SecondCoroutine even starts. The ExclusiveScheduler does not make guarantees about queueing or fairness (though it does <em>try</em> to be fair) - it only guarantees exclusive scheduling.</p>
+<p>Just one final word. There are benign race conditions in this code: e.g., it’s possible that <code>FirstCoroutine</code> may run and yield to itself before <code>SecondCoroutine</code> even starts. The <code>ExclusiveScheduler</code> does not make guarantees about queueing or fairness (though it does <em>try</em> to be fair) - it only guarantees exclusive scheduling.</p>
 
 
   </article>

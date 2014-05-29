@@ -88,92 +88,84 @@
 
 <p>Partial URLs are transformed by Internet Exporer into absolute URLs as they enter the object model. This can cause exceptions from the Uri constructor if you’re only passing a single string argument. The workaround that I’ve opted to use is to always use the Uri constructor that takes a Uri and a string as arguments, and I pass in the current page’s Uri as the first argument.</p>
 
-<p>I recommend never using the Uri constructor taking a single string parameter; in the following example, the &lt;a&gt; item has an href attribute similar to “/”, which is quietly transformed by IE into a full “http://www.tempuri.org/”:</p>
+<p>I recommend never using the Uri constructor taking a single string parameter; in the following example, the <code>&lt;a&gt;</code> item has an href attribute similar to <code>/</code>, which is quietly transformed by IE into a full <code>http://www.tempuri.org/</code>:</p>
 
-<pre><code>// Fails on Google Chrome
-new Uri(item.GetAttribute("href"))
-</code></pre>
+<div class="highlight"><pre><code class="csharp"><span class="c1">// Fails on Google Chrome</span>
+<span class="k">new</span> <span class="nf">Uri</span><span class="p">(</span><span class="n">item</span><span class="p">.</span><span class="n">GetAttribute</span><span class="p">(</span><span class="s">&quot;href&quot;</span><span class="p">))</span></code></pre></div>
 
-<p>Instead, pass the document Uri as the context of the relative Uri string. If the second parameter is actually an absolute Uri (e.g., when running in Internet Explorer), the context Uri is ignored:</p>
+<p>Instead, pass the document <code>Uri</code> as the context of the relative uri string. If the second parameter is actually an absolute uri (e.g., when running in Internet Explorer), the context uri is ignored:</p>
 
-<pre><code>// Works on both Chrome and IE
-new Uri(HtmlPage.Document.DocumentUri, item.GetAttribute("href"))
-</code></pre>
+<div class="highlight"><pre><code class="csharp"><span class="c1">// Works on both Chrome and IE</span>
+<span class="k">new</span> <span class="nf">Uri</span><span class="p">(</span><span class="n">HtmlPage</span><span class="p">.</span><span class="n">Document</span><span class="p">.</span><span class="n">DocumentUri</span><span class="p">,</span> <span class="n">item</span><span class="p">.</span><span class="n">GetAttribute</span><span class="p">(</span><span class="s">&quot;href&quot;</span><span class="p">))</span></code></pre></div>
 
 <h2 id="text-content">Text Content</h2>
 
-<p>Internet Explorer has an “innerText” attribute, while the DOM supports a “textContent” property. A simple extension method on HtmlElement suffices to get the text content of a node:</p>
+<p>Internet Explorer has an <code>innerText</code> attribute, while the DOM supports a <code>textContent</code> property. A simple extension method on <code>HtmlElement</code> suffices to get the text content of a node:</p>
 
-<pre><code>public static string GetTextContent(this HtmlElement htmlElement)
-{
-    string ret = htmlElement.GetProperty("textContent") as string;
-    if (string.IsNullOrEmpty(ret))
-    {
-         ret = htmlElement.GetAttribute("innerText");
-         if (ret == null)
-         {
-             return string.Empty;
-         }
-    }
-
-    return ret;
-}
-</code></pre>
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">static</span> <span class="kt">string</span> <span class="nf">GetTextContent</span><span class="p">(</span><span class="k">this</span> <span class="n">HtmlElement</span> <span class="n">htmlElement</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">string</span> <span class="n">ret</span> <span class="p">=</span> <span class="n">htmlElement</span><span class="p">.</span><span class="n">GetProperty</span><span class="p">(</span><span class="s">&quot;textContent&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="kt">string</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="kt">string</span><span class="p">.</span><span class="n">IsNullOrEmpty</span><span class="p">(</span><span class="n">ret</span><span class="p">))</span>
+    <span class="p">{</span>
+            <span class="n">ret</span> <span class="p">=</span> <span class="n">htmlElement</span><span class="p">.</span><span class="n">GetAttribute</span><span class="p">(</span><span class="s">&quot;innerText&quot;</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">ret</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="kt">string</span><span class="p">.</span><span class="n">Empty</span><span class="p">;</span>
+            <span class="p">}</span>
+    <span class="p">}</span>
+    
+    <span class="k">return</span> <span class="n">ret</span><span class="p">;</span>
+<span class="p">}</span></code></pre></div>
 
 <h2 id="documentready">DocumentReady</h2>
 
-<p>A long-standing bug in Internet Explorer (at least since IE6; still present in IE8) causes document.onreadystatechange to be fired incorrectly, and the standard DOMContentLoaded isn’t suppored. This means that HtmlPage.Document.DocumentReady <em>will fire</em> when the document is not ready. This behavior has <a href="http://forums.silverlight.net/forums/p/82810/193149.aspx#193149">been discussed</a> on a Silverlight forum.</p>
+<p>A long-standing bug in Internet Explorer (at least since IE6; still present in IE8) causes <code>document.onreadystatechange</code> to be fired incorrectly, and the standard <code>DOMContentLoaded</code> isn’t suppored. This means that <code>HtmlPage.Document.DocumentReady</code> <em>will fire</em> when the document is not ready. This behavior has <a href="http://forums.silverlight.net/forums/p/82810/193149.aspx#193149">been discussed</a> on a Silverlight forum.</p>
 
-<p>I’ve also seen some situations where the jQuery ready handlers (and the window.onload handlers) will fire before the Silverlight control begins executing; this can happen if the page contains several images. To be safe, I recommend having both jQuery and Silverlight register “readyness”, and the last one to register kicks off the initialization code.</p>
+<p>I’ve also seen some situations where the jQuery ready handlers (and the <code>window.onload</code> handlers) will fire before the Silverlight control begins executing; this can happen if the page contains several images. To be safe, I recommend having both jQuery and Silverlight register “readyness”, and the last one to register kicks off the initialization code.</p>
 
-<p>This has a few steps; I’ll be using as an example a Silverlight menu control I wrote that dynamically builds its menu from an unordered list in the HTML. First, the “initialization” code must be made a separate method in the Silverlight control (in this example, it’s “BuildMenu”):</p>
+<p>This has a few steps; I’ll be using as an example a Silverlight menu control I wrote that dynamically builds its menu from an unordered list in the HTML. First, the “initialization” code must be made a separate method in the Silverlight control (in this example, it’s <code>BuildMenu</code>):</p>
 
-<pre><code>// In the Page constructor (there's only one page in this simple menu control):
-HtmlPage.RegisterScriptableObject("SLMenu", this);
-
-// Also defined as part of the Page class:
-[ScriptableMember]
-public void BuildMenu()
-</code></pre>
+<div class="highlight"><pre><code class="csharp"><span class="c1">// In the Page constructor (there&#39;s only one page in this simple menu control):</span>
+<span class="n">HtmlPage</span><span class="p">.</span><span class="n">RegisterScriptableObject</span><span class="p">(</span><span class="s">&quot;SLMenu&quot;</span><span class="p">,</span> <span class="k">this</span><span class="p">);</span>
+    
+<span class="c1">// Also defined as part of the Page class:</span>
+<span class="na">[ScriptableMember]</span>
+<span class="k">public</span> <span class="k">void</span> <span class="nf">BuildMenu</span><span class="p">()</span></code></pre></div>
 
 <p>Define the “readyness” flags in plain, top-level JavaScript before the Silverlight control; this ensures that they’re interpreted immediately:</p>
 
-<pre><code>// Top-level code; not in a function!
-var silverlightLoaded = false;
-var htmlLoaded = false;
-</code></pre>
+<div class="highlight"><pre><code class="csharp"><span class="c1">// Top-level code; not in a function!</span>
+<span class="kt">var</span> <span class="n">silverlightLoaded</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+<span class="kt">var</span> <span class="n">htmlLoaded</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span></code></pre></div>
 
 <p>Also define the JavaScript function that the Silverlight control should call in top-level JavaScript before the Silverlight control:</p>
 
-<pre><code>// Top-level code; not in a function!
-MenuOnLoad = function() {
-  if (!silverlightLoaded) {
-    silverlightLoaded = true;
-    if (htmlLoaded) {
-      menuControl.Content.SLMenu.BuildMenu();
-    }
-  }
-}
-</code></pre>
+<div class="highlight"><pre><code class="csharp"><span class="c1">// Top-level code; not in a function!</span>
+<span class="n">MenuOnLoad</span> <span class="p">=</span> <span class="n">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(!</span><span class="n">silverlightLoaded</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">silverlightLoaded</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">htmlLoaded</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">menuControl</span><span class="p">.</span><span class="n">Content</span><span class="p">.</span><span class="n">SLMenu</span><span class="p">.</span><span class="n">BuildMenu</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
 
-<p>The code above is straightforward; it marks Silverlight as having loaded and then invokes the initialization code if the HTML has already loaded. The code run by the HTML when it loads is similar (shown here using jQuery, but window.onload could be used as well):</p>
+<p>The code above is straightforward; it marks Silverlight as having loaded and then invokes the initialization code if the HTML has already loaded. The code run by the HTML when it loads is similar (shown here using jQuery, but <code>window.onload</code> could be used as well):</p>
 
-<pre><code>$(function() {
-  if (!htmlLoaded) {
-    htmlLoaded = true;
-    if (silverlightLoaded) {
-      menuControl.Content.SLMenu.BuildMenu();
-    }
-  }
-});
-</code></pre>
+<div class="highlight"><pre><code class="csharp"><span class="err">$</span><span class="p">(</span><span class="n">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(!</span><span class="n">htmlLoaded</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">htmlLoaded</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">silverlightLoaded</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">menuControl</span><span class="p">.</span><span class="n">Content</span><span class="p">.</span><span class="n">SLMenu</span><span class="p">.</span><span class="n">BuildMenu</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">});</span></code></pre></div>
 
-<p>Finally, the Silverlight control must invoke the JavaScript “MenuOnLoad” function when it is loaded. This must come after its registration with the browser:</p>
+<p>Finally, the Silverlight control must invoke the JavaScript <code>MenuOnLoad</code> function when it is loaded. This must come after its registration with the browser:</p>
 
-<pre><code>// In the Page constructor (there's only one page in this simple menu control):
-HtmlPage.RegisterScriptableObject("SLMenu", this);
-HtmlPage.Window.Invoke("MenuOnLoad");
-</code></pre>
+<div class="highlight"><pre><code class="csharp"><span class="c1">// In the Page constructor (there&#39;s only one page in this simple menu control):</span>
+<span class="n">HtmlPage</span><span class="p">.</span><span class="n">RegisterScriptableObject</span><span class="p">(</span><span class="s">&quot;SLMenu&quot;</span><span class="p">,</span> <span class="k">this</span><span class="p">);</span>
+<span class="n">HtmlPage</span><span class="p">.</span><span class="n">Window</span><span class="p">.</span><span class="n">Invoke</span><span class="p">(</span><span class="s">&quot;MenuOnLoad&quot;</span><span class="p">);</span></code></pre></div>
 
 <h2 id="conclusion">Conclusion</h2>
 

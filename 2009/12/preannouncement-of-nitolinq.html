@@ -86,37 +86,33 @@
 
 <p><a href="http://nitolinq.codeplex.com/">Nito.Linq</a> is a library that helps “fill in the gaps” in the existing LINQ system. It will be compatible with .NET 3.5 SP1, .NET 4.0, and Silverlight 3 (all with or without <a href="http://msdn.microsoft.com/en-us/devlabs/ee794896.aspx">Rx</a>).</p>
 
-<p>The primary focus of this library is the development of operators around random-access sequences (IList&lt;T&gt;). Secondary focii include sorted sequence and list operators; a translation of all C++ STL algorithms into sequence/list operators (finally!); compatibility shims for working between .NET 3.5, .NET 4.0, and Rx; and a handful of little “extra” items such as LexicographicalComparer, CircularBuffer, and Deque.</p>
+<p>The primary focus of this library is the development of operators around random-access sequences (<code>IList&lt;T&gt;</code>). Secondary focii include sorted sequence and list operators; a translation of all C++ STL algorithms into sequence/list operators (finally!); compatibility shims for working between .NET 3.5, .NET 4.0, and Rx; and a handful of little “extra” items such as <code>LexicographicalComparer</code>, <code>CircularBuffer</code>, and <code>Deque</code>.</p>
 
 <p>The source code is currently available to play with. These classes are actually being used in production code (at my day job), and most of them have thorough unit tests as well. The implementation is actually quite stable at this point, though the interface may change before the first release.</p>
 
 <p>To whet your appetite, here’s a few things that one can do with Nito.Linq:</p>
 
-<pre><code>int[] a = { 1, 2, 3 };
-int[] b = { 4, 5, 6 };
-IList&lt;int&gt; result = a.Concat(b);
-</code></pre>
+<div class="highlight"><pre><code class="csharp"><span class="kt">int</span><span class="p">[]</span> <span class="n">a</span> <span class="p">=</span> <span class="p">{</span> <span class="m">1</span><span class="p">,</span> <span class="m">2</span><span class="p">,</span> <span class="m">3</span> <span class="p">};</span>
+<span class="kt">int</span><span class="p">[]</span> <span class="n">b</span> <span class="p">=</span> <span class="p">{</span> <span class="m">4</span><span class="p">,</span> <span class="m">5</span><span class="p">,</span> <span class="m">6</span> <span class="p">};</span>
+<span class="n">IList</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">result</span> <span class="p">=</span> <span class="n">a</span><span class="p">.</span><span class="n">Concat</span><span class="p">(</span><span class="n">b</span><span class="p">);</span></code></pre></div>
 
-<p>In the code above, <em>result</em> is a list that contains { 1, 2, 3, 4, 5, 6 }. Nothing too surprising there, except that <em>result</em> is actually a concatenated view of the original lists. In other words, <em>result</em> uses delayed execution, just like LINQ.</p>
+<p>In the code above, <code>result</code> is a list that contains <code>{ 1, 2, 3, 4, 5, 6 }</code>. Nothing too surprising there, except that <code>result</code> is actually a concatenated view of the original lists. In other words, <code>result</code> uses delayed execution, just like LINQ.</p>
 
-<pre><code>int[] a = { 1, 2, 3, 4, 5, 6 };
-IList&lt;int&gt; result = a.Skip(2);
-</code></pre>
+<div class="highlight"><pre><code class="csharp"><span class="kt">int</span><span class="p">[]</span> <span class="n">a</span> <span class="p">=</span> <span class="p">{</span> <span class="m">1</span><span class="p">,</span> <span class="m">2</span><span class="p">,</span> <span class="m">3</span><span class="p">,</span> <span class="m">4</span><span class="p">,</span> <span class="m">5</span><span class="p">,</span> <span class="m">6</span> <span class="p">};</span>
+<span class="n">IList</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">result</span> <span class="p">=</span> <span class="n">a</span><span class="p">.</span><span class="n">Skip</span><span class="p">(</span><span class="m">2</span><span class="p">);</span></code></pre></div>
 
-<p>In the code above, <em>result</em> contains the elements you’d expect from using the LINQ Skip operator. However, its type is not IEnumerable&lt;T&gt;; it is IList&lt;T&gt;, which means that it knows how many elements are in it and provides O(1) random-access element retrieval.</p>
+<p>In the code above, <code>result</code> contains the elements you’d expect from using the LINQ <code>Skip</code> operator. However, its type is not <code>IEnumerable&lt;T&gt;</code>; it is <code>IList&lt;T&gt;</code>, which means that it knows how many elements are in it and provides O(1) random-access element retrieval.</p>
 
-<pre><code>int[] a = { 1, 2, 3 };
-int[] b = { 4, 5, 6 };
-IList&lt;int&gt; result = a.Zip(b, (x, y) =&gt; x + y);
-</code></pre>
+<div class="highlight"><pre><code class="csharp"><span class="kt">int</span><span class="p">[]</span> <span class="n">a</span> <span class="p">=</span> <span class="p">{</span> <span class="m">1</span><span class="p">,</span> <span class="m">2</span><span class="p">,</span> <span class="m">3</span> <span class="p">};</span>
+<span class="kt">int</span><span class="p">[]</span> <span class="n">b</span> <span class="p">=</span> <span class="p">{</span> <span class="m">4</span><span class="p">,</span> <span class="m">5</span><span class="p">,</span> <span class="m">6</span> <span class="p">};</span>
+<span class="n">IList</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">result</span> <span class="p">=</span> <span class="n">a</span><span class="p">.</span><span class="n">Zip</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="n">x</span> <span class="p">+</span> <span class="n">y</span><span class="p">);</span></code></pre></div>
 
-<p>In the code above, <em>result</em> contains the elements { 5, 7, 9 }. This is identical to how the Rx Zip operator works, except that Rx’s Zip only performs on sequences; <em>result</em> is an IList&lt;T&gt;. Not only does this provide efficient random access to the resulting elements, it also delays execution of the zip delegate until a resulting element is accessed.</p>
+<p>In the code above, <code>result</code> contains the elements <code>{ 5, 7, 9 }</code>. This is identical to how the Rx <code>Zip</code> operator works, except that Rx’s <code>Zip</code> only performs on sequences; <code>result</code> is an <code>IList&lt;T&gt;</code>. Not only does this provide efficient random access to the resulting elements, it also delays execution of the zip delegate until a resulting element is accessed.</p>
 
-<pre><code>var a = new[] { 1, 2, 3 }.AsSorted();
-int i = a.IndexOf(2);
-</code></pre>
+<div class="highlight"><pre><code class="csharp"><span class="kt">var</span> <span class="n">a</span> <span class="p">=</span> <span class="k">new</span><span class="p">[]</span> <span class="p">{</span> <span class="m">1</span><span class="p">,</span> <span class="m">2</span><span class="p">,</span> <span class="m">3</span> <span class="p">}.</span><span class="n">AsSorted</span><span class="p">();</span>
+<span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="n">a</span><span class="p">.</span><span class="n">IndexOf</span><span class="p">(</span><span class="m">2</span><span class="p">);</span></code></pre></div>
 
-<p>In the code above, <em>IndexOf</em> is actually implemented using a binary search, rather than a simple linear search.</p>
+<p>In the code above, <code>IndexOf</code> is actually implemented using a binary search, rather than a simple linear search.</p>
 
 <p>If you’re interested at all, get the source and play around with it (check out the unit tests for simple examples). Let me know what you think!</p>
 

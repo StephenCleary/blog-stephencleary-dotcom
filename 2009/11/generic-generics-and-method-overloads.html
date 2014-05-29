@@ -82,59 +82,55 @@
   </header>
 
   <article>
-  <p>I was happily coding along this week, adding more IList&lt;T&gt; extension methods to my general utility library, when I came across an annoying problem. The following code works fine:</p>
+  <p>I was happily coding along this week, adding more <code>IList&lt;T&gt;</code> extension methods to my general utility library, when I came across an annoying problem. The following code works fine:</p>
 
-<pre><code>int test1&lt;T&gt;(IList&lt;T&gt; x) { return 0; }
-int test1&lt;T&gt;(IEnumerable&lt;T&gt; x) { return 1; }
-
-[TestMethod]
-public void TestMethod1()
-{
-    var list = new[] { 13 };
-    IEnumerable&lt;int&gt; seq = list;
-
-    Assert.AreEqual(0, test1(list));
-    Assert.AreEqual(1, test1(seq));
-}
-</code></pre>
+<div class="highlight"><pre><code class="csharp"><span class="kt">int</span> <span class="n">test1</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="n">IList</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">x</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="m">0</span><span class="p">;</span> <span class="p">}</span>
+<span class="kt">int</span> <span class="n">test1</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">x</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="m">1</span><span class="p">;</span> <span class="p">}</span>
+<span class="na">    </span>
+<span class="na">[TestMethod]</span>
+<span class="k">public</span> <span class="k">void</span> <span class="nf">TestMethod1</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="kt">var</span> <span class="n">list</span> <span class="p">=</span> <span class="k">new</span><span class="p">[]</span> <span class="p">{</span> <span class="m">13</span> <span class="p">};</span>
+    <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">seq</span> <span class="p">=</span> <span class="n">list</span><span class="p">;</span>
+    
+    <span class="n">Assert</span><span class="p">.</span><span class="n">AreEqual</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="n">test1</span><span class="p">(</span><span class="n">list</span><span class="p">));</span>
+    <span class="n">Assert</span><span class="p">.</span><span class="n">AreEqual</span><span class="p">(</span><span class="m">1</span><span class="p">,</span> <span class="n">test1</span><span class="p">(</span><span class="n">seq</span><span class="p">));</span>
+<span class="p">}</span></code></pre></div>
 
 <p>The behavior is just as you’d expect; the correct overloaded method is chosen based on the <a href="http://msdn.microsoft.com/en-us/library/aa691339(VS.71).aspx">better conversion</a> of the static types of the arguments.</p>
 
 <p>So far, so good. The problem that I came across is when generic generics are used:</p>
 
-<pre><code>int test2&lt;T&gt;(IList&lt;IList&lt;T&gt;&gt; x) { return 0; }
-int test2&lt;T&gt;(IEnumerable&lt;IEnumerable&lt;T&gt;&gt; x) { return 1; }
+<div class="highlight"><pre><code class="csharp"><span class="kt">int</span> <span class="n">test2</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="n">IList</span><span class="p">&lt;</span><span class="n">IList</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;&gt;</span> <span class="n">x</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="m">0</span><span class="p">;</span> <span class="p">}</span>
+<span class="kt">int</span> <span class="n">test2</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;&gt;</span> <span class="n">x</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="m">1</span><span class="p">;</span> <span class="p">}</span>
+<span class="na">    </span>
+<span class="na">[TestMethod]</span>
+<span class="k">public</span> <span class="k">void</span> <span class="nf">TestMethod2</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="kt">var</span> <span class="n">list</span> <span class="p">=</span> <span class="k">new</span><span class="p">[]</span> <span class="p">{</span> <span class="m">13</span> <span class="p">};</span>
+    <span class="n">IList</span><span class="p">&lt;</span><span class="n">IList</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;&gt;</span> <span class="n">list2</span> <span class="p">=</span> <span class="k">new</span><span class="p">[]</span> <span class="p">{</span> <span class="n">list</span> <span class="p">};</span>
+    <span class="kt">var</span> <span class="n">list3</span> <span class="p">=</span> <span class="k">new</span><span class="p">[]</span> <span class="p">{</span> <span class="n">list</span> <span class="p">};</span>
+    
+    <span class="n">Assert</span><span class="p">.</span><span class="n">AreEqual</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="n">test2</span><span class="p">(</span><span class="n">list2</span><span class="p">));</span>
+    <span class="c1">// The following line does not compile:</span>
+    <span class="c1">//  &quot;The call is ambiguous between the following methods or properties...&quot;</span>
+    <span class="c1">//Assert.AreEqual(0, test2(list3));</span>
+<span class="p">}</span></code></pre></div>
 
-[TestMethod]
-public void TestMethod2()
-{
-    var list = new[] { 13 };
-    IList&lt;IList&lt;int&gt;&gt; list2 = new[] { list };
-    var list3 = new[] { list };
-
-    Assert.AreEqual(0, test2(list2));
-    // The following line does not compile:
-    //  "The call is ambiguous between the following methods or properties..."
-    //Assert.AreEqual(0, test2(list3));
-}
-</code></pre>
-
-<p>The compiler can choose the correct overload when the argument matches the specific expected type (e.g., “list2”), but fails to deduce that one overload is better than another when the argument is not as specific (e.g., “list3”).</p>
+<p>The compiler can choose the correct overload when the argument matches the specific expected type (e.g., <code>list2</code>), but fails to deduce that one overload is better than another when the argument is not as specific (e.g., <code>list3</code>).</p>
 
 <p>The reasoning behind this is a bit obscure, but understandable. The compiler determines that it is able to convert the argument to either type:</p>
 
-<pre><code>// These implicit conversions are why both methods are considered.
-IList&lt;IList&lt;int&gt;&gt; tmp1 = list3;
-IEnumerable&lt;IEnumerable&lt;int&gt;&gt; tmp2 = list3;
-</code></pre>
+<div class="highlight"><pre><code class="csharp"><span class="c1">// These implicit conversions are why both methods are considered.</span>
+<span class="n">IList</span><span class="p">&lt;</span><span class="n">IList</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;&gt;</span> <span class="n">tmp1</span> <span class="p">=</span> <span class="n">list3</span><span class="p">;</span>
+<span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">IEnumerable</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;&gt;</span> <span class="n">tmp2</span> <span class="p">=</span> <span class="n">list3</span><span class="p">;</span></code></pre></div>
 
-<p>However, when determining which overload is “better”, the compiler <em>cannot</em> convert from IList&lt;IList&lt;int&gt;&gt; to IEnumerable&lt;IEnumerable&lt;int&gt;&gt;, so it decides that neither overload is better, and therefore they are ambiguous. The first example worked because there <em>is</em> a conversion from IList&lt;T&gt; to IEnumerable&lt;T&gt;, so the IList&lt;T&gt; overload was chosen.</p>
+<p>However, when determining which overload is “better”, the compiler <em>cannot</em> convert from <code>IList&lt;IList&lt;int&gt;&gt;</code> to <code>IEnumerable&lt;IEnumerable&lt;int&gt;&gt;</code>, so it decides that neither overload is better, and therefore they are ambiguous. The first example worked because there <em>is</em> a conversion from <code>IList&lt;T&gt;</code> to <code>IEnumerable&lt;T&gt;</code>, so the <code>IList&lt;T&gt;</code> overload was chosen.</p>
 
-<pre><code>// The lack of this implicit conversion is why the methods are ambiguous.
-//tmp2 = tmp1;
-</code></pre>
+<div class="highlight"><pre><code class="csharp"><span class="c1">// The lack of this implicit conversion is why the methods are ambiguous.</span>
+<span class="c1">//tmp2 = tmp1;</span></code></pre></div>
 
-<p>Note also that this situation <em>may</em> change when .NET 4 comes out. .NET 4 introduces covariance and contravariance for generics. The concepts don’t apply to APIs that are both readable and writeable (e.g., IList&lt;T&gt;), but they do apply to APIs that are one or the other (e.g., IEnumerable&lt;T&gt;). It’s expected that .NET 4 will have an implicit conversion from IList&lt;IList&lt;int&gt;&gt; to IEnumerable&lt;IEnumerable&lt;int&gt;&gt; (because IList&lt;IList&lt;int&gt;&gt; implements IEnumerable&lt;IList&lt;int&gt;&gt;), but it’s unclear exactly how “smart” the compiler will be while resolving overload resolution.</p>
+<p>Note also that this situation <em>may</em> change when .NET 4 comes out. .NET 4 introduces covariance and contravariance for generics. The concepts don’t apply to APIs that are both readable and writeable (e.g., <code>IList&lt;T&gt;</code>), but they do apply to APIs that are one or the other (e.g., <code>IEnumerable&lt;T&gt;</code>). It’s expected that .NET 4 will have an implicit conversion from <code>IList&lt;IList&lt;int&gt;&gt;</code> to <code>IEnumerable&lt;IEnumerable&lt;int&gt;&gt;</code> (because <code>IList&lt;IList&lt;int&gt;&gt;</code> implements <code>IEnumerable&lt;IList&lt;int&gt;&gt;</code>), but it’s unclear exactly how “smart” the compiler will be while resolving overload resolution.</p>
 
 <p><a href="http://en.wikipedia.org/wiki/May_you_live_in_interesting_times">We live in interesting times.</a></p>
 

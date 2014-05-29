@@ -4,10 +4,10 @@
   <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Option Parsing: Positional Arguments</title>
+    <title>A Tour of Task, Part 2: AsyncState and CreationOptions</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
-    <link rel="canonical" href="http://blog.stephencleary.com/2011/10/option-parsing-positional-arguments.html" />
+    <link rel="canonical" href="http://blog.stephencleary.com/2014/05/a-tour-of-task-part-2-asyncstate-and-creationoptions.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -76,218 +76,82 @@
 
   <header>
       <div class="page-header">
-          <h1>Option Parsing: Positional Arguments</h1>
-          <small>Oct 6, 2011 &bull; <a href="#disqus_thread">Comments</a></small>
+          <h1>A Tour of Task, Part 2: AsyncState and CreationOptions</h1>
+          <small>May 29, 2014 &bull; <a href="#disqus_thread">Comments</a></small>
       </div>
   </header>
 
   <article>
-  <p>“Positional arguments” are any arguments not associated with an option. When using the <a href="http://nuget.org/List/Packages/Nito.KitchenSink.OptionParsing">Nito.KitchenSink option parsing library</a>, positional arguments must come after any options and their arguments.</p>
+  <p>I skipped last week’s blog post (since I was working on the site redesign), so today is a 2-for-1 deal! :)</p>
 
-<h2 id="individual-positional-arguments">Individual Positional Arguments</h2>
+<h2 id="asyncstate">AsyncState</h2>
 
-<p>You can use the <strong>PositionalArgumentAttribute</strong> to specify positional arguments in your options class. This attribute takes a single integral parameter, the 0-based index of the positional argument.</p>
+<div class="highlight"><pre><code class="csharp"><span class="kt">object</span> <span class="n">AsyncState</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="c1">// implements IAsyncResult.AsyncState</span></code></pre></div>
 
-<p>Positional arguments support the entire range of <a href="/2011/08/option-parsing-argument-parsing.html">parsing possibilities</a>, including <strong>SimpleParserAttribute</strong>.</p>
+<p>The <code>AsyncState</code> property implements <code>IAsyncResult.AsyncState</code>. This member was useful back in the day, but not so much in modern applications.</p>
 
-<p>This example uses a regular <strong>Level</strong> option along with a <strong>Name</strong> positional parameter.</p>
-
-<div class="highlight"><pre><code class="csharp"><span class="k">class</span> <span class="nc">Program</span>
-<span class="p">{</span>
-  <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Options</span> <span class="p">:</span> <span class="n">OptionArgumentsBase</span>
-  <span class="p">{</span>
-<span class="na">    [Option(&#39;l&#39;)]</span>
-    <span class="k">public</span> <span class="kt">int?</span> <span class="n">Level</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
-
-<span class="na">    [PositionalArgument(0)]</span>
-    <span class="k">public</span> <span class="kt">string</span> <span class="n">Name</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
-  <span class="p">}</span>
-
-  <span class="k">static</span> <span class="kt">int</span> <span class="nf">Main</span><span class="p">()</span>
-  <span class="p">{</span>
-    <span class="k">try</span>
-    <span class="p">{</span>
-      <span class="kt">var</span> <span class="n">options</span> <span class="p">=</span> <span class="n">OptionParser</span><span class="p">.</span><span class="n">Parse</span><span class="p">&lt;</span><span class="n">Options</span><span class="p">&gt;();</span>
-
-      <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Level: &quot;</span> <span class="p">+</span> <span class="n">options</span><span class="p">.</span><span class="n">Level</span><span class="p">);</span>
-      <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Name: &quot;</span> <span class="p">+</span> <span class="n">options</span><span class="p">.</span><span class="n">Name</span><span class="p">);</span>
-
-      <span class="k">return</span> <span class="m">0</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">catch</span> <span class="p">(</span><span class="n">OptionParsingException</span> <span class="n">ex</span><span class="p">)</span>
-    <span class="p">{</span>
-      <span class="n">Console</span><span class="p">.</span><span class="n">Error</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">ex</span><span class="p">.</span><span class="n">Message</span><span class="p">);</span>
-      <span class="k">return</span> <span class="m">2</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span>
-    <span class="p">{</span>
-      <span class="n">Console</span><span class="p">.</span><span class="n">Error</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">ex</span><span class="p">);</span>
-      <span class="k">return</span> <span class="m">1</span><span class="p">;</span>
-    <span class="p">}</span>
-  <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
-
-<pre><code>&gt; CommandLineParsingTest.exe
-Level:
-Name:
-
-&gt; CommandLineParsingTest.exe Bob
-Level:
-Name: Bob
-
-&gt; CommandLineParsingTest.exe -l 13
-Level: 13
-Name:
-
-&gt; CommandLineParsingTest.exe -l 13 Bob
-Level: 13
-Name: Bob
-
-&gt; CommandLineParsingTest.exe Bob -l 13
-Unknown parameter  -l
-</code></pre>
-
-<p>The last test above shows that positional arguments must come after all regular options.</p>
-
-<p>If you need to pass a positional argument that starts with a dash (-) or forward slash (/), you can pass the special option “–”, which forces all remaining command-line arguments to be interpreted as positional arguments:</p>
-
-<pre><code>&gt; CommandLineParsingTest.exe -Negative
-Unknown option  N  in parameter  -Negative
-
-&gt; CommandLineParsingTest.exe -- -Negative
-Level:
-Name: -Negative
-</code></pre>
-
-<h2 id="the-positional-argument-collection">The Positional Argument Collection</h2>
-
-<p>Every options class must have one property that can receive “extra” positional arguments. Extra positional arguments are any positional arguments after those defined by <strong>PositionalArgumentAttribute</strong>.</p>
-
-<p>Most programs do not need this functionality, so the <strong>OptionArgumentsBase</strong> class provides a simple collection called <strong>AdditionalArguments</strong>. By default, <strong>OptionArgumentsBase.Validate</strong> will throw an <strong>UnknownOptionException</strong> if any positional arguments end up in that collection.</p>
-
-<p>A program may make use of the <strong>AdditionalArguments</strong> collection by overriding <strong>Validate</strong>:</p>
-
-<div class="highlight"><pre><code class="csharp"><span class="k">class</span> <span class="nc">Program</span>
-<span class="p">{</span>
-  <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Options</span> <span class="p">:</span> <span class="n">OptionArgumentsBase</span>
-  <span class="p">{</span>
-<span class="na">    [PositionalArgument(0)]</span>
-    <span class="k">public</span> <span class="kt">string</span> <span class="n">Name</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
-
-    <span class="k">public</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">Validate</span><span class="p">()</span>
-    <span class="p">{</span>
-    <span class="p">}</span>
-  <span class="p">}</span>
-
-  <span class="k">static</span> <span class="kt">int</span> <span class="nf">Main</span><span class="p">()</span>
-  <span class="p">{</span>
-    <span class="k">try</span>
-    <span class="p">{</span>
-      <span class="kt">var</span> <span class="n">options</span> <span class="p">=</span> <span class="n">OptionParser</span><span class="p">.</span><span class="n">Parse</span><span class="p">&lt;</span><span class="n">Options</span><span class="p">&gt;();</span>
-
-      <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Name: &quot;</span> <span class="p">+</span> <span class="n">options</span><span class="p">.</span><span class="n">Name</span><span class="p">);</span>
-      <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;ArgList: &quot;</span> <span class="p">+</span> <span class="kt">string</span><span class="p">.</span><span class="n">Join</span><span class="p">(</span><span class="s">&quot;, &quot;</span><span class="p">,</span> <span class="n">options</span><span class="p">.</span><span class="n">AdditionalArguments</span><span class="p">));</span>
-
-      <span class="k">return</span> <span class="m">0</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">catch</span> <span class="p">(</span><span class="n">OptionParsingException</span> <span class="n">ex</span><span class="p">)</span>
-    <span class="p">{</span>
-      <span class="n">Console</span><span class="p">.</span><span class="n">Error</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">ex</span><span class="p">.</span><span class="n">Message</span><span class="p">);</span>
-      <span class="k">return</span> <span class="m">2</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span>
-    <span class="p">{</span>
-      <span class="n">Console</span><span class="p">.</span><span class="n">Error</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">ex</span><span class="p">);</span>
-      <span class="k">return</span> <span class="m">1</span><span class="p">;</span>
-    <span class="p">}</span>
-  <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
-
-<pre><code>&gt; CommandLineParsingTest.exe
-Name:
-ArgList:
-
-&gt; CommandLineParsingTest.exe Bob
-Name: Bob
-ArgList:
-
-&gt; CommandLineParsingTest.exe Bob 17
-Name: Bob
-ArgList: 17
-
-&gt; CommandLineParsingTest.exe Bob -l 13
-Name: Bob
-ArgList: -l, 13
-
-&gt; CommandLineParsingTest.exe -- Bob
-Name: Bob
-ArgList:
-</code></pre>
-
-<p>Alternatively, an options class may provide its own collection, marked with the <strong>PositionalArgumentsAttribute</strong> (note the plural “Argument<strong>s</strong>”). When it does this, the options class may <em>not</em> derive from <strong>OptionArgumentsBase</strong>; rather, it should implement the <strong>IOptionArguments</strong> interface.</p>
-
-<p>The property does not have to be <strong>List&lt;string&gt;</strong> (which is used by <strong>OptionArgumentsBase</strong>). The only requirements on the collection is that it only have one method named <strong>Add</strong> which takes a single parameter. The parameter does not have to be <strong>string</strong>; it can be any type, and the <a href="/2011/08/option-parsing-argument-parsing.html">standard parsing rules</a> apply.</p>
+<p>When asynchronous programming was going through its awkward teen stage, <code>AsyncState</code> was an important part of the <a href="http://msdn.microsoft.com/en-us/library/ms228963(v=vs.110).aspx">Asynchronous Programming Model (APM)</a>. The <code>Begin*</code> method would take a <code>state</code> parameter, which is assigned to the <code>IAsyncResult.AsyncState</code> member. Later, when the application code’s callback is invoked, it could access the <code>AsyncState</code> value to determine which asynchronous operation completed.</p>
 
 <div class="alert alert-info">
   <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
 
-  <p>This means that <strong>PositionalArguments</strong> can be placed on a property of dictionary type, as long as a matching parser is provided.</p>
+  <p><code>IAsyncResult.AsyncState</code> (and other “state”-like parameters) are no longer necessary these days; a lambda callback can easily capture any number of local variables in a type-safe way. I prefer the lambda approach; it is more expressive, less brittle, and more flexible than a single <code>object state</code> parameter. However, the <code>state</code> parameter approach avoids memory allocation, so it is still sometimes used in performance-sensitive code.</p>
 </div>
 
-<p>Here’s an example of a program taking any number of integer parameters:</p>
+<p>In modern code, the <code>Task.AsyncState</code> member is mainly used for <a href="http://msdn.microsoft.com/en-us/library/hh873178(v=vs.110).aspx#TapToApm">interoperation from <code>Task</code> to APM</a>. This is only necessary if you’re writing <code>async</code>/<code>await</code> code that must exist within an older asynchronous framework (a rare situation these days). In that scenario, you’re implementing the <code>Begin*</code>/<code>End*</code> methods and using a <code>Task</code> instance as your implementation of <code>IAsyncResult</code>. The standard approach is to create a <code>Task&lt;T&gt;</code> using <code>TaskCompletionSource&lt;T&gt;</code>, and you pass the <code>state</code> parameter into the <code>TaskCompletionSource&lt;T&gt;</code> constructor:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">class</span> <span class="nc">Program</span>
+<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">static</span> <span class="n">IAsyncResult</span> <span class="nf">BeginOperation</span><span class="p">(</span><span class="n">AsyncCallback</span> <span class="n">callback</span><span class="p">,</span> <span class="kt">object</span> <span class="n">state</span><span class="p">)</span>
 <span class="p">{</span>
-  <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Options</span> <span class="p">:</span> <span class="n">IOptionArguments</span>
-  <span class="p">{</span>
-    <span class="k">public</span> <span class="nf">Options</span><span class="p">()</span>
-    <span class="p">{</span>
-      <span class="k">this</span><span class="p">.</span><span class="n">Integers</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;();</span>
-    <span class="p">}</span>
-
-<span class="na">    [PositionalArguments]</span>
-    <span class="k">public</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">Integers</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
-
-    <span class="k">public</span> <span class="k">void</span> <span class="nf">Validate</span><span class="p">()</span>
-    <span class="p">{</span>
-    <span class="p">}</span>
-  <span class="p">}</span>
-
-  <span class="k">static</span> <span class="kt">int</span> <span class="nf">Main</span><span class="p">()</span>
-  <span class="p">{</span>
-    <span class="k">try</span>
-    <span class="p">{</span>
-      <span class="kt">var</span> <span class="n">options</span> <span class="p">=</span> <span class="n">OptionParser</span><span class="p">.</span><span class="n">Parse</span><span class="p">&lt;</span><span class="n">Options</span><span class="p">&gt;();</span>
-
-      <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Integers: &quot;</span> <span class="p">+</span> <span class="kt">string</span><span class="p">.</span><span class="n">Join</span><span class="p">(</span><span class="s">&quot;, &quot;</span><span class="p">,</span> <span class="n">options</span><span class="p">.</span><span class="n">Integers</span><span class="p">));</span>
-
-      <span class="k">return</span> <span class="m">0</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">catch</span> <span class="p">(</span><span class="n">OptionParsingException</span> <span class="n">ex</span><span class="p">)</span>
-    <span class="p">{</span>
-      <span class="n">Console</span><span class="p">.</span><span class="n">Error</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">ex</span><span class="p">.</span><span class="n">Message</span><span class="p">);</span>
-      <span class="k">return</span> <span class="m">2</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span>
-    <span class="p">{</span>
-      <span class="n">Console</span><span class="p">.</span><span class="n">Error</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">ex</span><span class="p">);</span>
-      <span class="k">return</span> <span class="m">1</span><span class="p">;</span>
-    <span class="p">}</span>
-  <span class="p">}</span>
+    <span class="kt">var</span> <span class="n">tcs</span> <span class="p">=</span> <span class="k">new</span> <span class="n">TaskCompletionSource</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">state</span><span class="p">);</span>
+    <span class="p">...</span> <span class="c1">// start operation, and complete &quot;tcs&quot; when operation completes</span>
+    <span class="k">return</span> <span class="n">tcs</span><span class="p">.</span><span class="n">Task</span><span class="p">;</span>
 <span class="p">}</span></code></pre></div>
 
-<pre><code>&gt; CommandLineParsingTest.exe
-Integers:
+<p>There really isn’t a need to read <code>AsyncState</code> in modern code; it’s mainly important just because it implements <code>IAsyncResult.AsyncState</code>.</p>
 
-&gt; CommandLineParsingTest.exe 13
-Integers: 13
+<h2 id="creationoptions">CreationOptions</h2>
 
-&gt; CommandLineParsingTest.exe 13 7
-Integers: 13, 7
+<div class="highlight"><pre><code class="csharp"><span class="n">TaskCreationOptions</span> <span class="n">CreationOptions</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></div>
 
-&gt; CommandLineParsingTest.exe 13 7 Bob
-Could not parse  Bob  as Int32
-</code></pre>
+<p><code>CreationOptions</code> merely allows you to read the task creation options that were used to create this task. You can specify these options when you create a task using <a href="">the task constructor</a>, <code>Task.Factory.StartNew</code>, or <code>TaskCompletionSource&lt;T&gt;</code>. I’ll cover the meanings of these options later, when we cover <code>Task.Factory.StartNew</code>.</p>
+
+<p>However, there’s almost no reason to <em>read</em> the task creation options once the task has been created. This would only be necessary if you were doing some really funky work with parent/child tasks or task scheduling - <em>far</em> beyond the normal scenarios for asynchronous or parallel tasks.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>The running total of useful members:</p>
+
+<div class="panel panel-default">
+
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Actual Members</th>
+        <th>Logical Members</th>
+        <th>Useful for async</th>
+        <th>Useful for parallel</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>Task</code></td>
+        <td>10</td>
+        <td>3</td>
+        <td>0</td>
+        <td>0</td>
+      </tr>
+      <tr>
+        <td><code>Task&lt;T&gt;</code></td>
+        <td>10</td>
+        <td>3</td>
+        <td>0</td>
+        <td>0</td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
 
   </article>
     
@@ -561,6 +425,222 @@ Could not parse  Bob  as Int32
                     
                 
                     
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
                         
                         
                         
@@ -575,20 +655,6 @@ Could not parse  Bob  as Int32
                     
                 
                     
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
                         
                         
                         
@@ -599,292 +665,23 @@ Could not parse  Bob  as Int32
                     
                         
                         
-                        
-                            
-                        
-                    
-                
-                    
-                        
-                        
-                        
-                            
-                        
-                    
-                
-                    
-                        
-                        
-                        
-                            
-                        
-                    
-                
-                    
-                        
-                        
-                        
-                            
-                        
-                    
-                
-                    
-                        
-                        
-                        
-                            
-                        
-                    
-                
-                    
-                
-                    
-                        
-                        
-                        
-                            
-                        
-                    
-                
-                    
-                        
-                        
-                        
-                            
-                        
-                    
-                
-                    
-                        
-                        
-                        
-                            
-                        
-                    
-                
-                    
-                        
-                        
-                        
-                            
-                        
-                    
-                
-                    
-                        
-                        
-                        
-                            
-                        
-                    
-                
-                    
-                
-                    
-                
-                    
-                        
-                        
                             
                             
                         
                         
-                    
-                
-                    
-                        
-                            
-                            
-                        
-                        
-                        
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
                     
                 
             
 
             <ul class="pager">
-                <li class="previous"><a href="/2011/08/option-parsing-validation.html" title="Option Parsing: Validation">&larr; Previous in Option Parsing</a></li>
-                <li class="next"><a href="/2011/10/option-parsing-case-sensitivity.html" title="Option Parsing: Case Sensitivity">Next in Option Parsing &rarr;</a></li>
+                <li class="previous"><a href="/2014/05/a-tour-of-task-part-1-constructors.html" title="A Tour of Task, Part 1: Constructors">&larr; Previous in A Tour of Task</a></li>
+                
             </ul>
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2011/09/nitoasyncex-available.html" title="Nito.AsyncEx Available">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2011/10/option-parsing-case-sensitivity.html" title="Option Parsing: Case Sensitivity">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2014/05/a-tour-of-task-part-1-constructors.html" title="A Tour of Task, Part 1: Constructors">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="disqus_thread"></div>
@@ -903,7 +700,7 @@ Could not parse  Bob  as Int32
                     
                 
                 <div class="panel panel-primary">
-                    <div class="panel-heading">Option Parsing</div>
+                    <div class="panel-heading">A Tour of Task</div>
                     <div class="panel-body sidenav">
                         <ul class="nav nav-pills nav-stacked">
                             
@@ -1164,8 +961,224 @@ Could not parse  Bob  as Int32
                                     
                                 
                                     
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
+                                
+                                    
                                         
-                                            <li class="sidenavitem"><a href="/2011/02/option-parsing-introduction.html">Introduction</a></li>
+                                            <li class="sidenavitem"><a href="/2014/04/a-tour-of-task-part-0-overview.html">Overview</a></li>
                                         
                                     
                                 
@@ -1176,275 +1189,15 @@ Could not parse  Bob  as Int32
                                     
                                 
                                     
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
                                         
-                                            <li class="sidenavitem"><a href="/2011/06/option-parsing-option-parsing-pipeline.html">The Option Parsing Pipeline</a></li>
+                                            <li class="sidenavitem"><a href="/2014/05/a-tour-of-task-part-1-constructors.html">Constructors</a></li>
                                         
                                     
                                 
                                     
                                         
-                                            <li class="sidenavitem"><a href="/2011/06/option-parsing-lexing.html">Lexing</a></li>
+                                            <li class="active sidenavitem"><a href="/2014/05/a-tour-of-task-part-2-asyncstate-and-creationoptions.html">AsyncState and CreationOptions</a></li>
                                         
-                                    
-                                
-                                    
-                                        
-                                            <li class="sidenavitem"><a href="/2011/06/option-parsing-error-handling.html">Error Handling</a></li>
-                                        
-                                    
-                                
-                                    
-                                        
-                                            <li class="sidenavitem"><a href="/2011/06/option-parsing-option-names.html">Option Names</a></li>
-                                        
-                                    
-                                
-                                    
-                                        
-                                            <li class="sidenavitem"><a href="/2011/07/option-parsing-default-and-nullable.html">Default and Nullable Argument Values</a></li>
-                                        
-                                    
-                                
-                                    
-                                        
-                                            <li class="sidenavitem"><a href="/2011/07/option-parsing-options-with-optional.html">Options with Optional Arguments</a></li>
-                                        
-                                    
-                                
-                                    
-                                
-                                    
-                                        
-                                            <li class="sidenavitem"><a href="/2011/07/option-parsing-allowing-multiple.html">Allowing Multiple Argument Values</a></li>
-                                        
-                                    
-                                
-                                    
-                                        
-                                            <li class="sidenavitem"><a href="/2011/08/option-parsing-preventing-multiple.html">Preventing Multiple Argument Values</a></li>
-                                        
-                                    
-                                
-                                    
-                                        
-                                            <li class="sidenavitem"><a href="/2011/08/option-parsing-argument-parsing.html">Argument Parsing</a></li>
-                                        
-                                    
-                                
-                                    
-                                        
-                                            <li class="sidenavitem"><a href="/2011/08/option-parsing-boolean-options.html">Boolean Options</a></li>
-                                        
-                                    
-                                
-                                    
-                                        
-                                            <li class="sidenavitem"><a href="/2011/08/option-parsing-validation.html">Validation</a></li>
-                                        
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                        
-                                            <li class="active sidenavitem"><a href="/2011/10/option-parsing-positional-arguments.html">Positional Arguments</a></li>
-                                        
-                                    
-                                
-                                    
-                                        
-                                            <li class="sidenavitem"><a href="/2011/10/option-parsing-case-sensitivity.html">Case Sensitivity</a></li>
-                                        
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
-                                    
-                                
                                     
                                 
                             
@@ -1597,9 +1350,9 @@ var disqus_shortname = 'stephencleary';
 <script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
 <script type="text/javascript">
 var disqus_loaded = false;
-var disqus_identifier = "/2011/10/option-parsing-positional-arguments";
-var disqus_title = "Option Parsing: Positional Arguments";
-var disqus_url = "http://blog.stephencleary.com/2011/10/option-parsing-positional-arguments.html";
+var disqus_identifier = "/2014/05/a-tour-of-task-part-2-asyncstate-and-creationoptions";
+var disqus_title = "A Tour of Task, Part 2: AsyncState and CreationOptions";
+var disqus_url = "http://blog.stephencleary.com/2014/05/a-tour-of-task-part-2-asyncstate-and-creationoptions.html";
 (function($) {
     $('.pager').waypoint({
         offset: 'bottom-in-view',

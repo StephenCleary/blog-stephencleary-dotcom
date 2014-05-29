@@ -82,18 +82,18 @@
   </header>
 
   <article>
-  <p>I see a lot of code on blogs and in SO questions that use Task.Factory.StartNew to spin up work on a background thread. Stephen Toub has an <a href="http://blogs.msdn.com/b/pfxteam/archive/2011/10/24/10229468.aspx">excellent blog article that explains why Task.Run is better than Task.Factory.StartNew</a>, but I think a lot of people just haven’t read it (or don’t understand it). So, I’ve taken the same arguments, added some more forceful language, and we’ll see how this goes. :)</p>
+  <p>I see a lot of code on blogs and in SO questions that use <code>Task.Factory.StartNew</code> to spin up work on a background thread. Stephen Toub has an <a href="http://blogs.msdn.com/b/pfxteam/archive/2011/10/24/10229468.aspx">excellent blog article that explains why <code>Task.Run</code> is better than <code>Task.Factory.StartNew</code></a>, but I think a lot of people just haven’t read it (or don’t understand it). So, I’ve taken the same arguments, added some more forceful language, and we’ll see how this goes. :)</p>
 
-<p>StartNew does offer many more options than Task.Run, but it is quite dangerous, as we’ll see. You should prefer Task.Run over Task.Factory.StartNew in async code.</p>
+<p><code>StartNew</code> does offer many more options than <code>Task.Run</code>, but it is quite dangerous, as we’ll see. You should prefer <code>Task.Run</code> over <code>Task.Factory.StartNew</code> in <code>async</code> code.</p>
 
 <h2 id="why-use-taskfactorystartnew">Why Use Task.Factory.StartNew?</h2>
 
-<p>There are only four reasons that you would <em>ever</em> want to use Task.Factory.StartNew in async code:</p>
+<p>There are only four reasons that you would <em>ever</em> want to use <code>Task.Factory.StartNew</code> in async code:</p>
 
 <ol>
   <li>You need a task that represents only the first (synchronous) part of an asynchronous method, instead of a task representing the entire method.</li>
-  <li>You need to specify a custom TaskScheduler, instead of using the thread pool scheduler.</li>
-  <li>You need to specify custom TaskCreationOptions.</li>
+  <li>You need to specify a custom <code>TaskScheduler</code>, instead of using the thread pool scheduler.</li>
+  <li>You need to specify custom <code>TaskCreationOptions</code>.</li>
   <li>You need to pass a state object to the delegate to reduce memory pressure from lambda variable capture.</li>
 </ol>
 
@@ -104,28 +104,28 @@
     <p><em>You need a task that represents only the first (synchronous) part of an asynchronous method, instead of a task representing the entire method.</em> This can be useful if you’re writing something like a task scheduler. In which case, you should ask yourself why you’re writing Yet Another Task Scheduler in the first place. The vast majority of the time, you want a task that represents the entire asynchronous method instead of just the first bit.</p>
   </li>
   <li>
-    <p><em>You need to specify a custom TaskScheduler, instead of using the thread pool scheduler.</em> If you need to pass a specialized TaskScheduler to StartNew, then reconsider your API design. There are better ways of creating tasks for a specific context (e.g., TaskFactory).</p>
+    <p><em>You need to specify a custom <code>TaskScheduler</code>, instead of using the thread pool scheduler.</em> If you need to pass a specialized <code>TaskScheduler</code> to <code>StartNew</code>, then reconsider your API design. There are better ways of creating tasks for a specific context (e.g., <code>TaskFactory</code>).</p>
   </li>
   <li>
-    <p><em>You need to specify custom TaskCreationOptions.</em> Let’s consider <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.taskcreationoptions.aspx">each of the options</a>. AttachedToParent shouldn’t be used in async tasks, so that’s out. DenyChildAttach should <em>always</em> be used with async tasks (hint: if you didn’t already know that, then StartNew isn’t the tool you need). DenyChildAttach is passed by Task.Run. HideScheduler might be useful in some really obscure scheduling scenarios but in general should be avoided for async tasks. That only leaves LongRunning and PreferFairness, which are both optimization hints that <strong>should only be specified after application profiling</strong>. I often see LongRunning misused in particular. In the vast majority of situations, the threadpool will adjust to any long-running task in 0.5 seconds - <em>without</em> the LongRunning flag. Most likely, you don’t really need it.</p>
+    <p><em>You need to specify custom <code>TaskCreationOptions</code>.</em> Let’s consider <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.taskcreationoptions.aspx">each of the options</a>. <code>AttachedToParent</code> shouldn’t be used in async tasks, so that’s out. <code>DenyChildAttach</code> should <em>always</em> be used with async tasks (hint: if you didn’t already know that, then <code>StartNew</code> isn’t the tool you need). <code>DenyChildAttach</code> is passed by <code>Task.Run</code>. <code>HideScheduler</code> might be useful in some really obscure scheduling scenarios but in general should be avoided for <code>async</code> tasks. That only leaves <code>LongRunning</code> and <code>PreferFairness</code>, which are both optimization hints that <strong>should only be specified after application profiling</strong>. I often see <code>LongRunning</code> misused in particular. In the vast majority of situations, the threadpool will adjust to any long-running task in 0.5 seconds - <em>without</em> the <code>LongRunning</code> flag. Most likely, you don’t really need it.</p>
   </li>
   <li>
     <p><em>You need to pass a state object to the delegate to reduce memory pressure from lambda variable capture.</em> Again, avoid the premature optimization. You should discover that you need this after doing memory profiling.</p>
   </li>
 </ol>
 
-<p>Now, I’m not saying to <em>never</em> use Task.Factory.StartNew. If you’re writing a low-level, general-purpose async library, then there are some rare situations where you do want to use StartNew. But for the vast majority of async code, Task.Factory.StartNew is a mistake.</p>
+<p>Now, I’m not saying to <em>never</em> use <code>Task.Factory.StartNew</code>. If you’re writing a low-level, general-purpose async library, then there are some rare situations where you do want to use <code>StartNew</code>. But for the vast majority of <code>async</code> code, <code>Task.Factory.StartNew</code> is a mistake.</p>
 
 <div class="alert alert-info">
-  <p>As a side note, the context of this discussion is <em>async code</em>. If you’re writing <em>parallel code</em> (e.g., <a href="http://msdn.microsoft.com/en-us/library/ff963551.aspx" class="alert-link">dynamic task-based parallelism</a>), then StartNew is the tool you want to use.</p>
+  <p>As a side note, the context of this discussion is <em>async code</em>. If you’re writing <em>parallel code</em> (e.g., <a href="http://msdn.microsoft.com/en-us/library/ff963551.aspx" class="alert-link">dynamic task-based parallelism</a>), then <code>StartNew</code> is the tool you want to use.</p>
 </div>
 
 <h2 id="why-not-to-use-taskfactorystartnew">Why Not to Use Task.Factory.StartNew?</h2>
 
-<p>We’ve covered some (very obscure) situations where Task.Factory.StartNew could be useful. Now, let’s take a look at why you <em>shouldn’t</em> use Task.Factory.StartNew:</p>
+<p>We’ve covered some (very obscure) situations where <code>Task.Factory.StartNew</code> could be useful. Now, let’s take a look at why you <em>shouldn’t</em> use <code>Task.Factory.StartNew</code>:</p>
 
 <ol>
-  <li>Does not understand async delegates.</li>
+  <li>Does not understand <code>async</code> delegates.</li>
   <li>Confusing default scheduler.</li>
 </ol>
 
@@ -133,7 +133,7 @@
 
 <ol>
   <li>
-    <p><em>Does not understand async delegates.</em> This is actually the same as point 1 in the reasons why you <em>would</em> want to use StartNew. The problem is that when you pass an async delegate to StartNew, it’s natural to assume that the returned task represents that delegate. However, since StartNew does not understand async delegates, what that task actually represents is just the beginning of that delegate. This is one of the first pitfalls that coders encounter when using StartNew in async code.</p>
+    <p><em>Does not understand <code>async</code> delegates.</em> This is actually the same as point 1 in the reasons why you <em>would</em> want to use <code>StartNew</code>. The problem is that when you pass an <code>async</code> delegate to <code>StartNew</code>, it’s natural to assume that the returned task represents that delegate. However, since <code>StartNew</code> does not understand <code>async</code> delegates, what that task actually represents is just the beginning of that delegate. This is one of the first pitfalls that coders encounter when using <code>StartNew</code> in <code>async</code> code.</p>
   </li>
   <li>
     <p><em>Confusing default scheduler.</em> OK, trick question time: in the code below, what thread does the method “A” run on?</p>
@@ -144,7 +144,7 @@
 
 <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">A</span><span class="p">()</span> <span class="p">{</span> <span class="p">}</span></code></pre></div>
 
-<p>Well, you know it’s a trick question, eh? If you answered “a thread pool thread”, I’m sorry, but that’s not correct. “A” will run on whatever TaskScheduler is currently executing! OK, so let’s give a bit of context to the question: in the code below, what thread does the method “A” run on?</p>
+<p>Well, you know it’s a trick question, eh? If you answered “a thread pool thread”, I’m sorry, but that’s not correct. “A” will run on whatever <code>TaskScheduler</code> is currently executing! OK, so let’s give a bit of context to the question: in the code below, what thread does the method “A” run on?</p>
 
 <div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="k">void</span> <span class="nf">Form1_Load</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
 <span class="p">{</span>
@@ -153,7 +153,7 @@
 
 <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">A</span><span class="p">()</span> <span class="p">{</span> <span class="p">}</span></code></pre></div>
 
-<p>In this case, “A” <em>will</em> run on a thread pool thread! But it’s important to understand <em>why</em>: Task.Factory.StartNew will first examine the current TaskScheduler. There is none, so it uses the thread pool TaskScheduler. Easy enough for the simple case, but let’s consider a more realistic example:</p>
+<p>In this case, “A” <em>will</em> run on a thread pool thread! But it’s important to understand <em>why</em>: <code>Task.Factory.StartNew</code> will first examine the current <code>TaskScheduler</code>. There is none, so it uses the thread pool <code>TaskScheduler</code>. Easy enough for the simple case, but let’s consider a more realistic example:</p>
 
 <div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="k">void</span> <span class="nf">Form1_Load</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
 <span class="p">{</span>
@@ -182,17 +182,17 @@
     <span class="k">return</span> <span class="k">value</span><span class="p">;</span> <span class="c1">// CPU-intensive work.</span>
 <span class="p">}</span></code></pre></div>
 
-<p>This is a bit more complex, but it uses a pattern common in older code that used tasks before async was introduced. The “Compute” method first checks to see if it’s done computing; if it is, then it returns. If there’s more work to do, then it throws “A” onto the thread pool to do the CPU-intensive calculations. “Compute” also registers a continuation, so that when “A” is complete, it will marshal back to the UI thread, update the UI with the results so far, and then continue computing.</p>
+<p>This is a bit more complex, but it uses a pattern common in older code that used tasks before async was introduced. The <code>Compute</code> method first checks to see if it’s done computing; if it is, then it returns. If there’s more work to do, then it throws <code>A</code> onto the thread pool to do the CPU-intensive calculations. <code>Compute</code> also registers a continuation, so that when <code>A</code> is complete, it will marshal back to the UI thread, update the UI with the results so far, and then continue computing.</p>
 
-<p>Now, the question returns: what thread does “A” run on? Go ahead and walk through it; you should have enough knowledge at this point to figure out the answer.</p>
+<p>Now, the question returns: what thread does <code>A</code> run on? Go ahead and walk through it; you should have enough knowledge at this point to figure out the answer.</p>
 
-<p>Ready? The method “A” runs on a thread pool thread the first time, and then it runs on the UI thread the last two times.</p>
+<p>Ready? The method <code>A</code> runs on a thread pool thread the first time, and then it runs on the UI thread the last two times.</p>
 
-<p>Here’s why: the first time through “Compute”, there’s no task scheduler and StartNew schedules “A” to a thread pool thread. However, when the first continuation runs, it <em>is</em> running inside a task scheduler: the TaskScheduler.FromCurrentSynchronizationContext, which is the UI task scheduler. So when “Compute” executes the <em>second</em> time, there <em>is</em> a current task scheduler <em>which is picked up by StartNew</em>, and StartNew schedules “A” to that task scheduler (i.e., the UI thread). The same thing happens the third time through.</p>
+<p>Here’s why: the first time through <code>Compute</code>, there’s no task scheduler and <code>StartNew</code> schedules <code>A</code> to a thread pool thread. However, when the first continuation runs, it <em>is</em> running inside a task scheduler: the <code>TaskScheduler.FromCurrentSynchronizationContext</code>, which is the UI task scheduler. So when <code>Compute</code> executes the <em>second</em> time, there <em>is</em> a current task scheduler <em>which is picked up by <code>StartNew</code></em>, and <code>StartNew</code> schedules <code>A</code> to that task scheduler (i.e., the UI thread). The same thing happens the third time through.</p>
 
-<p>This is some pretty dangerous and unexpected behavior, IMO. In fact, many software teams have implemented rules for their source that <em>disallow StartNew unless you pass an explicit TaskScheduler</em>. And I think that’s a great idea.</p>
+<p>This is some pretty dangerous and unexpected behavior, IMO. In fact, many software teams have implemented rules for their source that <em>disallow <code>StartNew</code> unless you pass an explicit <code>TaskScheduler</code></em>. And I think that’s a great idea.</p>
 
-<p>Unfortunately, the only overloads for StartNew that take a TaskScheduler also require you to specify the CancellationToken and TaskCreationOptions. This means that in order to use Task.Factory.StartNew to reliably, predictably queue work to the thread pool, you have to use an overload like this:</p>
+<p>Unfortunately, the only overloads for <code>StartNew</code> that take a <code>TaskScheduler</code> also require you to specify the <code>CancellationToken</code> and <code>TaskCreationOptions</code>. This means that in order to use <code>Task.Factory.StartNew</code> to reliably, predictably queue work to the thread pool, you have to use an overload like this:</p>
 
 <div class="highlight"><pre><code class="csharp"><span class="n">Task</span><span class="p">.</span><span class="n">Factory</span><span class="p">.</span><span class="n">StartNew</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">.</span><span class="n">None</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">.</span><span class="n">DenyChildAttach</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">.</span><span class="n">Default</span><span class="p">);</span></code></pre></div>
 

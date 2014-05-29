@@ -88,41 +88,37 @@
 
 <p>Azure caching is a form of distributed cache, so it uses serialization to store object instances. When you install the NuGet Azure Caching package, you get a .config that looks like this:</p>
 
-<pre><code>&lt;dataCacheClients&gt;
-  &lt;dataCacheClient name="default"&gt;
-  &lt;/dataCacheClient&gt;
-&lt;/dataCacheClients&gt;
-</code></pre>
+<div class="highlight"><pre><code class="xml"><span class="nt">&lt;dataCacheClients&gt;</span>
+    <span class="nt">&lt;dataCacheClient</span> <span class="na">name=</span><span class="s">&quot;default&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;/dataCacheClient&gt;</span>
+<span class="nt">&lt;/dataCacheClients&gt;</span></code></pre></div>
 
 <p>Most of the settings are documented <a href="http://msdn.microsoft.com/en-us/library/windowsazure/jj658973.aspx">on MSDN</a>.</p>
 
-<p>With the default settings like this, Azure Caching will use <a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.netdatacontractserializer.aspx">NetDataContractSerializer</a>. As we’ll see, this is not exactly the most efficient setting.</p>
+<p>With the default settings like this, Azure Caching will use <a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.netdatacontractserializer.aspx"><code>NetDataContractSerializer</code></a>. As we’ll see, this is not exactly the most efficient setting.</p>
 
-<p>First, let’s consider alternative serializers. You can add a <code>serializationProperties</code> element to your config and specify <a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.formatters.binary.binaryformatter.aspx">BinaryFormatter</a> as such:</p>
+<p>First, let’s consider alternative serializers. You can add a <code>serializationProperties</code> element to your config and specify <a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.formatters.binary.binaryformatter.aspx"><code>BinaryFormatter</code></a> as such:</p>
 
-<pre><code>&lt;dataCacheClients&gt;
-  &lt;dataCacheClient name="default"&gt;
-    &lt;serializationProperties serializer="BinaryFormatter" /&gt;
-  &lt;/dataCacheClient&gt;
-&lt;/dataCacheClients&gt;
-</code></pre>
+<div class="highlight"><pre><code class="xml"><span class="nt">&lt;dataCacheClients&gt;</span>
+    <span class="nt">&lt;dataCacheClient</span> <span class="na">name=</span><span class="s">&quot;default&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;serializationProperties</span> <span class="na">serializer=</span><span class="s">&quot;BinaryFormatter&quot;</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;/dataCacheClient&gt;</span>
+<span class="nt">&lt;/dataCacheClients&gt;</span></code></pre></div>
 
 <p>You can also specify a custom serializer as such:</p>
 
-<pre><code>&lt;dataCacheClients&gt;
-  &lt;dataCacheClient name="default"&gt;
-    &lt;serializationProperties serializer="CustomSerializer" customSerializerType="MyType,MyAssembly" /&gt;
-  &lt;/dataCacheClient&gt;
-&lt;/dataCacheClients&gt;
-</code></pre>
+<div class="highlight"><pre><code class="xml"><span class="nt">&lt;dataCacheClients&gt;</span>
+    <span class="nt">&lt;dataCacheClient</span> <span class="na">name=</span><span class="s">&quot;default&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;serializationProperties</span> <span class="na">serializer=</span><span class="s">&quot;CustomSerializer&quot;</span> <span class="na">customSerializerType=</span><span class="s">&quot;MyType,MyAssembly&quot;</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;/dataCacheClient&gt;</span>
+<span class="nt">&lt;/dataCacheClients&gt;</span></code></pre></div>
 
 <p>There’s also another knob you can tweak: you can turn on compression (i.e., <code>DeflateStream</code>) by setting <code>isCompressionEnabled</code> as such:</p>
 
-<pre><code>&lt;dataCacheClients&gt;
-  &lt;dataCacheClient name="default" isCompressionEnabled="true"&gt;
-  &lt;/dataCacheClient&gt;
-&lt;/dataCacheClients&gt;
-</code></pre>
+<div class="highlight"><pre><code class="xml"><span class="nt">&lt;dataCacheClients&gt;</span>
+    <span class="nt">&lt;dataCacheClient</span> <span class="na">name=</span><span class="s">&quot;default&quot;</span> <span class="na">isCompressionEnabled=</span><span class="s">&quot;true&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;/dataCacheClient&gt;</span>
+<span class="nt">&lt;/dataCacheClients&gt;</span></code></pre></div>
 
 <h2 id="under-the-covers">Under the Covers</h2>
 
@@ -161,19 +157,16 @@
 
 <p>First, the default serializer (<code>NetDataContractSerializer</code>), which is XML-based. When serialized, the <code>MyTypeNSer</code> instance took up 521 bytes (312 compressed). The serialized data looks like this:</p>
 
-<pre><code>&lt;MyTypeNSer z:Id="1" z:Type="AzureCacheSizeTest.MyTypeNSer" z:Assembly="AzureCacheSizeTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" xmlns="http://schemas.datacontract.org/2004/07/AzureCacheSizeTest" xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:z="http://schemas.microsoft.com/2003/10/Serialization/"&gt;&lt;Description z:Id="2"&gt;This is a generic string solely for the purpose of searching.&lt;/Description&gt;&lt;FirstName z:Id="3"&gt;Christopher&lt;/FirstName&gt;&lt;LastName z:Id="4"&gt;Dombrowski&lt;/LastName&gt;&lt;/MyTypeNSer&gt;
-</code></pre>
+<div class="highlight"><pre><code class="xml"><span class="nt">&lt;MyTypeNSer</span> <span class="na">z:Id=</span><span class="s">&quot;1&quot;</span> <span class="na">z:Type=</span><span class="s">&quot;AzureCacheSizeTest.MyTypeNSer&quot;</span> <span class="na">z:Assembly=</span><span class="s">&quot;AzureCacheSizeTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null&quot;</span> <span class="na">xmlns=</span><span class="s">&quot;http://schemas.datacontract.org/2004/07/AzureCacheSizeTest&quot;</span> <span class="na">xmlns:i=</span><span class="s">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span> <span class="na">xmlns:z=</span><span class="s">&quot;http://schemas.microsoft.com/2003/10/Serialization/&quot;</span><span class="nt">&gt;&lt;Description</span> <span class="na">z:Id=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>This is a generic string solely for the purpose of searching.<span class="nt">&lt;/Description&gt;&lt;FirstName</span> <span class="na">z:Id=</span><span class="s">&quot;3&quot;</span><span class="nt">&gt;</span>Christopher<span class="nt">&lt;/FirstName&gt;&lt;LastName</span> <span class="na">z:Id=</span><span class="s">&quot;4&quot;</span><span class="nt">&gt;</span>Dombrowski<span class="nt">&lt;/LastName&gt;&lt;/MyTypeNSer&gt;</span></code></pre></div>
 
 <p>During my testing, I discovered that the default serializer acts differently when used on a <code>[Serializable]</code> type. Instead of serializing the properties directly, it looks like it serializes their backing fields:</p>
 
-<pre><code>&lt;MyTypeYSer z:Id="1" z:Type="AzureCacheSizeTest.MyTypeYSer" z:Assembly="AzureCacheSizeTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" xmlns="http://schemas.datacontract.org/2004/07/AzureCacheSizeTest" xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:z="http://schemas.microsoft.com/2003/10/Serialization/"&gt;&lt;_x003C_Description_x003E_k__BackingField z:Id="2"&gt;This is a generic string solely for the purpose of searching.&lt;/_x003C_Description_x003E_k__BackingField&gt;&lt;_x003C_FirstName_x003E_k__BackingField z:Id="3"&gt;Christopher&lt;/_x003C_FirstName_x003E_k__BackingField&gt;&lt;_x003C_LastName_x003E_k__BackingField z:Id="4"&gt;Dombrowski&lt;/_x003C_LastName_x003E_k__BackingField&gt;&lt;/MyTypeYSer&gt;
-</code></pre>
+<div class="highlight"><pre><code class="xml"><span class="nt">&lt;MyTypeYSer</span> <span class="na">z:Id=</span><span class="s">&quot;1&quot;</span> <span class="na">z:Type=</span><span class="s">&quot;AzureCacheSizeTest.MyTypeYSer&quot;</span> <span class="na">z:Assembly=</span><span class="s">&quot;AzureCacheSizeTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null&quot;</span> <span class="na">xmlns=</span><span class="s">&quot;http://schemas.datacontract.org/2004/07/AzureCacheSizeTest&quot;</span> <span class="na">xmlns:i=</span><span class="s">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span> <span class="na">xmlns:z=</span><span class="s">&quot;http://schemas.microsoft.com/2003/10/Serialization/&quot;</span><span class="nt">&gt;&lt;_x003C_Description_x003E_k__BackingField</span> <span class="na">z:Id=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>This is a generic string solely for the purpose of searching.<span class="nt">&lt;/_x003C_Description_x003E_k__BackingField&gt;&lt;_x003C_FirstName_x003E_k__BackingField</span> <span class="na">z:Id=</span><span class="s">&quot;3&quot;</span><span class="nt">&gt;</span>Christopher<span class="nt">&lt;/_x003C_FirstName_x003E_k__BackingField&gt;&lt;_x003C_LastName_x003E_k__BackingField</span> <span class="na">z:Id=</span><span class="s">&quot;4&quot;</span><span class="nt">&gt;</span>Dombrowski<span class="nt">&lt;/_x003C_LastName_x003E_k__BackingField&gt;&lt;/MyTypeYSer&gt;</span></code></pre></div>
 
 <p>In this case (with automatic backing fields), this bloats the serialized size to 695 bytes (340 compressed). Here’s a side-by-side comparison of how the data looks:</p>
 
-<pre><code>&lt;MyTypeNSer z:Id="1" z:Type="AzureCacheSizeTest.MyTypeNSer" z:Assembly="AzureCacheSizeTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" xmlns="http://schemas.datacontract.org/2004/07/AzureCacheSizeTest" xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:z="http://schemas.microsoft.com/2003/10/Serialization/"&gt;&lt;Description z:Id="2"&gt;This is a generic string solely for the purpose of searching.&lt;/Description&gt;&lt;FirstName z:Id="3"&gt;Christopher&lt;/FirstName&gt;&lt;LastName z:Id="4"&gt;Dombrowski&lt;/LastName&gt;&lt;/MyTypeNSer&gt;
-&lt;MyTypeYSer z:Id="1" z:Type="AzureCacheSizeTest.MyTypeYSer" z:Assembly="AzureCacheSizeTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" xmlns="http://schemas.datacontract.org/2004/07/AzureCacheSizeTest" xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:z="http://schemas.microsoft.com/2003/10/Serialization/"&gt;&lt;_x003C_Description_x003E_k__BackingField z:Id="2"&gt;This is a generic string solely for the purpose of searching.&lt;/_x003C_Description_x003E_k__BackingField&gt;&lt;_x003C_FirstName_x003E_k__BackingField z:Id="3"&gt;Christopher&lt;/_x003C_FirstName_x003E_k__BackingField&gt;&lt;_x003C_LastName_x003E_k__BackingField z:Id="4"&gt;Dombrowski&lt;/_x003C_LastName_x003E_k__BackingField&gt;&lt;/MyTypeYSer&gt;
-</code></pre>
+<div class="highlight"><pre><code class="xml"><span class="nt">&lt;MyTypeNSer</span> <span class="na">z:Id=</span><span class="s">&quot;1&quot;</span> <span class="na">z:Type=</span><span class="s">&quot;AzureCacheSizeTest.MyTypeNSer&quot;</span> <span class="na">z:Assembly=</span><span class="s">&quot;AzureCacheSizeTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null&quot;</span> <span class="na">xmlns=</span><span class="s">&quot;http://schemas.datacontract.org/2004/07/AzureCacheSizeTest&quot;</span> <span class="na">xmlns:i=</span><span class="s">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span> <span class="na">xmlns:z=</span><span class="s">&quot;http://schemas.microsoft.com/2003/10/Serialization/&quot;</span><span class="nt">&gt;&lt;Description</span> <span class="na">z:Id=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>This is a generic string solely for the purpose of searching.<span class="nt">&lt;/Description&gt;&lt;FirstName</span> <span class="na">z:Id=</span><span class="s">&quot;3&quot;</span><span class="nt">&gt;</span>Christopher<span class="nt">&lt;/FirstName&gt;&lt;LastName</span> <span class="na">z:Id=</span><span class="s">&quot;4&quot;</span><span class="nt">&gt;</span>Dombrowski<span class="nt">&lt;/LastName&gt;&lt;/MyTypeNSer&gt;</span>
+<span class="nt">&lt;MyTypeYSer</span> <span class="na">z:Id=</span><span class="s">&quot;1&quot;</span> <span class="na">z:Type=</span><span class="s">&quot;AzureCacheSizeTest.MyTypeYSer&quot;</span> <span class="na">z:Assembly=</span><span class="s">&quot;AzureCacheSizeTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null&quot;</span> <span class="na">xmlns=</span><span class="s">&quot;http://schemas.datacontract.org/2004/07/AzureCacheSizeTest&quot;</span> <span class="na">xmlns:i=</span><span class="s">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span> <span class="na">xmlns:z=</span><span class="s">&quot;http://schemas.microsoft.com/2003/10/Serialization/&quot;</span><span class="nt">&gt;&lt;_x003C_Description_x003E_k__BackingField</span> <span class="na">z:Id=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>This is a generic string solely for the purpose of searching.<span class="nt">&lt;/_x003C_Description_x003E_k__BackingField&gt;&lt;_x003C_FirstName_x003E_k__BackingField</span> <span class="na">z:Id=</span><span class="s">&quot;3&quot;</span><span class="nt">&gt;</span>Christopher<span class="nt">&lt;/_x003C_FirstName_x003E_k__BackingField&gt;&lt;_x003C_LastName_x003E_k__BackingField</span> <span class="na">z:Id=</span><span class="s">&quot;4&quot;</span><span class="nt">&gt;</span>Dombrowski<span class="nt">&lt;/_x003C_LastName_x003E_k__BackingField&gt;&lt;/MyTypeYSer&gt;</span></code></pre></div>
 
 <p>Next up is the <code>BinaryFormatter</code>. As expected, the binary serializer results in a smaller object size: 325 bytes (229 compressed). The serialized data looks like this (using <code>\xx</code> for binary hex values):</p>
 
@@ -182,8 +175,7 @@
 
 <p>Finally, I wanted to try JSON, since practically any modern Azure service <em>already</em> has a reference to JSON.NET anyway. JSON performed quite well: 189 bytes (140 compressed). The serialized instance looks like this:</p>
 
-<pre><code>{"$type":"AzureCacheSizeTest.MyTypeNSer, AzureCacheSizeTest","FirstName":"Christopher","LastName":"Dombrowski","Description":"This is a generic string solely for the purpose of searching."}
-</code></pre>
+<div class="highlight"><pre><code class="javascript"><span class="p">{</span><span class="s2">&quot;$type&quot;</span><span class="o">:</span><span class="s2">&quot;AzureCacheSizeTest.MyTypeNSer, AzureCacheSizeTest&quot;</span><span class="p">,</span><span class="s2">&quot;FirstName&quot;</span><span class="o">:</span><span class="s2">&quot;Christopher&quot;</span><span class="p">,</span><span class="s2">&quot;LastName&quot;</span><span class="o">:</span><span class="s2">&quot;Dombrowski&quot;</span><span class="p">,</span><span class="s2">&quot;Description&quot;</span><span class="o">:</span><span class="s2">&quot;This is a generic string solely for the purpose of searching.&quot;</span><span class="p">}</span></code></pre></div>
 
 <p>However, I was also aware that JSON.NET supports BSON (Binary JSON), so I was curious to see whether there were any further space savings that I could squeeze out. BSON was slightly <em>less</em> efficient than JSON, weighing in at 197 bytes (152 compressed). As it turns out, BSON is not a “compressed JSON” format as much as it is a “fast and traversable” JSON, as <a href="http://bsonspec.org/#/faq">described in their FAQ</a>. For completeness, here’s the same instance as it appears in BSON:</p>
 

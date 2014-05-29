@@ -84,13 +84,13 @@
   <article>
   <h2 id="dont-do-it-unless-you-need-to">Don’t do it (unless you need to).</h2>
 
-<p>IDisposable is not a destructor. Remember that .NET has a garbage collector that works just fine without requiring you to set member variables to null.</p>
+<p><code>IDisposable</code> is not a destructor. Remember that .NET has a garbage collector that works just fine without requiring you to set member variables to null.</p>
 
-<p>There are only two situations when IDisposable does need to be implemented; apply these tests to a class to determine if IDisposable is needed:</p>
+<p>There are only two situations when <code>IDisposable</code> does need to be implemented; apply these tests to a class to determine if <code>IDisposable</code> is needed:</p>
 
 <ul>
   <li>The class owns unmanaged resources.</li>
-  <li>The class owns managed (IDisposable) resources.</li>
+  <li>The class owns managed (<code>IDisposable</code>) resources.</li>
 </ul>
 
 <p>Note that only classes that <em>own</em> resources should free them. In particular, a class may have a reference to a shared resource; in this case, it should not free the resource because other classes may still be using it.</p>
@@ -156,7 +156,7 @@
     <span class="p">}</span>
 <span class="p">}</span></code></pre></div>
 
-<p>The correct implementation of IDisposable for this type is here:</p>
+<p>The correct implementation of <code>IDisposable</code> for this type is here:</p>
 
 <div class="highlight"><pre><code class="csharp"><span class="c1">// This is an example of a correct IDisposable implementation.</span>
 <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">ErrorList</span>
@@ -171,21 +171,21 @@
     <span class="p">}</span>
 <span class="p">}</span></code></pre></div>
 
-<p>That’s right, folks. The correct IDisposable implementation for this class is to <em>not</em> implement IDisposable! When an ErrorList instance becomes unreachable, the garbage collector will automatically reclaim all of its memory and resources.</p>
+<p>That’s right, folks. The correct <code>IDisposable</code> implementation for this class is to <em>not</em> implement <code>IDisposable</code>! When an <code>ErrorList</code> instance becomes unreachable, the garbage collector will automatically reclaim all of its memory and resources.</p>
 
-<p>Remember the two tests to determine if IDisposable is needed (owning unmanaged resources and owning managed resources). A simple checklist can be done as follows:</p>
+<p>Remember the two tests to determine if <code>IDisposable</code> is needed (owning unmanaged resources and owning managed resources). A simple checklist can be done as follows:</p>
 
 <ol>
-  <li>Does the ErrorList class own unmanaged resources? No, it does not.</li>
+  <li>Does the <code>ErrorList</code> class own unmanaged resources? No, it does not.</li>
   <li>
-    <p>Does the ErrorList class own managed resources? Remember, “managed resources” are any classes implementing IDisposable. So, check each owned member type:</p>
+    <p>Does the <code>ErrorList</code> class own managed resources? Remember, “managed resources” are any classes implementing <code>IDisposable</code>. So, check each owned member type:</p>
   </li>
-  <li>Does string implement IDisposable? No, it does not.</li>
-  <li>Does List&lt;string&gt; implement IDisposable? No, it does not.</li>
+  <li>Does <code>string</code> implement <code>IDisposable</code>? No, it does not.</li>
+  <li>Does <code>List&lt;string&gt;</code> implement <code>IDisposable</code>? No, it does not.</li>
   <li>
-    <p>Since none of the owned members implement IDisposable, the ErrorList class does not own any managed resources.</p>
+    <p>Since none of the owned members implement <code>IDisposable</code>, the <code>ErrorList</code> class does not own any managed resources.</p>
   </li>
-  <li>Since there are no unmanaged resources and no managed resources owned by ErrorList, it does not need to implement IDisposable.</li>
+  <li>Since there are no unmanaged resources and no managed resources owned by <code>ErrorList</code>, it does not need to implement <code>IDisposable</code>.</li>
 </ol>
 
   </article>
@@ -596,6 +596,8 @@
                         
                     
                         
+                    
+                        
                             
                             
                             
@@ -1086,6 +1088,8 @@
                         
                     
                         
+                    
+                        
                             
                             
                                 
@@ -1571,6 +1575,8 @@
                         
                     
                         
+                    
+                        
                             
                                 
                                 
@@ -2058,6 +2064,8 @@
                         
                     
                         
+                    
+                        
                             
                             
                             
@@ -2542,495 +2550,11 @@
                         
                     
                         
-                            
-                            
-                            
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
-                    
-                        
                     
                         
                             
                             
                             
-                        
-                    
-                        
-                    
                         
                     
                         
@@ -3615,6 +3139,8 @@
                     
                         
                     
+                        
+                    
                 
                     
                         
@@ -3926,6 +3452,496 @@
                         
                     
                         
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                            
+                            
+                            
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
                             
                             
                             
@@ -4102,6 +4118,8 @@
                         
                     
                 
+                    
+                        
                     
                         
                     
@@ -5014,6 +5032,8 @@
                                         
                                     
                                         
+                                    
+                                        
                                             
                                                 <li class="sidenavitem"><a href="/2009/08/how-to-implement-idisposable-and.html">Three Rules</a></li>
                                             
@@ -5110,6 +5130,8 @@
                                         
                                     
                                 
+                                    
+                                        
                                     
                                         
                                     
@@ -5984,6 +6006,8 @@
                                         
                                     
                                         
+                                    
+                                        
                                             
                                                 <li class="sidenavitem"><a href="/2009/08/second-rule-of-implementing-idisposable.html">Rule 2: Managed Resources</a></li>
                                             
@@ -6082,6 +6106,8 @@
                                         
                                     
                                 
+                                    
+                                        
                                     
                                         
                                     
@@ -6952,6 +6978,8 @@
                                         
                                     
                                         
+                                    
+                                        
                                             
                                                 <li class="sidenavitem"><a href="/2009/08/q-can-gcsuppressfinalizethis-be-called.html">Q&A: When to Call SuppressFinalize?</a></li>
                                             
@@ -7054,6 +7082,8 @@
                                         
                                     
                                 
+                                    
+                                        
                                     
                                         
                                     
@@ -7922,6 +7952,8 @@
                                         
                                     
                                         
+                                    
+                                        
                                             
                                                 <li class="sidenavitem"><a href="/2009/08/q-if-dispose-calls-suppressfinalize-is.html">Q&A: Is KeepAlive Required with SuppressFinalize?</a></li>
                                             
@@ -8026,6 +8058,8 @@
                                         
                                     
                                 
+                                    
+                                        
                                     
                                         
                                     
@@ -8512,6 +8546,8 @@
                                         
                                     
                                 
+                                    
+                                        
                                     
                                         
                                     
