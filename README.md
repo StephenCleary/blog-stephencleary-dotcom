@@ -9,10 +9,8 @@ To use:
 
 To serve locally (with future posts):
 > D:\Programs\PortableJekyll\setpath.ps1
-> chcp 65001
 > .\_serve.ps1
 
 To build:
 > D:\Programs\PortableJekyll\setpath.ps1
-> chcp 65001
 > .\_build.ps1
