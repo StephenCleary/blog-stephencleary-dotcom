@@ -15,7 +15,7 @@ If you view a `Task` as a state machine, then the `Status` property represents t
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
-As usual, this post is just taking [what Stephen Toub already said](http://blogs.msdn.com/b/pfxteam/archive/2009/08/30/9889070.aspx), expounding on it a bit, and drawing some ugly pictures. :)
+As usual, this post is just taking [what Stephen Toub already said](http://blogs.msdn.com/b/pfxteam/archive/2009/08/30/9889070.aspx){:.alert-link}, expounding on it a bit, and drawing some ugly pictures. :)
 </div>
 
 ### Delegate Tasks
@@ -32,7 +32,7 @@ Usually, Delegate Tasks are created via `Task.Run` (or `Task.Factory.StartNew`),
 
 Entering at the `WaitingToRun` state is the normal path for Delegate Tasks, but there are a couple of other possibilities.
 
-If a Delegate Task is started with the [task constructor]({{ post_url 2014-05-15-a-tour-of-task-part-1-constructors }}), then it starts in the `Created` state and only moves to the `WaitingToRun` state when you assign it to a task scheduler via `Start` or `RunSynchronously`.
+If a Delegate Task is started with the [task constructor]({% post_url 2014-05-15-a-tour-of-task-part-1-constructors %}){:.alert-link}, then it starts in the `Created` state and only moves to the `WaitingToRun` state when you assign it to a task scheduler via `Start` or `RunSynchronously`.
 
 If a Delegate Task is a continuation of another task, then it starts in the `WaitingForActivation` state and automatically moves to the `WaitingToRun` state when that other task completes.
 </div>
