@@ -5,7 +5,7 @@ title: "Reporting Progress from Tasks"
 <div class="alert alert-danger" markdown="1">
 <i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
 
-**Update, 2012-02-16:** The information in this post is old. See the new post [Reporting Progress from Async Tasks]({{ post-url 2012-02-16-reporting-progress-from-async-tasks }}){:.alert-link} for a better solution.
+**Update, 2012-02-16:** The information in this post is old. See the new post [Reporting Progress from Async Tasks]({% post_url 2012-02-16-reporting-progress-from-async-tasks %}){:.alert-link} for a better solution.
 </div>
 
 The .NET 4.0 [Task Parallel Library](http://msdn.microsoft.com/en-us/library/dd460717.aspx) respresents a huge shift in the way future multithreaded code will be written. The TPL and higher-level abstractions (such as the [Parallel class](http://msdn.microsoft.com/en-us/library/system.threading.tasks.parallel.aspx), [Parallel LINQ](http://msdn.microsoft.com/en-us/library/dd460688.aspx), and the [Reactive Extensions](http://msdn.microsoft.com/en-us/devlabs/ee794896.aspx)) will (hopefully) become the default approach for handling all multithreading situations. There is (almost) no reason to use the old [Thread class](http://msdn.microsoft.com/en-us/library/system.threading.thread.aspx) anymore.

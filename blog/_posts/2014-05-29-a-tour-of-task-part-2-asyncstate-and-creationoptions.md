@@ -41,7 +41,7 @@ There really isn't a need to read `AsyncState` in modern code; it's mainly impor
 TaskCreationOptions CreationOptions { get; }
 {% endhighlight %}
 
-`CreationOptions` merely allows you to read the task creation options that were used to create this task. You can specify these options when you create a task using [the task constructor]({{ post_url 2014-05-15-a-tour-of-task-part-1-constructors }}), `Task.Factory.StartNew`, or `TaskCompletionSource<T>`. I'll cover the meanings of these options later, when we cover `Task.Factory.StartNew`.
+`CreationOptions` merely allows you to read the task creation options that were used to create this task. You can specify these options when you create a task using [the task constructor]({% post_url 2014-05-15-a-tour-of-task-part-1-constructors %}), `Task.Factory.StartNew`, or `TaskCompletionSource<T>`. I'll cover the meanings of these options later, when we cover `Task.Factory.StartNew`.
 
 However, there's almost no reason to _read_ the task creation options once the task has been created. This would only be necessary if you were doing some really funky work with parent/child tasks or task scheduling - _far_ beyond the normal scenarios for asynchronous or parallel tasks.
 
