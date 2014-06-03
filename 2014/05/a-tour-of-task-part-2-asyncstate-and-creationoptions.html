@@ -113,7 +113,7 @@
 
 <div class="highlight"><pre><code class="csharp"><span class="n">TaskCreationOptions</span> <span class="n">CreationOptions</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></div>
 
-<p><code>CreationOptions</code> merely allows you to read the task creation options that were used to create this task. You can specify these options when you create a task using <a href="">the task constructor</a>, <code>Task.Factory.StartNew</code>, or <code>TaskCompletionSource&lt;T&gt;</code>. I’ll cover the meanings of these options later, when we cover <code>Task.Factory.StartNew</code>.</p>
+<p><code>CreationOptions</code> merely allows you to read the task creation options that were used to create this task. You can specify these options when you create a task using <a href="/2014/05/a-tour-of-task-part-1-constructors.html">the task constructor</a>, <code>Task.Factory.StartNew</code>, or <code>TaskCompletionSource&lt;T&gt;</code>. I’ll cover the meanings of these options later, when we cover <code>Task.Factory.StartNew</code>.</p>
 
 <p>However, there’s almost no reason to <em>read</em> the task creation options once the task has been created. This would only be necessary if you were doing some really funky work with parent/child tasks or task scheduling - <em>far</em> beyond the normal scenarios for asynchronous or parallel tasks.</p>
 
