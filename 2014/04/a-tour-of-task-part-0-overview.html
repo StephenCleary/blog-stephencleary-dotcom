@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <title>A Tour of Task, Part 0: Overview</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <meta name="description" content="I recently posted a poll on The Twitter; here it is with all the responses:" />
     <link rel="canonical" href="http://blog.stephencleary.com/2014/04/a-tour-of-task-part-0-overview.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
@@ -77,7 +77,7 @@
   <header>
       <div class="page-header">
           <h1>A Tour of Task, Part 0: Overview</h1>
-          <small>Apr 24, 2014 &bull; <a href="#disqus_thread">Comments</a></small>
+          <small><time datetime="2014-04-24">Apr 24, 2014</time> &bull; <a href="#disqus_thread">Comments</a></small>
       </div>
   </header>
 
@@ -97,7 +97,7 @@
   <li>Developers who have never heard of <code>Task</code> until <code>async</code> came along. To them, <code>Task</code> is just a part of <code>async</code> - one more (fairly complicated) thing to learn. “Continuation” is a foreign word. <strong>The danger</strong> that these developers face is assuming that every member of <code>Task</code> is applicable to <code>async</code> programming, which is most certainly not the case.</li>
 </ul>
 
-<p>The <code>async</code> team at Microsoft did consider writing their own “Promise” type that would act as an asynchronous task, but the <code>Task</code> type was too tempting. <code>Task</code> actually did support promise-style asynchronous tasks (somewhat awkwardly) even in .NET 4.0, and it only took a bit of extension for it to support <code>async</code> fully. Also, by merging this “Promise” with the existing <code>Task</code> type, we end up with a nice unification: it’s trivially easy to kick off some operation on a background thread and treat it asynchronously. No conversion from <code>Task</code> to “Promise” is necessary.</p>
+<p>The <code>async</code> team at Microsoft did consider writing their own “Future” type that would represent an asynchronous operation, but the <code>Task</code> type was too tempting. <code>Task</code> actually did support promise-style futures (somewhat awkwardly) even in .NET 4.0, and it only took a bit of extension for it to support <code>async</code> fully. Also, by merging this “Future” with the existing <code>Task</code> type, we end up with a nice unification: it’s trivially easy to kick off some operation on a background thread and treat it asynchronously. No conversion from <code>Task</code> to “Future” is necessary.</p>
 
 <p>The downside to using the same type is that it does create some developer confusion. As noted above, developers who have used <code>Task</code> in the past tend to try to use it the same way in the <code>async</code> world (which is wrong); and developers who have not used <code>Task</code> in the past face a bewildering selection of <code>Task</code> members, almost all of which should not be used in the <code>async</code> world.</p>
 
@@ -107,7 +107,7 @@
 
 <p>There are two types of tasks. The first type is a Delegate Task; this is a task that has code to run. The second type is a Promise Task; this is a task that represents some kind of event or signal. Promise Tasks are often I/O-based signals (e.g., “the HTTP download has completed”), but they can actually represent anything (e.g., “the 10-second timer has expired”).</p>
 
-<p>In the TPL world, most tasks were Delegate Tasks (with some support for Promise Tasks). When code does parallel processing, the various Delegate Tasks are divided up among different threads, which then actually <em>execute</em> the code in those Delegate Tasks. In the <code>async</code> world, most tasks are Promise Tasks (with some support for Delegate Tasks). When code does an <code>await</code> on a Promise Task, <a href="/2013/11/there-is-no-thread.html">there is no thread</a> tied up waiting for that promise to complete.</p>
+<p>In the TPL world, most tasks were Delegate Tasks (with some support for Promise Tasks). When code does parallel processing, the various Delegate Tasks are divided up among different threads, which then actually <em>execute</em> the code in those Delegate Tasks. In the <code>async</code> world, most tasks are Promise Tasks (with some support for Delegate Tasks). When code does an <code>await</code> on a Promise Task, <a href="/2013/11/there-is-no-thread.html">there is no thread</a> tied up waiting for that task to complete.</p>
 
 <p>In the past, I’ve used the terms “code-based Task” and “event-based Task” to describe the two kinds of tasks. In this series, I will try to use the terms “Delegate Task” and “Promise Task” to distinguish the two.</p>
 
@@ -1253,64 +1253,64 @@
 <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
 <script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
 <script type="text/javascript">
-(function($) {
-    $(function() {
-        if ($('body').css('color') !== 'rgb(102, 102, 102)') {
-            $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
-        }
-    });
-})(window.jQuery);
+    (function($) {
+        $(function() {
+            if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+                $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+            }
+        });
+    })(window.jQuery);
 </script>
 
 <!-- Font Awesome -->
 <span id="facheck" class="fa" style="display:none"></span>
 <script type="text/javascript">
-(function($) {
-    $(function() {
-        if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
-            $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
-        }
-    });
-})(window.jQuery);
+    (function($) {
+        $(function() {
+            if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+                $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+            }
+        });
+    })(window.jQuery);
 </script>
 
 <!-- Scroll the sidebar into view (if necessary) -->
 
 <script src="/lib/jquery.scrollTo.min.js"></script>
 <script type="text/javascript">
-(function ($) {
-    $(function () {
-        var container = $('.affix').filter(function() { return $(this).css('position') == 'fixed'; });
-        var target = container.find('.active');
-        container.scrollTo(target, { offset: - (container.height() / 2 - target.height() / 2) });
-    });
-})(window.jQuery);
+    (function ($) {
+        $(function () {
+            var container = $('.affix').filter(function() { return $(this).css('position') == 'fixed'; });
+            var target = container.find('.active');
+            container.scrollTo(target, { offset: - (container.height() / 2 - target.height() / 2) });
+        });
+    })(window.jQuery);
 </script>
 
 
 <!-- Google analytics -->
 <script type="text/javascript">
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
-  ga('create', 'UA-8910661-5', 'stephencleary.com');
-  ga('send', 'pageview');
+    ga('create', 'UA-8910661-5', 'stephencleary.com');
+    ga('send', 'pageview');
 </script>
 
 <!-- Google custom search -->
 <script type="text/javascript">
-(function() {
-    var cx = '012743255334612885637:mpmjhgx9bfg';
-    var gcse = document.createElement('script');
-    gcse.type = 'text/javascript';
-    gcse.async = true;
-    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
-        '//www.google.com/cse/cse.js?cx=' + cx;
-    var s = document.getElementsByTagName('script')[0];
-    s.parentNode.insertBefore(gcse, s);
-})();
+    (function() {
+        var cx = '012743255334612885637:mpmjhgx9bfg';
+        var gcse = document.createElement('script');
+        gcse.type = 'text/javascript';
+        gcse.async = true;
+        gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+            '//www.google.com/cse/cse.js?cx=' + cx;
+        var s = document.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(gcse, s);
+    })();
 </script>
 
 
@@ -1319,36 +1319,40 @@
 
 <!-- Disqus comment counter -->
 <script type="text/javascript">
-var disqus_shortname = 'stephencleary';
-(function () {
-    var s = document.createElement('script'); s.async = true;
-    s.type = 'text/javascript';
-    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
-    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
-}());
+    var disqus_shortname = 'stephencleary';
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
 </script>
 
 <!-- Disqus comment section, lazy-loaded -->
 <script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
 <script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
 <script type="text/javascript">
-var disqus_loaded = false;
-var disqus_identifier = "/2014/04/a-tour-of-task-part-0-overview";
-var disqus_title = "A Tour of Task, Part 0: Overview";
-var disqus_url = "http://blog.stephencleary.com/2014/04/a-tour-of-task-part-0-overview.html";
-(function($) {
-    $('.pager').waypoint({
-        offset: 'bottom-in-view',
-        handler: function () {
-            if (disqus_loaded)
-                return;
-            disqus_loaded = true;
-            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-        }
-    });
-})(window.jQuery);
+    var disqus_loaded = false;
+    var disqus_identifier = "/2014/04/a-tour-of-task-part-0-overview";
+    var disqus_title = "A Tour of Task, Part 0: Overview";
+    var disqus_url = "http://blog.stephencleary.com/2014/04/a-tour-of-task-part-0-overview.html";
+    (function($) {
+        $(function() {
+            $('.pager').waypoint({
+                offset: 'bottom-in-view',
+                handler: function() {
+                    if (disqus_loaded)
+                        return;
+                    disqus_loaded = true;
+                    var dsq = document.createElement('script');
+                    dsq.type = 'text/javascript';
+                    dsq.async = true;
+                    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+                    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+                }
+            });
+        });
+    })(window.jQuery);
 </script>
 
 
@@ -1356,7 +1360,21 @@ var disqus_url = "http://blog.stephencleary.com/2014/04/a-tour-of-task-part-0-ov
 <!-- Google AdSense -->
 <script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
 <script>
-(adsbygoogle = window.adsbygoogle || []).push({});
+    (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<!-- Moment -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.6.0/moment.min.js"></script>
+<script type="text/javascript">window.moment || document.write('<script src="/lib/moment.min.js"><\/script>')</script>
+<script type="text/javascript">
+    (function($) {
+        $(function() {
+            $('time').each(function (_, e) {
+                var text = moment($(e).attr('datetime'), 'YYYY-MM-DD').fromNow();
+                $(e).text(function(_, oldText) { return text + ' (' + oldText + ')'; });
+            });
+        });
+    })(window.jQuery);
 </script>
 
 </body>
