@@ -99,21 +99,32 @@ public static partial class MyStack
 {
     private static readonly string name = Guid.NewGuid().ToString("N");
 
+    private sealed class Wrapper : MarshalByRefObject
+    {
+        public ImmutableStack<string> Value { get; set; }
+    }
+
     private static ImmutableStack<string> CurrentContext
     {
         get
         {
-            var ret = CallContext.LogicalGetData(name) as ImmutableStack<string>;
-            return ret ?? ImmutableStack.Create<string>();
+            var ret = CallContext.LogicalGetData(name) as Wrapper;
+            return ret == null ? ImmutableStack.Create<string>() : ret.Value;
         }
 
         set
         {
-            CallContext.LogicalSetData(name, value);
+            CallContext.LogicalSetData(name, new Wrapper { Value = value });
         }
     }
 }
 {% endhighlight %}
+
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+**Updated 2014-06-03:** Added the `Wrapper` class, which enables code to use `MyStack` in cross-AppDomain calls.
+</div>
 
 So far, so good. Now we have a strongly-typed property we can use to get (or update) the current stack. Next we'll start defining our public API. We want the ability to "push" a string onto the stack, and get back a disposable that will pop that string back off the stack when disposed. Simple enough:
 
