@@ -34,7 +34,7 @@ In particular, the task returned by an `async` method is a Promise Task; it _log
 For more information, including sample code, see my [post on `CurrentId` in `async` methods]({% post_url 2013-03-28-taskcurrentid-in-async-methods %}){:.alert-link}.
 </div>
 
-In parallel code, it is _possible_ to use the current task identifier as a key into a result collection, but that is a poor approach IMO. It's usually far better to aggregate the results using the built-in PLINQ or `Parallel` aggregation support.
+In parallel code, it is _possible_ to use the current task identifier as a key into a collection to store task-local values or results, but that is a poor approach IMO. It's usually far better to use the PLINQ/`Parallel` built-in local value and result aggregation support.
 
 ## Conclusion
 

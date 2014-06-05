@@ -15,6 +15,7 @@ layout: default
   </article>
     
     <footer>
+        {% strip %}
         {% if page.series %}
             {% for orderedSeries in site.series %}
                 {% if orderedSeries.name == page.series %}
@@ -66,6 +67,7 @@ layout: default
                 {% if nextSibling %}<li class="next"><a href="{{ nextSibling.url }}" title="{{ nextSibling.title | escape }}">Next in {{ page.series }} &rarr;</a></li>{% endif %}
             </ul>
         {% endif %}
+        {% endstrip %}
         
         <ul class="pager">
             {% if page.previous %}<li class="previous"><a href="{{ page.previous.url }}" title="{{ page.previous.title | escape }}">&larr; Previous Post</a></li>{% endif %}
