@@ -7,6 +7,160 @@
     <atom:link href="http://blog.stephencleary.com/feed.xml" rel="self" type="application/rss+xml" />
     
       <item>
+        <title>A Tour of Task, Part 3: Status</title>
+        <description>&lt;h2 id=&quot;status&quot;&gt;Status&lt;/h2&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;TaskStatus&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Status&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;If you view a &lt;code&gt;Task&lt;/code&gt; as a state machine, then the &lt;code&gt;Status&lt;/code&gt; property represents the current state. Different types of tasks take different paths through the state machine.&lt;/p&gt;
+
+&lt;div class=&quot;alert alert-info&quot;&gt;
+  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
+
+  &lt;p&gt;As usual, this post is just taking &lt;a href=&quot;http://blogs.msdn.com/b/pfxteam/archive/2009/08/30/9889070.aspx&quot; class=&quot;alert-link&quot;&gt;what Stephen Toub already said&lt;/a&gt;, expounding on it a bit, and drawing some ugly pictures. :)&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;h3 id=&quot;delegate-tasks&quot;&gt;Delegate Tasks&lt;/h3&gt;
+
+&lt;p&gt;Delegate Tasks follow the basic pattern in the image below:&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/TaskStates.Delegate.png&quot;&gt;&lt;img src=&quot;/assets/TaskStates.Delegate.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Usually, Delegate Tasks are created via &lt;code&gt;Task.Run&lt;/code&gt; (or &lt;code&gt;Task.Factory.StartNew&lt;/code&gt;), and enter the state machine at the &lt;code&gt;WaitingToRun&lt;/code&gt; state. &lt;code&gt;WaitingToRun&lt;/code&gt; means that the task is associated with a task scheduler, and is just waiting its turn to run.&lt;/p&gt;
+
+&lt;div class=&quot;alert alert-info&quot;&gt;
+  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
+
+  &lt;p&gt;Entering at the &lt;code&gt;WaitingToRun&lt;/code&gt; state is the normal path for Delegate Tasks, but there are a couple of other possibilities.&lt;/p&gt;
+
+  &lt;p&gt;If a Delegate Task is started with the &lt;a href=&quot;/2014/05/a-tour-of-task-part-1-constructors.html&quot; class=&quot;alert-link&quot;&gt;task constructor&lt;/a&gt;, then it starts in the &lt;code&gt;Created&lt;/code&gt; state and only moves to the &lt;code&gt;WaitingToRun&lt;/code&gt; state when you assign it to a task scheduler via &lt;code&gt;Start&lt;/code&gt; or &lt;code&gt;RunSynchronously&lt;/code&gt;.&lt;/p&gt;
+
+  &lt;p&gt;If a Delegate Task is a continuation of another task, then it starts in the &lt;code&gt;WaitingForActivation&lt;/code&gt; state and automatically moves to the &lt;code&gt;WaitingToRun&lt;/code&gt; state when that other task completes.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;p&gt;The task is in the &lt;code&gt;Running&lt;/code&gt; state when the delegate of the Delegate Task is actually executing. When it’s done, the task proceeds to the &lt;code&gt;WaitingForChildrenToComplete&lt;/code&gt; state until its children are all completed. Finally, the task ends up in one of the three final states: &lt;code&gt;RanToCompletion&lt;/code&gt; (successfully), &lt;code&gt;Faulted&lt;/code&gt;, or &lt;code&gt;Canceled&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Remember that since Delegate Tasks represent running code, it’s quite possible that you may not see one or more of these states. For example, it’s possible to queue some very fast work to the thread pool and have that task already completed by the time it’s returned to your code.&lt;/p&gt;
+
+&lt;p&gt;Also, this state machine can be short-circuited at any point if the task is canceled. It is possible for the task to be canceled before it enters the &lt;code&gt;Running&lt;/code&gt; state, and thus not even execute its delegate.&lt;/p&gt;
+
+&lt;h3 id=&quot;promise-tasks&quot;&gt;Promise Tasks&lt;/h3&gt;
+
+&lt;p&gt;Promise Tasks have a much simpler state machine:&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/TaskStates.Promise.png&quot;&gt;&lt;img src=&quot;/assets/TaskStates.Promise.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;div class=&quot;alert alert-info&quot;&gt;
+  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
+
+  &lt;p&gt;This diagram is slightly simplified; technically, Promise Tasks &lt;em&gt;can&lt;/em&gt; enter the &lt;code&gt;WaitingForChildrenToComplete&lt;/code&gt; state. However, this is rather non-intuitive and for this reason tasks created for &lt;code&gt;async&lt;/code&gt; use usually specify the &lt;code&gt;DenyChildAttach&lt;/code&gt; flag.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;p&gt;It is natural to speak of I/O-based operations as “running” or “executing”, e.g., “the HTTP download is currently running”. However, there is no actual &lt;em&gt;CPU code&lt;/em&gt; to be &lt;em&gt;run&lt;/em&gt;, so Promise Tasks (such as an HTTP download task) will never enter the &lt;code&gt;WaitingToRun&lt;/code&gt; or &lt;code&gt;Running&lt;/code&gt; states. And yes, this means that a Promise Task may end in the &lt;code&gt;RanToCompletion&lt;/code&gt; state without ever actually &lt;em&gt;running&lt;/em&gt;. Well, it is what it is…&lt;/p&gt;
+
+&lt;p&gt;All Promise Tasks are created “hot”, meaning that the operation is in progress. The confusing part is that this “in-progress” state is actually called &lt;code&gt;WaitingForActivation&lt;/code&gt;.&lt;/p&gt;
+
+&lt;div class=&quot;alert alert-info&quot;&gt;
+  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
+
+  &lt;p&gt;For this reason, I try to avoid using the terms “running” or “executing” when talking about Promise Tasks; instead, I prefer to say that “the operation is in progress”.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;status-properties&quot;&gt;Status Properties&lt;/h2&gt;
+
+&lt;p&gt;&lt;code&gt;Task&lt;/code&gt; has a few convenience properties for determining the final state of a task:&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;csharp&quot;&gt;&lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IsCompleted&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IsCanceled&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IsFaulted&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;code&gt;IsCanceled&lt;/code&gt; and &lt;code&gt;IsFaulted&lt;/code&gt; map directly to the &lt;code&gt;Canceled&lt;/code&gt; and &lt;code&gt;Faulted&lt;/code&gt; states, but &lt;code&gt;IsCompleted&lt;/code&gt; is tricky. &lt;code&gt;IsCompleted&lt;/code&gt; does not map to &lt;code&gt;RanToCompletion&lt;/code&gt;; rather, it is &lt;code&gt;true&lt;/code&gt; if the task is in &lt;em&gt;any&lt;/em&gt; final state. In other words:&lt;/p&gt;
+
+&lt;div class=&quot;panel panel-default&quot;&gt;
+
+  &lt;table class=&quot;table table-striped&quot;&gt;
+    &lt;thead&gt;
+      &lt;tr&gt;
+        &lt;th&gt;Status&lt;/th&gt;
+        &lt;th&gt;&lt;code&gt;IsCompleted&lt;/code&gt;&lt;/th&gt;
+        &lt;th&gt;&lt;code&gt;IsCanceled&lt;/code&gt;&lt;/th&gt;
+        &lt;th&gt;&lt;code&gt;IsFaulted&lt;/code&gt;&lt;/th&gt;
+      &lt;/tr&gt;
+    &lt;/thead&gt;
+    &lt;tbody&gt;
+      &lt;tr&gt;
+        &lt;td&gt;other&lt;/td&gt;
+        &lt;td&gt;&lt;i class=&quot;fa fa-times fa-lg no&quot;&gt;&lt;/i&gt;&lt;/td&gt;
+        &lt;td&gt;&lt;i class=&quot;fa fa-times fa-lg no&quot;&gt;&lt;/i&gt;&lt;/td&gt;
+        &lt;td&gt;&lt;i class=&quot;fa fa-times fa-lg no&quot;&gt;&lt;/i&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+        &lt;td&gt;&lt;code&gt;RanToCompletion&lt;/code&gt;&lt;/td&gt;
+        &lt;td&gt;&lt;i class=&quot;fa fa-check fa-lg yes&quot;&gt;&lt;/i&gt;&lt;/td&gt;
+        &lt;td&gt;&lt;i class=&quot;fa fa-times fa-lg no&quot;&gt;&lt;/i&gt;&lt;/td&gt;
+        &lt;td&gt;&lt;i class=&quot;fa fa-times fa-lg no&quot;&gt;&lt;/i&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+        &lt;td&gt;&lt;code&gt;Canceled&lt;/code&gt;&lt;/td&gt;
+        &lt;td&gt;&lt;i class=&quot;fa fa-check fa-lg yes&quot;&gt;&lt;/i&gt;&lt;/td&gt;
+        &lt;td&gt;&lt;i class=&quot;fa fa-check fa-lg yes&quot;&gt;&lt;/i&gt;&lt;/td&gt;
+        &lt;td&gt;&lt;i class=&quot;fa fa-times fa-lg no&quot;&gt;&lt;/i&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+        &lt;td&gt;&lt;code&gt;Faulted&lt;/code&gt;&lt;/td&gt;
+        &lt;td&gt;&lt;i class=&quot;fa fa-check fa-lg yes&quot;&gt;&lt;/i&gt;&lt;/td&gt;
+        &lt;td&gt;&lt;i class=&quot;fa fa-times fa-lg no&quot;&gt;&lt;/i&gt;&lt;/td&gt;
+        &lt;td&gt;&lt;i class=&quot;fa fa-check fa-lg yes&quot;&gt;&lt;/i&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+    &lt;/tbody&gt;
+  &lt;/table&gt;
+
+&lt;/div&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;As interesting as these state properties all are, they are hardly ever actually &lt;em&gt;used&lt;/em&gt; (except for debugging). Both asynchronous and parallel code do not normally use &lt;code&gt;Status&lt;/code&gt; or the three convenience properties; instead, the normal usage is to wait for the tasks to complete and extract the results.&lt;/p&gt;
+
+&lt;p&gt;The running total of useful members:&lt;/p&gt;
+
+&lt;div class=&quot;panel panel-default&quot;&gt;
+
+  &lt;table class=&quot;table table-striped&quot;&gt;
+    &lt;thead&gt;
+      &lt;tr&gt;
+        &lt;th&gt;Type&lt;/th&gt;
+        &lt;th&gt;Actual Members&lt;/th&gt;
+        &lt;th&gt;Logical Members&lt;/th&gt;
+        &lt;th&gt;Useful for async&lt;/th&gt;
+        &lt;th&gt;Useful for parallel&lt;/th&gt;
+      &lt;/tr&gt;
+    &lt;/thead&gt;
+    &lt;tbody&gt;
+      &lt;tr&gt;
+        &lt;td&gt;&lt;code&gt;Task&lt;/code&gt;&lt;/td&gt;
+        &lt;td&gt;14&lt;/td&gt;
+        &lt;td&gt;7&lt;/td&gt;
+        &lt;td&gt;0&lt;/td&gt;
+        &lt;td&gt;0&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+        &lt;td&gt;&lt;code&gt;Task&amp;lt;T&amp;gt;&lt;/code&gt;&lt;/td&gt;
+        &lt;td&gt;14&lt;/td&gt;
+        &lt;td&gt;7&lt;/td&gt;
+        &lt;td&gt;0&lt;/td&gt;
+        &lt;td&gt;0&lt;/td&gt;
+      &lt;/tr&gt;
+    &lt;/tbody&gt;
+  &lt;/table&gt;
+
+&lt;/div&gt;
+</description>
+        <pubDate>Thu, 05 Jun 2014 00:00:00 -0400</pubDate>
+        <link>http://blog.stephencleary.com/2014/06/a-tour-of-task-part-3-status.html</link>
+        <guid isPermaLink="true">http://blog.stephencleary.com/2014/06/a-tour-of-task-part-3-status.html</guid>
+      </item>
+    
+      <item>
         <title>A Tour of Task, Part 2: AsyncState and CreationOptions</title>
         <description>&lt;p&gt;I skipped last week’s blog post (since I was working on the site redesign), so today is a 2-for-1 deal! :)&lt;/p&gt;
 
@@ -338,24 +492,6 @@
         <pubDate>Mon, 07 Apr 2014 00:00:00 -0400</pubDate>
         <link>http://blog.stephencleary.com/2014/04/announcement-aspnetbackgroundtasks.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2014/04/announcement-aspnetbackgroundtasks.html</guid>
-      </item>
-    
-      <item>
-        <title>Announcement: GRDevDay 2014 slides available</title>
-        <description>&lt;p&gt;This year at &lt;a href=&quot;http://grdevday.org/&quot;&gt;GRDevDay 2014&lt;/a&gt; I was honored to present &lt;em&gt;two&lt;/em&gt; sessions.&lt;/p&gt;
-
-&lt;p&gt;The slides and demo code are now available! Please note that there are some hidden slides with additional information that I had to remove for time considerations, so even if you came to the talks, there’s some helpful stuff in the slides.&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/Presentations/tree/master/Async%20Servers&quot;&gt;Introduction to async on ASP.NET&lt;/a&gt; was a pretty well-attended talk (~30 people). It covered how asynchronous requests work in ASP.NET, how async/await work in C#, and how async/await work specifically with ASP.NET.&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/Presentations/tree/master/Asynchronous%20Parallel%20Reactive%20-%20HELP!&quot;&gt;Asynchronous? Parallel? Reactive? HELP!&lt;/a&gt; was a &lt;em&gt;very&lt;/em&gt; well-attended talk (~45 people, standing-room only). It was a gentle introduction to various forms of concurrency: parallel processing (using the Parallel class and PLINQ), asynchronous code (using async/await), reactive coding (using Rx), and an overview of TPL Dataflow. If you ever wondered when to use which, take a look at this one.&lt;/p&gt;
-
-&lt;p&gt;I did record both talks, but have not had the time to do post-production. I’ll update here and on Twitter when (if) I get around to it. :)&lt;/p&gt;
-
-</description>
-        <pubDate>Fri, 04 Apr 2014 00:00:00 -0400</pubDate>
-        <link>http://blog.stephencleary.com/2014/04/announcement-grdevday-2014-slides.html</link>
-        <guid isPermaLink="true">http://blog.stephencleary.com/2014/04/announcement-grdevday-2014-slides.html</guid>
       </item>
     
   </channel>

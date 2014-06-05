@@ -3,10 +3,10 @@
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Async OOP 1: Inheritance and Interfaces</title>
+    <title>A Tour of Task, Part 3: Status</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Before we dive all the way into “asynchronous OOP”, let’s address one fairly common question: how does one deal with inheritance of asynchronous methods? What about an “asynchronous interface”?" />
-    <link rel="canonical" href="http://blog.stephencleary.com/2013/01/async-oop-1-inheritance-and-interfaces.html" />
+    <meta name="description" content="Status" />
+    <link rel="canonical" href="http://blog.stephencleary.com/2014/06/a-tour-of-task-part-3-status.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -74,51 +74,171 @@
 
   <header>
       <div class="page-header">
-          <h1>Async OOP 1: Inheritance and Interfaces</h1>
-          <small><time datetime="2013-01-10">Jan 10, 2013</time> &bull; <a href="#disqus_thread">Comments</a></small>
+          <h1>A Tour of Task, Part 3: Status</h1>
+          <small><time datetime="2014-06-05">Jun 5, 2014</time> &bull; <a href="#disqus_thread">Comments</a></small>
       </div>
   </header>
 
   <article>
-  <p>Before we dive all the way into “asynchronous OOP”, let’s address one fairly common question: how does one deal with inheritance of asynchronous methods? What about an “asynchronous interface”?</p>
+  <h2 id="status">Status</h2>
 
-<p>Fortunately, <code>async</code> does work well with inheritance (and interfaces). Remember that <code>async</code> is an implementation detail, so interfaces can’t be defined with <code>async</code>. To define an asynchronous method in an interface, you just need to define a method with the same signature, minus the <code>async</code> keyword:</p>
+<div class="highlight"><pre><code class="csharp"><span class="n">TaskStatus</span> <span class="n">Status</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></div>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">interface</span> <span class="n">IMyInterface</span>
-<span class="p">{</span>
-  <span class="n">Task</span> <span class="nf">MyMethodAsync</span><span class="p">();</span>
-<span class="p">}</span></code></pre></div>
+<p>If you view a <code>Task</code> as a state machine, then the <code>Status</code> property represents the current state. Different types of tasks take different paths through the state machine.</p>
 
-<p>You can then implement it using <code>async</code>:</p>
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span> <span class="p">:</span> <span class="n">IMyInterface</span>
-<span class="p">{</span>
-  <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">MyMethodAsync</span><span class="p">()</span>
-  <span class="p">{</span>
-    <span class="p">...</span>
-  <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+  <p>As usual, this post is just taking <a href="http://blogs.msdn.com/b/pfxteam/archive/2009/08/30/9889070.aspx" class="alert-link">what Stephen Toub already said</a>, expounding on it a bit, and drawing some ugly pictures. :)</p>
+</div>
 
-<p>If you have an implementation that <em>isn’t</em> <code>async</code>, you can use <code>TaskCompletionSource&lt;T&gt;</code> or one of its shorthand forms such as <code>Task.FromResult</code> to implement the asynchronous method signature synchronously.</p>
+<h3 id="delegate-tasks">Delegate Tasks</h3>
 
-<p>Similarly, if you have a base class method that returns <code>Task</code> or <code>Task&lt;T&gt;</code> (which may be asynchronous or synchronous), you can override it with an asynchronous or synchronous method.</p>
+<p>Delegate Tasks follow the basic pattern in the image below:</p>
 
-<p>Next time, we’ll take a look at asynchronous constructors.</p>
+<p class="center"><a href="/assets/TaskStates.Delegate.png"><img src="/assets/TaskStates.Delegate.png" alt="" /></a></p>
 
+<p>Usually, Delegate Tasks are created via <code>Task.Run</code> (or <code>Task.Factory.StartNew</code>), and enter the state machine at the <code>WaitingToRun</code> state. <code>WaitingToRun</code> means that the task is associated with a task scheduler, and is just waiting its turn to run.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>Entering at the <code>WaitingToRun</code> state is the normal path for Delegate Tasks, but there are a couple of other possibilities.</p>
+
+  <p>If a Delegate Task is started with the <a href="/2014/05/a-tour-of-task-part-1-constructors.html" class="alert-link">task constructor</a>, then it starts in the <code>Created</code> state and only moves to the <code>WaitingToRun</code> state when you assign it to a task scheduler via <code>Start</code> or <code>RunSynchronously</code>.</p>
+
+  <p>If a Delegate Task is a continuation of another task, then it starts in the <code>WaitingForActivation</code> state and automatically moves to the <code>WaitingToRun</code> state when that other task completes.</p>
+</div>
+
+<p>The task is in the <code>Running</code> state when the delegate of the Delegate Task is actually executing. When it’s done, the task proceeds to the <code>WaitingForChildrenToComplete</code> state until its children are all completed. Finally, the task ends up in one of the three final states: <code>RanToCompletion</code> (successfully), <code>Faulted</code>, or <code>Canceled</code>.</p>
+
+<p>Remember that since Delegate Tasks represent running code, it’s quite possible that you may not see one or more of these states. For example, it’s possible to queue some very fast work to the thread pool and have that task already completed by the time it’s returned to your code.</p>
+
+<p>Also, this state machine can be short-circuited at any point if the task is canceled. It is possible for the task to be canceled before it enters the <code>Running</code> state, and thus not even execute its delegate.</p>
+
+<h3 id="promise-tasks">Promise Tasks</h3>
+
+<p>Promise Tasks have a much simpler state machine:</p>
+
+<p class="center"><a href="/assets/TaskStates.Promise.png"><img src="/assets/TaskStates.Promise.png" alt="" /></a></p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>This diagram is slightly simplified; technically, Promise Tasks <em>can</em> enter the <code>WaitingForChildrenToComplete</code> state. However, this is rather non-intuitive and for this reason tasks created for <code>async</code> use usually specify the <code>DenyChildAttach</code> flag.</p>
+</div>
+
+<p>It is natural to speak of I/O-based operations as “running” or “executing”, e.g., “the HTTP download is currently running”. However, there is no actual <em>CPU code</em> to be <em>run</em>, so Promise Tasks (such as an HTTP download task) will never enter the <code>WaitingToRun</code> or <code>Running</code> states. And yes, this means that a Promise Task may end in the <code>RanToCompletion</code> state without ever actually <em>running</em>. Well, it is what it is…</p>
+
+<p>All Promise Tasks are created “hot”, meaning that the operation is in progress. The confusing part is that this “in-progress” state is actually called <code>WaitingForActivation</code>.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>For this reason, I try to avoid using the terms “running” or “executing” when talking about Promise Tasks; instead, I prefer to say that “the operation is in progress”.</p>
+</div>
+
+<h2 id="status-properties">Status Properties</h2>
+
+<p><code>Task</code> has a few convenience properties for determining the final state of a task:</p>
+
+<div class="highlight"><pre><code class="csharp"><span class="kt">bool</span> <span class="n">IsCompleted</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+<span class="kt">bool</span> <span class="n">IsCanceled</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+<span class="kt">bool</span> <span class="n">IsFaulted</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></div>
+
+<p><code>IsCanceled</code> and <code>IsFaulted</code> map directly to the <code>Canceled</code> and <code>Faulted</code> states, but <code>IsCompleted</code> is tricky. <code>IsCompleted</code> does not map to <code>RanToCompletion</code>; rather, it is <code>true</code> if the task is in <em>any</em> final state. In other words:</p>
+
+<div class="panel panel-default">
+
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Status</th>
+        <th><code>IsCompleted</code></th>
+        <th><code>IsCanceled</code></th>
+        <th><code>IsFaulted</code></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>other</td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+      </tr>
+      <tr>
+        <td><code>RanToCompletion</code></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+      </tr>
+      <tr>
+        <td><code>Canceled</code></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+      </tr>
+      <tr>
+        <td><code>Faulted</code></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+        <td><i class="fa fa-times fa-lg no"></i></td>
+        <td><i class="fa fa-check fa-lg yes"></i></td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>As interesting as these state properties all are, they are hardly ever actually <em>used</em> (except for debugging). Both asynchronous and parallel code do not normally use <code>Status</code> or the three convenience properties; instead, the normal usage is to wait for the tasks to complete and extract the results.</p>
+
+<p>The running total of useful members:</p>
+
+<div class="panel panel-default">
+
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Actual Members</th>
+        <th>Logical Members</th>
+        <th>Useful for async</th>
+        <th>Useful for parallel</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>Task</code></td>
+        <td>14</td>
+        <td>7</td>
+        <td>0</td>
+        <td>0</td>
+      </tr>
+      <tr>
+        <td><code>Task&lt;T&gt;</code></td>
+        <td>14</td>
+        <td>7</td>
+        <td>0</td>
+        <td>0</td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
 
   </article>
     
     <footer>
         
             <ul class="pager">
-                <li class="previous"><a href="/2013/01/async-oop-0-introduction.html" title="Async OOP 0: Introduction">&larr; Previous in Async OOP</a></li>
-                <li class="next"><a href="/2013/01/async-oop-2-constructors.html" title="Async OOP 2: Constructors">Next in Async OOP &rarr;</a></li>
+                <li class="previous"><a href="/2014/05/a-tour-of-task-part-2-asyncstate-and-creationoptions.html" title="A Tour of Task, Part 2: AsyncState and CreationOptions">&larr; Previous in A Tour of Task</a></li>
             </ul>
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2013/01/async-oop-0-introduction.html" title="Async OOP 0: Introduction">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2013/01/async-oop-2-constructors.html" title="Async OOP 2: Constructors">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2014/05/a-tour-of-task-part-2-asyncstate-and-creationoptions.html" title="A Tour of Task, Part 2: AsyncState and CreationOptions">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="disqus_thread"></div>
@@ -130,17 +250,13 @@
         <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
             
                 <div class="panel panel-primary">
-                    <div class="panel-heading">Async OOP</div>
+                    <div class="panel-heading">A Tour of Task</div>
                     <div class="panel-body sidenav">
                         <ul class="nav nav-pills nav-stacked">
-                                            <li class="sidenavitem"><a href="/2013/01/async-oop-0-introduction.html">Introduction</a></li>
-                                            <li class="active sidenavitem"><a href="/2013/01/async-oop-1-inheritance-and-interfaces.html">Inheritance and Interfaces</a></li>
-                                            <li class="sidenavitem"><a href="/2013/01/async-oop-2-constructors.html">Constructors</a></li>
-                                            <li class="sidenavitem"><a href="/2013/01/async-oop-3-properties.html">Properties</a></li>
-                                            <li class="sidenavitem"><a href="/2013/01/async-oop-4-state.html">State</a></li>
-                                            <li class="sidenavitem"><a href="/2013/02/async-oop-5-events.html">Events</a></li>
-                                            <li class="sidenavitem"><a href="/2013/03/async-oop-6-disposal.html">Disposal</a></li>
-                                            <li class="sidenavitem"><a href="/2013/03/async-oop-7-design.html">Design</a></li>
+                                            <li class="sidenavitem"><a href="/2014/04/a-tour-of-task-part-0-overview.html">Overview</a></li>
+                                            <li class="sidenavitem"><a href="/2014/05/a-tour-of-task-part-1-constructors.html">Constructors</a></li>
+                                            <li class="sidenavitem"><a href="/2014/05/a-tour-of-task-part-2-asyncstate-and-creationoptions.html">AsyncState and CreationOptions</a></li>
+                                            <li class="active sidenavitem"><a href="/2014/06/a-tour-of-task-part-3-status.html">Status</a></li>
                         </ul>
                     </div>
                 </div>
@@ -290,9 +406,9 @@
 <script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
 <script type="text/javascript">
     var disqus_loaded = false;
-    var disqus_identifier = "/2013/01/async-oop-1-inheritance-and-interfaces";
-    var disqus_title = "Async OOP 1: Inheritance and Interfaces";
-    var disqus_url = "http://blog.stephencleary.com/2013/01/async-oop-1-inheritance-and-interfaces.html";
+    var disqus_identifier = "/2014/06/a-tour-of-task-part-3-status";
+    var disqus_title = "A Tour of Task, Part 3: Status";
+    var disqus_url = "http://blog.stephencleary.com/2014/06/a-tour-of-task-part-3-status.html";
     (function($) {
         $(function() {
             $('.pager').waypoint({
