@@ -3,10 +3,10 @@
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>A Tour of Task, Part 3: Status</title>
+    <title>Fire and Forget on ASP.NET</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Status" />
-    <link rel="canonical" href="http://blog.stephencleary.com/2014/06/a-tour-of-task-part-3-status.html" />
+    <meta name="description" content="A summary of the various ways to schedule background or fire-and-forget tasks on ASP.NET." />
+    <link rel="canonical" href="http://blog.stephencleary.com/2014/06/fire-and-forget-on-asp-net.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -74,171 +74,88 @@
 
   <header>
       <div class="page-header">
-          <h1>A Tour of Task, Part 3: Status</h1>
-          <small><time datetime="2014-06-05">Jun 5, 2014</time> &bull; <a data-disqus-identifier="/2014/06/a-tour-of-task-part-3-status" href="#disqus_thread">Comments</a></small>
+          <h1>Fire and Forget on ASP.NET</h1>
+          <small><time datetime="2014-06-07">Jun 7, 2014</time> &bull; <a data-disqus-identifier="/2014/06/fire-and-forget-on-asp-net" href="#disqus_thread">Comments</a></small>
       </div>
   </header>
 
   <article>
-  <h2 id="status">Status</h2>
+  <p>.NET 4.5.2 added a built-in way to queue background (a.k.a. “fire and forget”) work in ASP.NET. This post is a summary of the different techniques available today.</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="n">TaskStatus</span> <span class="n">Status</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></div>
+<h2 id="threadpool">ThreadPool</h2>
 
-<p>If you view a <code>Task</code> as a state machine, then the <code>Status</code> property represents the current state. Different types of tasks take different paths through the state machine.</p>
+<p>The easiest method is to just throw work onto a background thread, e.g., <code>Task.Run</code>, <code>Task.Factory.StartNew</code>, <code>Delegate.BeginInvoke</code>, <code>ThreadPool.QueueUserWorkItem</code>, etc. However, this is a <strong>really bad idea</strong>!</p>
 
-<div class="alert alert-info">
-  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+<p>The reason is that the ASP.NET runtime has no idea that you’ve queued this work, so it’s not aware that the background work even <em>exists</em>. For a variety of reasons, IIS/ASP.NET has to occasionally recycle your application. If you have background work running when this recycling takes place, that work will mysteriously disappear.</p>
 
-  <p>As usual, this post is just taking <a href="http://blogs.msdn.com/b/pfxteam/archive/2009/08/30/9889070.aspx" class="alert-link">what Stephen Toub already said</a>, expounding on it a bit, and drawing some ugly pictures. :)</p>
-</div>
+<h2 id="hostingenvironmentqueuebackgroundworkitem">HostingEnvironment.QueueBackgroundWorkItem</h2>
 
-<h3 id="delegate-tasks">Delegate Tasks</h3>
+<p><code>QueueBackgroundWorkItem</code> (QBWI) was added in .NET 4.5.2 to help mitigate loss of background work. <a href="http://blogs.msdn.com/b/webdev/archive/2014/06/04/queuebackgroundworkitem-to-reliably-schedule-and-run-long-background-process-in-asp-net.aspx">QBWI will register its background work with the ASP.NET runtime</a>. </p>
 
-<p>Delegate Tasks follow the basic pattern in the image below:</p>
+<p>Since the ASP.NET runtime is aware of the background work, it will not immediately yank your AppDomain when it’s time to recycle. However, this does not mean that the background work can just do whatever it wants!</p>
 
-<p class="center"><a href="/assets/TaskStates.Delegate.png"><img src="/assets/TaskStates.Delegate.png" alt="" /></a></p>
+<p>QBWI will register the work with ASP.NET. When ASP.NET has to recycle, it will notify the background work (by setting a <code>CancellationToken</code>) and will then wait up to 30 seconds for the work to complete. If the background work doesn’t complete in that time frame, the work will mysteriously disappear.</p>
 
-<p>Usually, Delegate Tasks are created via <code>Task.Run</code> (or <code>Task.Factory.StartNew</code>), and enter the state machine at the <code>WaitingToRun</code> state. <code>WaitingToRun</code> means that the task is associated with a task scheduler, and is just waiting its turn to run.</p>
+<p>So, QBWI is a step in the right direction. I would say it’s the “minimum viable” alternative.</p>
 
-<div class="alert alert-info">
-  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+<h2 id="iregisteredobject">IRegisteredObject</h2>
 
-  <p>Entering at the <code>WaitingToRun</code> state is the normal path for Delegate Tasks, but there are a couple of other possibilities.</p>
+<p>The standard way to register with ASP.NET is via <code>IRegisteredObject</code>. The semantics aren’t officially documented, but they’re described in <a href="http://blogs.msdn.com/b/tmarq/archive/2010/04/14/performing-asynchronous-work-or-tasks-in-asp-net-applications.aspx">this blog post under the third answer of question 5</a>:</p>
 
-  <p>If a Delegate Task is started with the <a href="/2014/05/a-tour-of-task-part-1-constructors.html" class="alert-link">task constructor</a>, then it starts in the <code>Created</code> state and only moves to the <code>WaitingToRun</code> state when you assign it to a task scheduler via <code>Start</code> or <code>RunSynchronously</code>.</p>
+<blockquote>
+  <p>You can create an object that implements the <code>IRegisteredObject</code> interface and call <code>HostingEnvironment.RegisterObject</code> to “register” it with ASP.NET.  When the AppDomain is about to be unloaded, we will call your implementation of <code>IRegisteredObject.Stop(bool immediate)</code>.  The <code>Stop</code> method is called twice by ASP.NET, once with the <code>immediate</code> parameter set to <code>false</code> and once again with that argument set to <code>true</code>.  You are supposed to call <code>HostingEnvironment.UnregisterObject</code> as soon as your registered object has stopped, so ASP.NET knows it doesn’t need to call your <code>Stop</code> method.  You can call it at anytime, but you definitely should call it before returning from <code>Stop</code> when it is called with <code>immediate</code> set to <code>true</code>, because that’s your final chance and if you’re still running after that you will be rudely aborted…  If you need to, you can hold up the unload as long as you like, because we won’t unload until your <code>Stop</code> method returns the second time.</p>
+</blockquote>
 
-  <p>If a Delegate Task is a continuation of another task, then it starts in the <code>WaitingForActivation</code> state and automatically moves to the <code>WaitingToRun</code> state when that other task completes.</p>
-</div>
+<p>This blog post clarifies the semantics. Essentially, they boil down to this:</p>
 
-<p>The task is in the <code>Running</code> state when the delegate of the Delegate Task is actually executing. When it’s done, the task proceeds to the <code>WaitingForChildrenToComplete</code> state until its children are all completed. Finally, the task ends up in one of the three final states: <code>RanToCompletion</code> (successfully), <code>Faulted</code>, or <code>Canceled</code>.</p>
+<ol>
+  <li>When ASP.NET wants to unload your application, it will call <code>IRegisteredObject.Stop(false)</code> on all objects registered with the ASP.NET runtime.</li>
+  <li>This is a friendly notification that the AppDomain is going away. Registered objects should start cleaning up and call <code>UnregisterObject</code> when their cleanup is complete.</li>
+  <li>If there are still registered objects running after 30 seconds, ASP.NET will call <code>IRegisteredObject.Stop(true)</code> on them.</li>
+  <li>ASP.NET will unload the AppDomain after all those second notifications have returned.</li>
+</ol>
 
-<p>Remember that since Delegate Tasks represent running code, it’s quite possible that you may not see one or more of these states. For example, it’s possible to queue some very fast work to the thread pool and have that task already completed by the time it’s returned to your code.</p>
+<p>I use <code>IRegisteredObject</code> in my <a href="https://github.com/StephenCleary/AspNetBackgroundTasks">ASP.NET Background Tasks library</a>, and (as of this writing) the built-in <code>QueueBackgroundWorkItem</code> <em>also</em> uses <code>IRegisteredObject</code>. These approaches are slightly different, though. <code>QueueBackgroundWorkItem</code> ignores the second call to <code>Stop</code> and returns immediately, so any background work that takes longer than 30 seconds will be terminated. My AspNetBackgroundTasks library will wait for the background work to complete, and will delay the AppDomain shutdown indefinitely.</p>
 
-<p>Also, this state machine can be short-circuited at any point if the task is canceled. It is possible for the task to be canceled before it enters the <code>Running</code> state, and thus not even execute its delegate.</p>
+<p>Also, QBWI will log any exceptions from the background work, while AspNetBackgroundTasks will not.</p>
 
-<h3 id="promise-tasks">Promise Tasks</h3>
+<p>Neither one of those choices is better; they’re just different. <code>QueueBackgroundWorkItem</code> chose to keep the system as a whole more reliable by sacrificing long-running background work items. AspNetBackgroundTasks chose not to terminate background tasks, which could impact the regular application recycling if one of those tasks is misbehaved.</p>
 
-<p>Promise Tasks have a much simpler state machine:</p>
+<p>Neither of these solutions is ideal. They have to make tradeoffs, and of course neither of them can recover from situations like power losses and server failures. So, I characterize these registration-based solutions as “more reliable” than just queueing work to the thread pool (which is totally unreliable), but even registering with ASP.NET is not totally reliable.</p>
 
-<p class="center"><a href="/assets/TaskStates.Promise.png"><img src="/assets/TaskStates.Promise.png" alt="" /></a></p>
+<h2 id="hangfire">HangFire</h2>
 
-<div class="alert alert-info">
-  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+<p>One interesting low-entry reliable solution is <a href="http://hangfire.io/">HangFire</a>. This library is pretty easy to use but does make some assumptions.</p>
 
-  <p>This diagram is slightly simplified; technically, Promise Tasks <em>can</em> enter the <code>WaitingForChildrenToComplete</code> state. However, this is rather non-intuitive and for this reason tasks created for <code>async</code> use usually specify the <code>DenyChildAttach</code> flag.</p>
-</div>
+<p>The first and most obvious assumption is that it relies on some kind of reliable storage already in your architecture: specifically, SQL Server, Redis, or Microsoft Message Queues (MSMQ). This is a good start, but I’d like to see support for Azure tables and queues as well.</p>
 
-<p>It is natural to speak of I/O-based operations as “running” or “executing”, e.g., “the HTTP download is currently running”. However, there is no actual <em>CPU code</em> to be <em>run</em>, so Promise Tasks (such as an HTTP download task) will never enter the <code>WaitingToRun</code> or <code>Running</code> states. And yes, this means that a Promise Task may end in the <code>RanToCompletion</code> state without ever actually <em>running</em>. Well, it is what it is…</p>
+<p>The second assumption is that the code will not significantly change. The way that HangFire serializes the background work makes assumptions around the delegates that are queued. If the code changes significantly and ASP.NET restarts with the new code, I’m not sure how the system will respond when it attempts to run the old background work.</p>
 
-<p>All Promise Tasks are created “hot”, meaning that the operation is in progress. The confusing part is that this “in-progress” state is actually called <code>WaitingForActivation</code>.</p>
+<p>So, I’d need to research this library more to feel comfortable using it (and extend it to support Azure queues), but it does look like a very interesting library with a low bar to entry.</p>
 
-<div class="alert alert-info">
-  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+<h2 id="distributed-architecture">Distributed Architecture</h2>
 
-  <p>For this reason, I try to avoid using the terms “running” or “executing” when talking about Promise Tasks; instead, I prefer to say that “the operation is in progress”.</p>
-</div>
+<p>The proper solution is to use a basic distributed architecture.</p>
 
-<h2 id="status-properties">Status Properties</h2>
+<p>The first thing you need is a reliable storage medium. I prefer queues (e.g., Azure queues, WebSphere message queues, Microsoft message queueing, etc), but any kind of reliable storage would work (as previously mentioned, HangFire prefers databases).</p>
 
-<p><code>Task</code> has a few convenience properties for determining the final state of a task:</p>
+<p>Then you’ll need a way to store the background work in that storage. HangFire uses an interesting method of serializing the delegate, which I am a little leery of. I’d prefer a solution that stored the background work <em>semantically</em>. This also means that the schema for the background work should be versioned.</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="kt">bool</span> <span class="n">IsCompleted</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
-<span class="kt">bool</span> <span class="n">IsCanceled</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
-<span class="kt">bool</span> <span class="n">IsFaulted</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></div>
+<p>The next thing is a host to perform the background work. These days I’d prefer an Azure WebJob, but you could also use a separate thread in an ASP.NET app. The host must be reliable in the sense that it should either complete the work or leave the work in storage to try again, but not both. Usually, the easiest way to satisfy this is to make all the work items idempoent and use a “lease” when reading from storage. Most reliable queues have built-in support for leases, but it’s up to you to make the background work idempotent.</p>
 
-<p><code>IsCanceled</code> and <code>IsFaulted</code> map directly to the <code>Canceled</code> and <code>Faulted</code> states, but <code>IsCompleted</code> is tricky. <code>IsCompleted</code> does not map to <code>RanToCompletion</code>; rather, it is <code>true</code> if the task is in <em>any</em> final state. In other words:</p>
+<p>The last thing in this kind of architecture is some kind of “poison message” recovery. That is, if there is some background work that gets into the system, and that work cannot complete successfully for whatever reason, there has to be some procedure for removing that piece of background work and setting it aside so that the system as a whole can continue processing.</p>
 
-<div class="panel panel-default">
-
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>Status</th>
-        <th><code>IsCompleted</code></th>
-        <th><code>IsCanceled</code></th>
-        <th><code>IsFaulted</code></th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>other</td>
-        <td><i class="fa fa-times fa-lg no"></i></td>
-        <td><i class="fa fa-times fa-lg no"></i></td>
-        <td><i class="fa fa-times fa-lg no"></i></td>
-      </tr>
-      <tr>
-        <td><code>RanToCompletion</code></td>
-        <td><i class="fa fa-check fa-lg yes"></i></td>
-        <td><i class="fa fa-times fa-lg no"></i></td>
-        <td><i class="fa fa-times fa-lg no"></i></td>
-      </tr>
-      <tr>
-        <td><code>Canceled</code></td>
-        <td><i class="fa fa-check fa-lg yes"></i></td>
-        <td><i class="fa fa-check fa-lg yes"></i></td>
-        <td><i class="fa fa-times fa-lg no"></i></td>
-      </tr>
-      <tr>
-        <td><code>Faulted</code></td>
-        <td><i class="fa fa-check fa-lg yes"></i></td>
-        <td><i class="fa fa-times fa-lg no"></i></td>
-        <td><i class="fa fa-check fa-lg yes"></i></td>
-      </tr>
-    </tbody>
-  </table>
-
-</div>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>As interesting as these state properties all are, they are hardly ever actually <em>used</em> (except for debugging). Both asynchronous and parallel code do not normally use <code>Status</code> or the three convenience properties; instead, the normal usage is to wait for the tasks to complete and extract the results.</p>
-
-<p>The running total of useful members:</p>
-
-<div class="panel panel-default">
-
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Actual Members</th>
-        <th>Logical Members</th>
-        <th>Useful for async</th>
-        <th>Useful for parallel</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><code>Task</code></td>
-        <td>14</td>
-        <td>7</td>
-        <td>0</td>
-        <td>0</td>
-      </tr>
-      <tr>
-        <td><code>Task&lt;T&gt;</code></td>
-        <td>14</td>
-        <td>7</td>
-        <td>0</td>
-        <td>0</td>
-      </tr>
-    </tbody>
-  </table>
-
-</div>
+<p>Distributed architecture is complex, but it’s The Right Way™. It is the most reliable and resilient option available.</p>
 
   </article>
     
     <footer>
         
-            <ul class="pager">
-                <li class="previous"><a href="/2014/05/a-tour-of-task-part-2-asyncstate-and-creationoptions.html" title="A Tour of Task, Part 2: AsyncState and CreationOptions">&larr; Previous in A Tour of Task</a></li>
-            </ul>
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2014/05/a-tour-of-task-part-2-asyncstate-and-creationoptions.html" title="A Tour of Task, Part 2: AsyncState and CreationOptions">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2014/06/fire-and-forget-on-asp-net.html" title="Fire and Forget on ASP.NET">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2014/06/a-tour-of-task-part-3-status.html" title="A Tour of Task, Part 3: Status">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="disqus_thread"></div>
@@ -249,17 +166,6 @@
         </div>
         <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
             
-                <div class="panel panel-primary">
-                    <div class="panel-heading">A Tour of Task</div>
-                    <div class="panel-body sidenav">
-                        <ul class="nav nav-pills nav-stacked">
-                                            <li class="sidenavitem"><a href="/2014/04/a-tour-of-task-part-0-overview.html">Overview</a></li>
-                                            <li class="sidenavitem"><a href="/2014/05/a-tour-of-task-part-1-constructors.html">Constructors</a></li>
-                                            <li class="sidenavitem"><a href="/2014/05/a-tour-of-task-part-2-asyncstate-and-creationoptions.html">AsyncState and CreationOptions</a></li>
-                                            <li class="active sidenavitem"><a href="/2014/06/a-tour-of-task-part-3-status.html">Status</a></li>
-                        </ul>
-                    </div>
-                </div>
             
         </div>
         <div class="col-sm-2 col-md-3 sidebar">
@@ -349,17 +255,6 @@
 
 <!-- Scroll the sidebar into view (if necessary) -->
 
-<script src="/lib/jquery.scrollTo.min.js"></script>
-<script type="text/javascript">
-    (function ($) {
-        $(function () {
-            var container = $('.affix').filter(function() { return $(this).css('position') == 'fixed'; });
-            var target = container.find('.active');
-            container.scrollTo(target, { offset: - (container.height() / 2 - target.height() / 2) });
-        });
-    })(window.jQuery);
-</script>
-
 
 <!-- Google analytics -->
 <script type="text/javascript">
@@ -406,9 +301,9 @@
 <script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
 <script type="text/javascript">
     var disqus_loaded = false;
-    var disqus_identifier = "/2014/06/a-tour-of-task-part-3-status";
-    var disqus_title = "A Tour of Task, Part 3: Status";
-    var disqus_url = "http://blog.stephencleary.com/2014/06/a-tour-of-task-part-3-status.html";
+    var disqus_identifier = "/2014/06/fire-and-forget-on-asp-net";
+    var disqus_title = "Fire and Forget on ASP.NET";
+    var disqus_url = "http://blog.stephencleary.com/2014/06/fire-and-forget-on-asp-net.html";
     (function($) {
         $(function() {
             $('.pager').waypoint({

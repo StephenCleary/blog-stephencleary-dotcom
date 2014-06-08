@@ -80,10 +80,10 @@
   </header>
 
   <article>
-  <div class="alert alert-danger">
-  <p><i class="fa fa-exclamation-triangle fa-2x pull-left"></i></p>
+  <div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
 
-  <p><strong>Update, 2014-05-07:</strong> The <a href="http://msdn.microsoft.com/en-us/library/ms171868(v=vs.110).aspx#v452" class="alert-link">.NET Framework 4.5.2 introduced <code>HostingEnvironment.QueueBackgroundWorkItem</code></a>, which effectively rendered the code below obsolete. On .NET 4.5.2, you can use the new API instead of the <code>BackgroundTaskManager.Run</code> described below. However, the same safety warnings apply.</p>
+  <p><strong>Update, 2014-06-07:</strong> There is more information in <a href="/2014/06/fire-and-forget-on-asp-net.html" class="alert-link">a newer post</a>.</p>
 </div>
 
 <p>I have great reservations about writing this blog post. Pretty much everything I’m going to describe here is a bad idea and you should strongly avoid putting it into production, but there <em>are</em> just a few situations where this technique can be really helpful.</p>
@@ -111,11 +111,20 @@
 <p>The <em>slightly safer but still unsafe</em> way to do it is to keep the work in memory but register it with ASP.NET so that it will notify you when your AppDomain is going away. The code in this blog post uses <a href="http://haacked.com/archive/2011/10/16/the-dangers-of-implementing-recurring-background-tasks-in-asp-net.aspx">the technique described by Phil Haack</a> to register work with the ASP.NET runtime. It’s important to note the <strong>limitations</strong> of this approach:</p>
 
 <ul>
-  <li>By default, you only have 30 seconds total from the time the notification goes out to the time the AppDomain is yanked out from under you.</li>
+  <li>
+    <s>By default, you only have 30 seconds total from the time the notification goes out to the time the AppDomain is yanked out from under you.</s>
+    <p>As noted in the comments, the ASP.NET runtime will wait an arbitrary amount of time for your background tasks to complete. Still, it’s probably best not to keep them waiting…</p>
+  </li>
   <li>You <em>may</em> not get notification at all. In an unmanaged shutdown (e.g., power loss), all bets are off.</li>
 </ul>
 
-<p>Still, this approach <em>can</em> be useful in a limited set of scenarios, so with great reservation let’s take a look at the code. <strong>Update 2014-04: A newer version of this code is now <a href="https://github.com/StephenCleary/AspNetBackgroundTasks">on GitHub.</a></strong></p>
+<p>Still, this approach <em>can</em> be useful in a limited set of scenarios, so with great reservation let’s take a look at the code.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p><strong>Update 2014-04:</strong> A newer version of this code is now <a href="https://github.com/StephenCleary/AspNetBackgroundTasks" class="alert-link">on GitHub</a>.</p>
+</div>
 
 <div class="highlight"><pre><code class="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading</span><span class="p">;</span>
