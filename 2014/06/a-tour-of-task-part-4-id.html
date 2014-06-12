@@ -3,10 +3,10 @@
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>A Tour of Task, Part 3: Status</title>
+    <title>A Tour of Task, Part 4: Id</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="An analysis of Task.Status, Task.IsCompleted, Task.IsCanceled, and Task.IsFaulted; and discussion of whether they should be used for asynchronous and/or parallel code." />
-    <link rel="canonical" href="http://blog.stephencleary.com/2014/06/a-tour-of-task-part-3-status.html" />
+    <meta name="description" content="An analysis of Task.Id and Task.CurrentId, and discussion of whether they should be used for asynchronous and/or parallel code." />
+    <link rel="canonical" href="http://blog.stephencleary.com/2014/06/a-tour-of-task-part-4-id.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -74,126 +74,43 @@
 
   <header>
       <div class="page-header">
-          <h1>A Tour of Task, Part 3: Status</h1>
-          <small><time datetime="2014-06-05">Jun 5, 2014</time> &bull; <a data-disqus-identifier="/2014/06/a-tour-of-task-part-3-status" href="#disqus_thread">Comments</a></small>
+          <h1>A Tour of Task, Part 4: Id</h1>
+          <small><time datetime="2014-06-12">Jun 12, 2014</time> &bull; <a data-disqus-identifier="/2014/06/a-tour-of-task-part-4-id" href="#disqus_thread">Comments</a></small>
       </div>
   </header>
 
   <article>
-  <h2 id="status">Status</h2>
+  <h2 id="id">Id</h2>
 
-<div class="highlight"><pre><code class="csharp"><span class="n">TaskStatus</span> <span class="n">Status</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></div>
+<div class="highlight"><pre><code class="csharp"><span class="kt">int</span> <span class="n">Id</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></div>
 
-<p>If you view a <code>Task</code> as a state machine, then the <code>Status</code> property represents the current state. Different types of tasks take different paths through the state machine.</p>
+<p>I’ve talked a bit about <a href="/2013/03/a-few-words-on-taskid-and.html">task identifiers before</a>, so I’ll just cover the high points here.</p>
 
-<div class="alert alert-info">
-  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+<p>First, in spite of what the documentation says, the identifiers are not actually <em>unique</em>. They are pretty close, but not actually unique. The identifiers are generated on-demand, and will never be zero.</p>
 
-  <p>As usual, this post is just taking <a href="http://blogs.msdn.com/b/pfxteam/archive/2009/08/30/9889070.aspx" class="alert-link">what Stephen Toub already said</a>, expounding on it a bit, and drawing some ugly pictures. :)</p>
-</div>
+<p>The task identifiers are useful if you’re <a href="http://msdn.microsoft.com/en-us/library/ee517329.aspx">reading the ETW events</a> or <a href="http://msdn.microsoft.com/en-us/library/dd998369.aspx">debugging with the Tasks window</a>, but they don’t really have a use case outside of diagnostics and debugging.</p>
 
-<h3 id="delegate-tasks">Delegate Tasks</h3>
+<p>Sometimes developers try to use the task identifiers as keys in a collection, to associate “extra data” with a task. This is an incorrect approach; usually what they’re looking for is an <a href="/2013/04/implicit-async-context-asynclocal.html"><code>async</code> local</a>.</p>
 
-<p>Delegate Tasks follow the basic pattern in the image below:</p>
+<h2 id="currentid">CurrentId</h2>
 
-<p class="center"><a href="/assets/TaskStates.Delegate.png"><img src="/assets/TaskStates.Delegate.png" alt="" /></a></p>
+<div class="highlight"><pre><code class="csharp"><span class="k">static</span> <span class="kt">int?</span> <span class="n">CurrentId</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></div>
 
-<p>Usually, Delegate Tasks are created via <code>Task.Run</code> (or <code>Task.Factory.StartNew</code>), and enter the state machine at the <code>WaitingToRun</code> state. <code>WaitingToRun</code> means that the task is associated with a task scheduler, and is just waiting its turn to run.</p>
+<p>The <code>CurrentId</code> property returns the identifier of the currently-executing task, or <code>null</code> if no task is executing. The key word here is <em>executing</em> - <code>CurrentId</code> only works for Delegate Tasks, not Promise Tasks.</p>
 
-<div class="alert alert-info">
-  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
-
-  <p>Entering at the <code>WaitingToRun</code> state is the normal path for Delegate Tasks, but there are a couple of other possibilities.</p>
-
-  <p>If a Delegate Task is started with the <a href="/2014/05/a-tour-of-task-part-1-constructors.html" class="alert-link">task constructor</a>, then it starts in the <code>Created</code> state and only moves to the <code>WaitingToRun</code> state when you assign it to a task scheduler via <code>Start</code> or <code>RunSynchronously</code>.</p>
-
-  <p>If a Delegate Task is a continuation of another task, then it starts in the <code>WaitingForActivation</code> state and automatically moves to the <code>WaitingToRun</code> state when that other task completes.</p>
-</div>
-
-<p>The task is in the <code>Running</code> state when the delegate of the Delegate Task is actually executing. When it’s done, the task proceeds to the <code>WaitingForChildrenToComplete</code> state until its children are all completed. Finally, the task ends up in one of the three final states: <code>RanToCompletion</code> (successfully), <code>Faulted</code>, or <code>Canceled</code>.</p>
-
-<p>Remember that since Delegate Tasks represent running code, it’s quite possible that you may not see one or more of these states. For example, it’s possible to queue some very fast work to the thread pool and have that task already completed by the time it’s returned to your code.</p>
-
-<p>Also, this state machine can be short-circuited at any point if the task is canceled. It is possible for the task to be canceled before it enters the <code>Running</code> state, and thus not even execute its delegate.</p>
-
-<h3 id="promise-tasks">Promise Tasks</h3>
-
-<p>Promise Tasks have a much simpler state machine:</p>
-
-<p class="center"><a href="/assets/TaskStates.Promise.png"><img src="/assets/TaskStates.Promise.png" alt="" /></a></p>
+<p>In particular, the task returned by an <code>async</code> method is a Promise Task; it <em>logically</em> represents the <code>async</code> method, but it is not a Delegate Task, and does not actually have the asynchronous code as its delegate. <code>CurrentId</code> may or may not be <code>null</code> within an <code>async</code> method, depending on the implementation details of the underlying <code>SynchronizationContext</code> or <code>TaskScheduler</code>.</p>
 
 <div class="alert alert-info">
   <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
 
-  <p>This diagram is slightly simplified; technically, Promise Tasks <em>can</em> enter the <code>WaitingForChildrenToComplete</code> state. However, this is rather non-intuitive and for this reason tasks created for <code>async</code> use usually specify the <code>DenyChildAttach</code> flag.</p>
+  <p>For more information, including sample code, see my <a href="/2013/03/taskcurrentid-in-async-methods.html" class="alert-link">post on <code>CurrentId</code> in <code>async</code> methods</a>.</p>
 </div>
 
-<p>It is natural to speak of I/O-based operations as “running” or “executing”, e.g., “the HTTP download is currently running”. However, there is no actual <em>CPU code</em> to be <em>run</em>, so Promise Tasks (such as an HTTP download task) will never enter the <code>WaitingToRun</code> or <code>Running</code> states. And yes, this means that a Promise Task may end in the <code>RanToCompletion</code> state without ever actually <em>running</em>. Well, it is what it is…</p>
-
-<p>All Promise Tasks are created “hot”, meaning that the operation is in progress. The confusing part is that this “in-progress” state is actually called <code>WaitingForActivation</code>.</p>
-
-<div class="alert alert-info">
-  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
-
-  <p>For this reason, I try to avoid using the terms “running” or “executing” when talking about Promise Tasks; instead, I prefer to say that “the operation is in progress”.</p>
-</div>
-
-<h2 id="status-properties">Status Properties</h2>
-
-<p><code>Task</code> has a few convenience properties for determining the final state of a task:</p>
-
-<div class="highlight"><pre><code class="csharp"><span class="kt">bool</span> <span class="n">IsCompleted</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
-<span class="kt">bool</span> <span class="n">IsCanceled</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
-<span class="kt">bool</span> <span class="n">IsFaulted</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></div>
-
-<p><code>IsCanceled</code> and <code>IsFaulted</code> map directly to the <code>Canceled</code> and <code>Faulted</code> states, but <code>IsCompleted</code> is tricky. <code>IsCompleted</code> does not map to <code>RanToCompletion</code>; rather, it is <code>true</code> if the task is in <em>any</em> final state. In other words:</p>
-
-<div class="panel panel-default">
-
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>Status</th>
-        <th><code>IsCompleted</code></th>
-        <th><code>IsCanceled</code></th>
-        <th><code>IsFaulted</code></th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>other</td>
-        <td><i class="fa fa-times fa-lg no"></i></td>
-        <td><i class="fa fa-times fa-lg no"></i></td>
-        <td><i class="fa fa-times fa-lg no"></i></td>
-      </tr>
-      <tr>
-        <td><code>RanToCompletion</code></td>
-        <td><i class="fa fa-check fa-lg yes"></i></td>
-        <td><i class="fa fa-times fa-lg no"></i></td>
-        <td><i class="fa fa-times fa-lg no"></i></td>
-      </tr>
-      <tr>
-        <td><code>Canceled</code></td>
-        <td><i class="fa fa-check fa-lg yes"></i></td>
-        <td><i class="fa fa-check fa-lg yes"></i></td>
-        <td><i class="fa fa-times fa-lg no"></i></td>
-      </tr>
-      <tr>
-        <td><code>Faulted</code></td>
-        <td><i class="fa fa-check fa-lg yes"></i></td>
-        <td><i class="fa fa-times fa-lg no"></i></td>
-        <td><i class="fa fa-check fa-lg yes"></i></td>
-      </tr>
-    </tbody>
-  </table>
-
-</div>
+<p>In parallel code, it is <em>possible</em> to use the current task identifier as a key into a collection to store task-local values or results, but that is a poor approach IMO. It’s usually far better to use the PLINQ/<code>Parallel</code> built-in local value and result aggregation support.</p>
 
 <h2 id="conclusion">Conclusion</h2>
 
-<p>As interesting as these state properties all are, they are hardly ever actually <em>used</em> (except for debugging). Both asynchronous and parallel code do not normally use <code>Status</code> or the three convenience properties; instead, the normal usage is to wait for the tasks to complete and extract the results.</p>
-
-<p>The running total of useful members:</p>
+<p>The running total of useful members is still looking pretty bleak:</p>
 
 <div class="panel panel-default">
 
@@ -210,15 +127,15 @@
     <tbody>
       <tr>
         <td><code>Task</code></td>
-        <td>14</td>
-        <td>7</td>
+        <td>16</td>
+        <td>9</td>
         <td>0</td>
         <td>0</td>
       </tr>
       <tr>
         <td><code>Task&lt;T&gt;</code></td>
-        <td>14</td>
-        <td>7</td>
+        <td>16</td>
+        <td>9</td>
         <td>0</td>
         <td>0</td>
       </tr>
@@ -232,14 +149,13 @@
     <footer>
         
             <ul class="pager">
-                <li class="previous"><a href="/2014/05/a-tour-of-task-part-2-asyncstate-and-creationoptions.html" title="A Tour of Task, Part 2: AsyncState and CreationOptions">&larr; Previous in A Tour of Task</a></li>
-                <li class="next"><a href="/2014/06/a-tour-of-task-part-4-id.html" title="A Tour of Task, Part 4: Id">Next in A Tour of Task &rarr;</a></li>
+                <li class="previous"><a href="/2014/06/a-tour-of-task-part-3-status.html" title="A Tour of Task, Part 3: Status">&larr; Previous in A Tour of Task</a></li>
             </ul>
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2014/05/a-tour-of-task-part-2-asyncstate-and-creationoptions.html" title="A Tour of Task, Part 2: AsyncState and CreationOptions">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2014/06/fire-and-forget-on-asp-net.html" title="Fire and Forget on ASP.NET">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2014/06/fire-and-forget-on-asp-net.html" title="Fire and Forget on ASP.NET">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="disqus_thread"></div>
@@ -257,8 +173,8 @@
                                             <li class="sidenavitem"><a href="/2014/04/a-tour-of-task-part-0-overview.html">Overview</a></li>
                                             <li class="sidenavitem"><a href="/2014/05/a-tour-of-task-part-1-constructors.html">Constructors</a></li>
                                             <li class="sidenavitem"><a href="/2014/05/a-tour-of-task-part-2-asyncstate-and-creationoptions.html">AsyncState and CreationOptions</a></li>
-                                            <li class="active sidenavitem"><a href="/2014/06/a-tour-of-task-part-3-status.html">Status</a></li>
-                                            <li class="sidenavitem"><a href="/2014/06/a-tour-of-task-part-4-id.html">Id</a></li>
+                                            <li class="sidenavitem"><a href="/2014/06/a-tour-of-task-part-3-status.html">Status</a></li>
+                                            <li class="active sidenavitem"><a href="/2014/06/a-tour-of-task-part-4-id.html">Id</a></li>
                         </ul>
                     </div>
                 </div>
@@ -408,9 +324,9 @@
 <script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
 <script type="text/javascript">
     var disqus_loaded = false;
-    var disqus_identifier = "/2014/06/a-tour-of-task-part-3-status";
-    var disqus_title = "A Tour of Task, Part 3: Status";
-    var disqus_url = "http://blog.stephencleary.com/2014/06/a-tour-of-task-part-3-status.html";
+    var disqus_identifier = "/2014/06/a-tour-of-task-part-4-id";
+    var disqus_title = "A Tour of Task, Part 4: Id";
+    var disqus_url = "http://blog.stephencleary.com/2014/06/a-tour-of-task-part-4-id.html";
     (function($) {
         $(function() {
             $('.pager').waypoint({

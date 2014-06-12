@@ -7,6 +7,77 @@
     <atom:link href="http://blog.stephencleary.com/feed.xml" rel="self" type="application/rss+xml" />
     
       <item>
+        <title>A Tour of Task, Part 4: Id</title>
+        <description>&lt;h2 id=&quot;id&quot;&gt;Id&lt;/h2&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;csharp&quot;&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Id&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;I’ve talked a bit about &lt;a href=&quot;/2013/03/a-few-words-on-taskid-and.html&quot;&gt;task identifiers before&lt;/a&gt;, so I’ll just cover the high points here.&lt;/p&gt;
+
+&lt;p&gt;First, in spite of what the documentation says, the identifiers are not actually &lt;em&gt;unique&lt;/em&gt;. They are pretty close, but not actually unique. The identifiers are generated on-demand, and will never be zero.&lt;/p&gt;
+
+&lt;p&gt;The task identifiers are useful if you’re &lt;a href=&quot;http://msdn.microsoft.com/en-us/library/ee517329.aspx&quot;&gt;reading the ETW events&lt;/a&gt; or &lt;a href=&quot;http://msdn.microsoft.com/en-us/library/dd998369.aspx&quot;&gt;debugging with the Tasks window&lt;/a&gt;, but they don’t really have a use case outside of diagnostics and debugging.&lt;/p&gt;
+
+&lt;p&gt;Sometimes developers try to use the task identifiers as keys in a collection, to associate “extra data” with a task. This is an incorrect approach; usually what they’re looking for is an &lt;a href=&quot;/2013/04/implicit-async-context-asynclocal.html&quot;&gt;&lt;code&gt;async&lt;/code&gt; local&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;currentid&quot;&gt;CurrentId&lt;/h2&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int?&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CurrentId&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;The &lt;code&gt;CurrentId&lt;/code&gt; property returns the identifier of the currently-executing task, or &lt;code&gt;null&lt;/code&gt; if no task is executing. The key word here is &lt;em&gt;executing&lt;/em&gt; - &lt;code&gt;CurrentId&lt;/code&gt; only works for Delegate Tasks, not Promise Tasks.&lt;/p&gt;
+
+&lt;p&gt;In particular, the task returned by an &lt;code&gt;async&lt;/code&gt; method is a Promise Task; it &lt;em&gt;logically&lt;/em&gt; represents the &lt;code&gt;async&lt;/code&gt; method, but it is not a Delegate Task, and does not actually have the asynchronous code as its delegate. &lt;code&gt;CurrentId&lt;/code&gt; may or may not be &lt;code&gt;null&lt;/code&gt; within an &lt;code&gt;async&lt;/code&gt; method, depending on the implementation details of the underlying &lt;code&gt;SynchronizationContext&lt;/code&gt; or &lt;code&gt;TaskScheduler&lt;/code&gt;.&lt;/p&gt;
+
+&lt;div class=&quot;alert alert-info&quot;&gt;
+  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
+
+  &lt;p&gt;For more information, including sample code, see my &lt;a href=&quot;/2013/03/taskcurrentid-in-async-methods.html&quot; class=&quot;alert-link&quot;&gt;post on &lt;code&gt;CurrentId&lt;/code&gt; in &lt;code&gt;async&lt;/code&gt; methods&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;p&gt;In parallel code, it is &lt;em&gt;possible&lt;/em&gt; to use the current task identifier as a key into a collection to store task-local values or results, but that is a poor approach IMO. It’s usually far better to use the PLINQ/&lt;code&gt;Parallel&lt;/code&gt; built-in local value and result aggregation support.&lt;/p&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;The running total of useful members is still looking pretty bleak:&lt;/p&gt;
+
+&lt;div class=&quot;panel panel-default&quot;&gt;
+
+  &lt;table class=&quot;table table-striped&quot;&gt;
+    &lt;thead&gt;
+      &lt;tr&gt;
+        &lt;th&gt;Type&lt;/th&gt;
+        &lt;th&gt;Actual Members&lt;/th&gt;
+        &lt;th&gt;Logical Members&lt;/th&gt;
+        &lt;th&gt;Useful for async&lt;/th&gt;
+        &lt;th&gt;Useful for parallel&lt;/th&gt;
+      &lt;/tr&gt;
+    &lt;/thead&gt;
+    &lt;tbody&gt;
+      &lt;tr&gt;
+        &lt;td&gt;&lt;code&gt;Task&lt;/code&gt;&lt;/td&gt;
+        &lt;td&gt;16&lt;/td&gt;
+        &lt;td&gt;9&lt;/td&gt;
+        &lt;td&gt;0&lt;/td&gt;
+        &lt;td&gt;0&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+        &lt;td&gt;&lt;code&gt;Task&amp;lt;T&amp;gt;&lt;/code&gt;&lt;/td&gt;
+        &lt;td&gt;16&lt;/td&gt;
+        &lt;td&gt;9&lt;/td&gt;
+        &lt;td&gt;0&lt;/td&gt;
+        &lt;td&gt;0&lt;/td&gt;
+      &lt;/tr&gt;
+    &lt;/tbody&gt;
+  &lt;/table&gt;
+
+&lt;/div&gt;
+</description>
+        <pubDate>Thu, 12 Jun 2014 00:00:00 -0400</pubDate>
+        <link>http://blog.stephencleary.com/2014/06/a-tour-of-task-part-4-id.html</link>
+        <guid isPermaLink="true">http://blog.stephencleary.com/2014/06/a-tour-of-task-part-4-id.html</guid>
+      </item>
+    
+      <item>
         <title>Fire and Forget on ASP.NET</title>
         <description>&lt;p&gt;.NET 4.5.2 added a built-in way to queue background (a.k.a. “fire and forget”) work in ASP.NET. This post is a summary of the different techniques available today.&lt;/p&gt;
 
@@ -536,18 +607,6 @@
         <pubDate>Thu, 17 Apr 2014 00:00:00 -0400</pubDate>
         <link>http://blog.stephencleary.com/2014/04/announcement-book.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2014/04/announcement-book.html</guid>
-      </item>
-    
-      <item>
-        <title>Announcement: MSDN &quot;async MVVM&quot; articles</title>
-        <description>&lt;p&gt;Oops, not sure how I missed making this announcement! Sorry for the late notice!&lt;/p&gt;
-
-&lt;p&gt;I have two articles published recently in MSDN magazine, both dealing with patterns for async MVVM applications. The first one is on &lt;a href=&quot;http://msdn.microsoft.com/en-us/magazine/dn605875.aspx&quot;&gt;asynchronous MVVM data-binding&lt;/a&gt;, and the second one is on &lt;a href=&quot;http://msdn.microsoft.com/en-us/magazine/dn630647.aspx&quot;&gt;asynchronous MVVM commands&lt;/a&gt;.&lt;/p&gt;
-
-</description>
-        <pubDate>Tue, 08 Apr 2014 00:00:00 -0400</pubDate>
-        <link>http://blog.stephencleary.com/2014/04/announcement-msdn-async-mvvm-articles.html</link>
-        <guid isPermaLink="true">http://blog.stephencleary.com/2014/04/announcement-msdn-async-mvvm-articles.html</guid>
       </item>
     
   </channel>
