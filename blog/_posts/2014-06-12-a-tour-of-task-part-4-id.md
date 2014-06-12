@@ -3,6 +3,7 @@ layout: post
 title: "A Tour of Task, Part 4: Id"
 series: "A Tour of Task"
 seriesTitle: "Id"
+description: "An analysis of Task.Id and Task.CurrentId, and discussion of whether they should be used for asynchronous and/or parallel code."
 ---
 ## Id
 
@@ -10,7 +11,7 @@ seriesTitle: "Id"
 int Id { get; }
 {% endhighlight %}
 
-I've talked a bit about [task (and task scheduler) identifiers before]({% post_url 2013-03-21-a-few-words-on-taskid-and %}), so I'll just cover the high points here.
+I've talked a bit about [task identifiers before]({% post_url 2013-03-21-a-few-words-on-taskid-and %}), so I'll just cover the high points here.
 
 First, in spite of what the documentation says, the identifiers are not actually _unique_. They are pretty close, but not actually unique. The identifiers are generated on-demand, and will never be zero.
 

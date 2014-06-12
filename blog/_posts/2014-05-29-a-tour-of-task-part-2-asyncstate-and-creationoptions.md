@@ -3,6 +3,7 @@ layout: post
 title: "A Tour of Task, Part 2: AsyncState and CreationOptions"
 series: "A Tour of Task"
 seriesTitle: "AsyncState and CreationOptions"
+description: "An analysis of Task.AsyncState and Task.CreationOptions, and discussion of whether they should be used for asynchronous and/or parallel code."
 ---
 I skipped last week's blog post (since I was working on the site redesign), so today is a 2-for-1 deal! :)
 

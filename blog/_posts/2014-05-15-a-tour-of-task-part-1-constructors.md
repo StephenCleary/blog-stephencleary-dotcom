@@ -3,6 +3,7 @@ layout: post
 title: "A Tour of Task, Part 1: Constructors"
 series: "A Tour of Task"
 seriesTitle: "Constructors"
+description: "An analysis of Task constructors, and discussion of whether they should be used for asynchronous and/or parallel code."
 ---
 TL;DR: Do not use `Task` or `Task<T>` constructors.
 

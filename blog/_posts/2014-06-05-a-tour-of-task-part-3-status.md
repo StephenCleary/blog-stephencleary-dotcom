@@ -3,6 +3,7 @@ layout: post
 title: "A Tour of Task, Part 3: Status"
 series: "A Tour of Task"
 seriesTitle: "Status"
+description: "An analysis of Task.Status, Task.IsCompleted, Task.IsCanceled, and Task.IsFaulted; and discussion of whether they should be used for asynchronous and/or parallel code."
 ---
 ## Status
 
