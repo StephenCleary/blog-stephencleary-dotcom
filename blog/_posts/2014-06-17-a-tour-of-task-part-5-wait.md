@@ -3,7 +3,11 @@ layout: post
 title: "A Tour of Task, Part 5: Waiting"
 series: "A Tour of Task"
 seriesTitle: "Waiting"
+description: "An analysis of Task.Wait, Task.WaitAll, Task.WaitAny, and Task.AsyncWaitHandle; and discussion of whether they should be used for asynchronous and/or parallel code."
 ---
+
+Today, we'll look at a variety of ways that code can block on a task.
+
 ## Wait
 
 There are five overloads of `Wait`:
