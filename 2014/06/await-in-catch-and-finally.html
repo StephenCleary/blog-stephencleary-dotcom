@@ -3,10 +3,10 @@
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>A Tour of Task, Part 4: Id</title>
+    <title>Await in Catch and Finally</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="An analysis of Task.Id and Task.CurrentId, and discussion of whether they should be used for asynchronous and/or parallel code." />
-    <link rel="canonical" href="http://blog.stephencleary.com/2014/06/a-tour-of-task-part-4-id.html" />
+    <meta name="description" content="Visual Studio 14 will probably support await in catch and finally blocks." />
+    <link rel="canonical" href="http://blog.stephencleary.com/2014/06/await-in-catch-and-finally.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -74,88 +74,68 @@
 
   <header>
       <div class="page-header">
-          <h1>A Tour of Task, Part 4: Id</h1>
-          <small><time datetime="2014-06-12">Jun 12, 2014</time> &bull; <a data-disqus-identifier="/2014/06/a-tour-of-task-part-4-id" href="#disqus_thread">Comments</a></small>
+          <h1>Await in Catch and Finally</h1>
+          <small><time datetime="2014-06-14">Jun 14, 2014</time> &bull; <a data-disqus-identifier="/2014/06/await-in-catch-and-finally" href="#disqus_thread">Comments</a></small>
       </div>
   </header>
 
   <article>
-  <h2 id="id">Id</h2>
+  <p>This is just a brief note to publicize a coming improvement to the <code>async</code> language support.</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="kt">int</span> <span class="n">Id</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></div>
-
-<p>I’ve talked a bit about <a href="/2013/03/a-few-words-on-taskid-and.html">task identifiers before</a>, so I’ll just cover the high points here.</p>
-
-<p>First, in spite of what the documentation says, the identifiers are not actually <em>unique</em>. They are pretty close, but not actually unique. The identifiers are generated on-demand, and will never be zero.</p>
-
-<p>The task identifiers are useful if you’re <a href="http://msdn.microsoft.com/en-us/library/ee517329.aspx">reading the ETW events</a> or <a href="http://msdn.microsoft.com/en-us/library/dd998369.aspx">debugging with the Tasks window</a>, but they don’t really have a use case outside of diagnostics and debugging.</p>
-
-<p>Sometimes developers try to use the task identifiers as keys in a collection, to associate “extra data” with a task. This is an incorrect approach; usually what they’re looking for is an <a href="/2013/04/implicit-async-context-asynclocal.html"><code>async</code> local</a>.</p>
-
-<h2 id="currentid">CurrentId</h2>
-
-<div class="highlight"><pre><code class="csharp"><span class="k">static</span> <span class="kt">int?</span> <span class="n">CurrentId</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></div>
-
-<p>The <code>CurrentId</code> property returns the identifier of the currently-executing task, or <code>null</code> if no task is executing. The key word here is <em>executing</em> - <code>CurrentId</code> only works for Delegate Tasks, not Promise Tasks.</p>
-
-<p>In particular, the task returned by an <code>async</code> method is a Promise Task; it <em>logically</em> represents the <code>async</code> method, but it is not a Delegate Task, and does not actually have the asynchronous code as its delegate. <code>CurrentId</code> may or may not be <code>null</code> within an <code>async</code> method, depending on the implementation details of the underlying <code>SynchronizationContext</code> or <code>TaskScheduler</code>.</p>
+<p>Visual Studio “14” <a href="http://blogs.msdn.com/b/somasegar/archive/2014/06/03/first-preview-of-visual-studio-quot-14-quot-available-now.aspx">is currently in CTP</a>, and is <a href="http://www.visualstudio.com/en-us/downloads/visual-studio-14-ctp-vs">available for download</a>. One of the primary advantages of this release is the new Roslyn-based compilers.</p>
 
 <div class="alert alert-info">
   <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
 
-  <p>For more information, including sample code, see my <a href="/2013/03/taskcurrentid-in-async-methods.html" class="alert-link">post on <code>CurrentId</code> in <code>async</code> methods</a>.</p>
+  <p>Note that the “14” in the name is the version number, not the year of release. In other words, the CTP is for “Visual Studio 14”, <em>not</em> “Visual Studio 2014”. If I had to guess, I would say that this CTP will probably become “Visual Studio 2015”.</p>
 </div>
 
-<p>In parallel code, it is <em>possible</em> to use the current task identifier as a key into a collection to store task-local values or results, but that is a poor approach IMO. It’s usually far better to use the PLINQ/<code>Parallel</code> built-in local value and result aggregation support.</p>
+<p>With the new compilers, changes to the C# language (e.g., <code>async</code>/<code>await</code>) are easier than they used to be. One improvement that is coming is the use of <code>await</code> in <code>catch</code> and <code>finally</code> blocks. This enables your error-handling/cleanup code to be asynchronous without awkward code mangling.</p>
 
-<h2 id="conclusion">Conclusion</h2>
+<p>For example, let’s say that you want to (asynchronously) log an exception in one of your <code>async</code> methods. The natural way to write this is:</p>
 
-<p>The running total of useful members is still looking pretty bleak:</p>
+<div class="highlight"><pre><code class="csharp"><span class="k">try</span>
+<span class="p">{</span>
+  <span class="k">await</span> <span class="nf">OperationThatMayThrowAsync</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="k">catch</span> <span class="p">(</span><span class="n">ExpectedException</span> <span class="n">ex</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">await</span> <span class="n">MyLogger</span><span class="p">.</span><span class="n">LogAsync</span><span class="p">(</span><span class="n">ex</span><span class="p">);</span>
+<span class="p">}</span></code></pre></div>
 
-<div class="panel panel-default">
+<p>And this natural code works fine in Visual Studio “14”. However, the currently-released Visual Studio 2013 does not support <code>await</code> in a <code>catch</code>, so you would have to keep some kind of “error flag” and move the actual error handling logic outside the <code>catch</code> block:</p>
 
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Actual Members</th>
-        <th>Logical Members</th>
-        <th>Useful for async</th>
-        <th>Useful for parallel</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><code>Task</code></td>
-        <td>16</td>
-        <td>9</td>
-        <td>0</td>
-        <td>0</td>
-      </tr>
-      <tr>
-        <td><code>Task&lt;T&gt;</code></td>
-        <td>16</td>
-        <td>9</td>
-        <td>0</td>
-        <td>0</td>
-      </tr>
-    </tbody>
-  </table>
+<div class="highlight"><pre><code class="csharp"><span class="n">ExpectedException</span> <span class="n">exception</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+<span class="k">try</span>
+<span class="p">{</span>
+  <span class="k">await</span> <span class="nf">OperationThatMayThrowAsync</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="k">catch</span> <span class="p">(</span><span class="n">ExpectedException</span> <span class="n">ex</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">exception</span> <span class="p">=</span> <span class="n">ex</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">exception</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+  <span class="k">await</span> <span class="n">MyLogger</span><span class="p">.</span><span class="n">LogAsync</span><span class="p">(</span><span class="n">exception</span><span class="p">);</span></code></pre></div>
 
+<p>This is only a simple example; in real-world code, this can get ugly rather quickly!</p>
+
+<p>Fortunately, it looks like the next version of Visual Studio will fix this by allowing <code>await</code> within <code>catch</code> and <code>finally</code> blocks. I’ve tested this out with the Visual Studio “14” CTP, and it does work!</p>
+
+<div class="alert alert-danger">
+  <p><i class="fa fa-exclamation-triangle fa-2x pull-left"></i></p>
+
+  <p>This blog post is describing technology currently in preview (CTP). The final product may be different.</p>
 </div>
 
   </article>
     
     <footer>
         
-            <ul class="pager">
-                <li class="previous"><a href="/2014/06/a-tour-of-task-part-3-status.html" title="A Tour of Task, Part 3: Status">&larr; Previous in A Tour of Task</a></li>
-            </ul>
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2014/06/fire-and-forget-on-asp-net.html" title="Fire and Forget on ASP.NET">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2014/06/await-in-catch-and-finally.html" title="Await in Catch and Finally">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2014/06/a-tour-of-task-part-4-id.html" title="A Tour of Task, Part 4: Id">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="disqus_thread"></div>
@@ -166,18 +146,6 @@
         </div>
         <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
             
-                <div class="panel panel-primary">
-                    <div class="panel-heading">A Tour of Task</div>
-                    <div class="panel-body sidenav">
-                        <ul class="nav nav-pills nav-stacked">
-                                            <li class="sidenavitem"><a href="/2014/04/a-tour-of-task-part-0-overview.html">Overview</a></li>
-                                            <li class="sidenavitem"><a href="/2014/05/a-tour-of-task-part-1-constructors.html">Constructors</a></li>
-                                            <li class="sidenavitem"><a href="/2014/05/a-tour-of-task-part-2-asyncstate-and-creationoptions.html">AsyncState and CreationOptions</a></li>
-                                            <li class="sidenavitem"><a href="/2014/06/a-tour-of-task-part-3-status.html">Status</a></li>
-                                            <li class="active sidenavitem"><a href="/2014/06/a-tour-of-task-part-4-id.html">Id</a></li>
-                        </ul>
-                    </div>
-                </div>
             
         </div>
         <div class="col-sm-2 col-md-3 sidebar">
@@ -267,17 +235,6 @@
 
 <!-- Scroll the sidebar into view (if necessary) -->
 
-<script src="/lib/jquery.scrollTo.min.js"></script>
-<script type="text/javascript">
-    (function ($) {
-        $(function () {
-            var container = $('.affix').filter(function() { return $(this).css('position') == 'fixed'; });
-            var target = container.find('.active');
-            container.scrollTo(target, { offset: - (container.height() / 2 - target.height() / 2) });
-        });
-    })(window.jQuery);
-</script>
-
 
 <!-- Google analytics -->
 <script type="text/javascript">
@@ -324,9 +281,9 @@
 <script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
 <script type="text/javascript">
     var disqus_loaded = false;
-    var disqus_identifier = "/2014/06/a-tour-of-task-part-4-id";
-    var disqus_title = "A Tour of Task, Part 4: Id";
-    var disqus_url = "http://blog.stephencleary.com/2014/06/a-tour-of-task-part-4-id.html";
+    var disqus_identifier = "/2014/06/await-in-catch-and-finally";
+    var disqus_title = "Await in Catch and Finally";
+    var disqus_url = "http://blog.stephencleary.com/2014/06/await-in-catch-and-finally.html";
     (function($) {
         $(function() {
             $('.pager').waypoint({

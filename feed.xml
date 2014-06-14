@@ -7,6 +7,60 @@
     <atom:link href="http://blog.stephencleary.com/feed.xml" rel="self" type="application/rss+xml" />
     
       <item>
+        <title>Await in Catch and Finally</title>
+        <description>&lt;p&gt;This is just a brief note to publicize a coming improvement to the &lt;code&gt;async&lt;/code&gt; language support.&lt;/p&gt;
+
+&lt;p&gt;Visual Studio “14” &lt;a href=&quot;http://blogs.msdn.com/b/somasegar/archive/2014/06/03/first-preview-of-visual-studio-quot-14-quot-available-now.aspx&quot;&gt;is currently in CTP&lt;/a&gt;, and is &lt;a href=&quot;http://www.visualstudio.com/en-us/downloads/visual-studio-14-ctp-vs&quot;&gt;available for download&lt;/a&gt;. One of the primary advantages of this release is the new Roslyn-based compilers.&lt;/p&gt;
+
+&lt;div class=&quot;alert alert-info&quot;&gt;
+  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
+
+  &lt;p&gt;Note that the “14” in the name is the version number, not the year of release. In other words, the CTP is for “Visual Studio 14”, &lt;em&gt;not&lt;/em&gt; “Visual Studio 2014”. If I had to guess, I would say that this CTP will probably become “Visual Studio 2015”.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;p&gt;With the new compilers, changes to the C# language (e.g., &lt;code&gt;async&lt;/code&gt;/&lt;code&gt;await&lt;/code&gt;) are easier than they used to be. One improvement that is coming is the use of &lt;code&gt;await&lt;/code&gt; in &lt;code&gt;catch&lt;/code&gt; and &lt;code&gt;finally&lt;/code&gt; blocks. This enables your error-handling/cleanup code to be asynchronous without awkward code mangling.&lt;/p&gt;
+
+&lt;p&gt;For example, let’s say that you want to (asynchronously) log an exception in one of your &lt;code&gt;async&lt;/code&gt; methods. The natural way to write this is:&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;OperationThatMayThrowAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExpectedException&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MyLogger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;LogAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;And this natural code works fine in Visual Studio “14”. However, the currently-released Visual Studio 2013 does not support &lt;code&gt;await&lt;/code&gt; in a &lt;code&gt;catch&lt;/code&gt;, so you would have to keep some kind of “error flag” and move the actual error handling logic outside the &lt;code&gt;catch&lt;/code&gt; block:&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;ExpectedException&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;exception&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;OperationThatMayThrowAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExpectedException&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;exception&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;exception&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MyLogger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;LogAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;exception&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;This is only a simple example; in real-world code, this can get ugly rather quickly!&lt;/p&gt;
+
+&lt;p&gt;Fortunately, it looks like the next version of Visual Studio will fix this by allowing &lt;code&gt;await&lt;/code&gt; within &lt;code&gt;catch&lt;/code&gt; and &lt;code&gt;finally&lt;/code&gt; blocks. I’ve tested this out with the Visual Studio “14” CTP, and it does work!&lt;/p&gt;
+
+&lt;div class=&quot;alert alert-danger&quot;&gt;
+  &lt;p&gt;&lt;i class=&quot;fa fa-exclamation-triangle fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
+
+  &lt;p&gt;This blog post is describing technology currently in preview (CTP). The final product may be different.&lt;/p&gt;
+&lt;/div&gt;
+</description>
+        <pubDate>Sat, 14 Jun 2014 00:00:00 -0400</pubDate>
+        <link>http://blog.stephencleary.com/2014/06/await-in-catch-and-finally.html</link>
+        <guid isPermaLink="true">http://blog.stephencleary.com/2014/06/await-in-catch-and-finally.html</guid>
+      </item>
+    
+      <item>
         <title>A Tour of Task, Part 4: Id</title>
         <description>&lt;h2 id=&quot;id&quot;&gt;Id&lt;/h2&gt;
 
@@ -591,22 +645,6 @@
         <pubDate>Thu, 24 Apr 2014 00:00:00 -0400</pubDate>
         <link>http://blog.stephencleary.com/2014/04/a-tour-of-task-part-0-overview.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2014/04/a-tour-of-task-part-0-overview.html</guid>
-      </item>
-    
-      <item>
-        <title>Announcement: Book</title>
-        <description>&lt;p&gt;I am very pleased to announce that I have finished writing a &lt;strong&gt;book!&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;The title is quite a mouthful: &lt;a href=&quot;http://tinyurl.com/ConcurrencyCookbook&quot;&gt;Concurrency in C# Cookbook: Asynchronous, Parallel, and Multithreaded Programming&lt;/a&gt;. The goal of this book is to introduce developers to asynchronous, parallel, and reactive code in a way that is helpful and down-to-earth.&lt;/p&gt;
-
-&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;http://tinyurl.com/ConcurrencyCookbook&quot;&gt;&lt;img src=&quot;/assets/Book.jpg&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;I have to say that writing this book took a lot more time than I originally thought! I should be able to resume a more normal pace of blogging shortly. :)&lt;/p&gt;
-
-</description>
-        <pubDate>Thu, 17 Apr 2014 00:00:00 -0400</pubDate>
-        <link>http://blog.stephencleary.com/2014/04/announcement-book.html</link>
-        <guid isPermaLink="true">http://blog.stephencleary.com/2014/04/announcement-book.html</guid>
       </item>
     
   </channel>
