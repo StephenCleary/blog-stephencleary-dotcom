@@ -24,25 +24,27 @@ You should use GeneralThreadAffineContext unless you absolutely need another one
 
 Then, take each unit test and re-write it so that it has a context:
 
-    [TestMethod]
-    public void FourDividedByTwoIsTwo()
+{% highlight csharp %}
+[TestMethod]
+public void FourDividedByTwoIsTwo()
+{
+    GeneralThreadAffineContext.Run(async () =>
     {
-    &nbsp; GeneralThreadAffineContext.Run(async () =>
-    &nbsp; {
-    &nbsp; &nbsp; int result = await MyClass.Divide(4, 2);
-    &nbsp; &nbsp; Assert.AreEqual(2, result);
-    &nbsp; });
-    }
+    int result = await MyClass.Divide(4, 2);
+    Assert.AreEqual(2, result);
+    });
+}
     
-    [TestMethod]
-    [ExpectedException(typeof(DivideByZeroException))]
-    public void DenominatorIsZeroThrowsDivideByZero()
+[TestMethod]
+[ExpectedException(typeof(DivideByZeroException))]
+public void DenominatorIsZeroThrowsDivideByZero()
+{
+    GeneralThreadAffineContext.Run(async () =>
     {
-    &nbsp; GeneralThreadAffineContext.Run(async () =>
-    &nbsp; {
-    &nbsp; &nbsp; await MyClass.Divide(4, 0);
-    &nbsp; });
-    }
+    await MyClass.Divide(4, 0);
+    });
+}
+{% endhighlight %}
 
 Our unit test methods are not async. Each one sets up an async context and passes the _actual_ test into it as an async lambda expression. So, the _actual_ test code can still be written with all the benefits of async/await, and the async context takes care of making sure it runs as expected:
 
@@ -50,15 +52,17 @@ Our unit test methods are not async. Each one sets up an async context and passe
 
 Just as importantly, the async context ensures that tests that _should_ fail, _will_ fail:
 
-    [TestMethod]
-    public void FourDividedByTwoIsThirteen_ShouldFail()
+{% highlight csharp %}
+[TestMethod]
+public void FourDividedByTwoIsThirteen_ShouldFail()
+{
+    GeneralThreadAffineContext.Run(async () =>
     {
-    &nbsp; GeneralThreadAffineContext.Run(async () =>
-    &nbsp; {
-    &nbsp; &nbsp; int result = await MyClass.Divide(4, 2);
-    &nbsp; &nbsp; Assert.AreEqual(13, result);
-    &nbsp; });
-    }
+    int result = await MyClass.Divide(4, 2);
+    Assert.AreEqual(13, result);
+    });
+}
+{% endhighlight %}
 
 ![]({{ site_url }}/assets/AsyncUnitTests9.png)  
 
@@ -80,19 +84,21 @@ Sweet.
 
 Now you can write async unit tests (using async void):
 
-    [TestMethod]
-    public async void FourDividedByTwoIsTwoAsync()
-    {
-      int result = await MyClass.Divide(4, 2);
-      Assert.AreEqual(2, result);
-    }
+{% highlight csharp %}
+[TestMethod]
+public async void FourDividedByTwoIsTwoAsync()
+{
+    int result = await MyClass.Divide(4, 2);
+    Assert.AreEqual(2, result);
+}
     
-    [TestMethod]
-    [ExpectedException(typeof(DivideByZeroException))]
-    public async void DenominatorIsZeroThrowsDivideByZeroAsync()
-    {
-      await MyClass.Divide(4, 0);
-    }
+[TestMethod]
+[ExpectedException(typeof(DivideByZeroException))]
+public async void DenominatorIsZeroThrowsDivideByZeroAsync()
+{
+    await MyClass.Divide(4, 0);
+}
+{% endhighlight %}
 
 And it works:
 
@@ -100,12 +106,14 @@ And it works:
 
 And test failures actually fail:
 
-    [TestMethod]
-    public async void FourDividedByTwoIsThirteenAsync_ShouldFail()
-    {
-      int result = await MyClass.Divide(4, 2);
-      Assert.AreEqual(13, result);
-    }
+{% highlight csharp %}
+[TestMethod]
+public async void FourDividedByTwoIsThirteenAsync_ShouldFail()
+{
+    int result = await MyClass.Divide(4, 2);
+    Assert.AreEqual(13, result);
+}
+{% endhighlight %}
 
 ![]({{ site_url }}/assets/AsyncUnitTests11.png)  
 
