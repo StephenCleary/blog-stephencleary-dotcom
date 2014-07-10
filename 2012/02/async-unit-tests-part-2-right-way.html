@@ -102,26 +102,25 @@
 
 <p>Then, take each unit test and re-write it so that it has a context:</p>
 
-<pre><code>[TestMethod]
-public void FourDividedByTwoIsTwo()
-{
-&amp;nbsp; GeneralThreadAffineContext.Run(async () =&gt;
-&amp;nbsp; {
-&amp;nbsp; &amp;nbsp; int result = await MyClass.Divide(4, 2);
-&amp;nbsp; &amp;nbsp; Assert.AreEqual(2, result);
-&amp;nbsp; });
-}
-
-[TestMethod]
-[ExpectedException(typeof(DivideByZeroException))]
-public void DenominatorIsZeroThrowsDivideByZero()
-{
-&amp;nbsp; GeneralThreadAffineContext.Run(async () =&gt;
-&amp;nbsp; {
-&amp;nbsp; &amp;nbsp; await MyClass.Divide(4, 0);
-&amp;nbsp; });
-}
-</code></pre>
+<div class="highlight"><pre><code class="csharp"><span class="na">[TestMethod]</span>
+<span class="k">public</span> <span class="k">void</span> <span class="nf">FourDividedByTwoIsTwo</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">GeneralThreadAffineContext</span><span class="p">.</span><span class="n">Run</span><span class="p">(</span><span class="k">async</span> <span class="p">()</span> <span class="p">=&gt;</span>
+    <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">MyClass</span><span class="p">.</span><span class="n">Divide</span><span class="p">(</span><span class="m">4</span><span class="p">,</span> <span class="m">2</span><span class="p">);</span>
+    <span class="n">Assert</span><span class="p">.</span><span class="n">AreEqual</span><span class="p">(</span><span class="m">2</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
+    <span class="p">});</span>
+<span class="p">}</span>
+<span class="na">    </span>
+<span class="na">[TestMethod]</span>
+<span class="na">[ExpectedException(typeof(DivideByZeroException))]</span>
+<span class="k">public</span> <span class="k">void</span> <span class="nf">DenominatorIsZeroThrowsDivideByZero</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">GeneralThreadAffineContext</span><span class="p">.</span><span class="n">Run</span><span class="p">(</span><span class="k">async</span> <span class="p">()</span> <span class="p">=&gt;</span>
+    <span class="p">{</span>
+    <span class="k">await</span> <span class="n">MyClass</span><span class="p">.</span><span class="n">Divide</span><span class="p">(</span><span class="m">4</span><span class="p">,</span> <span class="m">0</span><span class="p">);</span>
+    <span class="p">});</span>
+<span class="p">}</span></code></pre></div>
 
 <p>Our unit test methods are not async. Each one sets up an async context and passes the <em>actual</em> test into it as an async lambda expression. So, the <em>actual</em> test code can still be written with all the benefits of async/await, and the async context takes care of making sure it runs as expected:</p>
 
@@ -129,16 +128,15 @@ public void DenominatorIsZeroThrowsDivideByZero()
 
 <p>Just as importantly, the async context ensures that tests that <em>should</em> fail, <em>will</em> fail:</p>
 
-<pre><code>[TestMethod]
-public void FourDividedByTwoIsThirteen_ShouldFail()
-{
-&amp;nbsp; GeneralThreadAffineContext.Run(async () =&gt;
-&amp;nbsp; {
-&amp;nbsp; &amp;nbsp; int result = await MyClass.Divide(4, 2);
-&amp;nbsp; &amp;nbsp; Assert.AreEqual(13, result);
-&amp;nbsp; });
-}
-</code></pre>
+<div class="highlight"><pre><code class="csharp"><span class="na">[TestMethod]</span>
+<span class="k">public</span> <span class="k">void</span> <span class="nf">FourDividedByTwoIsThirteen_ShouldFail</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">GeneralThreadAffineContext</span><span class="p">.</span><span class="n">Run</span><span class="p">(</span><span class="k">async</span> <span class="p">()</span> <span class="p">=&gt;</span>
+    <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">MyClass</span><span class="p">.</span><span class="n">Divide</span><span class="p">(</span><span class="m">4</span><span class="p">,</span> <span class="m">2</span><span class="p">);</span>
+    <span class="n">Assert</span><span class="p">.</span><span class="n">AreEqual</span><span class="p">(</span><span class="m">13</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
+    <span class="p">});</span>
+<span class="p">}</span></code></pre></div>
 
 <p><img src="/assets/AsyncUnitTests9.png" alt="" />  </p>
 
@@ -162,20 +160,19 @@ public void FourDividedByTwoIsThirteen_ShouldFail()
 
 <p>Now you can write async unit tests (using async void):</p>
 
-<pre><code>[TestMethod]
-public async void FourDividedByTwoIsTwoAsync()
-{
-  int result = await MyClass.Divide(4, 2);
-  Assert.AreEqual(2, result);
-}
-
-[TestMethod]
-[ExpectedException(typeof(DivideByZeroException))]
-public async void DenominatorIsZeroThrowsDivideByZeroAsync()
-{
-  await MyClass.Divide(4, 0);
-}
-</code></pre>
+<div class="highlight"><pre><code class="csharp"><span class="na">[TestMethod]</span>
+<span class="k">public</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">FourDividedByTwoIsTwoAsync</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">MyClass</span><span class="p">.</span><span class="n">Divide</span><span class="p">(</span><span class="m">4</span><span class="p">,</span> <span class="m">2</span><span class="p">);</span>
+    <span class="n">Assert</span><span class="p">.</span><span class="n">AreEqual</span><span class="p">(</span><span class="m">2</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="na">    </span>
+<span class="na">[TestMethod]</span>
+<span class="na">[ExpectedException(typeof(DivideByZeroException))]</span>
+<span class="k">public</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">DenominatorIsZeroThrowsDivideByZeroAsync</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="k">await</span> <span class="n">MyClass</span><span class="p">.</span><span class="n">Divide</span><span class="p">(</span><span class="m">4</span><span class="p">,</span> <span class="m">0</span><span class="p">);</span>
+<span class="p">}</span></code></pre></div>
 
 <p>And it works:</p>
 
@@ -183,13 +180,12 @@ public async void DenominatorIsZeroThrowsDivideByZeroAsync()
 
 <p>And test failures actually fail:</p>
 
-<pre><code>[TestMethod]
-public async void FourDividedByTwoIsThirteenAsync_ShouldFail()
-{
-  int result = await MyClass.Divide(4, 2);
-  Assert.AreEqual(13, result);
-}
-</code></pre>
+<div class="highlight"><pre><code class="csharp"><span class="na">[TestMethod]</span>
+<span class="k">public</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">FourDividedByTwoIsThirteenAsync_ShouldFail</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">MyClass</span><span class="p">.</span><span class="n">Divide</span><span class="p">(</span><span class="m">4</span><span class="p">,</span> <span class="m">2</span><span class="p">);</span>
+    <span class="n">Assert</span><span class="p">.</span><span class="n">AreEqual</span><span class="p">(</span><span class="m">13</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
+<span class="p">}</span></code></pre></div>
 
 <p><img src="/assets/AsyncUnitTests11.png" alt="" />  </p>
 
