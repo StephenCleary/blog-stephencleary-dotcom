@@ -30,8 +30,8 @@ public void FourDividedByTwoIsTwo()
 {
     GeneralThreadAffineContext.Run(async () =>
     {
-    int result = await MyClass.Divide(4, 2);
-    Assert.AreEqual(2, result);
+        int result = await MyClass.Divide(4, 2);
+        Assert.AreEqual(2, result);
     });
 }
     
@@ -41,7 +41,7 @@ public void DenominatorIsZeroThrowsDivideByZero()
 {
     GeneralThreadAffineContext.Run(async () =>
     {
-    await MyClass.Divide(4, 0);
+        await MyClass.Divide(4, 0);
     });
 }
 {% endhighlight %}
@@ -58,8 +58,8 @@ public void FourDividedByTwoIsThirteen_ShouldFail()
 {
     GeneralThreadAffineContext.Run(async () =>
     {
-    int result = await MyClass.Divide(4, 2);
-    Assert.AreEqual(13, result);
+        int result = await MyClass.Divide(4, 2);
+        Assert.AreEqual(13, result);
     });
 }
 {% endhighlight %}
