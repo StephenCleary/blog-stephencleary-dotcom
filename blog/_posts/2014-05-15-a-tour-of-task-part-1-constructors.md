@@ -82,15 +82,3 @@ If you're writing parallel code, first try to use [Parallel](http://msdn.microso
 ## Conclusion
 
 Sorry that the first post just boiled down to "don't use this", but it is what it is. I'll cover all the constructor arguments such as `CancellationToken` later when I cover `Task.Factory.StartNew`.
-
-I think it would be fun to keep a running total of useful members, so here's the results from today's post:
-
-<div class="panel panel-default" markdown="1">
-
-{:.table .table-striped}
-|Type|Actual Members|Logical Members|Useful for async|Useful for parallel|
-|-
-|`Task`|8|1|0|0|
-|`Task<T>`|8|1|0|0|
-
-</div>

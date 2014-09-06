@@ -48,14 +48,4 @@ However, there's almost no reason to _read_ the task creation options once the t
 
 ## Conclusion
 
-The running total of useful members:
-
-<div class="panel panel-default" markdown="1">
-
-{:.table .table-striped}
-|Type|Actual Members|Logical Members|Useful for async|Useful for parallel|
-|-
-|`Task`|10|3|0|0|
-|`Task<T>`|10|3|0|0|
-
-</div>
+Once again none of these members are actually useful in real-world code.

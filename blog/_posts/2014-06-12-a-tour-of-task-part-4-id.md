@@ -36,17 +36,3 @@ For more information, including sample code, see my [post on `CurrentId` in `asy
 </div>
 
 In parallel code, it is _possible_ to use the current task identifier as a key into a collection to store task-local values or results, but that is a poor approach IMO. It's usually far better to use the PLINQ/`Parallel` built-in local value and result aggregation support.
-
-## Conclusion
-
-The running total of useful members is still looking pretty bleak:
-
-<div class="panel panel-default" markdown="1">
-
-{:.table .table-striped}
-|Type|Actual Members|Logical Members|Useful for async|Useful for parallel|
-|-
-|`Task`|16|9|0|0|
-|`Task<T>`|16|9|0|0|
-
-</div>

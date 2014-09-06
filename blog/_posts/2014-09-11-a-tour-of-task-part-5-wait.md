@@ -39,15 +39,3 @@ void Wait(int, CancellationToken);
 
 
 ## Conclusion
-
-The running total of useful members is still looking pretty bleak:
-
-<div class="panel panel-default" markdown="1">
-
-{:.table .table-striped}
-|Type|Actual Members|Logical Members|Useful for async|Useful for parallel|
-|-
-|`Task`|16|9|0|0|
-|`Task<T>`|16|9|0|0|
-
-</div>

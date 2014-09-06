@@ -94,15 +94,3 @@ bool IsFaulted { get; }
 ## Conclusion
 
 As interesting as these state properties all are, they are hardly ever actually _used_ (except for debugging). Both asynchronous and parallel code do not normally use `Status` or the three convenience properties; instead, the normal usage is to wait for the tasks to complete and extract the results.
-
-The running total of useful members:
-
-<div class="panel panel-default" markdown="1">
-
-{:.table .table-striped}
-|Type|Actual Members|Logical Members|Useful for async|Useful for parallel|
-|-
-|`Task`|14|7|0|0|
-|`Task<T>`|14|7|0|0|
-
-</div>

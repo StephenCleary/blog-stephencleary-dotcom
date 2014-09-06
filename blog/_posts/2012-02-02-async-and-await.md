@@ -24,7 +24,7 @@ public async Task DoSomethingAsync()
 }
 {% endhighlight %}
 
-The "async" keyword enables the "await" keyword in that method. _That's all the async keyword does!_ It does not run this method on a thread pool thread, or do any other kind of magic. The async keyword _only_ enables the await keyword.
+The "async" keyword enables the "await" keyword in that method and changes how method results are handled. _That's all the async keyword does!_ It does not run this method on a thread pool thread, or do any other kind of magic. The async keyword _only_ enables the await keyword (and manages the method results).
 
 The beginning of an async method is executed just like any other method. That is, it runs synchronously until it hits an "await" (or throws an exception).
 
