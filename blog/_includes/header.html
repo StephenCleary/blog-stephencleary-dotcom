@@ -1,35 +1,22 @@
 <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
-    <div class="container-fluid">
-        <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
-            <ul class="nav navbar-nav navbar-left">
-                <li {% if page.id == 'index' and site.url == site.url_www %} class="active" {% endif %} ><a class="navbar-brand" href="{{ site.url_www }}">Stephen Cleary</a></li>
-            </ul>
-        </div>
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <div class="navbar-brand-container{% if page.id == 'index' and site.url == site.url_www %} active{% endif %}"><a class="navbar-brand" href="{{ site.url_www }}">Stephen Cleary</a></div>
+    </div>
 
-        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-            <ul class="nav navbar-nav navbar-left">
-                <li {% if site.url == site.url_blog %} class="active" {% endif %} ><a href="{{ site.url_blog }}">Blog</a></li>
-                <li {% if page.id == 'projects' %} class="active" {% endif %} ><a href="{{ '/projects/' | prepend: site.url_www }}">Projects</a></li>
-                <li {% if page.id == 'publications' %} class="active" {% endif %} ><a href="{{ '/publications/' | prepend: site.url_www }}">Publications</a></li>
-                <li {% if page.id == 'contact' %} class="active" {% endif %} ><a href="{{ '/contact/' | prepend: site.url_www }}">Contact</a></li>
-                {% if site.url == site.url_blog %}
-                <li><a href="{{ site.feed }}"><i class="fa fa-rss-square fa-lg"></i></a></li>
-                {% endif %}
-            </ul>
-                    
-            <ul class="nav navbar-nav navbar-right">
-                <li>
-                    <form class="navbar-form google google-searchbox" role="search">
-                        <gcse:searchbox></gcse:searchbox>
-                    </form>
-                </li>
-            </ul>
-        </div>
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+        <ul class="nav navbar-nav">
+            <li {% if site.url == site.url_blog %} class="active" {% endif %} ><a href="{{ site.url_blog }}">Blog</a></li>
+            <li {% if page.id == 'projects' %} class="active" {% endif %} ><a href="{{ '/projects/' | prepend: site.url_www }}">Projects</a></li>
+            <li {% if page.id == 'publications' %} class="active" {% endif %} ><a href="{{ '/publications/' | prepend: site.url_www }}">Publications</a></li>
+            <li {% if page.id == 'contact' %} class="active" {% endif %} ><a href="{{ '/contact/' | prepend: site.url_www }}">Contact</a></li>
+            <li><a href="{{ site.feed }}"><i class="fa fa-rss-square fa-lg"></i></a></li>
+            <li {% if page.id == 'search' %} class="active" {% endif %} ><a href="{{ '/search/' | prepend: site.url_www }}"><i class="fa fa-search"></i></a></li>
+        </ul>
     </div>
 </nav>

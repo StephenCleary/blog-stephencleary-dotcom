@@ -9,8 +9,8 @@ To use:
 
 To serve locally (with future posts):
 > D:\Programs\PortableJekyll\setpath.ps1
-> .\_serve.ps1
+> .\serve.ps1
 
 To build:
 > D:\Programs\PortableJekyll\setpath.ps1
-> .\_build.ps1
+> .\build.ps1
