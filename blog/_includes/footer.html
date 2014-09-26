@@ -72,6 +72,7 @@
 
 {% if page.id == 'contact' %}
 
+<!-- Email obfuscation -->
 <script type="text/javascript">
     (function($) {
         $(function() {
@@ -87,42 +88,33 @@
 
 {% if site.url == site.url_blog %}{% unless site.local %}
 
-<!-- Disqus comment counter -->
+<!-- Disqus variables -->
 <script type="text/javascript">
     var disqus_shortname = 'stephencleary';
+    var disqus_identifier = "{{ page.id | escape }}";
+    var disqus_title = "{% if page.title %}{{ page.title | escape }}{% else %}{{ site.title | escape }}{% endif %}";
+    var disqus_url = "{{ page.url | replace:'index.html','' | prepend: site.baseurl | prepend: site.url }}";
+</script>
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
     (function () {
         var s = document.createElement('script'); s.async = true;
         s.type = 'text/javascript';
         s.src = '//' + disqus_shortname + '.disqus.com/count.js';
-        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(s);
     }());
 </script>
 
-<!-- Disqus comment section, lazy-loaded -->
-<script src="//cdnjs.cloudflare.com/ajax/libs/waypoints/2.0.4/waypoints.min.js"></script>
-<script>window.jQuery.fn.waypoint || document.write('<script src="/lib/waypoints.min.js"><\/script>')</script>
+<!-- Disqus comment section -->
 <script type="text/javascript">
-    var disqus_loaded = false;
-    var disqus_identifier = "{{ page.id | escape }}";
-    var disqus_title = "{% if page.title %}{{ page.title | escape }}{% else %}{{ site.title | escape }}{% endif %}";
-    var disqus_url = "{{ page.url | replace:'index.html','' | prepend: site.baseurl | prepend: site.url }}";
-    (function($) {
-        $(function() {
-            $('.pager').waypoint({
-                offset: 'bottom-in-view',
-                handler: function() {
-                    if (disqus_loaded)
-                        return;
-                    disqus_loaded = true;
-                    var dsq = document.createElement('script');
-                    dsq.type = 'text/javascript';
-                    dsq.async = true;
-                    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-                    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-                }
-            });
-        });
-    })(window.jQuery);
+    (function() {
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
 </script>
 
 {% endunless %}{% endif %}
