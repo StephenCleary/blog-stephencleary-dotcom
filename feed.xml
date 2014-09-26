@@ -89,42 +89,6 @@
 &lt;/div&gt;
 
 &lt;p&gt;In parallel code, it is &lt;em&gt;possible&lt;/em&gt; to use the current task identifier as a key into a collection to store task-local values or results, but that is a poor approach IMO. It’s usually far better to use the PLINQ/&lt;code&gt;Parallel&lt;/code&gt; built-in local value and result aggregation support.&lt;/p&gt;
-
-&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
-
-&lt;p&gt;The running total of useful members is still looking pretty bleak:&lt;/p&gt;
-
-&lt;div class=&quot;panel panel-default&quot;&gt;
-
-  &lt;table class=&quot;table table-striped&quot;&gt;
-    &lt;thead&gt;
-      &lt;tr&gt;
-        &lt;th&gt;Type&lt;/th&gt;
-        &lt;th&gt;Actual Members&lt;/th&gt;
-        &lt;th&gt;Logical Members&lt;/th&gt;
-        &lt;th&gt;Useful for async&lt;/th&gt;
-        &lt;th&gt;Useful for parallel&lt;/th&gt;
-      &lt;/tr&gt;
-    &lt;/thead&gt;
-    &lt;tbody&gt;
-      &lt;tr&gt;
-        &lt;td&gt;&lt;code&gt;Task&lt;/code&gt;&lt;/td&gt;
-        &lt;td&gt;16&lt;/td&gt;
-        &lt;td&gt;9&lt;/td&gt;
-        &lt;td&gt;0&lt;/td&gt;
-        &lt;td&gt;0&lt;/td&gt;
-      &lt;/tr&gt;
-      &lt;tr&gt;
-        &lt;td&gt;&lt;code&gt;Task&amp;lt;T&amp;gt;&lt;/code&gt;&lt;/td&gt;
-        &lt;td&gt;16&lt;/td&gt;
-        &lt;td&gt;9&lt;/td&gt;
-        &lt;td&gt;0&lt;/td&gt;
-        &lt;td&gt;0&lt;/td&gt;
-      &lt;/tr&gt;
-    &lt;/tbody&gt;
-  &lt;/table&gt;
-
-&lt;/div&gt;
 </description>
         <pubDate>Thu, 12 Jun 2014 00:00:00 -0400</pubDate>
         <link>http://blog.stephencleary.com/2014/06/a-tour-of-task-part-4-id.html</link>
@@ -319,40 +283,6 @@
 &lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
 
 &lt;p&gt;As interesting as these state properties all are, they are hardly ever actually &lt;em&gt;used&lt;/em&gt; (except for debugging). Both asynchronous and parallel code do not normally use &lt;code&gt;Status&lt;/code&gt; or the three convenience properties; instead, the normal usage is to wait for the tasks to complete and extract the results.&lt;/p&gt;
-
-&lt;p&gt;The running total of useful members:&lt;/p&gt;
-
-&lt;div class=&quot;panel panel-default&quot;&gt;
-
-  &lt;table class=&quot;table table-striped&quot;&gt;
-    &lt;thead&gt;
-      &lt;tr&gt;
-        &lt;th&gt;Type&lt;/th&gt;
-        &lt;th&gt;Actual Members&lt;/th&gt;
-        &lt;th&gt;Logical Members&lt;/th&gt;
-        &lt;th&gt;Useful for async&lt;/th&gt;
-        &lt;th&gt;Useful for parallel&lt;/th&gt;
-      &lt;/tr&gt;
-    &lt;/thead&gt;
-    &lt;tbody&gt;
-      &lt;tr&gt;
-        &lt;td&gt;&lt;code&gt;Task&lt;/code&gt;&lt;/td&gt;
-        &lt;td&gt;14&lt;/td&gt;
-        &lt;td&gt;7&lt;/td&gt;
-        &lt;td&gt;0&lt;/td&gt;
-        &lt;td&gt;0&lt;/td&gt;
-      &lt;/tr&gt;
-      &lt;tr&gt;
-        &lt;td&gt;&lt;code&gt;Task&amp;lt;T&amp;gt;&lt;/code&gt;&lt;/td&gt;
-        &lt;td&gt;14&lt;/td&gt;
-        &lt;td&gt;7&lt;/td&gt;
-        &lt;td&gt;0&lt;/td&gt;
-        &lt;td&gt;0&lt;/td&gt;
-      &lt;/tr&gt;
-    &lt;/tbody&gt;
-  &lt;/table&gt;
-
-&lt;/div&gt;
 </description>
         <pubDate>Thu, 05 Jun 2014 00:00:00 -0400</pubDate>
         <link>http://blog.stephencleary.com/2014/06/a-tour-of-task-part-3-status.html</link>
@@ -398,39 +328,7 @@
 
 &lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
 
-&lt;p&gt;The running total of useful members:&lt;/p&gt;
-
-&lt;div class=&quot;panel panel-default&quot;&gt;
-
-  &lt;table class=&quot;table table-striped&quot;&gt;
-    &lt;thead&gt;
-      &lt;tr&gt;
-        &lt;th&gt;Type&lt;/th&gt;
-        &lt;th&gt;Actual Members&lt;/th&gt;
-        &lt;th&gt;Logical Members&lt;/th&gt;
-        &lt;th&gt;Useful for async&lt;/th&gt;
-        &lt;th&gt;Useful for parallel&lt;/th&gt;
-      &lt;/tr&gt;
-    &lt;/thead&gt;
-    &lt;tbody&gt;
-      &lt;tr&gt;
-        &lt;td&gt;&lt;code&gt;Task&lt;/code&gt;&lt;/td&gt;
-        &lt;td&gt;10&lt;/td&gt;
-        &lt;td&gt;3&lt;/td&gt;
-        &lt;td&gt;0&lt;/td&gt;
-        &lt;td&gt;0&lt;/td&gt;
-      &lt;/tr&gt;
-      &lt;tr&gt;
-        &lt;td&gt;&lt;code&gt;Task&amp;lt;T&amp;gt;&lt;/code&gt;&lt;/td&gt;
-        &lt;td&gt;10&lt;/td&gt;
-        &lt;td&gt;3&lt;/td&gt;
-        &lt;td&gt;0&lt;/td&gt;
-        &lt;td&gt;0&lt;/td&gt;
-      &lt;/tr&gt;
-    &lt;/tbody&gt;
-  &lt;/table&gt;
-
-&lt;/div&gt;
+&lt;p&gt;Once again none of these members are actually useful in real-world code.&lt;/p&gt;
 </description>
         <pubDate>Thu, 29 May 2014 00:00:00 -0400</pubDate>
         <link>http://blog.stephencleary.com/2014/05/a-tour-of-task-part-2-asyncstate-and-creationoptions.html</link>
@@ -507,40 +405,6 @@
 &lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
 
 &lt;p&gt;Sorry that the first post just boiled down to “don’t use this”, but it is what it is. I’ll cover all the constructor arguments such as &lt;code&gt;CancellationToken&lt;/code&gt; later when I cover &lt;code&gt;Task.Factory.StartNew&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;I think it would be fun to keep a running total of useful members, so here’s the results from today’s post:&lt;/p&gt;
-
-&lt;div class=&quot;panel panel-default&quot;&gt;
-
-  &lt;table class=&quot;table table-striped&quot;&gt;
-    &lt;thead&gt;
-      &lt;tr&gt;
-        &lt;th&gt;Type&lt;/th&gt;
-        &lt;th&gt;Actual Members&lt;/th&gt;
-        &lt;th&gt;Logical Members&lt;/th&gt;
-        &lt;th&gt;Useful for async&lt;/th&gt;
-        &lt;th&gt;Useful for parallel&lt;/th&gt;
-      &lt;/tr&gt;
-    &lt;/thead&gt;
-    &lt;tbody&gt;
-      &lt;tr&gt;
-        &lt;td&gt;&lt;code&gt;Task&lt;/code&gt;&lt;/td&gt;
-        &lt;td&gt;8&lt;/td&gt;
-        &lt;td&gt;1&lt;/td&gt;
-        &lt;td&gt;0&lt;/td&gt;
-        &lt;td&gt;0&lt;/td&gt;
-      &lt;/tr&gt;
-      &lt;tr&gt;
-        &lt;td&gt;&lt;code&gt;Task&amp;lt;T&amp;gt;&lt;/code&gt;&lt;/td&gt;
-        &lt;td&gt;8&lt;/td&gt;
-        &lt;td&gt;1&lt;/td&gt;
-        &lt;td&gt;0&lt;/td&gt;
-        &lt;td&gt;0&lt;/td&gt;
-      &lt;/tr&gt;
-    &lt;/tbody&gt;
-  &lt;/table&gt;
-
-&lt;/div&gt;
 </description>
         <pubDate>Thu, 15 May 2014 00:00:00 -0400</pubDate>
         <link>http://blog.stephencleary.com/2014/05/a-tour-of-task-part-1-constructors.html</link>
