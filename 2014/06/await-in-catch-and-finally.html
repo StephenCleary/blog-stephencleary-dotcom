@@ -80,7 +80,7 @@
 
 <p>For example, let’s say that you want to (asynchronously) log an exception in one of your <code>async</code> methods. The natural way to write this is:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">try</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">try</span>
 <span class="p">{</span>
   <span class="k">await</span> <span class="nf">OperationThatMayThrowAsync</span><span class="p">();</span>
 <span class="p">}</span>
@@ -91,7 +91,7 @@
 
 <p>And this natural code works fine in Visual Studio “14”. However, the currently-released Visual Studio 2013 does not support <code>await</code> in a <code>catch</code>, so you would have to keep some kind of “error flag” and move the actual error handling logic outside the <code>catch</code> block:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="n">ExpectedException</span> <span class="n">exception</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">ExpectedException</span> <span class="n">exception</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
 <span class="k">try</span>
 <span class="p">{</span>
   <span class="k">await</span> <span class="nf">OperationThatMayThrowAsync</span><span class="p">();</span>

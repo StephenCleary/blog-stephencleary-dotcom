@@ -112,7 +112,7 @@
 
 <p>The following sample code takes an XElement and an Encoding, and translates the XML to a byte array (not including an XML prolog):</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="kt">byte</span><span class="p">[]</span> <span class="nf">ConvertXmlToByteArray</span><span class="p">(</span><span class="n">XElement</span> <span class="n">xml</span><span class="p">,</span> <span class="n">Encoding</span> <span class="n">encoding</span><span class="p">)</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="kt">byte</span><span class="p">[]</span> <span class="nf">ConvertXmlToByteArray</span><span class="p">(</span><span class="n">XElement</span> <span class="n">xml</span><span class="p">,</span> <span class="n">Encoding</span> <span class="n">encoding</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">using</span> <span class="p">(</span><span class="n">MemoryStream</span> <span class="n">stream</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MemoryStream</span><span class="p">())</span>
     <span class="p">{</span>
@@ -132,7 +132,7 @@
 
 <p>If the application protocol specification does not specify an encoding, then the XmlReader must be used. Incorrect XML prologs cannot be allowed. The following sample code allows any encoding:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="n">XElement</span> <span class="nf">ConvertByteArrayToXml</span><span class="p">(</span><span class="kt">byte</span><span class="p">[]</span> <span class="n">data</span><span class="p">)</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">XElement</span> <span class="nf">ConvertByteArrayToXml</span><span class="p">(</span><span class="kt">byte</span><span class="p">[]</span> <span class="n">data</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="c1">// Interpret the byte array allowing any encoding</span>
     <span class="n">XmlReaderSettings</span> <span class="n">settings</span> <span class="p">=</span> <span class="k">new</span> <span class="n">XmlReaderSettings</span><span class="p">();</span>
@@ -146,7 +146,7 @@
 
 <p>If the application protocol specification does specify a particular encoding, then using a StreamReader will allow incorrect XML prologs. The following sample code forces a specific encoding:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="n">XElement</span> <span class="nf">ConvertByteArrayToXml</span><span class="p">(</span><span class="kt">byte</span><span class="p">[]</span> <span class="n">data</span><span class="p">,</span> <span class="n">Encoding</span> <span class="n">encoding</span><span class="p">)</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">XElement</span> <span class="nf">ConvertByteArrayToXml</span><span class="p">(</span><span class="kt">byte</span><span class="p">[]</span> <span class="n">data</span><span class="p">,</span> <span class="n">Encoding</span> <span class="n">encoding</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="c1">// Interpret the byte array according to a specific encoding</span>
     <span class="k">using</span> <span class="p">(</span><span class="n">MemoryStream</span> <span class="n">stream</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MemoryStream</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>

@@ -84,7 +84,7 @@
 
 <p>The shell escaping and quoting appears to be a simple algorithm: escaped characters (including normal characters) are passed through directly, and each (non-escaped) double-quote either starts or ends a quoted string. Consider the outputs from this example program:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">Environment</span><span class="p">.</span><span class="n">CommandLine</span><span class="p">);</span>
 <span class="p">}</span></code></pre></div>
@@ -118,7 +118,7 @@ CommandLineParsingTest.exe "^^
 
 <p>Each non-escaped double-quote starts or ends a quoted string, just like command shell quoting. However, unlike command shell quoting, escaping is allowed within quoted strings. The .NET lexing also allows two consecutive double-quotes inside a quoted string to represent a single double-quote. Consider the outputs from this example program:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">arg</span> <span class="k">in</span> <span class="n">args</span><span class="p">)</span>
     <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">arg</span><span class="p">);</span>

@@ -79,7 +79,7 @@
 
 <p>The answer is to split off the “25 character string” type into its own structure (containing a single flattened string), and define a flattened array of those structures in the parent structure, as such:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="na">[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="na">[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]</span>
 <span class="k">public</span> <span class="k">struct</span> <span class="nc">MyStruct</span>
 <span class="p">{</span>
     <span class="k">public</span> <span class="k">void</span> <span class="nf">Init</span><span class="p">()</span>
@@ -147,7 +147,7 @@ __declspec(dllexport) void AddMultipleNames(const MyStruct* DSNames)
 
 <p>Then we can use the managed interop definitions above like this:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="na">[DllImport(&quot;ByValArrayOfStrings.dll&quot;, CharSet = CharSet.Ansi)]</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="na">[DllImport(&quot;ByValArrayOfStrings.dll&quot;, CharSet = CharSet.Ansi)]</span>
 <span class="k">static</span> <span class="k">extern</span> <span class="k">void</span> <span class="nf">AddMultipleNames</span><span class="p">(</span><span class="k">ref</span> <span class="n">MyStruct</span> <span class="n">DSNames</span><span class="p">);</span>
 
 <span class="k">private</span> <span class="k">void</span> <span class="nf">button1_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
@@ -190,7 +190,7 @@ DSNames-&gt;names[5]: x
 
 <p>In this case, string marshaling cannot be used in the managed code. The above solution can be modified to marshal an array of characters instead:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="na">[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="na">[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]</span>
 <span class="k">public</span> <span class="k">struct</span> <span class="nc">MyStruct</span>
 <span class="p">{</span>
     <span class="k">public</span> <span class="k">void</span> <span class="nf">Init</span><span class="p">()</span>
@@ -228,7 +228,7 @@ DSNames-&gt;names[5]: x
 
 <p>This solution allows sending a 25-character, non-null-terminated string as a member of the unmanaged string array:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="k">void</span> <span class="nf">button1_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">void</span> <span class="nf">button1_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">try</span>
     <span class="p">{</span>

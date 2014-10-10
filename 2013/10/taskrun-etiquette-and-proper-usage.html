@@ -117,16 +117,16 @@
 
 <p>To conclude, synchronous methods should have a synchronous signature:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="c1">// Documentation: This method is CPU-bound (use Task.Run to call from a UI thread).</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Documentation: This method is CPU-bound (use Task.Run to call from a UI thread).</span>
 <span class="k">void</span> <span class="nf">DoWork</span><span class="p">();</span></code></pre></div>
 
 <p>Asynchronous methods should have an asynchronous signature:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="n">Task</span> <span class="nf">DoWorkAsync</span><span class="p">();</span></code></pre></div>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span> <span class="nf">DoWorkAsync</span><span class="p">();</span></code></pre></div>
 
 <p>And methods that are a <em>mixture</em> of synchronous and asynchronous work should have an asynchronous signature with documentation pointing out their partially-synchronous nature:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="c1">// Documentation: This method is CPU-bound (use Task.Run to call from a UI thread).</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Documentation: This method is CPU-bound (use Task.Run to call from a UI thread).</span>
 <span class="n">Task</span> <span class="nf">DoWorkAsync</span><span class="p">();</span></code></pre></div>
 
   </article>

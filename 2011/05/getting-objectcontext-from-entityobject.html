@@ -78,7 +78,7 @@
 
 <p>The modified <strong>NorthwindEntities</strong> uses <strong>OnContextCreated</strong> to hook into its constructor and set up event handlers to respond whenever an entity is added to or removed from this context. Each event handler uses dynamic duck typing to access an “ObjectContext” property on the entity; if no such property exists, the entity is ignored.</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">using</span> <span class="nn">System.ComponentModel</span><span class="p">;</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="nn">System.ComponentModel</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Data.Objects.DataClasses</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">Microsoft.CSharp.RuntimeBinder</span><span class="p">;</span>
 
@@ -147,7 +147,7 @@
 
 <p>The disadvantage to this approach is that you have to add an <strong>ObjectContext</strong> property to each entity type, like this:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">namespace</span> <span class="nn">WindowsFormsApplication1</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">namespace</span> <span class="nn">WindowsFormsApplication1</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">Order</span>
   <span class="p">{</span>
@@ -169,7 +169,7 @@
 
 <p>This modified <strong>NorthwindEntities</strong> uses the same hooks as the one above, but it uses connected properties instead of dynamic duck typing:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">using</span> <span class="nn">System.ComponentModel</span><span class="p">;</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="nn">System.ComponentModel</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Data.Objects.DataClasses</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">Nito.ConnectedProperties</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">Nito.ConnectedProperties.Implicit</span><span class="p">;</span>

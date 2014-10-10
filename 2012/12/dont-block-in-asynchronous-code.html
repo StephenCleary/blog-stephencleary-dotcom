@@ -78,7 +78,7 @@
 
 <p>This code will deadlock in a free-threaded context (e.g., a Console application, unit test, or <code>Task.Run</code>):</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="c1">// Creates a new task on the thread pool and waits for it.</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Creates a new task on the thread pool and waits for it.</span>
 <span class="c1">// This method will deadlock if called in a free-threaded context.</span>
 <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">Test</span><span class="p">()</span>
 <span class="p">{</span>
@@ -124,7 +124,7 @@
 
 <p>One fun twist to this scenario is that if we use <code>ConfigureAwait</code>, then the method will <em>consistently</em> deadlock, regardless of its initial context:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="c1">// Creates a new task on the thread pool and waits for it.</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Creates a new task on the thread pool and waits for it.</span>
 <span class="c1">// This method will always deadlock.</span>
 <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">Test</span><span class="p">()</span>
 <span class="p">{</span>

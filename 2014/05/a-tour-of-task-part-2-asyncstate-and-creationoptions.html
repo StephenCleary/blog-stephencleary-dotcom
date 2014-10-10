@@ -70,7 +70,7 @@
 
 <h2 id="asyncstate">AsyncState</h2>
 
-<div class="highlight"><pre><code class="csharp"><span class="kt">object</span> <span class="n">AsyncState</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="c1">// implements IAsyncResult.AsyncState</span></code></pre></div>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="kt">object</span> <span class="n">AsyncState</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="c1">// implements IAsyncResult.AsyncState</span></code></pre></div>
 
 <p>The <code>AsyncState</code> property implements <code>IAsyncResult.AsyncState</code>. This member was useful back in the day, but not so much in modern applications.</p>
 
@@ -84,7 +84,7 @@
 
 <p>In modern code, the <code>Task.AsyncState</code> member is mainly used for <a href="http://msdn.microsoft.com/en-us/library/hh873178(v=vs.110).aspx#TapToApm">interoperation from <code>Task</code> to APM</a>. This is only necessary if you’re writing <code>async</code>/<code>await</code> code that must exist within an older asynchronous framework (a rare situation these days). In that scenario, you’re implementing the <code>Begin*</code>/<code>End*</code> methods and using a <code>Task</code> instance as your implementation of <code>IAsyncResult</code>. The standard approach is to create a <code>Task&lt;T&gt;</code> using <code>TaskCompletionSource&lt;T&gt;</code>, and you pass the <code>state</code> parameter into the <code>TaskCompletionSource&lt;T&gt;</code> constructor:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">static</span> <span class="n">IAsyncResult</span> <span class="nf">BeginOperation</span><span class="p">(</span><span class="n">AsyncCallback</span> <span class="n">callback</span><span class="p">,</span> <span class="kt">object</span> <span class="n">state</span><span class="p">)</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">static</span> <span class="n">IAsyncResult</span> <span class="nf">BeginOperation</span><span class="p">(</span><span class="n">AsyncCallback</span> <span class="n">callback</span><span class="p">,</span> <span class="kt">object</span> <span class="n">state</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">tcs</span> <span class="p">=</span> <span class="k">new</span> <span class="n">TaskCompletionSource</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">state</span><span class="p">);</span>
     <span class="p">...</span> <span class="c1">// start operation, and complete &quot;tcs&quot; when operation completes</span>
@@ -95,7 +95,7 @@
 
 <h2 id="creationoptions">CreationOptions</h2>
 
-<div class="highlight"><pre><code class="csharp"><span class="n">TaskCreationOptions</span> <span class="n">CreationOptions</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></div>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">TaskCreationOptions</span> <span class="n">CreationOptions</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></div>
 
 <p><code>CreationOptions</code> merely allows you to read the task creation options that were used to create this task. You can specify these options when you create a task using <a href="/2014/05/a-tour-of-task-part-1-constructors.html">the task constructor</a>, <code>Task.Factory.StartNew</code>, or <code>TaskCompletionSource&lt;T&gt;</code>. I’ll cover the meanings of these options later, when we cover <code>Task.Factory.StartNew</code>.</p>
 

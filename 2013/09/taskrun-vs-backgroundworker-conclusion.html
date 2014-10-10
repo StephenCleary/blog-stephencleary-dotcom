@@ -83,7 +83,7 @@
 
 <p>I’ll leave you with a “combined” example. The code below starts a cancelable background operation that reports progress, and will either throw an exception or return a value. These are all the basic operations of <code>BackgroundWorker</code>. One of these uses <code>BackgroundWorker</code> and the other uses <code>Task.Run</code>. Don’t just look at the length of the code; consider all the little nuances of how it works (type safety, how easily the API can be misused, etc). Then ask yourself: which code would I rather maintain?</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="n">BackgroundWorker</span> <span class="n">_bgw</span><span class="p">;</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="n">BackgroundWorker</span> <span class="n">_bgw</span><span class="p">;</span>
 <span class="k">private</span> <span class="k">void</span> <span class="nf">button1_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="kt">var</span> <span class="n">fail</span> <span class="p">=</span> <span class="n">checkBox1</span><span class="p">.</span><span class="n">Checked</span><span class="p">;</span>
@@ -135,7 +135,7 @@
     <span class="n">_bgw</span><span class="p">.</span><span class="n">CancelAsync</span><span class="p">();</span>
 <span class="p">}</span></code></pre></div>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="n">CancellationTokenSource</span> <span class="n">_cts</span><span class="p">;</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="n">CancellationTokenSource</span> <span class="n">_cts</span><span class="p">;</span>
 <span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">button2_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="kt">var</span> <span class="n">fail</span> <span class="p">=</span> <span class="n">checkBox1</span><span class="p">.</span><span class="n">Checked</span><span class="p">;</span>

@@ -78,7 +78,7 @@
 
 <p>The <code>DoWork</code> event can throw exceptions, which are automatically caught and placed on the <code>Error</code> property of the arguments passed to <code>RunWorkerCompleted</code>. The code is not too bad:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="k">void</span> <span class="nf">button1_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">void</span> <span class="nf">button1_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">bgw</span> <span class="p">=</span> <span class="k">new</span> <span class="n">BackgroundWorker</span><span class="p">();</span>
     <span class="n">bgw</span><span class="p">.</span><span class="n">DoWork</span> <span class="p">+=</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">__</span><span class="p">)</span> <span class="p">=&gt;</span>
@@ -98,7 +98,7 @@
 
 <p><code>Task.Run</code> will also capture any exceptions and place them on the returned <code>Task</code>. When the task is awaited, the exceptions are propagated. This means that you can use the normal try/catch blocks to handle exceptions:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">button2_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">button2_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">try</span>
     <span class="p">{</span>
@@ -124,7 +124,7 @@
 
 <p>There’s a pretty good “gotcha” when propagating exceptions. If you just re-throw them, then you lose the original stack trace. .NET 4.5 introduced the <code>ExceptionDispatchInfo</code> type which can preserve the original stack trace; you just have to remember to use it.</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="k">void</span> <span class="nf">button1_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">void</span> <span class="nf">button1_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">bgw</span> <span class="p">=</span> <span class="k">new</span> <span class="n">BackgroundWorker</span><span class="p">();</span>
     <span class="n">bgw</span><span class="p">.</span><span class="n">DoWork</span> <span class="p">+=</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">__</span><span class="p">)</span> <span class="p">=&gt;</span>
@@ -140,7 +140,7 @@
 
 <p>Since <code>await</code> will correctly preserve the stack trace for propagated exceptions, the <code>Task.Run</code> code is quite simple:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">button2_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">button2_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span>
     <span class="p">{</span>

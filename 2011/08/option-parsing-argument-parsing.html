@@ -81,7 +81,7 @@
 
 <p>Consider this example program, which just takes two string arguments, one required and one optional:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">class</span> <span class="nc">Program</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
   <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Options</span> <span class="p">:</span> <span class="n">OptionArgumentsBase</span>
   <span class="p">{</span>
@@ -159,7 +159,7 @@ Optional Value: /b
 
 <p>If we try to add it to our program, then whatever we pass as the argument value will just fail to parse:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">class</span> <span class="nc">Program</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
   <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Options</span> <span class="p">:</span> <span class="n">OptionArgumentsBase</span>
   <span class="p">{</span>
@@ -201,7 +201,7 @@ Could not parse  (3,5)  as Complex
 
 <p>Our solution now looks like this:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">class</span> <span class="nc">Program</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
   <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">ComplexParser</span> <span class="p">:</span> <span class="n">ISimpleParser</span>
   <span class="p">{</span>
@@ -273,7 +273,7 @@ Value: (3, 5)
 
 <p>We’ll use <strong>uint</strong> for our example. We want to allow either decimal numbers or hexadecimal numbers prefixed by “0x”. <strong>System.UInt32.TryParse(string)</strong> does not accept hexadecimal numbers:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">class</span> <span class="nc">Program</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
   <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Options</span> <span class="p">:</span> <span class="n">OptionArgumentsBase</span>
   <span class="p">{</span>
@@ -314,7 +314,7 @@ Could not parse  0x11  as UInt32
 
 <p>Just like the last example, we’ll implement our own parser, and we’ll add it to the parser collection (replacing the default parser).</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">class</span> <span class="nc">Program</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
   <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">UInt32HexParser</span> <span class="p">:</span> <span class="n">ISimpleParser</span>
   <span class="p">{</span>
@@ -388,7 +388,7 @@ Value: 17
 
 <p>This example defines a hex parser (without the “0x” prefix) and then uses it for only one of its properties:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">class</span> <span class="nc">Program</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
   <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">UInt32HexParser</span> <span class="p">:</span> <span class="n">ISimpleParser</span>
   <span class="p">{</span>
@@ -451,7 +451,7 @@ DecValue: 11
 
 <p>Revisiting the problem of <a href="/2011/07/option-parsing-allowing-multiple.html">multiple argument values</a>, we can use a custom parser for a cleaner solution. This example “sequence parser” uses the default simple parser for <strong>int</strong> types, which is easier to deal with than <strong>int.TryParse</strong>:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">class</span> <span class="nc">Program</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
   <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Int32SequenceParser</span> <span class="p">:</span> <span class="n">ISimpleParser</span>
   <span class="p">{</span>

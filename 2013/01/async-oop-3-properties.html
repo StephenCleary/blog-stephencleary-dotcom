@@ -86,7 +86,7 @@
 
 <p>It <em>is</em> possible to have a property return a <code>Task&lt;T&gt;</code> just by returning the result of an <code>async</code> method:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span>
 <span class="p">{</span>
     <span class="k">private</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">GetMyProperty</span><span class="p">()</span>
     <span class="p">{</span>
@@ -110,7 +110,7 @@
 
 <p>However, I do not recommend this approach. If every access to a property is going to kick off a new asynchronous operation, then that “property” should really be a <em>method</em>:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span>
 <span class="p">{</span>
     <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">GetMyProperty</span><span class="p">()</span>
     <span class="p">{</span>
@@ -135,7 +135,7 @@
 
 <p>The easiest solution for this is to use <code>AsyncLazy&lt;T&gt;</code>, <a href="http://nitoasyncex.codeplex.com/wikipage?title=AsyncLazy">available in the AsyncEx library</a>:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span>
 <span class="p">{</span>
     <span class="k">public</span> <span class="nf">MyClass</span><span class="p">()</span>
     <span class="p">{</span>
@@ -165,7 +165,7 @@
 
 <p>For this to work, the data-bound value must be initially set to some default or “unknown” value, and the type can implement <code>INotifyPropertyChanged</code> to let the data binding know when the asynchronous value has been determined.</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span> <span class="p">:</span> <span class="n">INotifyPropertyChanged</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span> <span class="p">:</span> <span class="n">INotifyPropertyChanged</span>
 <span class="p">{</span>
     <span class="k">public</span> <span class="k">event</span> <span class="n">PropertyChangedEventHandler</span> <span class="n">PropertyChanged</span><span class="p">;</span>
     <span class="k">private</span> <span class="k">void</span> <span class="nf">OnPropertyChanged</span><span class="p">([</span><span class="n">CallerMemberName</span><span class="p">]</span> <span class="kt">string</span> <span class="n">propertyName</span> <span class="p">=</span> <span class="k">null</span><span class="p">)</span>
@@ -196,7 +196,7 @@
 
 <p>If your property value is simply the result of a <code>Task&lt;TResult&gt;</code>, then you can use the <a href="http://nitoasyncex.codeplex.com/wikipage?title=NotifyTaskCompletion">NotifyTaskCompletion type in the AsyncEx library</a> to make this even easier:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span> <span class="p">:</span> <span class="n">INotifyPropertyChanged</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span> <span class="p">:</span> <span class="n">INotifyPropertyChanged</span>
 <span class="p">{</span>
     <span class="k">public</span> <span class="n">INotifyTaskCompletion</span><span class="p">&lt;</span><span class="kt">int?</span><span class="p">&gt;</span> <span class="n">MyProperty</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
 

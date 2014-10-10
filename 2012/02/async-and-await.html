@@ -78,7 +78,7 @@
 
 <p>Asynchronous methods look something like this:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">()</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="c1">// In the Real World, we would actually do something...</span>
   <span class="c1">// For this example, we&#39;re just going to (asynchronously) wait 100ms.</span>
@@ -107,7 +107,7 @@
 
 <p>One important point about awaitables is this: it is the <em>type</em> that is awaitable, not the method returning the type. In other words, you can await the result of an async method that returns Task … <em>because the method returns Task, not because it’s async</em>. So you can also await the result of a <em>non-async</em> method that returns Task:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">NewStuffAsync</span><span class="p">()</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">NewStuffAsync</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="c1">// Use await and have fun with the new stuff.</span>
   <span class="k">await</span> <span class="p">...</span>
@@ -150,7 +150,7 @@
 
 <p>Async methods returning Task or void do not have a return value. Async methods returning Task&lt;T&gt; must return a value of type T:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">CalculateAnswer</span><span class="p">()</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">CalculateAnswer</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">100</span><span class="p">);</span> <span class="c1">// (Probably should be longer...)</span>
 
@@ -181,7 +181,7 @@
 
 <p>What does this mean in the real world? For one thing, capturing (and restoring) the UI/ASP.NET context is done transparently:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="c1">// WinForms example (it works exactly the same for WPF).</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// WinForms example (it works exactly the same for WPF).</span>
 <span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">DownloadFileButton_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="c1">// Since we asynchronously wait, the UI thread is not blocked by the file download.</span>
@@ -209,7 +209,7 @@
 
 <p>Most of the time, you don’t <em>need</em> to sync back to the “main” context. Most async methods will be designed with composition in mind: they await other operations, and each one represents an asynchronous operation itself (which can be composed by others). In this case, you want to tell the awaiter to <em>not</em> capture the current context by calling <strong>ConfigureAwait</strong> and passing false, e.g.:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">DownloadFileAsync</span><span class="p">(</span><span class="kt">string</span> <span class="n">fileName</span><span class="p">)</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">DownloadFileAsync</span><span class="p">(</span><span class="kt">string</span> <span class="n">fileName</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="c1">// Use HttpClient or whatever to download the file contents.</span>
   <span class="kt">var</span> <span class="n">fileContents</span> <span class="p">=</span> <span class="k">await</span> <span class="n">DownloadFileContentsAsync</span><span class="p">(</span><span class="n">fileName</span><span class="p">).</span><span class="n">ConfigureAwait</span><span class="p">(</span><span class="k">false</span><span class="p">);</span>

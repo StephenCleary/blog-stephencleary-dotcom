@@ -68,7 +68,7 @@
   <article>
   <p>Last time we looked at <a href="/2013/11/taskrun-etiquette-examples-using.html">using <code>Task.Run</code> for the wrong thing</a> (code that is not CPU-bound). So let’s move on to the proper use case of <code>Task.Run</code>: CPU-bound code. We start off with some existing code, which synchronously does some heavy calculations.</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">class</span> <span class="nc">MyService</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">MyService</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="kt">int</span> <span class="nf">CalculateMandelbrot</span><span class="p">()</span>
   <span class="p">{</span>
@@ -89,7 +89,7 @@
 
 <p>Now, we want to use this from a UI thread, but this method will block our thread. This <strong>is</strong> a problem that should be solved using <code>Task.Run</code>. Doing these calculations is a CPU-bound operation.</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="c1">// Warning: bad code!</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Warning: bad code!</span>
 <span class="k">class</span> <span class="nc">MyService</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">CalculateMandelbrotAsync</span><span class="p">()</span>
@@ -120,7 +120,7 @@
 
 <p>Let’s introduce a simple ASP.NET MVC controller that returns a view using the (original, synchronous) service.</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">class</span> <span class="nc">MyService</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">MyService</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="kt">int</span> <span class="nf">CalculateMandelbrot</span><span class="p">()</span>
   <span class="p">{</span>
@@ -146,7 +146,7 @@
 
 <p>But the desktop app required a change in the service. It’s now <code>async</code>, which is “no problem” because ASP.NET MVC naturally supports asynchronous actions.</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="c1">// Warning: bad code!</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Warning: bad code!</span>
 <span class="k">class</span> <span class="nc">MyService</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">CalculateMandelbrotAsync</span><span class="p">()</span>
@@ -208,7 +208,7 @@
 
 <p>So, let’s be good API citizens (“APIs are all about etiquette”) and keep the new synchronous version along with the asynchronous version. That way there’s no breaking changes, right? It’s simple enough, and we can even implement it easily so that there’s no code duplication!</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="c1">// Warning: bad code!</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Warning: bad code!</span>
 <span class="k">class</span> <span class="nc">MyService</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="kt">int</span> <span class="nf">CalculateMandelbrot</span><span class="p">()</span>
@@ -243,7 +243,7 @@
 
 <p>The key here is that the solution does not belong in the service. It belongs in the UI layer itself. Let the UI layer solve its own problems and leave the service out of it.</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">class</span> <span class="nc">MyService</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">MyService</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="kt">int</span> <span class="nf">CalculateMandelbrot</span><span class="p">()</span>
   <span class="p">{</span>

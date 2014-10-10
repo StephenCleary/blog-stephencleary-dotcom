@@ -72,7 +72,7 @@
 
 <p>The default behavior in the <a href="http://nuget.org/List/Packages/Nito.KitchenSink.OptionParsing">Nito.KitchenSink option parsing library</a> is to <em>overwrite</em> previous values. In other words, options coming later on the command line may “override” options earlier on the command line. Consider this example:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">class</span> <span class="nc">Program</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
   <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Options</span> <span class="p">:</span> <span class="n">OptionArgumentsBase</span>
   <span class="p">{</span>
@@ -119,7 +119,7 @@ Level: 9
 
 <p>The <em>prevent</em> behavior can be implemented by having a nullable backing value, and throwing from the setter if it is already set. The only tricky part is choosing the exception to throw from the setter; I recommend throwing an exception derived from <strong>OptionParsingException</strong>, since that indicates a usage error. Any exception thrown from a property setter will be wrapped in an <strong>OptionParsingException.OptionArgumentException</strong> (in versions 1.1.2 and newer).</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">class</span> <span class="nc">Program</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
   <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Options</span> <span class="p">:</span> <span class="n">OptionArgumentsBase</span>
   <span class="p">{</span>
@@ -177,7 +177,7 @@ The value may only be specified once.
 
 <p>Likewise, the <em>ignore</em> behavior can be implemented by having a nullable backing value, and ignoring the setter if it is already set:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">class</span> <span class="nc">Program</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
   <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Options</span> <span class="p">:</span> <span class="n">OptionArgumentsBase</span>
   <span class="p">{</span>

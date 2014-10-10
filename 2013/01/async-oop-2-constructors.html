@@ -74,7 +74,7 @@
 
 <p>Constructors cannot be <code>async</code>, but static methods can. It’s pretty easy to have a static creation method, making the type its own factory:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span>
 <span class="p">{</span>
   <span class="k">private</span> <span class="n">MyData</span> <span class="n">asyncData</span><span class="p">;</span>
   <span class="k">private</span> <span class="nf">MyClass</span><span class="p">()</span> <span class="p">{</span> <span class="p">...</span> <span class="p">}</span>
@@ -106,7 +106,7 @@
 
 <p>If the instance you’re creating is a <em>shared resource</em>, then you can use <a href="/2012/08/asynchronous-lazy-initialization.html">asynchronous lazy initialization</a> to create your shared instance:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="k">static</span> <span class="n">AsyncLazy</span><span class="p">&lt;</span><span class="n">MyResource</span><span class="p">&gt;</span> <span class="n">resource</span> <span class="p">=</span> <span class="k">new</span> <span class="n">AsyncLazy</span><span class="p">&lt;</span><span class="n">MyResource</span><span class="p">&gt;(</span><span class="k">async</span> <span class="p">()</span> <span class="p">=&gt;</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">static</span> <span class="n">AsyncLazy</span><span class="p">&lt;</span><span class="n">MyResource</span><span class="p">&gt;</span> <span class="n">resource</span> <span class="p">=</span> <span class="k">new</span> <span class="n">AsyncLazy</span><span class="p">&lt;</span><span class="n">MyResource</span><span class="p">&gt;(</span><span class="k">async</span> <span class="p">()</span> <span class="p">=&gt;</span>
 <span class="p">{</span>
   <span class="kt">var</span> <span class="n">data</span> <span class="p">=</span> <span class="k">await</span> <span class="n">GetResource</span><span class="p">();</span>
   <span class="k">return</span> <span class="k">new</span> <span class="nf">MyResource</span><span class="p">(</span><span class="n">data</span><span class="p">);</span>
@@ -133,7 +133,7 @@
 
 <p>If you want to treat asynchronous initialization as an implementation detail, you can (optionally) define a “marker” interface for types that use asynchronous initialization:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="c1">/// &lt;summary&gt;</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">/// &lt;summary&gt;</span>
 <span class="c1">/// Marks a type as requiring asynchronous initialization and provides the result of that initialization.</span>
 <span class="c1">/// &lt;/summary&gt;</span>
 <span class="k">public</span> <span class="k">interface</span> <span class="n">IAsyncInitialization</span>
@@ -146,7 +146,7 @@
 
 <p>The pattern for asynchronous initialization then looks like this:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyFundamentalType</span> <span class="p">:</span> <span class="n">IAsyncInitialization</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyFundamentalType</span> <span class="p">:</span> <span class="n">IAsyncInitialization</span>
 <span class="p">{</span>
     <span class="k">public</span> <span class="nf">MyFundamentalType</span><span class="p">()</span>
     <span class="p">{</span>
@@ -172,7 +172,7 @@
 
 <p>An instance of this type can be (manually) constructed like this:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="kt">var</span> <span class="n">myInstance</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MyFundamentalType</span><span class="p">();</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="kt">var</span> <span class="n">myInstance</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MyFundamentalType</span><span class="p">();</span>
 <span class="c1">// Danger: the instance is not initialized here!</span>
 <span class="k">await</span> <span class="n">myInstance</span><span class="p">.</span><span class="n">Initialization</span><span class="p">;</span>
 <span class="c1">// OK: the instance is initialized now.</span></code></pre></div>
@@ -181,7 +181,7 @@
 
 <p>It’s easy to create another type that depends on this fundamental type (i.e., asynchronous composition):</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyComposedType</span> <span class="p">:</span> <span class="n">IAsyncInitialization</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyComposedType</span> <span class="p">:</span> <span class="n">IAsyncInitialization</span>
 <span class="p">{</span>
     <span class="k">private</span> <span class="k">readonly</span> <span class="n">MyFundamentalType</span> <span class="n">_fundamental</span><span class="p">;</span>
 
@@ -215,7 +215,7 @@
 
 <p>In addition, if you’re using the <code>IAsyncInitialization</code> “marker” interface, you can test for that and asynchronously initialize instances that are provided to you by IoC/DI. This slightly complicates your <code>InitializeAsync</code> but allows you to treat asynchronous initialization as an implementation detail. For example, if <code>_fundamental</code> is of type <code>IMyFundamentalType</code>:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">InitializeAsync</span><span class="p">()</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">InitializeAsync</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="c1">// Asynchronously wait for the fundamental instance to initialize if necessary.</span>
     <span class="kt">var</span> <span class="n">asyncFundamental</span> <span class="p">=</span> <span class="n">_fundamental</span> <span class="k">as</span> <span class="n">IAsyncInitialization</span><span class="p">;</span>
@@ -232,14 +232,14 @@
 
 <p>In many dynamic-creation scenarios (such as IoC/DI/<code>Activator.CreateInstance</code>), you can just check for <code>IAsyncInitialization</code> and initialize it directly:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="kt">object</span> <span class="n">myInstance</span> <span class="p">=</span> <span class="p">...;</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="kt">object</span> <span class="n">myInstance</span> <span class="p">=</span> <span class="p">...;</span>
 <span class="kt">var</span> <span class="n">asyncInstance</span> <span class="p">=</span> <span class="n">myInstance</span> <span class="k">as</span> <span class="n">IAsyncInitialization</span><span class="p">;</span>
 <span class="k">if</span> <span class="p">(</span><span class="n">asyncInstance</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
     <span class="k">await</span> <span class="n">asyncInstance</span><span class="p">.</span><span class="n">Initialization</span><span class="p">;</span></code></pre></div>
 
 <p>However, if you’re creating a type by data binding, or using IoC/DI to inject your view models into your view’s data context, then you don’t really have a place where you interact with the top-level instance. Data binding will take care of updating the UI when the initialization completes <em>unless the initialization fails</em>, so you’ll need to surface failures. Unfortunately, <code>Task</code> does not implement <code>INotifyPropertyChanged</code>, so the task completion is not surfaced automatically. You can use a type like <a href="http://nitoasyncex.codeplex.com/wikipage?title=NotifyTaskCompletion">NotifyTaskCompletion type in the AsyncEx library</a> to make this easy:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyViewModel</span> <span class="p">:</span> <span class="n">INotifyPropertyChanged</span><span class="p">,</span> <span class="n">IAsyncInitialization</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyViewModel</span> <span class="p">:</span> <span class="n">INotifyPropertyChanged</span><span class="p">,</span> <span class="n">IAsyncInitialization</span>
 <span class="p">{</span>
     <span class="k">public</span> <span class="nf">MyViewModel</span><span class="p">()</span>
     <span class="p">{</span>
@@ -265,7 +265,7 @@
 
 <p>Here’s an example of what <strong>not</strong> to do:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span>
 <span class="p">{</span>
   <span class="k">private</span> <span class="n">MyData</span> <span class="n">asyncData</span><span class="p">;</span>
   <span class="k">public</span> <span class="nf">MyClass</span><span class="p">()</span>

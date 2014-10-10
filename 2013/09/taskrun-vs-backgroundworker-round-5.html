@@ -78,7 +78,7 @@
 
 <p><code>BackgroundWorker</code> has built-in support for progress reporting, and even automatically marshals to the UI thread. Like last time, we have to first set the <code>BackgroundWorker.WorkerSupportsProgress</code> property to allow progress reports. Then, the <code>DoWork</code> method can call the <code>BackgroundWorker.ReportProgress</code> method, which raises the <code>BackgroundWorker.ProgressChanged</code> event.</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="k">void</span> <span class="nf">button1_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">void</span> <span class="nf">button1_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">bgw</span> <span class="p">=</span> <span class="k">new</span> <span class="n">BackgroundWorker</span><span class="p">();</span>
     <span class="n">bgw</span><span class="p">.</span><span class="n">WorkerReportsProgress</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
@@ -107,7 +107,7 @@
 
 <p>The new <code>async</code> support also introduces a pattern for progress reporting in asynchronous methods: the caller optionally creates an implementation of <code>IProgress&lt;T&gt;</code> (usually an instance of <code>Progress&lt;T&gt;</code>), and that instance is passed into the asynchronous method. The method then sends progress reports to its <code>IProgress&lt;T&gt;</code> instance (if it is not <code>null</code>).</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">button2_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">button2_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">progressHandler</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Progress</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;(</span><span class="k">value</span> <span class="p">=&gt;</span>
     <span class="p">{</span>
@@ -138,7 +138,7 @@
 
 <p><code>BackgroundWorker.ReportProgress</code> takes an optional second argument, which is a custom “progress report” instance. This is then available to the progress changed handler as <code>ProgressChangedEventArgs.UserState</code>.</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="k">void</span> <span class="nf">button1_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">void</span> <span class="nf">button1_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">bgw</span> <span class="p">=</span> <span class="k">new</span> <span class="n">BackgroundWorker</span><span class="p">();</span>
     <span class="n">bgw</span><span class="p">.</span><span class="n">WorkerReportsProgress</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
@@ -167,7 +167,7 @@
 
 <p>The <code>IProgress&lt;T&gt;</code> and <code>Progress&lt;T&gt;</code> types allow any type for <code>T</code>, so changing the progress report type from <code>int</code> to <code>string</code> is quite straightforward:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">button2_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">button2_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">progressHandler</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Progress</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;(</span><span class="k">value</span> <span class="p">=&gt;</span>
     <span class="p">{</span>

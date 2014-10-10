@@ -72,7 +72,7 @@
 
 <p>We can use generics to turn one call site into many call sites, all cached independently, thereby improving performance when invoked later:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">static</span> <span class="kt">dynamic</span> <span class="nf">SingleCallSite</span><span class="p">(</span><span class="kt">dynamic</span> <span class="n">arg1</span><span class="p">,</span> <span class="kt">dynamic</span> <span class="n">arg2</span><span class="p">)</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">static</span> <span class="kt">dynamic</span> <span class="nf">SingleCallSite</span><span class="p">(</span><span class="kt">dynamic</span> <span class="n">arg1</span><span class="p">,</span> <span class="kt">dynamic</span> <span class="n">arg2</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">return</span> <span class="n">arg1</span> <span class="p">+</span> <span class="n">arg2</span><span class="p">;</span>
 <span class="p">}</span>
@@ -85,7 +85,7 @@
 
 <p>Even though the <strong>SingleCallSite</strong> method only has one call site (for the <strong>+</strong> operator) and the <strong>MultipleCallSites</strong> method has two call sites (one for the <strong>+</strong> operator, and one for converting the dynamic result to <strong>T</strong>), <strong>MultipleCallSites</strong> reliably runs faster, as this remarkably unscientific test code demonstrates:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">try</span>
     <span class="p">{</span>

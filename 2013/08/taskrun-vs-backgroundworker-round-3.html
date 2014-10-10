@@ -76,7 +76,7 @@
 
 <p>It’s pretty straightforward to return values from a <code>BackgroundWorker</code>; just set the <code>DoWorkEventArgs.Result</code> property and then you can pick up the results from <code>RunWorkerCompletedEventArgs.Result</code>:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="k">void</span> <span class="nf">button1_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">void</span> <span class="nf">button1_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">bgw</span> <span class="p">=</span> <span class="k">new</span> <span class="n">BackgroundWorker</span><span class="p">();</span>
     <span class="n">bgw</span><span class="p">.</span><span class="n">DoWork</span> <span class="p">+=</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span> <span class="p">=&gt;</span>
@@ -98,7 +98,7 @@
 
 <p>The lambda passed to <code>Task.Run</code> can simply return a value:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">button2_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">button2_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span>
     <span class="p">{</span>

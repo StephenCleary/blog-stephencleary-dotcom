@@ -79,7 +79,7 @@
 
 <p>Some examples will help clarify how this class can be used; the following “fake ViewModel” class is used by these examples. It just has two properties: “int Value” and “FakeVM Child”, and implements INotifyPropertyChanged:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">FakeVM</span> <span class="p">:</span> <span class="n">INotifyPropertyChanged</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">FakeVM</span> <span class="p">:</span> <span class="n">INotifyPropertyChanged</span>
 <span class="p">{</span>
     <span class="k">private</span> <span class="kt">int</span> <span class="k">value</span><span class="p">;</span>
     <span class="k">private</span> <span class="n">FakeVM</span> <span class="n">child</span><span class="p">;</span>
@@ -123,7 +123,7 @@
 
 <p>A simple example to start off with; to read or write the “Value” property on a FakeVM object:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="n">FakeVM</span> <span class="n">obj</span> <span class="p">=</span> <span class="k">new</span> <span class="n">FakeVM</span> <span class="p">{</span> <span class="n">Value</span> <span class="p">=</span> <span class="m">13</span> <span class="p">};</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">FakeVM</span> <span class="n">obj</span> <span class="p">=</span> <span class="k">new</span> <span class="n">FakeVM</span> <span class="p">{</span> <span class="n">Value</span> <span class="p">=</span> <span class="m">13</span> <span class="p">};</span>
 <span class="n">SimplePropertyPath</span> <span class="n">path</span> <span class="p">=</span> <span class="k">new</span> <span class="n">SimplePropertyPath</span> <span class="p">{</span> <span class="n">Root</span> <span class="p">=</span> <span class="n">obj</span><span class="p">,</span> <span class="n">Path</span> <span class="p">=</span> <span class="s">&quot;Value&quot;</span> <span class="p">};</span>
 
 <span class="n">Assert</span><span class="p">.</span><span class="n">AreEqual</span><span class="p">(</span><span class="m">13</span><span class="p">,</span> <span class="n">path</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span>
@@ -133,7 +133,7 @@
 
 <p>Nothing too difficult there. The next example exercises reading and writing to a longer path:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="n">FakeVM</span> <span class="n">obj</span> <span class="p">=</span> <span class="k">new</span> <span class="n">FakeVM</span> <span class="p">{</span> <span class="n">Child</span> <span class="p">=</span> <span class="k">new</span> <span class="n">FakeVM</span> <span class="p">{</span> <span class="n">Value</span> <span class="p">=</span> <span class="m">10</span> <span class="p">}</span> <span class="p">};</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">FakeVM</span> <span class="n">obj</span> <span class="p">=</span> <span class="k">new</span> <span class="n">FakeVM</span> <span class="p">{</span> <span class="n">Child</span> <span class="p">=</span> <span class="k">new</span> <span class="n">FakeVM</span> <span class="p">{</span> <span class="n">Value</span> <span class="p">=</span> <span class="m">10</span> <span class="p">}</span> <span class="p">};</span>
 <span class="n">SimplePropertyPath</span> <span class="n">path</span> <span class="p">=</span> <span class="k">new</span> <span class="n">SimplePropertyPath</span> <span class="p">{</span> <span class="n">Root</span> <span class="p">=</span> <span class="n">obj</span><span class="p">,</span> <span class="n">Path</span> <span class="p">=</span> <span class="s">&quot;Child.Value&quot;</span> <span class="p">};</span>
 
 <span class="n">Assert</span><span class="p">.</span><span class="n">AreEqual</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="n">path</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span>
@@ -143,7 +143,7 @@
 
 <p>Now it’s starting to act more like a real binding. Invalid property paths will result in a Value of null (writing errors to PresentationTraceSources.DataBindingSource just like WPF data binding does):</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="n">FakeVM</span> <span class="n">obj</span> <span class="p">=</span> <span class="k">new</span> <span class="n">FakeVM</span> <span class="p">{</span> <span class="n">Value</span> <span class="p">=</span> <span class="m">13</span> <span class="p">};</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">FakeVM</span> <span class="n">obj</span> <span class="p">=</span> <span class="k">new</span> <span class="n">FakeVM</span> <span class="p">{</span> <span class="n">Value</span> <span class="p">=</span> <span class="m">13</span> <span class="p">};</span>
 <span class="n">SimplePropertyPath</span> <span class="n">path</span> <span class="p">=</span> <span class="k">new</span> <span class="n">SimplePropertyPath</span> <span class="p">{</span> <span class="n">Root</span> <span class="p">=</span> <span class="n">obj</span><span class="p">,</span> <span class="n">Path</span> <span class="p">=</span> <span class="s">&quot;value&quot;</span> <span class="p">};</span>
 
 <span class="n">Assert</span><span class="p">.</span><span class="n">IsNull</span><span class="p">(</span><span class="n">path</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span>
@@ -154,7 +154,7 @@
 
 <p>The “childmost” property is not the only one that is being monitored; SimplePropertyPath will monitor INotifyPropertyChanged for each object along the path:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="n">FakeVM</span> <span class="n">obj</span> <span class="p">=</span> <span class="k">new</span> <span class="n">FakeVM</span> <span class="p">{</span> <span class="n">Child</span> <span class="p">=</span> <span class="k">new</span> <span class="n">FakeVM</span> <span class="p">{</span> <span class="n">Value</span> <span class="p">=</span> <span class="m">100</span> <span class="p">}</span> <span class="p">};</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">FakeVM</span> <span class="n">obj</span> <span class="p">=</span> <span class="k">new</span> <span class="n">FakeVM</span> <span class="p">{</span> <span class="n">Child</span> <span class="p">=</span> <span class="k">new</span> <span class="n">FakeVM</span> <span class="p">{</span> <span class="n">Value</span> <span class="p">=</span> <span class="m">100</span> <span class="p">}</span> <span class="p">};</span>
 <span class="n">SimplePropertyPath</span> <span class="n">path</span> <span class="p">=</span> <span class="k">new</span> <span class="n">SimplePropertyPath</span> <span class="p">{</span> <span class="n">Root</span> <span class="p">=</span> <span class="n">obj</span><span class="p">,</span> <span class="n">Path</span> <span class="p">=</span> <span class="s">&quot;Child.Value&quot;</span> <span class="p">};</span>
 
 <span class="n">Assert</span><span class="p">.</span><span class="n">AreEqual</span><span class="p">(</span><span class="m">100</span><span class="p">,</span> <span class="n">path</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span>

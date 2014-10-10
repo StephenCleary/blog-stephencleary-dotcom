@@ -86,7 +86,7 @@
 
 <p>Consider the following example program. It has reasonably realistic asynchronous method usage; the <code>MainAsync</code> method calls the <code>MyMethodAsync</code> method, which is overloaded to allow cancellation. <code>MyMethodAsync</code> in turn spins up a couple of parallel asynchronous tasks and waits for them both to complete. One of these tasks will throw an exception.</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
 
@@ -149,7 +149,7 @@
 
 <p>Once it’s installed, it’ll bring up some installation/usage instructions. First, in one of your source files, apply the <code>AsyncDiagnosticAspect</code> to your assembly. Then, locate the place where you display or log your exceptions, and change <code>ToString</code> to <code>ToAsyncDiagnosticString</code>:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">Nito.AsyncEx.AsyncDiagnostics</span><span class="p">;</span>
@@ -222,7 +222,7 @@ Logical stack:
 
 <p>Ready to go one step further? You can tie into the diagnostic stack and add whatever additional data you want:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">Nito.AsyncEx.AsyncDiagnostics</span><span class="p">;</span>

@@ -123,7 +123,7 @@
 
 <p>As described in <a href="http://www.amazon.com/gp/product/0735627045?ie=UTF8&amp;tag=stepheclearys-20&amp;linkCode=as2&amp;camp=1789&amp;creative=390957&amp;creativeASIN=0735627045">CLR via C#</a>, the JIT compiler for a method will determine which native code blocks reference which variables by building a “root table” for the method. It’s important to note that this table is quite accurate (though not 100% accurate - it <em>may</em> “hold onto” references slightly longer than necessary if it simplifies the table). Examine the simple code below:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">static</span> <span class="kt">object</span> <span class="nf">CheckType</span><span class="p">(</span><span class="kt">object</span> <span class="n">a</span><span class="p">,</span> <span class="n">Type</span> <span class="n">b</span><span class="p">)</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">static</span> <span class="kt">object</span> <span class="nf">CheckType</span><span class="p">(</span><span class="kt">object</span> <span class="n">a</span><span class="p">,</span> <span class="n">Type</span> <span class="n">b</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="n">Type</span> <span class="n">t</span> <span class="p">=</span> <span class="n">a</span><span class="p">.</span><span class="n">GetType</span><span class="p">();</span>
   <span class="c1">// The object referenced by &quot;a&quot; may be eligible for GC here</span>

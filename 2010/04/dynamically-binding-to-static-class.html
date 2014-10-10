@@ -74,7 +74,7 @@
 
 <p>The general concept is to implement a DynamicObject type that uses reflection to access static members. This makes sense since <em>dynamic</em> may be seen as a more user-friendly type of reflection (of course, this simple interpretation ignores a lot of other DLR benefits). Unfortunately, DynamicObject does not support the concept of ref/out parameters, even though they are fully supported by <em>dynamic</em>. There is a work-around for this: wrapping ref or out parameters, adding a layer of indirection. The RefOutArg class was invented for this purpose (<a href="http://nitokitchensink.codeplex.com/SourceControl/changeset/view/51391#1073961">official source</a>):</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="c1">/// &lt;summary&gt;</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">/// &lt;summary&gt;</span>
 <span class="c1">/// A wrapper around a &quot;ref&quot; or &quot;out&quot; argument invoked dynamically.</span>
 <span class="c1">/// &lt;/summary&gt;</span>
 <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">RefOutArg</span>
@@ -132,7 +132,7 @@
 
 <p>The DynamicStaticTypeMembers class enables dynamic access to static members. It is similar to David’s StaticMembersDynamicWrapper, only this class allows setting static properties, invoking overloaded static methods, and ref/out parameters using RefOutArg (<a href="http://nitokitchensink.codeplex.com/SourceControl/changeset/view/51391#1073960">official source</a>):</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Diagnostics</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Diagnostics.Contracts</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Dynamic</span><span class="p">;</span>
@@ -284,27 +284,27 @@
 
 <p>An instance of DynamicStaticTypeMembers may be constructed by passing either a generic type or Type instance into the Create method:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="kt">var</span> <span class="n">mathClass</span> <span class="p">=</span> <span class="n">DynamicStaticTypeMembers</span><span class="p">.</span><span class="n">Create</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">Math</span><span class="p">));</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="kt">var</span> <span class="n">mathClass</span> <span class="p">=</span> <span class="n">DynamicStaticTypeMembers</span><span class="p">.</span><span class="n">Create</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">Math</span><span class="p">));</span>
 <span class="kt">var</span> <span class="n">intEqualityComparerClass</span> <span class="p">=</span> <span class="n">DynamicStaticTypeMembers</span><span class="p">.</span><span class="n">Create</span><span class="p">&lt;</span><span class="n">EqualityComparer</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;&gt;();</span>
 <span class="kt">var</span> <span class="n">threadClass</span> <span class="p">=</span> <span class="n">DynamicStaticTypeMembers</span><span class="p">.</span><span class="n">Create</span><span class="p">&lt;</span><span class="n">Thread</span><span class="p">&gt;();</span>
 <span class="kt">var</span> <span class="n">intClass</span> <span class="p">=</span> <span class="n">DynamicStaticTypeMembers</span><span class="p">.</span><span class="n">Create</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;();</span></code></pre></div>
 
 <p>Once created, any static property or method of that class may be invoked using instance syntax:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="kt">int</span> <span class="n">result0</span> <span class="p">=</span> <span class="n">mathClass</span><span class="p">.</span><span class="n">Min</span><span class="p">(</span><span class="m">13</span><span class="p">,</span> <span class="m">15</span><span class="p">);</span> <span class="c1">// invokes Math.Min(int, int)</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="kt">int</span> <span class="n">result0</span> <span class="p">=</span> <span class="n">mathClass</span><span class="p">.</span><span class="n">Min</span><span class="p">(</span><span class="m">13</span><span class="p">,</span> <span class="m">15</span><span class="p">);</span> <span class="c1">// invokes Math.Min(int, int)</span>
 <span class="kt">var</span> <span class="n">comparer</span> <span class="p">=</span> <span class="n">intEqualityComparerClass</span><span class="p">.</span><span class="n">Default</span><span class="p">;</span> <span class="c1">// gets EqualityComparer&lt;int&gt;.Default</span>
 <span class="n">threadClass</span><span class="p">.</span><span class="n">CurrentPrincipal</span> <span class="p">=</span> <span class="k">new</span> <span class="n">GenericPrincipal</span><span class="p">(</span><span class="k">new</span> <span class="n">GenericIdentity</span><span class="p">(</span><span class="s">&quot;Bob&quot;</span><span class="p">),</span> <span class="k">new</span> <span class="kt">string</span><span class="p">[]</span> <span class="p">{</span> <span class="p">});</span> <span class="c1">// sets Thread.CurrentPrincipal</span></code></pre></div>
 
 <p>Invoking methods with ref or out parameters is more awkward, but possible:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="kt">int</span> <span class="n">result1</span><span class="p">;</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="kt">int</span> <span class="n">result1</span><span class="p">;</span>
 <span class="kt">var</span> <span class="n">result1arg</span> <span class="p">=</span> <span class="n">RefOutArg</span><span class="p">.</span><span class="n">Create</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;();</span> <span class="c1">// or: RefOutArg.Create(0);</span>
 <span class="n">intClass</span><span class="p">.</span><span class="n">TryParse</span><span class="p">(</span><span class="s">&quot;13&quot;</span><span class="p">,</span> <span class="n">result1arg</span><span class="p">);</span> <span class="c1">// invokes int.TryParse(string, out int)</span>
 <span class="n">result1</span> <span class="p">=</span> <span class="n">result1arg</span><span class="p">.</span><span class="n">Value</span><span class="p">;</span></code></pre></div>
 
 <p>This can be a powerful tool in some cases, allowing a higher form of “duck typing.” For instance, the new <a href="http://msdn.microsoft.com/en-us/library/system.numerics.biginteger.aspx">BigInteger</a> numeric type defines its own <em>DivRem</em> method similar to the existing <em>DivRem</em> methods defined on the <a href="http://msdn.microsoft.com/en-us/library/system.math.aspx">Math</a> class for <em>int</em> and <em>long</em>. Using DynamicStaticTypeMembers, it is possible to define a generic <em>DivRem</em> that attempts to invoke <em>Math.DivRem</em> but falls back on a <em>DivRem</em> defined by the numeric type:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">static</span> <span class="n">T</span> <span class="n">DivRem</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="n">T</span> <span class="n">dividend</span><span class="p">,</span> <span class="n">T</span> <span class="n">divisor</span><span class="p">,</span> <span class="k">out</span> <span class="n">T</span> <span class="n">remainder</span><span class="p">)</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">static</span> <span class="n">T</span> <span class="n">DivRem</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="n">T</span> <span class="n">dividend</span><span class="p">,</span> <span class="n">T</span> <span class="n">divisor</span><span class="p">,</span> <span class="k">out</span> <span class="n">T</span> <span class="n">remainder</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">remainderArg</span> <span class="p">=</span> <span class="n">RefOutArg</span><span class="p">.</span><span class="n">Create</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;();</span>
     <span class="kt">dynamic</span> <span class="n">ret</span><span class="p">;</span>

@@ -112,7 +112,7 @@
   <p><strong>Update 2014-04:</strong> A newer version of this code is now <a href="https://github.com/StephenCleary/AspNetBackgroundTasks" class="alert-link">on GitHub</a>.</p>
 </div>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Web.Hosting</span><span class="p">;</span>
@@ -200,7 +200,7 @@
 
 <p>You can queue synchronous or asynchronous work by calling <code>Run</code>:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="n">BackgroundTaskManager</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">BackgroundTaskManager</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span>
 <span class="p">{</span>
     <span class="n">Thread</span><span class="p">.</span><span class="n">Sleep</span><span class="p">(</span><span class="m">20000</span><span class="p">);</span>
 <span class="p">});</span>
@@ -211,7 +211,7 @@
 
 <p><code>BackgroundTaskManager</code> also publishes a <code>CancellationToken</code> that is canceled when ASP.NET notifies us that our AppDomain is shutting down. <code>async</code> code can use this to abort processing (when it is safe to do so):</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="n">BackgroundTaskManager</span><span class="p">.</span><span class="n">Run</span><span class="p">(</span><span class="k">async</span> <span class="p">()</span> <span class="p">=&gt;</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">BackgroundTaskManager</span><span class="p">.</span><span class="n">Run</span><span class="p">(</span><span class="k">async</span> <span class="p">()</span> <span class="p">=&gt;</span>
 <span class="p">{</span>
     <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">20000</span><span class="p">,</span> <span class="n">BackgroundTaskManager</span><span class="p">.</span><span class="n">Shutdown</span><span class="p">);</span>
 <span class="p">});</span></code></pre></div>

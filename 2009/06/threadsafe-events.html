@@ -74,11 +74,11 @@
 
 <p>The C# language authors attempted to make event subscription and unsubscription threadsafe by default. To do so, they allow (but do not require) locking on <code>this</code>, which is generally considered bad. This code:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">event</span> <span class="n">MyEventHandler</span> <span class="n">MyEvent</span><span class="p">;</span></code></pre></div>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">event</span> <span class="n">MyEventHandler</span> <span class="n">MyEvent</span><span class="p">;</span></code></pre></div>
 
 <p>Logically becomes this code:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="n">MyEventHandler</span> <span class="n">__MyEvent</span><span class="p">;</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="n">MyEventHandler</span> <span class="n">__MyEvent</span><span class="p">;</span>
 <span class="k">public</span> <span class="k">event</span> <span class="n">MyEventHandler</span> <span class="n">MyEvent</span>
 <span class="p">{</span>
     <span class="k">add</span>
@@ -110,7 +110,7 @@
 
 <p>This is the standard, simple, and logical event-raising code:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">MyEvent</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">MyEvent</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">this</span><span class="p">.</span><span class="n">MyEvent</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="n">args</span><span class="p">);</span>
 <span class="p">}</span></code></pre></div>
@@ -123,7 +123,7 @@
 
 <p>One solution to the problem described above is to make a copy of the event delegate before testing it. The event raising code becomes:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="n">MyEventHandler</span> <span class="n">myEvent</span> <span class="p">=</span> <span class="k">this</span><span class="p">.</span><span class="n">MyEvent</span><span class="p">;</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">MyEventHandler</span> <span class="n">myEvent</span> <span class="p">=</span> <span class="k">this</span><span class="p">.</span><span class="n">MyEvent</span><span class="p">;</span>
 <span class="k">if</span> <span class="p">(</span><span class="n">myEvent</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">myEvent</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="n">args</span><span class="p">);</span>
@@ -143,7 +143,7 @@
 
 <p>Jon Skeet has a great treatment of this subject in his paper <a href="http://www.yoda.arachsys.com/csharp/events.html">Delegates and Events</a> (you may wish to skip to the section titled “Thread-safe events”). He covers everything that I’ve described above, but then proceeds on to propose another wrong solution. He dislikes the memory barrier solution (as do I), and attempts to solve it by wrapping the copy operation within the lock. As Jon points out, the event add/remove methods <em>may</em> lock <code>this</code> or they could lock something else (remember, a future C# compiler may choose to lock on a super-secret private field instead). So, the default add/remove methods have to be replaced with ones that perform an explicit lock, as such:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="kt">object</span> <span class="n">myEventLock</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">object</span><span class="p">();</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="kt">object</span> <span class="n">myEventLock</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">object</span><span class="p">();</span>
 <span class="k">private</span> <span class="n">MyEventHandler</span> <span class="n">myEvent</span><span class="p">;</span>
 <span class="k">public</span> <span class="n">MyEventHandler</span> <span class="n">MyEvent</span>
 <span class="p">{</span>
@@ -236,7 +236,7 @@
 
 <p>One nice side effect of this approach is that the code becomes much simpler:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">public</span> <span class="k">event</span> <span class="n">MyEventHandler</span> <span class="n">MyEvent</span><span class="p">;</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">event</span> <span class="n">MyEventHandler</span> <span class="n">MyEvent</span><span class="p">;</span>
 
 <span class="k">protected</span> <span class="k">virtual</span> <span class="nf">OnMyEvent</span><span class="p">(</span><span class="n">MyEventArgs</span> <span class="n">args</span><span class="p">)</span>
 <span class="p">{</span>
@@ -248,7 +248,7 @@
 
 <p>Efficiency freaks can go one step further and explicitly implement the backing field, add handler, and remove handler. By removing the default locking (which is useless), the code is more explicit but also more efficient:</p>
 
-<div class="highlight"><pre><code class="csharp"><span class="k">private</span> <span class="n">MyEventHandler</span> <span class="n">myEvent</span><span class="p">;</span>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="n">MyEventHandler</span> <span class="n">myEvent</span><span class="p">;</span>
 <span class="k">public</span> <span class="k">event</span> <span class="n">MyEventHandler</span> <span class="n">MyEvent</span>
 <span class="p">{</span>
     <span class="k">add</span>
