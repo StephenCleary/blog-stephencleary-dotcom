@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>A Tour of Task, Part 5: Waiting</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="An analysis of Task.Wait, Task.WaitAll, Task.WaitAny, and Task.AsyncWaitHandle; and discussion of whether they should be used for asynchronous and/or parallel code." />
+    <link rel="canonical" href="http://blog.stephencleary.com/2014/10/a-tour-of-task-part-5-wait.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
+    
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.2.0/spacelab/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://stephencleary.com/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://stephencleary.com/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://stephencleary.com/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://stephencleary.com/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://stephencleary.com/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://stephencleary.com/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://stephencleary.com/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://stephencleary.com/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://stephencleary.com/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://stephencleary.com/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://stephencleary.com/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-32x32.png" sizes="32x32">
+</head>
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <div class="navbar-brand-container"><a class="navbar-brand" href="http://stephencleary.com">Stephen Cleary</a></div>
+    </div>
+
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+        <ul class="nav navbar-nav">
+            <li  class="active"  ><a href="http://blog.stephencleary.com">Blog</a></li>
+            <li  ><a href="http://stephencleary.com/projects/">Projects</a></li>
+            <li  ><a href="http://stephencleary.com/publications/">Publications</a></li>
+            <li  ><a href="http://stephencleary.com/contact/">Contact</a></li>
+            <li><a href="http://feeds.feedburner.com/NitoPrograms"><i class="fa fa-rss-square fa-lg"></i></a></li>
+            <li  ><a href="http://stephencleary.com/search/"><i class="fa fa-search"></i></a></li>
+        </ul>
+    </div>
+</nav>
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>A Tour of Task, Part 5: Waiting</h1>
+          <small><time datetime="2014-10-10">Oct 10, 2014</time> &bull; <a data-disqus-identifier="/2014/10/a-tour-of-task-part-5-wait" href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>Today, we’ll look at a variety of ways that code can block on a task. All of these options block the calling thread until the task completes, so they’re almost never used with <a href="/2014/06/a-tour-of-task-part-3-status.html">Promise Tasks</a>. Note that <a href="/2012/07/dont-block-on-async-code.html">blocking on a Promise Task is a common cause of deadlocks</a>; blocking is almost exclusively used with Delegate Tasks (i.e., a task returned from <code>Task.Run</code>).</p>
+
+<h2 id="wait">Wait</h2>
+
+<p>There are five overloads of <code>Wait</code>:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">void</span> <span class="nf">Wait</span><span class="p">();</span>
+<span class="k">void</span> <span class="nf">Wait</span><span class="p">(</span><span class="n">CancellationToken</span><span class="p">);</span>
+<span class="kt">bool</span> <span class="nf">Wait</span><span class="p">(</span><span class="kt">int</span><span class="p">);</span>
+<span class="kt">bool</span> <span class="nf">Wait</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">);</span>
+<span class="kt">bool</span> <span class="nf">Wait</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span></code></pre></div>
+
+<p>These nicely simplify down to a single <em>logical</em> method:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">void</span> <span class="nf">Wait</span><span class="p">()</span> <span class="p">{</span> <span class="n">Wait</span><span class="p">(-</span><span class="m">1</span><span class="p">);</span> <span class="p">}</span>
+<span class="k">void</span> <span class="nf">Wait</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">token</span><span class="p">)</span> <span class="p">{</span> <span class="n">Wait</span><span class="p">(-</span><span class="m">1</span><span class="p">,</span> <span class="n">token</span><span class="p">);</span> <span class="p">}</span>
+<span class="kt">bool</span> <span class="nf">Wait</span><span class="p">(</span><span class="kt">int</span> <span class="n">timeout</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">Wait</span><span class="p">(</span><span class="n">timeout</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">.</span><span class="n">None</span><span class="p">);</span> <span class="p">}</span>
+<span class="kt">bool</span> <span class="nf">Wait</span><span class="p">(</span><span class="n">TimeSpan</span> <span class="n">timeout</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">Wait</span><span class="p">(</span><span class="n">timeout</span><span class="p">.</span><span class="n">TotalMilliseconds</span><span class="p">);</span> <span class="p">}</span>
+<span class="kt">bool</span> <span class="nf">Wait</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span></code></pre></div>
+
+<p><code>Wait</code> is rather simple: it will block the calling thread until the task completes, a timeout occurs, or the wait is cancelled. If the wait is cancelled, then <code>Wait</code> raises an <code>OperationCanceledException</code>. If a timeout occurs, then <code>Wait</code> returns <code>false</code>. If the task completes in a failed or canceled state, then <code>Wait</code> wraps any exceptions into an <code>AggregateException</code>. Note that a canceled <em>task</em> will raise an <code>OperationCanceledException</code> wrapped in an <code>AggregateException</code>, whereas a canceled <em>wait</em> will raise an unwrapped <code>OperationCanceledException</code>.</p>
+
+<p><code>Task.Wait</code> is occasionally useful, if it’s done in the correct context. For example, the <code>Main</code> method of a Console application can use <code>Wait</code> if it has asynchronous work to do, but wants the main thread to synchronously block until that work is done. However, most of the time, <code>Task.Wait</code> is dangerous because if its <a href="/2012/07/dont-block-on-async-code.html">deadlock potential</a>.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>For asynchronous code, use <code>await</code> instead of <code>Task.Wait</code>.</p>
+</div>
+
+<h2 id="waitall">WaitAll</h2>
+
+<p>The overloads for <code>WaitAll</code> are very similar to the overloads of <code>Wait</code>:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">static</span> <span class="k">void</span> <span class="nf">WaitAll</span><span class="p">(</span><span class="k">params</span> <span class="n">Task</span><span class="p">[]);</span>
+<span class="k">static</span> <span class="k">void</span> <span class="nf">WaitAll</span><span class="p">(</span><span class="n">Task</span><span class="p">[],</span> <span class="n">CancellationToken</span><span class="p">);</span>
+<span class="k">static</span> <span class="kt">bool</span> <span class="nf">WaitAll</span><span class="p">(</span><span class="n">Task</span><span class="p">[],</span> <span class="kt">int</span><span class="p">);</span>
+<span class="k">static</span> <span class="kt">bool</span> <span class="nf">WaitAll</span><span class="p">(</span><span class="n">Task</span><span class="p">[],</span> <span class="n">TimeSpan</span><span class="p">);</span>
+<span class="k">static</span> <span class="kt">bool</span> <span class="nf">WaitAll</span><span class="p">(</span><span class="n">Task</span><span class="p">[],</span> <span class="kt">int</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span></code></pre></div>
+
+<p>Again, these nicely simplify down to a single logical method:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">static</span> <span class="k">void</span> <span class="nf">WaitAll</span><span class="p">(</span><span class="k">params</span> <span class="n">Task</span><span class="p">[]</span> <span class="n">tasks</span><span class="p">)</span> <span class="p">{</span> <span class="n">WaitAll</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="p">-</span><span class="m">1</span><span class="p">);</span> <span class="p">}</span>
+<span class="k">static</span> <span class="k">void</span> <span class="nf">WaitAll</span><span class="p">(</span><span class="n">Task</span><span class="p">[]</span> <span class="n">tasks</span><span class="p">,</span> <span class="n">CancellationToken</span> <span class="n">token</span><span class="p">)</span> <span class="p">{</span> <span class="n">WaitAll</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="p">-</span><span class="m">1</span><span class="p">,</span> <span class="n">token</span><span class="p">);</span> <span class="p">}</span>
+<span class="k">static</span> <span class="kt">bool</span> <span class="nf">WaitAll</span><span class="p">(</span><span class="n">Task</span><span class="p">[]</span> <span class="n">tasks</span><span class="p">,</span> <span class="kt">int</span> <span class="n">timeout</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">WaitAll</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="n">timeout</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">.</span><span class="n">None</span><span class="p">);</span> <span class="p">}</span>
+<span class="k">static</span> <span class="kt">bool</span> <span class="nf">WaitAll</span><span class="p">(</span><span class="n">Task</span><span class="p">[]</span> <span class="n">tasks</span><span class="p">,</span> <span class="n">TimeSpan</span> <span class="n">timeout</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">WaitAll</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="n">timeout</span><span class="p">.</span><span class="n">TotalMilliseconds</span><span class="p">);</span> <span class="p">}</span>
+<span class="k">static</span> <span class="kt">bool</span> <span class="nf">WaitAll</span><span class="p">(</span><span class="n">Task</span><span class="p">[],</span> <span class="kt">int</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span></code></pre></div>
+
+<p>These are practically identical to <code>Task.Wait</code>, except they wait for multiple tasks to all complete. Similarly to <code>Task.Wait</code>, <code>Task.WaitAll</code> will throw <code>OperationCanceledException</code> if the wait is cancelled, or an <code>AggregateException</code> if any of the tasks fail or are cancelled. <code>WaitAll</code> will return <code>false</code> if a timeout occurs.</p>
+
+<p><code>Task.WaitAll</code> should be very rarely used. It is occasionally useful when working with <a href="/2014/06/a-tour-of-task-part-3-status.html">Delegate Tasks</a>, but even this usage is rare. Developers writing parallel code should first attempt data parallelism; and even if task parallism is necessary, then parent/child tasks may result in cleaner code than defining ad-hoc dependencies with <code>Task.WaitAll</code>.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>Note that <code>Task.WaitAll</code> (for synchronous code) is rare, but <code>Task.WhenAll</code> (for asynchronous code) is common.</p>
+</div>
+
+<h2 id="waitany">WaitAny</h2>
+
+<p><code>Task.WaitAny</code> is similar to <code>WaitAll</code> except it only waits for the first task to complete (and returns the index of that task). Again, we have the similar overloads:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">static</span> <span class="kt">int</span> <span class="nf">WaitAny</span><span class="p">(</span><span class="k">params</span> <span class="n">Task</span><span class="p">[]);</span>
+<span class="k">static</span> <span class="kt">int</span> <span class="nf">WaitAny</span><span class="p">(</span><span class="n">Task</span><span class="p">[],</span> <span class="n">CancellationToken</span><span class="p">);</span>
+<span class="k">static</span> <span class="kt">int</span> <span class="nf">WaitAny</span><span class="p">(</span><span class="n">Task</span><span class="p">[],</span> <span class="kt">int</span><span class="p">);</span>
+<span class="k">static</span> <span class="kt">int</span> <span class="nf">WaitAny</span><span class="p">(</span><span class="n">Task</span><span class="p">[],</span> <span class="n">TimeSpan</span><span class="p">);</span>
+<span class="k">static</span> <span class="kt">int</span> <span class="nf">WaitAny</span><span class="p">(</span><span class="n">Task</span><span class="p">[],</span> <span class="kt">int</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span></code></pre></div>
+
+<p>Which simplify down to a single logical method:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">static</span> <span class="kt">int</span> <span class="nf">WaitAny</span><span class="p">(</span><span class="k">params</span> <span class="n">Task</span><span class="p">[]</span> <span class="n">tasks</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">WaitAny</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="p">-</span><span class="m">1</span><span class="p">);</span> <span class="p">}</span>
+<span class="k">static</span> <span class="kt">int</span> <span class="nf">WaitAny</span><span class="p">(</span><span class="n">Task</span><span class="p">[]</span> <span class="n">tasks</span><span class="p">,</span> <span class="n">CancellationToken</span> <span class="n">token</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">WaitAny</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="p">-</span><span class="m">1</span><span class="p">,</span> <span class="n">token</span><span class="p">);</span> <span class="p">}</span>
+<span class="k">static</span> <span class="kt">int</span> <span class="nf">WaitAny</span><span class="p">(</span><span class="n">Task</span><span class="p">[]</span> <span class="n">tasks</span><span class="p">,</span> <span class="kt">int</span> <span class="n">timeout</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">WaitAny</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="n">timeout</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">.</span><span class="n">None</span><span class="p">);</span> <span class="p">}</span>
+<span class="k">static</span> <span class="kt">int</span> <span class="nf">WaitAny</span><span class="p">(</span><span class="n">Task</span><span class="p">[]</span> <span class="n">tasks</span><span class="p">,</span> <span class="n">TimeSpan</span> <span class="n">timeout</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">WaitAny</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="n">timeout</span><span class="p">.</span><span class="n">TotalMilliseconds</span><span class="p">);</span> <span class="p">}</span>
+<span class="k">static</span> <span class="kt">int</span> <span class="nf">WaitAny</span><span class="p">(</span><span class="n">Task</span><span class="p">[],</span> <span class="kt">int</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span></code></pre></div>
+
+<p>The semantics of <code>WaitAny</code> are a bit different than <code>WaitAll</code> and <code>Wait</code>: <code>WaitAny</code> merely waits for the first task to complete. It will <em>not</em> propagate that task’s exception in an <code>AggregateException</code>. Rather, any task failures will need to be checked after <code>WaitAny</code> returns. <code>WaitAny</code> will return <code>-1</code> on timeout, and will throw <code>OperationCanceledException</code> if the wait is cancelled.</p>
+
+<p>If <code>Task.WaitAll</code> is rarely used, <code>Task.WaitAny</code> should hardly ever be used at all.</p>
+
+<h2 id="asyncwaithandle">AsyncWaitHandle</h2>
+
+<p>The <code>Task</code> type actually implements <code>IAsyncResult</code> for <a href="http://msdn.microsoft.com/en-us/library/hh873178(v=vs.110).aspx#TapToApm">easy interoperation with the (unfortunately named) Asynchronous Programming Model (APM)</a>. This means <code>Task</code> has a wait handle as one of its properties:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">WaitHandle</span> <span class="n">IAsyncResult</span><span class="p">.</span><span class="n">AsyncWaitHandle</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></div>
+
+<p>Note that this member is explicitly implemented, so consuming code <em>must</em> cast the <code>Task</code> as <code>IAsyncResult</code> before reading it. The actual underlying wait handle is lazy-allocated.</p>
+
+<p>Code using <code>AsyncWaitHandle</code> should be extremely, <em>extremely</em> rare. It only makes sense if you have tons of existing code that is built around <code>WaitHandle</code>. If you do read the <code>AsyncWaitHandle</code> property, strongly consider <a href="http://blogs.msdn.com/b/pfxteam/archive/2012/03/25/10287435.aspx">disposing the task instance</a>.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>There are a few corner cases where a single <code>Task.Wait</code> could be useful; but in general, code should not synchronously block on a task.</p>
+
+  </article>
+    
+    <footer>
+        
+            <ul class="pager">
+                <li class="previous"><a href="/2014/06/a-tour-of-task-part-4-id.html" title="A Tour of Task, Part 4: Id">&larr; Previous in A Tour of Task</a></li>
+            </ul>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2014/06/await-in-catch-and-finally.html" title="Await in Catch and Finally">&larr; Previous Post</a></li>
+            
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+                <div class="panel panel-primary">
+                    <div class="panel-heading">A Tour of Task</div>
+                    <div class="panel-body sidenav">
+                        <ul class="nav nav-pills nav-stacked">
+                                            <li class="sidenavitem"><a href="/2014/04/a-tour-of-task-part-0-overview.html">Overview</a></li>
+                                            <li class="sidenavitem"><a href="/2014/05/a-tour-of-task-part-1-constructors.html">Constructors</a></li>
+                                            <li class="sidenavitem"><a href="/2014/05/a-tour-of-task-part-2-asyncstate-and-creationoptions.html">AsyncState and CreationOptions</a></li>
+                                            <li class="sidenavitem"><a href="/2014/06/a-tour-of-task-part-3-status.html">Status</a></li>
+                                            <li class="sidenavitem"><a href="/2014/06/a-tour-of-task-part-4-id.html">Id</a></li>
+                                            <li class="active sidenavitem"><a href="/2014/10/a-tour-of-task-part-5-wait.html">Waiting</a></li>
+                        </ul>
+                    </div>
+                </div>
+            
+        </div>
+        <div class="col-sm-2 col-md-offset-1 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://stephencleary.com/www.assets/Me-large.jpg"/></div>
+                    <div class="center vertical-margins">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://stephencleary.com/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://stephencleary.com/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+    (function($) {
+        $(function() {
+            if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+                $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+            }
+        });
+    })(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+    (function($) {
+        $(function() {
+            if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+                $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+            }
+        });
+    })(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+<script src="/lib/jquery.scrollTo.min.js"></script>
+<script type="text/javascript">
+    (function ($) {
+        $(function () {
+            var container = $('.affix').filter(function() { return $(this).css('position') == 'fixed'; });
+            var target = container.find('.active');
+            container.scrollTo(target, { offset: - (container.height() / 2 - target.height() / 2) });
+        });
+    })(window.jQuery);
+</script>
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-8910661-5', 'stephencleary.com');
+    ga('send', 'pageview');
+</script>
+
+
+
+
+
+
+
+<!-- Disqus variables -->
+<script type="text/javascript">
+    var disqus_shortname = 'stephencleary';
+    var disqus_identifier = "/2014/10/a-tour-of-task-part-5-wait";
+    var disqus_title = "A Tour of Task, Part 5: Waiting";
+    var disqus_url = "http://blog.stephencleary.com/2014/10/a-tour-of-task-part-5-wait.html";
+</script>
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(s);
+    }());
+</script>
+
+<!-- Disqus comment section -->
+<script type="text/javascript">
+    (function() {
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<!-- Moment -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.6.0/moment.min.js"></script>
+<script type="text/javascript">window.moment || document.write('<script src="/lib/moment.min.js"><\/script>')</script>
+<script type="text/javascript">
+    (function($) {
+        $(function() {
+            $('time').each(function (_, e) {
+                var text = moment($(e).attr('datetime'), 'YYYY-MM-DD').fromNow();
+                $(e).text(function(_, oldText) { return text + ' (' + oldText + ')'; });
+            });
+        });
+    })(window.jQuery);
+</script>
+
+</body>
+</html>
