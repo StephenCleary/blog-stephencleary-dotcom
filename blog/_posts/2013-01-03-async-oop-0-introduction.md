@@ -16,3 +16,8 @@ _All_ asynchronous code is functional by nature. I used to teach asynchronous pr
 
 The major breakthrough with `async` is that you can still think procedurally while programming asynchronously. This makes asynchronous methods easier to write and understand. However, under the covers, asynchronous code is still functional in nature; and this causes some problems when people try to force `async` methods into classical OOP designs.
 
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Update (2014-12-01): For more details, see Chapter 10 in my [Concurrency Cookbook](http://tinyurl.com/ConcurrencyCookbook){:.alert-link}.
+</div>

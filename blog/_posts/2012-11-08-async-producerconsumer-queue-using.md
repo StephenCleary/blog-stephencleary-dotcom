@@ -220,3 +220,8 @@ Note that `ExecutionDataflowBlockOptions.BoundedCapacity` is now performing anot
 
 In summary, we just reviewed two scenarios where we should set `BoundedCapacity` to a low number: when we want to maintain throttling throughout a pipeline, and when we have a "T" in our dataflow mesh.
 
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Update (2014-12-01): For more details, see Recipes 8.8 and 8.10 in my [Concurrency Cookbook](http://tinyurl.com/ConcurrencyCookbook){:.alert-link}.
+</div>

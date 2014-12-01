@@ -133,3 +133,8 @@ But don't do that. Yes, it's cool, and very clever. But having your component ov
 
 I recommend using deferrals. It's what programmers are expecting these days. I just mentioned these other solutions for the sake of completeness.
 
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Update (2014-12-01): For more details, see Recipe 10.5 in my [Concurrency Cookbook](http://tinyurl.com/ConcurrencyCookbook){:.alert-link}.
+</div>

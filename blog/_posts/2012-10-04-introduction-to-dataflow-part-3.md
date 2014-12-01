@@ -49,3 +49,9 @@ This introductory series on Dataflow is just scratching the surface. The resourc
 - [Document: Introduction to TPL Dataflow](http://www.microsoft.com/en-us/download/details.aspx?id=14782)
 - [Document: Guide to Implementing Custom TPL Dataflow Blocks](http://blogs.msdn.com/b/pfxteam/archive/2011/12/05/10244302.aspx)
 - [TPL Dataflow forum](http://social.msdn.microsoft.com/Forums/en/tpldataflow/threads)
+
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Update (2014-12-01): For more details, see Chapter 4 in my [Concurrency Cookbook](http://tinyurl.com/ConcurrencyCookbook){:.alert-link}.
+</div>

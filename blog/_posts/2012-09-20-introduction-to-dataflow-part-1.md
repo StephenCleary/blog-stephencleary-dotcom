@@ -53,3 +53,8 @@ If you have a simple dataflow mesh (like a pipeline), then you can tell the bloc
 
 If your dataflow mesh is more complex, then you may have to propagate completion manually. The common tools for this are [`Task.WhenAll`](http://msdn.microsoft.com/en-us/library/hh160384.aspx) and [`Task.ContinueWith`](http://msdn.microsoft.com/en-us/library/system.threading.tasks.task.continuewith.aspx). If you do have to do this, I recommend that you wrap your dataflow mesh into a separate class (possibly exposing the blocks as properties) and implement your own `Complete` and `Completion` members just like a dataflow block does.
 
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Update (2014-12-01): For more details, see Chapter 4 in my [Concurrency Cookbook](http://tinyurl.com/ConcurrencyCookbook){:.alert-link}.
+</div>

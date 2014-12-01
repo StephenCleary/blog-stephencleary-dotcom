@@ -31,5 +31,10 @@ If you have an implementation that _isn't_ `async`, you can use `TaskCompletionS
 
 Similarly, if you have a base class method that returns `Task` or `Task<T>` (which may be asynchronous or synchronous), you can override it with an asynchronous or synchronous method.
 
-Next time, we'll take a look at asynchronous constructors.
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
+Update (2014-12-01): For more details, see Recipe 10.1 in my [Concurrency Cookbook](http://tinyurl.com/ConcurrencyCookbook){:.alert-link}.
+</div>
+
+Next time, we'll take a look at asynchronous constructors.

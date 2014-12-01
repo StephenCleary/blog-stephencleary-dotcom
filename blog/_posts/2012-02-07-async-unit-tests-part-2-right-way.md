@@ -8,6 +8,12 @@ title: "Async Unit Tests, Part 2: The Right Way"
 **Update:** The information in this blog post _only applies to Visual Studio 2010_. Visual Studio 2012 _will_ support asynchronous unit tests, **as long as those tests are "async Task" tests, not "async void" tests**.
 </div>
 
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Update (2014-12-01): For a more modern solution, see Chapter 6 in my [Concurrency Cookbook](http://tinyurl.com/ConcurrencyCookbook){:.alert-link}.
+</div>
+
 Last time, we looked at [incorrect approaches to async unit testing]({% post_url 2012-02-06-async-unit-tests-part-1-wrong-way %}). We also identified the underlying problem: that unit tests do not have an appropriate async context.
 
 At this point, the solution should be pretty obvious: give the unit tests an async context!
@@ -134,4 +140,10 @@ xUnit.NET has recently released [first-class support for asynchronous unit tests
 I've been in contact with some people inside of Microsoft regarding this issue, and they said they're aware of it and are considering various options. They wouldn't give me any details, of course, but they did suggest that I would be "pleasantly surprised" when Visual Studio vNext comes out.
 
 So, that's where we are today. Hopefully Microsoft will ship built-in async unit test support in Visual Studio vNext, and I'll be able to look back at this blog post and laugh at how fraught with peril async unit testing _used_ to be.
+
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Update (2014-12-01): For a more modern solution, see Chapter 6 in my [Concurrency Cookbook](http://tinyurl.com/ConcurrencyCookbook){:.alert-link}.
+</div>
 

@@ -41,3 +41,9 @@ You can work around this by providing your own async-compatible context. [AsyncC
 
 That's all for today; next week we'll start looking at asynchronous unit tests, which suffer from a similar problem.
 
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+For a similar example, see Recipe 2.9 in my [Concurrency Cookbook](http://tinyurl.com/ConcurrencyCookbook){:.alert-link}.
+</div>
+

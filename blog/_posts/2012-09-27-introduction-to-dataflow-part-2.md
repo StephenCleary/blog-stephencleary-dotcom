@@ -54,3 +54,8 @@ The blocks described above are a good starting point for playing around with TPL
 
 Please read the [official "Introduction to TPL Dataflow" document](http://www.microsoft.com/en-us/download/details.aspx?id=14782) for more details on these block types; that document covers information like the [option for greedy behavior](http://msdn.microsoft.com/en-us/library/system.threading.tasks.dataflow.groupingdataflowblockoptions.greedy.aspx), which is important for some batching and joining scenarios. Finally, if you're using the advanced blocks, I also recommend also hanging out on the [TPL Dataflow forum](http://social.msdn.microsoft.com/Forums/en/tpldataflow/threads).
 
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Update (2014-12-01): For more details, see Chapter 4 in my [Concurrency Cookbook](http://tinyurl.com/ConcurrencyCookbook){:.alert-link}.
+</div>

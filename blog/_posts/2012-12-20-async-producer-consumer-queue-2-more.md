@@ -86,3 +86,8 @@ There is an implementation of this type in the [AsyncEx library](http://nitoasyn
  - The ability to attempt an enqueue/dequeue to/from multiple queues simultaneously, with only one enqueue/dequeue actually taking place.
  - `Try*` variants for all operations.
 
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Update (2014-12-01): For more details, see Recipes 8.8 and 8.10 in my [Concurrency Cookbook](http://tinyurl.com/ConcurrencyCookbook){:.alert-link}.
+</div>

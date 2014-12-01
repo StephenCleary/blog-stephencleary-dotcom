@@ -22,7 +22,19 @@ The best option is to restructure your code so that concurrency is removed. Inst
 This is yet another example of async code gently pushing you towards a functional programming style.
 </div>
 
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Update (2014-12-01): For more details, see Chapters 4 and 5 in my [Concurrency Cookbook](http://tinyurl.com/ConcurrencyCookbook){:.alert-link}.
+</div>
+
 The first option isn't always feasible, though. If you want minimal impact to your existing code, you can check out Stephen Toub's series where he creates async-friendly versions of [ManualResetEvent](http://blogs.msdn.com/b/pfxteam/archive/2012/02/11/10266920.aspx), [AutoResetEvent](http://blogs.msdn.com/b/pfxteam/archive/2012/02/11/10266923.aspx), [CountdownEvent](http://blogs.msdn.com/b/pfxteam/archive/2012/02/11/10266930.aspx), [Barrier](http://blogs.msdn.com/b/pfxteam/archive/2012/02/11/10266932.aspx), [Semaphore](http://blogs.msdn.com/b/pfxteam/archive/2012/02/12/10266983.aspx), [lock](http://blogs.msdn.com/b/pfxteam/archive/2012/02/12/10266988.aspx), and [ReaderWriterLock](http://blogs.msdn.com/b/pfxteam/archive/2012/02/12/building-async-coordination-primitives-part-7-asyncreaderwriterlock.aspx). There's some tremendous knowledge in these posts, even if you don't use the code.
+
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Update (2014-12-01): For more details, see Recipes 11.2, 11.4, and 11.5 in my [Concurrency Cookbook](http://tinyurl.com/ConcurrencyCookbook){:.alert-link}. I also have a [full suite of async-ready synchronization primitives](https://github.com/StephenCleary/AsyncEx/wiki) in my AsyncEx library.
+</div>
 
 Today, though, I'm going to explore a third option: **scheduled concurrency**. A lot of people aren't even aware that it's an option.
 
@@ -62,6 +74,12 @@ It's also possible to define your own special TaskScheduler, if you really need 
 <i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
 
 **Note:** When an asynchronous method awaits, it returns back to its context. This means that ExclusiveScheduler is perfectly happy to run one task _at a time_, not one task _until it completes_. As soon as an asynchronous method awaits, it's no longer the "owner" of the ExclusiveScheduler. Stephen Toub's async-friendly primitives like [AsyncLock](http://blogs.msdn.com/b/pfxteam/archive/2012/02/12/10266988.aspx){:.alert-link} use a different strategy, allowing an asynchronous method to hold the lock while it awaits.
+</div>
+
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Update (2014-12-01): For more details, see Recipe 12.2 in my [Concurrency Cookbook](http://tinyurl.com/ConcurrencyCookbook){:.alert-link}.
 </div>
 
 <!--

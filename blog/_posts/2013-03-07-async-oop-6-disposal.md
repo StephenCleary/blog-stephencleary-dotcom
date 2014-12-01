@@ -71,3 +71,8 @@ So, if you need to support "asynchronous disposal", I recommend following this s
 
 Types with asynchronous disposal should have at least the `Completion` member, and most likely the `Complete` member. Only add the `Fault` member if it really makes sense for your type. As a final note, instance-level _cancellation_ is handled by passing a `CancellationToken` into the constructor; there's no existing examples of a `Cancel` member for asynchronous disposal. If you do need "external" cancellation like this, consider implementing `IDisposable` with cancellation semantics (as described above) in addition to the standard asynchronous disposal API.
 
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Update (2014-12-01): For more details, see Recipe 10.6 in my [Concurrency Cookbook](http://tinyurl.com/ConcurrencyCookbook){:.alert-link}.
+</div>

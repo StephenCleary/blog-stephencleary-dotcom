@@ -44,6 +44,12 @@ You _probably_ won't have to use TaskCompletionSource\<TResult> directly; you ca
 [Nito.AsyncEx](http://nuget.org/packages/Nito.AsyncEx){:.alert-link} includes an **AsyncFactory** type which works like TaskFactory.FromAsync but is slightly easier to use and supports more arguments. It also includes a (non-generic) **TaskCompletionSource**, which is easier to use when creating (non-generic) Tasks.
 </div>
 
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Update (2014-12-01): For more details, see Recipes 7.1, 7.2, and 7.3 in my [Concurrency Cookbook](http://tinyurl.com/ConcurrencyCookbook){:.alert-link}.
+</div>
+
 ## Tasks as Code
 
 Remember (from our [async intro post]({% post_url 2012-02-02-async-and-await %})) that the async keyword does _not_ run the method on a background thread. However, you can use **Task.Run** to run code on a background thread:
@@ -86,6 +92,12 @@ If you need a specific thread (e.g., an STA thread) that supports TaskScheduler,
 
 There are some pretty cool tricks we can pull off using the built-in TaskScheduler/TaskFactory types. We'll look at more advanced TaskScheduler situations in later posts.
 
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Update (2014-12-01): For more details, see Recipes 7.4 and 3.4 in my [Concurrency Cookbook](http://tinyurl.com/ConcurrencyCookbook){:.alert-link}.
+</div>
+
 ## Tasks as Async Methods
 
 This is a special case of Task creation - and it's easy to overlook!
@@ -102,5 +114,10 @@ public async Task<int> DivideAsync(int numerator, int denominator)
 
 We do not create a Task\<int> in our code, but the compiler rewrites our code so that a Task\<int> is created and returned. When the method completes, the task completes. This type of task is actually an event-based task, since an event (the method returning) causes the task to complete.
 
-That's the easiest way to create Task objects! However, it only works if you're building on existing awaitables; if you aren't in this situation, then you should use TaskFactory.StartNew or TaskCompletionSource\<TResult>.
+That's the easiest way to create Task objects! However, it only works if you're building on existing awaitables; if you aren't in this situation, then you should use Task.Run or TaskCompletionSource\<TResult>.
 
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Update (2014-12-01): For more details, see Section 1.2 and Chapter 2 in my [Concurrency Cookbook](http://tinyurl.com/ConcurrencyCookbook){:.alert-link}.
+</div>

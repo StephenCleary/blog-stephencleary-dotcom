@@ -144,6 +144,12 @@ If you _do_ need to maintain a partially-asynchronous code base, then be sure to
 
 There are scores of answered questions out there that are all caused by the same deadlock problem. It has shown up on WinRT, WPF, Windows Forms, Windows Phone, MonoDroid, Monogame, and ASP.NET.
 
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Update (2014-12-01): For more details, see my [MSDN article on asynchronous best practices](http://msdn.microsoft.com/en-us/magazine/jj991977.aspx){:.alert-link} or Section 1.2 in my [Concurrency Cookbook](http://tinyurl.com/ConcurrencyCookbook){:.alert-link}.
+</div>
+
 <!--
 Boring list that I'm no longer interested enough in to maintain.
 

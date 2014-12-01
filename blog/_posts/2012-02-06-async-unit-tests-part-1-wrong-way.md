@@ -116,3 +116,9 @@ During CodeMash, I gave a lightning talk about async unit testing. You could alm
 
 Tomorrow we'll look at [the right way to do async unit testing]({% post_url 2012-02-07-async-unit-tests-part-2-right-way %}).
 
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Update (2014-12-01): For a more modern solution, see Chapter 6 in my [Concurrency Cookbook](http://tinyurl.com/ConcurrencyCookbook){:.alert-link}.
+</div>
+

@@ -53,6 +53,12 @@ Actually, the entire AsyncEx library got its start with FromApm. TaskFactory.Fro
 
 So, TAP wrappers for existing APM methods are pretty easy.
 
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Update (2014-12-01): For more details, see Recipe 7.2 in my [Concurrency Cookbook](http://tinyurl.com/ConcurrencyCookbook){:.alert-link}.
+</div>
+
 ## APM Wrappers for TAP Implementations
 
 You'd think this would be easy, too, especially considering that Task implements IAsyncResult. Unfortunately, there are a couple of pitfalls.

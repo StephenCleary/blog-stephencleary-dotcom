@@ -265,3 +265,8 @@ Similar code will compile targeting .NET 4.0 (with [Microsoft.Bcl.Async](http://
 
 As a final reminder: this will work **only on .NET 4.5** and it only works because we **stored immutable data**.
 
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Update (2014-12-01): For more details, see Recipe 13.4 in my [Concurrency Cookbook](http://tinyurl.com/ConcurrencyCookbook){:.alert-link}.
+</div>

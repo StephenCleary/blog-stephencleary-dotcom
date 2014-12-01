@@ -40,7 +40,7 @@ Still, this approach _can_ be useful in a limited set of scenarios, so with grea
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
-**Update 2014-04:** A newer version of this code is now [on GitHub](https://github.com/StephenCleary/AspNetBackgroundTasks){:.alert-link}.
+**Update 2014-04:** A newer version of this code is now [on GitHub](https://github.com/StephenCleary/AspNetBackgroundTasks){:.alert-link} and available [via NuGet](https://www.nuget.org/packages/Nito.AspNetBackgroundTasks/){:.alert-link}.
 </div>
 
 {% highlight csharp %}

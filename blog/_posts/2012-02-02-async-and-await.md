@@ -247,6 +247,6 @@ Of course, another resource is my own blog.
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
-My [Concurrency Cookbook](http://tinyurl.com/ConcurrencyCookbook){:.alert-link} covers a wide range of use cases, showing the proper `async` and `await` by example.
+My [Concurrency Cookbook](http://tinyurl.com/ConcurrencyCookbook){:.alert-link} covers a wide range of use cases for `async` and `await`, and also covers situations when you should use the Task Parallel Library, Rx, or TPL Dataflow instead.
 </div>
 
