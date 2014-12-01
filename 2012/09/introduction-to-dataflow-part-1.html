@@ -119,6 +119,11 @@
 
 <p>If your dataflow mesh is more complex, then you may have to propagate completion manually. The common tools for this are <a href="http://msdn.microsoft.com/en-us/library/hh160384.aspx"><code>Task.WhenAll</code></a> and <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.task.continuewith.aspx"><code>Task.ContinueWith</code></a>. If you do have to do this, I recommend that you wrap your dataflow mesh into a separate class (possibly exposing the blocks as properties) and implement your own <code>Complete</code> and <code>Completion</code> members just like a dataflow block does.</p>
 
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>Update (2014-12-01): For more details, see Chapter 4 in my <a href="http://tinyurl.com/ConcurrencyCookbook" class="alert-link">Concurrency Cookbook</a>.</p>
+</div>
 
   </article>
     

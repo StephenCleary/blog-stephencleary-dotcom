@@ -106,6 +106,12 @@
   <p><a href="http://nuget.org/packages/Nito.AsyncEx" class="alert-link">Nito.AsyncEx</a> includes an <strong>AsyncFactory</strong> type which works like TaskFactory.FromAsync but is slightly easier to use and supports more arguments. It also includes a (non-generic) <strong>TaskCompletionSource</strong>, which is easier to use when creating (non-generic) Tasks.</p>
 </div>
 
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>Update (2014-12-01): For more details, see Recipes 7.1, 7.2, and 7.3 in my <a href="http://tinyurl.com/ConcurrencyCookbook" class="alert-link">Concurrency Cookbook</a>.</p>
+</div>
+
 <h2 id="tasks-as-code">Tasks as Code</h2>
 
 <p>Remember (from our <a href="/2012/02/async-and-await.html">async intro post</a>) that the async keyword does <em>not</em> run the method on a background thread. However, you can use <strong>Task.Run</strong> to run code on a background thread:</p>
@@ -146,6 +152,12 @@
 
 <p>There are some pretty cool tricks we can pull off using the built-in TaskScheduler/TaskFactory types. We’ll look at more advanced TaskScheduler situations in later posts.</p>
 
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>Update (2014-12-01): For more details, see Recipes 7.4 and 3.4 in my <a href="http://tinyurl.com/ConcurrencyCookbook" class="alert-link">Concurrency Cookbook</a>.</p>
+</div>
+
 <h2 id="tasks-as-async-methods">Tasks as Async Methods</h2>
 
 <p>This is a special case of Task creation - and it’s easy to overlook!</p>
@@ -160,8 +172,13 @@
 
 <p>We do not create a Task&lt;int&gt; in our code, but the compiler rewrites our code so that a Task&lt;int&gt; is created and returned. When the method completes, the task completes. This type of task is actually an event-based task, since an event (the method returning) causes the task to complete.</p>
 
-<p>That’s the easiest way to create Task objects! However, it only works if you’re building on existing awaitables; if you aren’t in this situation, then you should use TaskFactory.StartNew or TaskCompletionSource&lt;TResult&gt;.</p>
+<p>That’s the easiest way to create Task objects! However, it only works if you’re building on existing awaitables; if you aren’t in this situation, then you should use Task.Run or TaskCompletionSource&lt;TResult&gt;.</p>
 
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>Update (2014-12-01): For more details, see Section 1.2 and Chapter 2 in my <a href="http://tinyurl.com/ConcurrencyCookbook" class="alert-link">Concurrency Cookbook</a>.</p>
+</div>
 
   </article>
     
