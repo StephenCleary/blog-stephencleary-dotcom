@@ -59,6 +59,12 @@ BackgroundWorker does have one rather significant drawback. It works perfectly f
   - If the child BackgroundWorker should synchronize to the UI, then the parent BackgroundWorker can manually install the UI SynchronizationContext in its DoWork delegate by calling SynchronizationContext.SetSynchronizationContext.
   - If the child BackgroundWorker should synchronize to the parent BackgroundWorker (not the UI), then the parent BackgroundWorker can run a synchronization loop using an object like [Nito.Async.ActionDispatcher](http://nitoasync.codeplex.com/). Alternatively, the parent BackgroundWorker could be replaced entirely by a [Nito.Async.ActionThread](http://nitoasync.codeplex.com/).
 
+<div class="alert alert-danger" markdown="1">
+<i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
+
+**Update, 2014-11-29:** `BackgroundWorker` is an outdated technique for modern code. I have a [blog series comparing `BackgroundWorker` to `Task.Run` in detail]({% post_url 2013-05-02-taskrun-vs-backgroundworker-intro %}){:.alert-link}.
+</div>
+
 ## Delegate.BeginInvoke
 
 Every delegate in .NET supports [asynchronous invocation](http://msdn.microsoft.com/en-us/library/2e08f6yc.aspx). This is a lower-level technique that does not require a separate object (e.g., Task or BackgroundWorker) to define an asynchronous operation. Because it is at a lower level, it supports fewer of the standard requirements:

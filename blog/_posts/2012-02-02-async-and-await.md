@@ -242,5 +242,11 @@ The [official MSDN documentation](http://msdn.microsoft.com/en-us/library/hh1914
 
 The async team has published an [async/await FAQ](http://blogs.msdn.com/b/pfxteam/archive/2012/04/12/10293335.aspx) that is a great place to continue learning about async. They have pointers to the best blog posts and videos on there. Also, pretty much any blog post by [Stephen Toub](http://blogs.msdn.com/b/pfxteam) is instructive!
 
-Of course, another resource is my own blog. This blog post is the beginning of a [series of posts on async]({% post_url 2009-01-24-announcing-release-of-nitoasync %}).
+Of course, another resource is my own blog.
+
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+My [Concurrency Cookbook](http://tinyurl.com/ConcurrencyCookbook){:.alert-link} covers a wide range of use cases, showing the proper `async` and `await` by example.
+</div>
 
