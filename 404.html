@@ -3,10 +3,10 @@
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Dealing with WiX data files</title>
+    <title>Stephen Cleary (the blog)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="I am not an installer guru. The story below is how another company overcame one of their installer upgrade difficulties. The solution was found by their installer guru, a friend of mine." />
-    <link rel="canonical" href="http://blog.stephencleary.com/2009/05/dealing-with-wix-data-files.html" />
+    <meta name="description" content="Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics." />
+    <link rel="canonical" href="http://blog.stephencleary.com/404.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -29,6 +29,8 @@
     <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-96x96.png" sizes="96x96">
     <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-16x16.png" sizes="16x16">
     <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-32x32.png" sizes="32x32">
+    
+    <meta http-equiv="refresh" content="5; url=http://stephencleary.com/search/">
     
 </head>
 <body>
@@ -57,48 +59,10 @@
 
     <div class="container-fluid">
         <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
-            <div class="post">
-
-  <header>
-      <div class="page-header">
-          <h1>Dealing with WiX data files</h1>
-          <small><time datetime="2009-05-12">May 12, 2009</time> &bull; <a data-disqus-identifier="/2009/05/dealing-with-wix-data-files" href="#disqus_thread">Comments</a></small>
-      </div>
-  </header>
-
-  <article>
-  <p>I am not an installer guru. The story below is how another company overcame one of their installer upgrade difficulties. The solution was found by their installer guru, a friend of mine.</p>
-
-<p>Splitting up an application into components is a pretty <a href="http://msdn.microsoft.com/en-us/library/aa368269(VS.85).aspx">straightforward process</a> - usually, resource files are thrown into a directory-wide component. Apparently, the ideal setup for “.config” files is to be in the same component as their .exe, with their CompanionFile set to the .exe, like this: <a href="http://wix.mindcapers.com/wiki/Companion_File">http://wix.mindcapers.com/wiki/Companion_File</a>.</p>
-
-<p>That’s nice. Now, what to do if your previous installs didn’t do this?</p>
-
-<p>Unfortunately, our situation was even worse. We had the .config file being installed as its own component, with a util:XmlFile modifying the file at the end of the install. This has the unfortunate side effect of the installer sometimes not wanting to update this file (since it’s an XML file, it has no version information, and the modification date may be newer since it was modified at install time by the previous installer).</p>
-
-<p>(BTW, for other users of util:XmlFile, there is an attribute PreserveModifiedDate. If our previous installer had set this to “yes”, then we wouldn’t have had these problems. But it didn’t, so the modified date is changed, and we ended up where we were today.)</p>
-
-<p>The solution we adopted is called “version lying”. We added a DefaultVersion attribute to the File element to force the new installer to overwrite the old file. Of course, if the end user had changed the .config file after installing, then the new install would blow that away.</p>
-
-<p>WiX doesn’t really like version lying a lot: it will give you a warning. However, it works. We are using an environment variable for the build version, and we just set DefaultVersion to “$(env.MY_BUILD_VERSION)”. This way the fake version will stay in sync with the final build version.</p>
-
-<p>For our next major update, we’re going to use PreserveModifiedDate and either not support automatic upgrades (forcing the user to uninstall the old version first) or upgrade to a different directory. We can then drop the version lying, and our installers will be kosher from then on.</p>
-
-
-  </article>
-    
-    <footer>
-        
-        
-        
-        <ul class="pager">
-            <li class="previous"><a href="/2009/05/socket-operations.html" title="Socket Operations">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2009/05/error-handling.html" title="Error Handling">Next Post &rarr;</a></li>
-        </ul>
-
-        <div id="disqus_thread"></div>
-        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
-    </footer>
+            <div>
+    <h1>Not Found</h1>
+    <p>Sorry about that!</p>
+    <p>Hang tight, and you'll be redirected to the search page in 3... 2... 1...</p>
 </div>
         </div>
         <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
@@ -213,9 +177,9 @@
 <!-- Disqus variables -->
 <script type="text/javascript">
     var disqus_shortname = 'stephencleary';
-    var disqus_identifier = "/2009/05/dealing-with-wix-data-files";
-    var disqus_title = "Dealing with WiX data files";
-    var disqus_url = "http://blog.stephencleary.com/2009/05/dealing-with-wix-data-files.html";
+    var disqus_identifier = "404";
+    var disqus_title = "Stephen Cleary (the blog)";
+    var disqus_url = "http://blog.stephencleary.com/404.html";
 </script>
 
 <!-- Disqus comment counter -->
