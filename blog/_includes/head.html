@@ -1,4 +1,4 @@
-<head>
+﻿<head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <title>{% if page.title %}{{ page.title }}{% else %}{{ site.title }}{% endif %}</title>
@@ -27,4 +27,7 @@
     <link rel="icon" type="image/png" href="{{ '/icons/favicon-96x96.png' | prepend: site.url_www }}" sizes="96x96">
     <link rel="icon" type="image/png" href="{{ '/icons/favicon-16x16.png' | prepend: site.url_www }}" sizes="16x16">
     <link rel="icon" type="image/png" href="{{ '/icons/favicon-32x32.png' | prepend: site.url_www }}" sizes="32x32">
+    {% if page.id == '404' %}
+    <meta http-equiv="refresh" content="5; url={{ '/search/' | prepend: site.url_www }}">
+    {% endif %}
 </head>
