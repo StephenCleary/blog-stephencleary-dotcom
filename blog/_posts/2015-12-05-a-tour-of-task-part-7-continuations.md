@@ -6,62 +6,149 @@ seriesTitle: "Continuations"
 description: "An analysis of Task.ContinueWith, TaskFactory.ContinueWhenAny, TaskFactory.ContinueWhenAll, Task.WhenAll, and Task.WhenAny; and discussion of whether they should be used for asynchronous and/or parallel code."
 ---
 
-Recent posts have considered several members 
+Recent posts have considered several members that wait for tasks to complete ([`Wait`, `WaitAll`, `WaitAny`]({% post_url 2014-10-10-a-tour-of-task-part-5-wait %}), [`Result`, and `GetAwaiter().GetResult()`]({% post_url 2014-12-05-a-tour-of-task-part-6-results %})). One common disadvantage that all of these have is that they synchronously *block* the calling thread while waiting for the task to complete.
 
+Today's post talks about *continuations*. A continuation is a delegate that you can attach to a task and tell the task "run this when you're done." When the task completes, it will then schedule its continuations.
 
-The task members discussed in this blog post are concerned with retrieving results from the task. Once the task completes, the consuming code must retrieve the results of the task. Even if the task has no result, it's important for the consuming code to examine the task for errors so it knows whether the task completed successfully or failed.
+Continuations are important because they don't block any threads. Instead of (synchronously) waiting for a task to complete, a thread may just attach a continuation for the task to run whenever it does complete. This is the essence of asynchrony, and the `async`/`await` system uses continuations whenever it deals with tasks.
 
-## Result
+## ContinueWith
 
-Part 7 - Continuations
-- ContinueWith
-- TaskFactory.ContinueWhenAny
-- TaskFactory.ContinueWhenAll
-- WhenAll, WhenAny
-
-
-The `Result` member only exists on the `Task<T>` type; it does not exist on the `Task` type (which represents a task without a result value).
+The most low-level way to attach continuations to a task is to use its `ContinueWith` method. There are quite a number of overloads, but the general idea is to attach a delegate as a continuation for the task:
 
 {% highlight csharp %}
-T Result { get; }
+Task ContinueWith(Action<Task>);
+Task ContinueWith(Action<Task>, CancellationToken);
+Task ContinueWith(Action<Task>, TaskContinuationOptions);
+Task ContinueWith(Action<Task>, TaskScheduler);
+Task ContinueWith(Action<Task>, CancellationToken, TaskContinuationOptions, TaskScheduler);
+Task ContinueWith(Action<Task, object>, object);
+Task ContinueWith(Action<Task, object>, object, CancellationToken);
+Task ContinueWith(Action<Task, object>, object, TaskContinuationOptions);
+Task ContinueWith(Action<Task, object>, object, TaskScheduler);
+Task ContinueWith(Action<Task, object>, object, CancellationToken, TaskContinuationOptions, TaskScheduler);
+Task<TResult> ContinueWith<TResult>(Func<Task, TResult>);
+Task<TResult> ContinueWith<TResult>(Func<Task, TResult>, CancellationToken);
+Task<TResult> ContinueWith<TResult>(Func<Task, TResult>, TaskContinuationOptions);
+Task<TResult> ContinueWith<TResult>(Func<Task, TResult>, TaskScheduler);
+Task<TResult> ContinueWith<TResult>(Func<Task, TResult>, CancellationToken, TaskContinuationOptions, TaskScheduler);
+Task<TResult> ContinueWith<TResult>(Func<Task, object, TResult>, object);
+Task<TResult> ContinueWith<TResult>(Func<Task, object, TResult>, object, CancellationToken);
+Task<TResult> ContinueWith<TResult>(Func<Task, object, TResult>, object, TaskContinuationOptions);
+Task<TResult> ContinueWith<TResult>(Func<Task, object, TResult>, object, TaskScheduler);
+Task<TResult> ContinueWith<TResult>(Func<Task, object, TResult>, object, CancellationToken, TaskContinuationOptions, TaskScheduler);
 {% endhighlight %}
 
-[Like `Wait`]({% post_url 2014-10-10-a-tour-of-task-part-5-wait %}), `Result` will synchronously block the calling thread until the task completes. This is generally not a good idea for the same reason it wasn't a good idea for `Wait`: [it's easy to cause deadlocks]({% post_url 2012-07-12-dont-block-on-async-code %}).
-
-Furthermore, `Result` will wrap any task exceptions inside an `AggregateException`. This usually just complicates the error handling.
-
-## Exception
-
-Speaking of exceptions, there's a member specifically just for retrieving the exceptions from a task:
+<!--
+The overloads taking an `object` parameter just pass that value through to the continuation delegate. This is just an optimization to avoid an extra allocation in some cases. Logically, all these overloads can simplify down to a single method:
 
 {% highlight csharp %}
-AggregateException Exception { get; }
+Task ContinueWith(Action<Task> continuation) { return ContinueWith(continuation, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Current); }
+Task ContinueWith(Action<Task> continuation, CancellationToken token) { return ContinueWith(continuation, token, TaskContinuationOptions.None, TaskScheduler.Current); }
+Task ContinueWith(Action<Task> continuation, TaskContinuationOptions options) { return ContinueWith(continuation, CancellationToken.None, options, TaskScheduler.Current); }
+Task ContinueWith(Action<Task> continuation, TaskScheduler scheduler) { return ContinueWith(continuation, CancellationToken.None, TaskContinuationOptions.None, scheduler); }
+Task ContinueWith(Action<Task> continuation, CancellationToken token, TaskContinuationOptions options, TaskScheduler scheduler) { return ContinueWith(_ => continuation(), null, token, options, scheduler); }
+Task ContinueWith(Action<Task, object> continuation, object state) { return ContinueWith(continuation, state, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Current); }
+Task ContinueWith(Action<Task, object> continuation, object state, CancellationToken token) { return ContinueWith(continuation, state, token, TaskContinuationOptions.None, TaskScheduler.Current); }
+Task ContinueWith(Action<Task, object> continuation, object state, TaskContinuationOptions options) { return ContinueWith(continuation, state, CancellationToken.None, options, TaskScheduler.Current); }
+Task ContinueWith(Action<Task, object> continuation, object state, TaskScheduler scheduler) { return ContinueWith(continuation, state, CancellationToken.None, TaskContinuationOptions.None, scheduler; }
+Task ContinueWith(Action<Task, object> continuation, object state, CancellationToken token, TaskContinuationOptions options, TaskScheduler scheduler) { return ContinueWith<object>(s => { continuation(s); return null; }, state, token, options, scheduler); }
+Task<TResult> ContinueWith<TResult>(Func<Task, TResult> continuation) { return ContinueWith(continuation, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Current); }
+Task<TResult> ContinueWith<TResult>(Func<Task, TResult> continuation, CancellationToken token) { return ContinueWith(continuation, token, TaskContinuationOptions.None, TaskScheduler.Current); }
+Task<TResult> ContinueWith<TResult>(Func<Task, TResult> continuation, TaskContinuationOptions options) { return ContinueWith(continuation, CancellationToken.None, options, TaskScheduler.Current); }
+Task<TResult> ContinueWith<TResult>(Func<Task, TResult> continuation, TaskScheduler scheduler) { return ContinueWith(continuation, CancellationToken.None, TaskContinuationOptions.None, scheduler); }
+Task<TResult> ContinueWith<TResult>(Func<Task, TResult> continuation, CancellationToken token, TaskContinuationOptions options, TaskScheduler scheduler) { return ContinueWith(_ => continuation(), null, token, options, scheduler); }
+Task<TResult> ContinueWith<TResult>(Func<Task, object, TResult> continuation, object state) { return ContinueWith(continuation, state, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Current); }
+Task<TResult> ContinueWith<TResult>(Func<Task, object, TResult> continuation, object state, CancellationToken token) { return ContinueWith(continuation, state, token, TaskContinuationOptions.None, TaskScheduler.Current); }
+Task<TResult> ContinueWith<TResult>(Func<Task, object, TResult> continuation, object state, TaskContinuationOptions options) { return ContinueWith(continuation, state, CancellationToken.None, options, TaskScheduler.Current); }
+Task<TResult> ContinueWith<TResult>(Func<Task, object, TResult> continuation, object state, TaskScheduler scheduler) { return ContinueWith(continuation, state, CancellationToken.None, TaskContinuationOptions.None, scheduler); }
+Task<TResult> ContinueWith<TResult>(Func<Task, object, TResult>, object, CancellationToken, TaskContinuationOptions, TaskScheduler);
 {% endhighlight %}
+-->
 
-Unlike `Result` and `Wait`, `Exception` will *not* block until the task completes; if called while the task is still in progress, it will just return `null`. If the task completes successfully *or* is cancelled, then `Exception` will still return `null`. If the task is faulted, then `Exception` will return the task's exceptions wrapped in an `AggregateException`. Again, this usually just serves to complicate the error handling.
-
-## GetAwaiter().GetResult()
-
-The `GetAwaiter` member was added to `Task` and `Task<T>` in .NET 4.5, and it's available as an extension method on .NET 4.0 using the `Microsoft.Bcl.Async` NuGet package. Normally, the `GetAwaiter` method is just used by `await`, but it *is* possible to call it yourself:
+Whew, that's a lot of overloads! Let's break it down a little. First, the overloads containing an `object` parameter just pass that value through to the continuation delegate; this is just an optimization to avoid an extra allocation in some cases, so we can ignore those overloads for now:
 
 {% highlight csharp %}
-Task<T> task = ...;
-T result = task.GetAwaiter().GetResult();
+Task ContinueWith(Action<Task>);
+Task ContinueWith(Action<Task>, CancellationToken);
+Task ContinueWith(Action<Task>, TaskContinuationOptions);
+Task ContinueWith(Action<Task>, TaskScheduler);
+Task ContinueWith(Action<Task>, CancellationToken, TaskContinuationOptions, TaskScheduler);
+Task<TResult> ContinueWith<TResult>(Func<Task, TResult>);
+Task<TResult> ContinueWith<TResult>(Func<Task, TResult>, CancellationToken);
+Task<TResult> ContinueWith<TResult>(Func<Task, TResult>, TaskContinuationOptions);
+Task<TResult> ContinueWith<TResult>(Func<Task, TResult>, TaskScheduler);
+Task<TResult> ContinueWith<TResult>(Func<Task, TResult>, CancellationToken, TaskContinuationOptions, TaskScheduler);
 {% endhighlight %}
 
-The code above will synchronously block until the task completes. As such, it is subject to the [same old deadlock problems]({% post_url 2012-07-12-dont-block-on-async-code %}) as `Wait` and `Result`. However, it will *not* wrap the task exceptions in an `AggregateException`.
-
-The code above will retrieve the result value from a `Task<T>`. The same code pattern can also be applied to `Task` (without a result value); in this case "GetResult" actually means "check the task for errors":
+There's also three optional parameters: a `CancellationToken` (defaulting to `CancellationToken.None`), a set of `TaskContinuationOptions` (defaulting to `TaskContinuationOptions.None`), and a `TaskScheduler` (defaulting to `TaskScheduler.Current`). So this list of overloads can be further simplified to:
 
 {% highlight csharp %}
-Task task = ...;
-task.GetAwaiter().GetResult();
+Task ContinueWith(Action<Task>, CancellationToken, TaskContinuationOptions, TaskScheduler);
+Task<TResult> ContinueWith<TResult>(Func<Task, TResult>, CancellationToken, TaskContinuationOptions, TaskScheduler);
 {% endhighlight %}
 
-In general, I try my best to avoid synchronously blocking on an asynchronous task. However, there are a handful of situations where I do violate that guideline. In those rare conditions, my preferred method is `GetAwaiter().GetResult()` because it preserves the task exceptions instead of wrapping them in an `AggregateException`.
+The `Task<T>` type has its own matching set of overloads. I won't bore you with the details - there are another 20 method signatures, which simplify in the same manner down to:
 
-## await
+{% highlight csharp %}
+Task ContinueWith(Action<Task<TResult>>, CancellationToken, TaskContinuationOptions, TaskScheduler);
+Task<TContinuationResult> ContinueWith<TContinuationResult>(Func<Task<TResult>, TContinuationResult>, CancellationToken, TaskContinuationOptions, TaskScheduler);
+{% endhighlight %}
 
-Of course, `await` is not a member of the task type; however, I feel it's important to remind today's readers that the *best* way of retrieving results from a [Promise Task]({% post_url 2014-06-05-a-tour-of-task-part-3-status %}) is to merely use `await`. `await` retrieves task results in the most benign manner possible: `await` will *asynchronously* wait (not block); `await` will return the result (if any) for a successful task; and `await` will (re-)throw exceptions for a failed task *without* wrapping them in an `AggregateException`.
+At this point, it should be clear that there are two primary types of continuation delegates that can be passed to `ContinueWith`: one has a result value (`Func<...>`) and the other does not (`Action<...>`). The continuation delegate always receives a task as a parameter. This is the task that the continuation is attaching to, so if you were to call `task.ContinueWith(t => ..., ...)`, then `task` and `t` refer to the same instance.
 
-In short, `await` should be your go-to option for retrieving task results. The vast majority of the time, `await` should be used instead of `Wait`, `Result`, `Exception`, or `GetAwaiter().GetResult()`.
+`ContinueWith` also *returns* a task. This is a Promise Task that represents the continuation delegate itself.
+
+Let's talk a bit more about the optional parameters.
+
+First, the `CancellationToken`. If you cancel the token *before* the continuation is scheduled, then the continuation delegate never actually runs - it's cancelled. However, note that the token is not 
+
+- Use await instead
+
+## TaskFactory.ContinueWhenAny
+
+`Task.WaitAny` is similar to `WaitAll` except it only waits for the first task to complete (and returns the index of that task). Again, we have the similar overloads:
+
+{% highlight csharp %}
+static int WaitAny(params Task[]);
+static int WaitAny(Task[], CancellationToken);
+static int WaitAny(Task[], int);
+static int WaitAny(Task[], TimeSpan);
+static int WaitAny(Task[], int, CancellationToken);
+{% endhighlight %}
+
+Which simplify down to a single logical method:
+
+{% highlight csharp %}
+static int WaitAny(params Task[] tasks) { return WaitAny(tasks, -1); }
+static int WaitAny(Task[] tasks, CancellationToken token) { return WaitAny(tasks, -1, token); }
+static int WaitAny(Task[] tasks, int timeout) { return WaitAny(tasks, timeout, CancellationToken.None); }
+static int WaitAny(Task[] tasks, TimeSpan timeout) { return WaitAny(tasks, timeout.TotalMilliseconds); }
+static int WaitAny(Task[], int, CancellationToken);
+{% endhighlight %}
+
+## TaskFactory.ContinueWhenAll
+
+`Task.WaitAny` is similar to `WaitAll` except it only waits for the first task to complete (and returns the index of that task). Again, we have the similar overloads:
+
+{% highlight csharp %}
+static int WaitAny(params Task[]);
+static int WaitAny(Task[], CancellationToken);
+static int WaitAny(Task[], int);
+static int WaitAny(Task[], TimeSpan);
+static int WaitAny(Task[], int, CancellationToken);
+{% endhighlight %}
+
+Which simplify down to a single logical method:
+
+{% highlight csharp %}
+static int WaitAny(params Task[] tasks) { return WaitAny(tasks, -1); }
+static int WaitAny(Task[] tasks, CancellationToken token) { return WaitAny(tasks, -1, token); }
+static int WaitAny(Task[] tasks, int timeout) { return WaitAny(tasks, timeout, CancellationToken.None); }
+static int WaitAny(Task[] tasks, TimeSpan timeout) { return WaitAny(tasks, timeout.TotalMilliseconds); }
+static int WaitAny(Task[], int, CancellationToken);
+{% endhighlight %}
+
+## Task.WhenAll
+
+## Task.WhenAny
