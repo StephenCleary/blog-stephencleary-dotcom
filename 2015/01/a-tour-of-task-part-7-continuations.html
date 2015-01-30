@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>A Tour of Task, Part 7: Continuations</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="An analysis of Task.ContinueWith, TaskFactory.ContinueWhenAny, TaskFactory.ContinueWhenAll, Task.WhenAll, and Task.WhenAny; and discussion of whether they should be used for asynchronous and/or parallel code." />
+    <link rel="canonical" href="http://blog.stephencleary.com/2015/01/a-tour-of-task-part-7-continuations.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
+    
+    <link type="text/css" rel="stylesheet" href="//netdna.bootstrapcdn.com/bootswatch/3.2.0/spacelab/bootstrap.min.css" />
+    <link type="text/css" rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" />
+    <link type="text/css" rel="stylesheet" href="http://stephencleary.com/css/main.css" />
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://stephencleary.com/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://stephencleary.com/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://stephencleary.com/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://stephencleary.com/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://stephencleary.com/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://stephencleary.com/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://stephencleary.com/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://stephencleary.com/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://stephencleary.com/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://stephencleary.com/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-32x32.png" sizes="32x32">
+    
+</head>
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <div class="navbar-brand-container"><a class="navbar-brand" href="http://stephencleary.com">Stephen Cleary</a></div>
+    </div>
+
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+        <ul class="nav navbar-nav">
+            <li  class="active"  ><a href="http://blog.stephencleary.com">Blog</a></li>
+            <li  ><a href="http://stephencleary.com/projects/">Projects</a></li>
+            <li  ><a href="http://stephencleary.com/publications/">Publications</a></li>
+            <li  ><a href="http://stephencleary.com/contact/">Contact</a></li>
+            <li><a href="http://feeds.feedburner.com/NitoPrograms"><i class="fa fa-rss-square fa-lg"></i></a></li>
+            <li  ><a href="http://stephencleary.com/search/"><i class="fa fa-search"></i></a></li>
+        </ul>
+    </div>
+</nav>
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>A Tour of Task, Part 7: Continuations</h1>
+          <small><time datetime="2015-01-29">Jan 29, 2015</time> &bull; <a data-disqus-identifier="/2015/01/a-tour-of-task-part-7-continuations" href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>Recent posts have considered several members that wait for tasks to complete (<a href="/2014/10/a-tour-of-task-part-5-wait.html"><code>Wait</code>, <code>WaitAll</code>, <code>WaitAny</code></a>, <a href="/2014/12/a-tour-of-task-part-6-results.html"><code>Result</code>, and <code>GetAwaiter().GetResult()</code></a>). One common disadvantage that all of these have is that they synchronously <em>block</em> the calling thread while waiting for the task to complete.</p>
+
+<p>Today’s post talks about <em>continuations</em>. A continuation is a delegate that you can attach to a task and tell the task “run this when you’re done.” When the task completes, it will then schedule its continuations. The task that a continuation attaches to is called the “antecedent” task.</p>
+
+<p>Continuations are important because they don’t block any threads. Instead of (synchronously) waiting for a task to complete, a thread may just attach a continuation for the task to run whenever it does complete. This is the essence of asynchrony, and the <code>async</code>/<code>await</code> system uses continuations whenever it deals with tasks.</p>
+
+<h2 id="continuewith">ContinueWith</h2>
+
+<p>The most low-level way to attach continuations to a task is to use its <code>ContinueWith</code> method. There are quite a number of overloads, but the general idea is to attach a delegate as a continuation for the task:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span> <span class="nf">ContinueWith</span><span class="p">(</span><span class="n">Action</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&gt;);</span>
+<span class="n">Task</span> <span class="nf">ContinueWith</span><span class="p">(</span><span class="n">Action</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">);</span>
+<span class="n">Task</span> <span class="nf">ContinueWith</span><span class="p">(</span><span class="n">Action</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&gt;,</span> <span class="n">TaskContinuationOptions</span><span class="p">);</span>
+<span class="n">Task</span> <span class="nf">ContinueWith</span><span class="p">(</span><span class="n">Action</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&gt;,</span> <span class="n">TaskScheduler</span><span class="p">);</span>
+<span class="n">Task</span> <span class="nf">ContinueWith</span><span class="p">(</span><span class="n">Action</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskContinuationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span>
+<span class="n">Task</span> <span class="nf">ContinueWith</span><span class="p">(</span><span class="n">Action</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">,</span> <span class="kt">object</span><span class="p">&gt;,</span> <span class="kt">object</span><span class="p">);</span>
+<span class="n">Task</span> <span class="nf">ContinueWith</span><span class="p">(</span><span class="n">Action</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">,</span> <span class="kt">object</span><span class="p">&gt;,</span> <span class="kt">object</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span>
+<span class="n">Task</span> <span class="nf">ContinueWith</span><span class="p">(</span><span class="n">Action</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">,</span> <span class="kt">object</span><span class="p">&gt;,</span> <span class="kt">object</span><span class="p">,</span> <span class="n">TaskContinuationOptions</span><span class="p">);</span>
+<span class="n">Task</span> <span class="nf">ContinueWith</span><span class="p">(</span><span class="n">Action</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">,</span> <span class="kt">object</span><span class="p">&gt;,</span> <span class="kt">object</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span>
+<span class="n">Task</span> <span class="nf">ContinueWith</span><span class="p">(</span><span class="n">Action</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">,</span> <span class="kt">object</span><span class="p">&gt;,</span> <span class="kt">object</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskContinuationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span>
+
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">ContinueWith</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">ContinueWith</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">ContinueWith</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">TaskContinuationOptions</span><span class="p">);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">ContinueWith</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">TaskScheduler</span><span class="p">);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">ContinueWith</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskContinuationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">ContinueWith</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">,</span> <span class="kt">object</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="kt">object</span><span class="p">);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">ContinueWith</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">,</span> <span class="kt">object</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="kt">object</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">ContinueWith</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">,</span> <span class="kt">object</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="kt">object</span><span class="p">,</span> <span class="n">TaskContinuationOptions</span><span class="p">);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">ContinueWith</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">,</span> <span class="kt">object</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="kt">object</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">ContinueWith</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">,</span> <span class="kt">object</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="kt">object</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskContinuationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span></code></pre></div>
+
+<p>Whew, that’s a lot of overloads! Let’s break it down a little. First, the overloads containing an <code>object</code> parameter just pass that value through to the continuation delegate; this is just an optimization to avoid an extra allocation in some cases, so we can ignore those overloads for now:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span> <span class="nf">ContinueWith</span><span class="p">(</span><span class="n">Action</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&gt;);</span>
+<span class="n">Task</span> <span class="nf">ContinueWith</span><span class="p">(</span><span class="n">Action</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">);</span>
+<span class="n">Task</span> <span class="nf">ContinueWith</span><span class="p">(</span><span class="n">Action</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&gt;,</span> <span class="n">TaskContinuationOptions</span><span class="p">);</span>
+<span class="n">Task</span> <span class="nf">ContinueWith</span><span class="p">(</span><span class="n">Action</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&gt;,</span> <span class="n">TaskScheduler</span><span class="p">);</span>
+<span class="n">Task</span> <span class="nf">ContinueWith</span><span class="p">(</span><span class="n">Action</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskContinuationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span>
+
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">ContinueWith</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">ContinueWith</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">ContinueWith</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">TaskContinuationOptions</span><span class="p">);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">ContinueWith</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">TaskScheduler</span><span class="p">);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">ContinueWith</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskContinuationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span></code></pre></div>
+
+<p>There’s also three optional parameters: a <code>CancellationToken</code> (defaulting to <code>CancellationToken.None</code>), a set of <code>TaskContinuationOptions</code> (defaulting to <code>TaskContinuationOptions.None</code>), and a <code>TaskScheduler</code> (defaulting to <code>TaskScheduler.Current</code>). So this list of overloads can be further simplified to:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span> <span class="nf">ContinueWith</span><span class="p">(</span><span class="n">Action</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskContinuationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">ContinueWith</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskContinuationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span></code></pre></div>
+
+<p>The <code>Task&lt;T&gt;</code> type has its own matching set of overloads. I won’t bore you with the details - there are another 20 method signatures, which simplify in the same manner down to:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span> <span class="nf">ContinueWith</span><span class="p">(</span><span class="n">Action</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;&gt;,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskContinuationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TContinuationResult</span><span class="p">&gt;</span> <span class="n">ContinueWith</span><span class="p">&lt;</span><span class="n">TContinuationResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">TContinuationResult</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskContinuationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span></code></pre></div>
+
+<p>At this point, it should be clear that there are two primary types of continuation delegates that can be passed to <code>ContinueWith</code>: one has a result value (<code>Func&lt;...&gt;</code>) and the other does not (<code>Action&lt;...&gt;</code>). The continuation delegate always receives a task as a parameter. This is the task that the continuation is attaching to, so if you were to call <code>task.ContinueWith(t =&gt; ...)</code>, then <code>task</code> and <code>t</code> refer to the same antecedent task instance.</p>
+
+<p><code>ContinueWith</code> also <em>returns</em> a task. This task represents the continuation itself. So, each continuation is itself a task, and may have its own continuations, and so on.</p>
+
+<p>Let’s talk a bit more about the optional parameters.</p>
+
+<p>First, the <code>CancellationToken</code>. If you cancel the token <em>before</em> the continuation is scheduled, then the continuation delegate never actually runs - it’s cancelled. However, note that the token does not cancel the continuation <em>once it has started</em>. In other words, the <code>CancellationToken</code> cancels the <em>scheduling</em> of the continuation, not the continuation itself. For this reason, I think the <code>CancellationToken</code> parameter is misleading, and I never use it myself.</p>
+
+<p>The next parameter is <code>TaskContinuationOptions</code>, a collection of options for the continuation. Most options either have to do with <em>conditions</em>, <em>scheduling</em>, or <em>parenting</em> for the continuation. The <code>None</code> option means to use the default behavior; however, in modern applications, these defaults are only appropriate for <a href="https://msdn.microsoft.com/en-us/library/ff963551.aspx">dynamic task parallelism</a>, which is extremely rare.</p>
+
+<p>The “condition options” will only schedule the continuation if the antecedent task completes in a <a href="/2014/06/a-tour-of-task-part-3-status.html">matching state</a>. <code>OnlyOnRanToCompletion</code>, <code>OnlyOnFaulted</code>, and <code>OnlyOnCanceled</code> will only schedule the continuation if the antecedent task completes in a specific state. <code>NotOnRanToCompletion</code>, <code>NotOnFaulted</code>, and <code>NotOnCanceled</code> will only schedule the continuation if the antecedent task completes in <em>another</em> state. All of these “condition options” are roughly equivalent to just checking the task’s <code>Status</code> from within the continuation.</p>
+
+<p>Several “scheduling options” are passed along to the <code>TaskScheduler</code> that is responsible for scheduling the continuation. <code>PreferFairness</code> is a hint asking for FIFO behavior. <code>LongRunning</code> is a hint that the continuation will execute for a long time. <code>ExecuteSynchronously</code> is a request that the continuation be scheduled on the same thread that completes the antecedent task. Note that all of these are just hints; it is entirely appropriate for the <code>TaskScheduler</code> to ignore them all; in particular, <a href="http://blogs.msdn.com/b/pfxteam/archive/2012/02/07/10265067.aspx"><code>ExecuteSynchronously</code> does not guarantee that the continuation will execute synchronously</a>.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>As of this writing, in the .NET 4.6 preview, there is another option called <code>RunContinuationsAsynchronously</code>, which seems to force continuations to execute asynchronously. Currently, there is no way to absolutely force continuations to be synchronous or asynchronous; forcing asynchronous continuations would certainly be useful in some situations.</p>
+</div>
+
+<p>There are a few more “scheduling options” that are not passed to the <code>TaskScheduler</code>. The <code>HideScheduler</code> option (introduced in .NET 4.5) will use the given task scheulder to schedule the continuation, but then will pretend that there is no current task scheduler while the continuation is executing; this can be used as a workaround for the unexpected default task scheduler (described below). <code>LazyCancellation</code> (introduced in .NET 4.5) is an option that ensures the continuation is completed (canceled) only after its antecedent completes. Without <code>LazyCancellation</code>, if the cancellation token passed to <code>ContinueWith</code> is cancelled, it could cancel the continuation before the original task even completed.</p>
+
+<p>The “parenting options” control how the continuation task is attached to the antecedent task. <a href="https://msdn.microsoft.com/en-us/library/vstudio/dd997417(v=vs.110).aspx">Attached child tasks</a> change the <a href="/2014/06/a-tour-of-task-part-3-status.html">behavior of their parent task</a> in ways that are convenient in some <a href="https://msdn.microsoft.com/en-us/library/ff963551.aspx">dynamic task parallelism</a> scenarios, but are unexpected and awkward anywhere outside that (extremely small) use case. <code>AttachedToParent</code> will attach the continuation as a child task of the antecedent task. In modern code, you almost never want this option; more importantly, you almost never want <em>other</em> code to attach child tasks to your tasks. For this reason, the <code>DenyChildAttach</code> option was introduced in .NET 4.5, which prevents any continuations from using <code>AttachedToParent</code>.</p>
+
+<p>The final optional parameter is a <code>TaskScheduler</code> that is used to schedule the continuation. Unfortunately, the default value for this parameter is <em>not</em> <code>TaskScheduler.Default</code>, but rather <code>TaskScheduler.Current</code>. This fact has caused quite a bit of confusion over the years, because the vast majority of the time, developers expect (and desire) <code>TaskScheduler.Default</code>. <code>Task.Factory.StartNew</code> has a <a href="/2013/08/startnew-is-dangerous.html">similar problem that I have described earlier</a>. Since this default value is unexpected (and almost always undesirable), I recommend that you <em>always</em> pass a <code>TaskScheduler</code> value to <code>ContinueWith</code>. Many companies have run into this issue and enforce similar rules on their codebase.</p>
+
+<p><strong>In conclusion</strong>, I do not recommend using <code>ContinueWith</code> at all, unless you are doing <a href="https://msdn.microsoft.com/en-us/library/ff963551.aspx">dynamic task parallelism</a> (which is extremely rare). In modern code, you should almost always use <code>await</code> instead of <code>ContinueWith</code>. There are several benefits to <code>await</code>.</p>
+
+<p>One benefit is when working with other asynchronous code. As mentioned above, <code>ContinueWith</code> can take only a limited number of delegates, none of which are <a href="/2014/02/synchronous-and-asynchronous-delegate.html">async-aware delegates</a>. When dealing with asynchronous continuations, <code>ContinueWith</code> will treat them as though they were synchronous. This can cause some manner of confusion when working with continuations of those continuations. Also, this means the scheduling options (e.g., <code>LongRunning</code>) do not work as most developers expect; they are only applied to the initial synchronous portion of an asynchronous delegate. In contrast, <code>await</code> works naturally with asynchronous continuations.</p>
+
+<p>Another benefit is a better default task scheduler. Code using <code>ContinueWith</code> should always explicitly specify a task scheduler to reduce confusion, but <code>await</code> has <a href="/2012/02/async-and-await.html">much more reasonable default behavior</a>. Modern code almost never uses task schedulers; it either uses <code>SynchronizationContext.Current</code> or the thread pool scheduler.</p>
+
+<p>The last benefit is that <code>await</code> uses the most appropriate options by default. When you <code>await</code> an incomplete task, under the hood <code>await</code> does use <code>ContinueWith</code> to schedule a continuation for you. However, it will automatically use the appropriate options (<code>DenyChildAttach</code> and <code>ExecuteSynchronously</code>), and doesn’t allow you to specify options that will not work correctly (e.g., <code>AttachedToParent</code> or <code>LongRunning</code>).</p>
+
+<p>In short, <strong>prefer <code>await</code> over <code>ContinueWith</code></strong>. <code>ContinueWith</code> is useful when doing <a href="https://msdn.microsoft.com/en-us/library/ff963551.aspx">dynamic task parallelism</a>, but in every other scenario, <code>await</code> is preferred.</p>
+
+<h2 id="taskfactorycontinuewhenany">TaskFactory.ContinueWhenAny</h2>
+
+<p><code>ContinueWhenAny</code> is a way of executing a <em>single</em> continuation when any of a <em>set</em> of tasks completes. So, it’s a way to attach a single continuation to multiple tasks, and only have that continuation run when the first task completes.</p>
+
+<p>The <code>TaskFactory</code> type has a set of <code>ContinueWhenAny</code> overloads that are somewhat similar to <code>ContinueWith</code>:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span> <span class="nf">ContinueWhenAny</span><span class="p">(</span><span class="n">Task</span><span class="p">[],</span> <span class="n">Action</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&gt;);</span>
+<span class="n">Task</span> <span class="nf">ContinueWhenAny</span><span class="p">(</span><span class="n">Task</span><span class="p">[],</span> <span class="n">Action</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">);</span>
+<span class="n">Task</span> <span class="nf">ContinueWhenAny</span><span class="p">(</span><span class="n">Task</span><span class="p">[],</span> <span class="n">Action</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&gt;,</span> <span class="n">TaskContinuationOptions</span><span class="p">);</span>
+<span class="n">Task</span> <span class="nf">ContinueWhenAny</span><span class="p">(</span><span class="n">Task</span><span class="p">[],</span> <span class="n">Action</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskContinuationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span>
+
+<span class="n">Task</span> <span class="n">ContinueWhenAny</span><span class="p">&lt;</span><span class="n">TAntecedentResult</span><span class="p">&gt;(</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TAntecedentResult</span><span class="p">&gt;[],</span> <span class="n">Action</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TAntecedentResult</span><span class="p">&gt;&gt;);</span>
+<span class="n">Task</span> <span class="n">ContinueWhenAny</span><span class="p">&lt;</span><span class="n">TAntecedentResult</span><span class="p">&gt;(</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TAntecedentResult</span><span class="p">&gt;[],</span> <span class="n">Action</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TAntecedentResult</span><span class="p">&gt;&gt;,</span> <span class="n">CancellationToken</span><span class="p">);</span>
+<span class="n">Task</span> <span class="n">ContinueWhenAny</span><span class="p">&lt;</span><span class="n">TAntecedentResult</span><span class="p">&gt;(</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TAntecedentResult</span><span class="p">&gt;[],</span> <span class="n">Action</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TAntecedentResult</span><span class="p">&gt;&gt;,</span> <span class="n">TaskContinuationOptions</span><span class="p">);</span>
+<span class="n">Task</span> <span class="n">ContinueWhenAny</span><span class="p">&lt;</span><span class="n">TAntecedentResult</span><span class="p">&gt;(</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TAntecedentResult</span><span class="p">&gt;[],</span> <span class="n">Action</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TAntecedentResult</span><span class="p">&gt;&gt;,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskContinuationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span>
+
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">ContinueWhenAny</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Task</span><span class="p">[],</span> <span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">ContinueWhenAny</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Task</span><span class="p">[],</span> <span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">ContinueWhenAny</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Task</span><span class="p">[],</span> <span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">TaskContinuationOptions</span><span class="p">);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">ContinueWhenAny</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Task</span><span class="p">[],</span> <span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskContinuationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span>
+
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">ContinueWhenAny</span><span class="p">&lt;</span><span class="n">TAntecedentResult</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TAntecedentResult</span><span class="p">&gt;[],</span> <span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TAntecedentResult</span><span class="p">&gt;,</span> <span class="n">TResult</span><span class="p">&gt;);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">ContinueWhenAny</span><span class="p">&lt;</span><span class="n">TAntecedentResult</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TAntecedentResult</span><span class="p">&gt;[],</span> <span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TAntecedentResult</span><span class="p">&gt;,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">ContinueWhenAny</span><span class="p">&lt;</span><span class="n">TAntecedentResult</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TAntecedentResult</span><span class="p">&gt;[],</span> <span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TAntecedentResult</span><span class="p">&gt;,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">TaskContinuationOptions</span><span class="p">);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">ContinueWhenAny</span><span class="p">&lt;</span><span class="n">TAntecedentResult</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TAntecedentResult</span><span class="p">&gt;[],</span> <span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TAntecedentResult</span><span class="p">&gt;,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskContinuationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span></code></pre></div>
+
+<p>Each of those groups of four overloads simplify down to a central method:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span> <span class="nf">ContinueWhenAny</span><span class="p">(</span><span class="n">Task</span><span class="p">[],</span> <span class="n">Action</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskContinuationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span>
+<span class="n">Task</span> <span class="n">ContinueWhenAny</span><span class="p">&lt;</span><span class="n">TAntecedentResult</span><span class="p">&gt;(</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TAntecedentResult</span><span class="p">&gt;[],</span> <span class="n">Action</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TAntecedentResult</span><span class="p">&gt;&gt;,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskContinuationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">ContinueWhenAny</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Task</span><span class="p">[],</span> <span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskContinuationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">ContinueWhenAny</span><span class="p">&lt;</span><span class="n">TAntecedentResult</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TAntecedentResult</span><span class="p">&gt;[],</span> <span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TAntecedentResult</span><span class="p">&gt;,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskContinuationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span></code></pre></div>
+
+<p>The overloads with a <code>TAntecedentResult</code> generic parameter are for when the antecedent tasks all have the same result type. The overloads with a <code>TResult</code> are for when the continuation returns a result of its own. The <code>TaskFactory&lt;TResult&gt;</code> type only has overloads supporting continuations that return a result, so it has half the overloads that <code>TaskFactory</code> does.</p>
+
+<p>The default parameter values work similarly to <code>ContinueWith</code>, except that they are specified by the <code>TaskFactory</code> properties. So, the default <code>CancellationToken</code> is <code>TaskFactory.CancellationToken</code>, the default <code>ContinuationOptions</code> value is <code>TaskFactory.ContinuationOptions</code>, and the default <code>TaskScheduler</code> is <code>TaskFactory.Scheduler</code>, all of which may be set by passing the desired values into the <code>TaskFactory</code> constructor.</p>
+
+<p>Note that the default <code>TaskScheduler</code> is still dangerous: anytime a <code>TaskFactory</code> is constructed without an explicit <code>TaskScheduler</code>, it will default to the value of <code>TaskScheduler.Current</code> at the time <code>ContinueWhenAny</code> is called. This causes the same surprising behavior as it does for <code>ContinueWith</code>. Note that the static <code>TaskFactory</code> instance <code>Task.Factory</code> does have this problematic default task scheduler.</p>
+
+<p>I recommend not using these overloads at all; instead, use <code>await Task.WhenAny(...)</code> (see below) to asynchronously wait for one of a set of tasks to complete.</p>
+
+<h2 id="taskfactorycontinuewhenall">TaskFactory.ContinueWhenAll</h2>
+
+<p><code>ContinueWhenAll</code> is just like <code>ContinueWhenAny</code>, except the logic is that the continuation is executed once after <em>all</em> the antecedent tasks have completed. There are sixteen overloads on <code>TaskFactory</code> and eight on <code>TaskFactory&lt;TResult&gt;</code>, exactly like <code>ContinueWhenAny</code>. The same default parameter logic applies.</p>
+
+<p>And the same default <code>TaskScheduler</code> is still dangerous.</p>
+
+<p>And I recommend not using these overloads at all, either; instead, use <code>await Task.WhenAll(...)</code> (see below).</p>
+
+<h2 id="taskwhenall">Task.WhenAll</h2>
+
+<p><code>Task.WhenAll</code> returns a task that completes when all of the antecedent tasks have completed. This is conceptually similar to <code>TaskFactory.ContinueWhenAll</code>, but works much more nicely with <code>await</code>:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span> <span class="nf">WhenAll</span><span class="p">(</span><span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&gt;);</span>
+<span class="n">Task</span> <span class="nf">WhenAll</span><span class="p">(</span><span class="k">params</span> <span class="n">Task</span><span class="p">[]);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">[]&gt;</span> <span class="n">WhenAll</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;&gt;);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">[]&gt;</span> <span class="n">WhenAll</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="k">params</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;[]);</span></code></pre></div>
+
+<p>The <code>IEnumerable&lt;&gt;</code> overloads allow you to pass in a sequence of tasks, such as a LINQ expression. The sequence is immediately reified (i.e., copied to an array). For example, this allows you to pass the results of a <code>Select</code> expression directly to <code>WhenAll</code>. Personally, I usually prefer to explicitly reify the sequence by calling <code>ToArray()</code> so that it’s obvious that’s what’s happening, but some folks like the ability to pass the sequence directly in.</p>
+
+<p>The overloads with the <code>TResult</code> generic parameter will retrieve all the results of those tasks, as an array. This is very convenient when you have multiple operations of a similar nature. For example, you can do two concurrent downloads as such:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="kt">var</span> <span class="n">client</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
+<span class="kt">string</span><span class="p">[]</span> <span class="n">results</span> <span class="p">=</span> <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">WhenAll</span><span class="p">(</span>
+    <span class="n">client</span><span class="p">.</span><span class="n">GetStringAsync</span><span class="p">(</span><span class="s">&quot;http://example.com&quot;</span><span class="p">),</span>
+    <span class="n">client</span><span class="p">.</span><span class="n">GetStringAsync</span><span class="p">(</span><span class="s">&quot;http://microsoft.com&quot;</span><span class="p">));</span>
+<span class="c1">// results[0] has the HTML of example.com</span>
+<span class="c1">// results[1] has the HTML of microsoft.com</span></code></pre></div>
+
+<p>This is also powerful when combined with LINQ. The code below will simultaneously download whatever urls are in the source sequence:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">IEnumerable</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">urls</span> <span class="p">=</span> <span class="p">...;</span>
+<span class="kt">var</span> <span class="n">client</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
+<span class="kt">string</span><span class="p">[]</span> <span class="n">results</span> <span class="p">=</span> <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">WhenAll</span><span class="p">(</span><span class="n">urls</span><span class="p">.</span><span class="n">Select</span><span class="p">(</span><span class="n">url</span> <span class="p">=&gt;</span> <span class="n">client</span><span class="p">.</span><span class="n">GetStringAsync</span><span class="p">(</span><span class="n">url</span><span class="p">)));</span></code></pre></div>
+
+<h2 id="taskwhenany">Task.WhenAny</h2>
+
+<p><code>Task.WhenAny</code> is similar to <code>Task.WhenAll</code>, but instead of asynchronously waiting for all antecedent tasks to complete, it asynchronously waits for only one. It has a similar set of overloads:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&gt;</span> <span class="n">WhenAny</span><span class="p">(</span><span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&gt;);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&gt;</span> <span class="n">WhenAny</span><span class="p">(</span><span class="k">params</span> <span class="n">Task</span><span class="p">[]);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;&gt;</span> <span class="n">WhenAny</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;&gt;);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;&gt;</span> <span class="n">WhenAny</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="k">params</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;[]);</span></code></pre></div>
+
+<p>The <code>IEnumerable&lt;&gt;</code> and <code>TResult</code> overloads serve the same purposes as they do for <code>WhenAll</code>. However, the <em>return</em> type of <code>WhenAny</code> is interesting. <code>WhenAny</code> returns a task that is completed when any of the antecedent tasks complete. The <em>result</em> of that task is the antecedent task that completed.</p>
+
+<p>This means that applying a single <code>await</code> to a call to <code>WhenAny</code> will give you the task that completed. This allows you to do things like do two operations at the same time and see which finishes first:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="kt">var</span> <span class="n">client</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">downloadExampleTask</span> <span class="p">=</span> <span class="n">client</span><span class="p">.</span><span class="n">GetStringAsync</span><span class="p">(</span><span class="s">&quot;http://example.com&quot;</span><span class="p">);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">downloadMicrosoftTask</span> <span class="p">=</span> <span class="n">client</span><span class="p">.</span><span class="n">GetStringAsync</span><span class="p">(</span><span class="s">&quot;http://microsoft.com&quot;</span><span class="p">);</span>
+<span class="n">Task</span> <span class="n">completedTask</span> <span class="p">=</span> <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">WhenAny</span><span class="p">(</span><span class="n">downloadExampleTask</span><span class="p">,</span> <span class="n">downloadMicrosoftTask</span><span class="p">);</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">completedTask</span> <span class="p">==</span> <span class="n">downloadExampleTask</span><span class="p">)</span>
+  <span class="p">;</span> <span class="c1">// example.com downloaded faster.</span></code></pre></div>
+
+<p>Usually, when you use <code>WhenAny</code>, you actually don’t care about the tasks that <em>don’t</em> complete first. That is, only the results of the first task are important. In this scenario, you can make use of the rare but legal “double await”:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="kt">var</span> <span class="n">client</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
+<span class="kt">string</span> <span class="n">results</span> <span class="p">=</span> <span class="k">await</span> <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">WhenAny</span><span class="p">(</span>
+    <span class="n">client</span><span class="p">.</span><span class="n">GetStringAsync</span><span class="p">(</span><span class="s">&quot;http://example.com&quot;</span><span class="p">),</span>
+    <span class="n">client</span><span class="p">.</span><span class="n">GetStringAsync</span><span class="p">(</span><span class="s">&quot;http://microsoft.com&quot;</span><span class="p">));</span>
+<span class="c1">// results contains the HTML for whichever website responded first.</span></code></pre></div>
+
+<p>If you find the “double await” confusing, just break it out and specify the types. The code above is the same as:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="kt">var</span> <span class="n">client</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">firstDownloadToComplete</span> <span class="p">=</span> <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">WhenAny</span><span class="p">(</span>
+    <span class="n">client</span><span class="p">.</span><span class="n">GetStringAsync</span><span class="p">(</span><span class="s">&quot;http://example.com&quot;</span><span class="p">),</span>
+    <span class="n">client</span><span class="p">.</span><span class="n">GetStringAsync</span><span class="p">(</span><span class="s">&quot;http://microsoft.com&quot;</span><span class="p">));</span>
+<span class="kt">string</span> <span class="n">results</span> <span class="p">=</span> <span class="k">await</span> <span class="n">firstDownloadToComplete</span><span class="p">;</span> 
+<span class="c1">// results contains the HTML for whichever website responded first.</span></code></pre></div>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>I do recommend using <code>await</code> to retrieve the results of the completed task. In this case, it might seem that <code>await</code> is supurfluous, since we <em>know</em> that the task is already completed. However, <code>await</code> is still better than <code>Task.Result</code> because <code>await</code> will not wrap exceptions inside an <code>AggregateException</code>.</p>
+</div>
+
+  </article>
+    
+    <footer>
+        
+            <ul class="pager">
+                <li class="previous"><a href="/2014/12/a-tour-of-task-part-6-results.html" title="A Tour of Task, Part 6: Results">&larr; Previous in A Tour of Task</a></li>
+            </ul>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2015/01/codemash-2015.html" title="CodeMash 2015">&larr; Previous Post</a></li>
+            
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+                <div class="panel panel-primary">
+                    <div class="panel-heading">A Tour of Task</div>
+                    <div class="panel-body sidenav">
+                        <ul class="nav nav-pills nav-stacked">
+                                            <li class="sidenavitem"><a href="/2014/04/a-tour-of-task-part-0-overview.html">Overview</a></li>
+                                            <li class="sidenavitem"><a href="/2014/05/a-tour-of-task-part-1-constructors.html">Constructors</a></li>
+                                            <li class="sidenavitem"><a href="/2014/05/a-tour-of-task-part-2-asyncstate-and-creationoptions.html">AsyncState and CreationOptions</a></li>
+                                            <li class="sidenavitem"><a href="/2014/06/a-tour-of-task-part-3-status.html">Status</a></li>
+                                            <li class="sidenavitem"><a href="/2014/06/a-tour-of-task-part-4-id.html">Id</a></li>
+                                            <li class="sidenavitem"><a href="/2014/10/a-tour-of-task-part-5-wait.html">Waiting</a></li>
+                                            <li class="sidenavitem"><a href="/2014/12/a-tour-of-task-part-6-results.html">Results</a></li>
+                                            <li class="active sidenavitem"><a href="/2015/01/a-tour-of-task-part-7-continuations.html">Continuations</a></li>
+                        </ul>
+                    </div>
+                </div>
+            
+        </div>
+        <div class="col-sm-2 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://stephencleary.com/www.assets/Me-large.jpg"/></div>
+                    <div class="center vertical-margins">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://stephencleary.com/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://tinyurl.com/ConcurrencyCookbook"><img src="http://stephencleary.com/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+    (function($) {
+        $(function() {
+            if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+                $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+            }
+        });
+    })(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+    (function($) {
+        $(function() {
+            if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+                $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+            }
+        });
+    })(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+<script src="/lib/jquery.scrollTo.min.js"></script>
+<script type="text/javascript">
+    (function ($) {
+        $(function () {
+            var container = $('.affix').filter(function() { return $(this).css('position') == 'fixed'; });
+            var target = container.find('.active');
+            container.scrollTo(target, { offset: - (container.height() / 2 - target.height() / 2) });
+        });
+    })(window.jQuery);
+</script>
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-8910661-5', 'stephencleary.com');
+    ga('send', 'pageview');
+</script>
+
+
+
+
+
+
+
+<!-- Disqus variables -->
+<script type="text/javascript">
+    var disqus_shortname = 'stephencleary';
+    var disqus_identifier = "/2015/01/a-tour-of-task-part-7-continuations";
+    var disqus_title = "A Tour of Task, Part 7: Continuations";
+    var disqus_url = "http://blog.stephencleary.com/2015/01/a-tour-of-task-part-7-continuations.html";
+</script>
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(s);
+    }());
+</script>
+
+<!-- Disqus comment section -->
+<script type="text/javascript">
+    (function() {
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<!-- Moment -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.6.0/moment.min.js"></script>
+<script type="text/javascript">window.moment || document.write('<script src="/lib/moment.min.js"><\/script>')</script>
+<script type="text/javascript">
+    (function($) {
+        $(function() {
+            $('time').each(function (_, e) {
+                var text = moment($(e).attr('datetime'), 'YYYY-MM-DD').fromNow();
+                $(e).text(function(_, oldText) { return text + ' (' + oldText + ')'; });
+            });
+        });
+    })(window.jQuery);
+</script>
+
+</body>
+</html>
