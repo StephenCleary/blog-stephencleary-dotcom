@@ -32,7 +32,7 @@ bool Wait(int, CancellationToken);
 
 `Wait` is rather simple: it will block the calling thread until the task completes, a timeout occurs, or the wait is cancelled. If the wait is cancelled, then `Wait` raises an `OperationCanceledException`. If a timeout occurs, then `Wait` returns `false`. If the task completes in a failed or canceled state, then `Wait` wraps any exceptions into an `AggregateException`. Note that a canceled _task_ will raise an `OperationCanceledException` wrapped in an `AggregateException`, whereas a canceled _wait_ will raise an unwrapped `OperationCanceledException`.
 
-`Task.Wait` is occasionally useful, if it's done in the correct context. For example, the `Main` method of a Console application can use `Wait` if it has asynchronous work to do, but wants the main thread to synchronously block until that work is done. However, most of the time, `Task.Wait` is dangerous because if its [deadlock potential]({% post_url 2012-07-12-dont-block-on-async-code %}).
+`Task.Wait` is occasionally useful, if it's done in the correct context. For example, the `Main` method of a Console application can use `Wait` if it has asynchronous work to do, but wants the main thread to synchronously block until that work is done. However, most of the time, `Task.Wait` is dangerous because of its [deadlock potential]({% post_url 2012-07-12-dont-block-on-async-code %}).
 
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
