@@ -90,6 +90,8 @@ Several "scheduling options" are passed along to the `TaskScheduler` that is res
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
 As of this writing, in the .NET 4.6 preview, there is another option called `RunContinuationsAsynchronously`, which seems to force continuations to execute asynchronously. Currently, there is no way to absolutely force continuations to be synchronous or asynchronous; forcing asynchronous continuations would certainly be useful in some situations.
+
+**Update, 2015-02-02:** The .NET team has [released a post](http://blogs.msdn.com/b/pfxteam/archive/2015/02/02/new-task-apis-in-net-4-6.aspx) describing the `RunContinuationsAsynchronously` option. As the name implies, it does in fact run the continuation asynchronously.
 </div>
 
 There are a few more "scheduling options" that are not passed to the `TaskScheduler`. The `HideScheduler` option (introduced in .NET 4.5) will use the given task scheulder to schedule the continuation, but then will pretend that there is no current task scheduler while the continuation is executing; this can be used as a workaround for the unexpected default task scheduler (described below). `LazyCancellation` (introduced in .NET 4.5) is an option that ensures the continuation is completed (canceled) only after its antecedent completes. Without `LazyCancellation`, if the cancellation token passed to `ContinueWith` is cancelled, it could cancel the continuation before the original task even completed.
