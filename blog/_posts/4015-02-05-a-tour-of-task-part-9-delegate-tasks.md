@@ -55,6 +55,46 @@ First, the `CancellationToken`. This paramter is often misunderstood.
 
 // TODO: You keep using that CancellationToken there. I do not think it means what you think it means.
 
+        [TestMethod]
+        public void CancellationTokenUsed()
+        {
+            var cts = new CancellationTokenSource();
+            cts.Cancel();
+            var task = Task.Factory.StartNew(() => { }, cts.Token);
+            TaskCanceledException exception = null;
+            try
+            {
+                task.Wait();
+            }
+            catch (AggregateException ex)
+            {
+                exception = ex.InnerException as TaskCanceledException;
+            }
+            Assert.IsTrue(task.IsCanceled);
+            Assert.IsNotNull(exception);
+            Assert.AreEqual(cts.Token, exception.CancellationToken);
+        }
+
+        [TestMethod]
+        public void TestMethod1()
+        {
+            var cts = new CancellationTokenSource();
+            cts.Cancel();
+            var task = Task.Factory.StartNew(() => { cts.Token.ThrowIfCancellationRequested(); });
+            OperationCanceledException exception = null;
+            try
+            {
+                task.Wait();
+            }
+            catch (AggregateException ex)
+            {
+                exception = ex.InnerException as OperationCanceledException;
+            }
+            Assert.IsTrue(task.IsFaulted);
+            Assert.IsNotNull(exception);
+            Assert.AreEqual(cts.Token, exception.CancellationToken);
+        }
+
 ## Run
 
 
