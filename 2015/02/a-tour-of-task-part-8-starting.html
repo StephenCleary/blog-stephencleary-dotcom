@@ -3,10 +3,10 @@
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>A Tour of Task, Part 3: Status</title>
+    <title>A Tour of Task, Part 8: Starting</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="An analysis of Task.Status, Task.IsCompleted, Task.IsCanceled, and Task.IsFaulted; and discussion of whether they should be used for asynchronous and/or parallel code." />
-    <link rel="canonical" href="http://blog.stephencleary.com/2014/06/a-tour-of-task-part-3-status.html" />
+    <meta name="description" content="An analysis of Task.Start, Task.RunSynchronously, and Task.CompletedSynchronously; and discussion of whether they should be used for asynchronous and/or parallel code." />
+    <link rel="canonical" href="http://blog.stephencleary.com/2015/02/a-tour-of-task-part-8-starting.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -217,138 +217,76 @@ code {
 
   <header>
       <div class="page-header">
-          <h1>A Tour of Task, Part 3: Status</h1>
-          <small><time datetime="2014-06-05">Jun 5, 2014</time> &bull; <a data-disqus-identifier="/2014/06/a-tour-of-task-part-3-status" href="#disqus_thread">Comments</a></small>
+          <h1>A Tour of Task, Part 8: Starting</h1>
+          <small><time datetime="2015-02-05">Feb 5, 2015</time> &bull; <a data-disqus-identifier="/2015/02/a-tour-of-task-part-8-starting" href="#disqus_thread">Comments</a></small>
       </div>
   </header>
 
   <article>
-  <h2 id="status">Status</h2>
+  <p>When a task is <a href="/2014/05/a-tour-of-task-part-1-constructors.html">created using its constructor</a>, it is <a href="/2014/06/a-tour-of-task-part-3-status.html">initially in a <code>Created</code> state</a>. This is a kind of “holding” state, where the task won’t do anything until it is started. Today’s post considers ways to start tasks that have already been created.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">TaskStatus</span> <span class="n">Status</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></div>
+<div class="alert alert-danger">
+  <p><i class="fa fa-exclamation-triangle fa-2x pull-left"></i></p>
 
-<p>If you view a <code>Task</code> as a state machine, then the <code>Status</code> property represents the current state. Different types of tasks take different paths through the state machine.</p>
+  <p>There is <em>absolutely nothing</em> in this blog post that is recommended for modern code. If you’re looking for <em>best</em> practices, move along; there’s nothing to see here.</p>
+</div>
+
+<h2 id="start">Start</h2>
+
+<p>The most basic way to start a task is to just call its <code>Start</code> method. Sounds simple, right?</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">void</span> <span class="nf">Start</span><span class="p">();</span>
+<span class="k">void</span> <span class="nf">Start</span><span class="p">(</span><span class="n">TaskScheduler</span><span class="p">);</span></code></pre></div>
+
+<p>As you may guess by now, the default <code>TaskScheduler</code> is not <code>TaskScheduler.Default</code>. It is <code>TaskScheduler.Current</code>. And, once again, this brings up <a href="/2013/08/startnew-is-dangerous.html">all the same problems that <code>Task.Factory.StartNew</code> has with its similar treatment of <code>TaskScheduler</code></a>.</p>
+
+<p>Originally, <code>Start</code> (and the task constructors) were intended so that developers could define tasks to be executed kind of like a fancy delegate. Then, other code could execute those tasks in whatever way it felt appropriate (e.g., on the UI thread, or on a background thread). But in the real world, this is almost never useful, because <em>what the delegate does</em> usually determines its required <em>context</em> (e.g., a delegate accessing UI elements <em>must</em> be run on the UI thread). So this separation doesn’t make sense for most code, and even when it does, developers just use delegates directly instead of tasks.</p>
+
+<p><code>Start</code> can only be called on a task that is created with the task constructor; that is, it only works on Delegate Tasks that are in the <code>Created</code> state. Once <code>Start</code> is called, the task moves to the <code>WaitingToRun</code> state (and never returns to the <code>Created</code> state), so <code>Start</code> cannot be called on a task more than once. <code>Start</code> cannot be called on Promise Tasks at all, since they are never in the <code>Created</code> state.</p>
 
 <div class="alert alert-info">
   <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
 
-  <p>As usual, this post is just taking <a href="http://blogs.msdn.com/b/pfxteam/archive/2009/08/30/9889070.aspx" class="alert-link">what Stephen Toub already said</a>, expounding on it a bit, and drawing some ugly pictures. :)</p>
+  <p>For more information on the task states, Delegate Tasks, and Promise Tasks, see <a href="/2014/06/a-tour-of-task-part-3-status.html" class="alert-link">Part 3 (Status) of this series</a>.</p>
 </div>
 
-<h3 id="delegate-tasks">Delegate Tasks</h3>
+<p>In modern code - even dynamic task parallel code - <code>Start</code> just doesn’t have a place anymore. Instead of the task constructor and <code>Start</code>, use <code>Task.Run</code>, which creates <em>and</em> schedules a task.</p>
 
-<p>Delegate Tasks follow the basic pattern in the image below:</p>
+<h2 id="runsynchronously">RunSynchronously</h2>
 
-<p class="center"><a href="/assets/TaskStates.Delegate.png"><img src="/assets/TaskStates.Delegate.png" alt="" /></a></p>
+<p><code>RunSynchronously</code> is very similar to <code>Start</code>, and has the same overloads:</p>
 
-<p>Usually, Delegate Tasks are created via <code>Task.Run</code> (or <code>Task.Factory.StartNew</code>), and enter the state machine at the <code>WaitingToRun</code> state. <code>WaitingToRun</code> means that the task is associated with a task scheduler, and is just waiting its turn to run.</p>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">void</span> <span class="nf">RunSynchronously</span><span class="p">();</span>
+<span class="k">void</span> <span class="nf">RunSynchronously</span><span class="p">(</span><span class="n">TaskScheduler</span><span class="p">);</span></code></pre></div>
 
-<div class="alert alert-info">
-  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+<p><code>RunSynchronously</code> will attempt to start the task immediately and execute it <em>on the current thread</em>. This does not always happen, however; the final decision is up to the task scheduler that is passed to <code>RunSynchronously</code>. For example, a task scheduler for the UI thread will not permit a task to run on a thread pool thread. If the task scheduler refuses to execute the task synchronously, then <code>RunSynchronously</code> behaves just like <code>Start</code>; that is, the task is queued to the task scheduler for future execution.</p>
 
-  <p>Entering at the <code>WaitingToRun</code> state is the normal path for Delegate Tasks, but there are a couple of other possibilities.</p>
+<p>Once again, the default <code>TaskSchedler</code> is <code>TaskScheduler.Current</code>. However, this time this behavior does make sense: since <code>RunSynchronously</code> will attempt to execute the task’s delegate on the current thread, it is reasonable to assume the current task scheduler is the correct one to use.</p>
 
-  <p>If a Delegate Task is started with the <a href="/2014/05/a-tour-of-task-part-1-constructors.html" class="alert-link">task constructor</a>, then it starts in the <code>Created</code> state and only moves to the <code>WaitingToRun</code> state when you assign it to a task scheduler via <code>Start</code> or <code>RunSynchronously</code>.</p>
+<p>Similarly to <code>Start</code>, <code>RunSynchronously</code> doesn’t have any place in modern code.</p>
 
-  <p>If a Delegate Task is a continuation of another task, then it starts in the <code>WaitingForActivation</code> state and automatically moves to the <code>WaitingToRun</code> state when that other task completes.</p>
-</div>
+<h2 id="iasyncresultcompletedsynchronously">IAsyncResult.CompletedSynchronously</h2>
 
-<p>The task is in the <code>Running</code> state when the delegate of the Delegate Task is actually executing. When it’s done, the task proceeds to the <code>WaitingForChildrenToComplete</code> state until its children are all completed. Finally, the task ends up in one of the three final states: <code>RanToCompletion</code> (successfully), <code>Faulted</code>, or <code>Canceled</code>.</p>
+<p><code>Task</code> has an explicit interface implementation of a member called <code>CompletedSynchronously</code>:</p>
 
-<p>Remember that since Delegate Tasks represent running code, it’s quite possible that you may not see one or more of these states. For example, it’s possible to queue some very fast work to the thread pool and have that task already completed by the time it’s returned to your code.</p>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="kt">bool</span> <span class="n">IAsyncResult</span><span class="p">.</span><span class="n">CompletedSynchronously</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></div>
 
-<p>Also, this state machine can be short-circuited at any point if the task is canceled. It is possible for the task to be canceled before it enters the <code>Running</code> state, and thus not even execute its delegate.</p>
+<p>If you believe the MSDN documentation, this member should return <code>true</code> if the task was completed synchronously. Unfortunately, this member actually always returns <code>false</code>, even for synchronously-completed Promise Tasks such as those returned from <code>Task.FromResult</code>.</p>
 
-<h3 id="promise-tasks">Promise Tasks</h3>
-
-<p>Promise Tasks have a much simpler state machine:</p>
-
-<p class="center"><a href="/assets/TaskStates.Promise.png"><img src="/assets/TaskStates.Promise.png" alt="" /></a></p>
-
-<div class="alert alert-info">
-  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
-
-  <p>This diagram is slightly simplified; technically, Promise Tasks <em>can</em> enter the <code>WaitingForChildrenToComplete</code> state. However, this is rather non-intuitive and for this reason tasks created for <code>async</code> use usually specify the <code>DenyChildAttach</code> flag.</p>
-</div>
-
-<p>It is natural to speak of I/O-based operations as “running” or “executing”, e.g., “the HTTP download is currently running”. However, there is no actual <em>CPU code</em> to be <em>run</em>, so Promise Tasks (such as an HTTP download task) will never enter the <code>WaitingToRun</code> or <code>Running</code> states. And yes, this means that a Promise Task may end in the <code>RanToCompletion</code> state without ever actually <em>running</em>. Well, it is what it is…</p>
-
-<p>All Promise Tasks are created “hot”, meaning that the operation is in progress. The confusing part is that this “in-progress” state is actually called <code>WaitingForActivation</code>.</p>
-
-<div class="alert alert-info">
-  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
-
-  <p>For this reason, I try to avoid using the terms “running” or “executing” when talking about Promise Tasks; instead, I prefer to say that “the operation is in progress”.</p>
-</div>
-
-<h2 id="status-properties">Status Properties</h2>
-
-<p><code>Task</code> has a few convenience properties for determining the final state of a task:</p>
-
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="kt">bool</span> <span class="n">IsCompleted</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
-<span class="kt">bool</span> <span class="n">IsCanceled</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
-<span class="kt">bool</span> <span class="n">IsFaulted</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></div>
-
-<p><code>IsCanceled</code> and <code>IsFaulted</code> map directly to the <code>Canceled</code> and <code>Faulted</code> states, but <code>IsCompleted</code> is tricky. <code>IsCompleted</code> does not map to <code>RanToCompletion</code>; rather, it is <code>true</code> if the task is in <em>any</em> final state. In other words:</p>
-
-<div class="panel panel-default">
-
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>Status</th>
-        <th><code>IsCompleted</code></th>
-        <th><code>IsCanceled</code></th>
-        <th><code>IsFaulted</code></th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>other</td>
-        <td><i class="fa fa-times fa-lg no"></i></td>
-        <td><i class="fa fa-times fa-lg no"></i></td>
-        <td><i class="fa fa-times fa-lg no"></i></td>
-      </tr>
-      <tr>
-        <td><code>RanToCompletion</code></td>
-        <td><i class="fa fa-check fa-lg yes"></i></td>
-        <td><i class="fa fa-times fa-lg no"></i></td>
-        <td><i class="fa fa-times fa-lg no"></i></td>
-      </tr>
-      <tr>
-        <td><code>Canceled</code></td>
-        <td><i class="fa fa-check fa-lg yes"></i></td>
-        <td><i class="fa fa-check fa-lg yes"></i></td>
-        <td><i class="fa fa-times fa-lg no"></i></td>
-      </tr>
-      <tr>
-        <td><code>Faulted</code></td>
-        <td><i class="fa fa-check fa-lg yes"></i></td>
-        <td><i class="fa fa-times fa-lg no"></i></td>
-        <td><i class="fa fa-check fa-lg yes"></i></td>
-      </tr>
-    </tbody>
-  </table>
-
-</div>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>As interesting as these state properties all are, they are hardly ever actually <em>used</em> (except for debugging). Both asynchronous and parallel code do not normally use <code>Status</code> or the three convenience properties; instead, the normal usage is to wait for the tasks to complete and extract the results.</p>
+<p><code>IAsyncResult.CompletedSynchronously</code> is used by some legacy <code>IAsyncResult</code>-based code. But generally speaking, this member shouldn’t be used in modern code. In particular, you can’t depend on it being anything other than <code>false</code> for tasks.</p>
 
   </article>
     
     <footer>
         
             <ul class="pager">
-                <li class="previous"><a href="/2014/05/a-tour-of-task-part-2-asyncstate-and-creationoptions.html" title="A Tour of Task, Part 2: AsyncState and CreationOptions">&larr; Previous in A Tour of Task</a></li>
-                <li class="next"><a href="/2014/06/a-tour-of-task-part-4-id.html" title="A Tour of Task, Part 4: Id">Next in A Tour of Task &rarr;</a></li>
+                <li class="previous"><a href="/2015/01/a-tour-of-task-part-7-continuations.html" title="A Tour of Task, Part 7: Continuations">&larr; Previous in A Tour of Task</a></li>
             </ul>
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2014/05/a-tour-of-task-part-2-asyncstate-and-creationoptions.html" title="A Tour of Task, Part 2: AsyncState and CreationOptions">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2014/06/fire-and-forget-on-asp-net.html" title="Fire and Forget on ASP.NET">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2015/01/a-tour-of-task-part-7-continuations.html" title="A Tour of Task, Part 7: Continuations">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="disqus_thread"></div>
@@ -366,12 +304,12 @@ code {
                                             <li class="sidenavitem"><a href="/2014/04/a-tour-of-task-part-0-overview.html">Overview</a></li>
                                             <li class="sidenavitem"><a href="/2014/05/a-tour-of-task-part-1-constructors.html">Constructors</a></li>
                                             <li class="sidenavitem"><a href="/2014/05/a-tour-of-task-part-2-asyncstate-and-creationoptions.html">AsyncState and CreationOptions</a></li>
-                                            <li class="active sidenavitem"><a href="/2014/06/a-tour-of-task-part-3-status.html">Status</a></li>
+                                            <li class="sidenavitem"><a href="/2014/06/a-tour-of-task-part-3-status.html">Status</a></li>
                                             <li class="sidenavitem"><a href="/2014/06/a-tour-of-task-part-4-id.html">Id</a></li>
                                             <li class="sidenavitem"><a href="/2014/10/a-tour-of-task-part-5-wait.html">Waiting</a></li>
                                             <li class="sidenavitem"><a href="/2014/12/a-tour-of-task-part-6-results.html">Results</a></li>
                                             <li class="sidenavitem"><a href="/2015/01/a-tour-of-task-part-7-continuations.html">Continuations</a></li>
-                                            <li class="sidenavitem"><a href="/2015/02/a-tour-of-task-part-8-starting.html">Starting</a></li>
+                                            <li class="active sidenavitem"><a href="/2015/02/a-tour-of-task-part-8-starting.html">Starting</a></li>
                         </ul>
                     </div>
                 </div>
@@ -496,9 +434,9 @@ code {
 <!-- Disqus variables -->
 <script type="text/javascript">
     var disqus_shortname = 'stephencleary';
-    var disqus_identifier = "/2014/06/a-tour-of-task-part-3-status";
-    var disqus_title = "A Tour of Task, Part 3: Status";
-    var disqus_url = "http://blog.stephencleary.com/2014/06/a-tour-of-task-part-3-status.html";
+    var disqus_identifier = "/2015/02/a-tour-of-task-part-8-starting";
+    var disqus_title = "A Tour of Task, Part 8: Starting";
+    var disqus_url = "http://blog.stephencleary.com/2015/02/a-tour-of-task-part-8-starting.html";
 </script>
 
 <!-- Disqus comment counter -->
