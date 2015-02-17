@@ -260,7 +260,7 @@ code {
 
 <p>There are also other awaitable types: special methods such as “Task.Yield” return awaitables that are not Tasks, and the WinRT runtime (coming in Windows 8) has an unmanaged awaitable type. You can also create your own awaitable (usually for performance reasons), or use extension methods to make a non-awaitable type awaitable.</p>
 
-<p>That’s all I’m going to say about making your own awaitables. I’ve only had to write a couple of awaitables in the entire time I’ve used async/await. If you want to know more about writing your own awaitables, see the <a href="http://blogs.msdn.com/b/pfxteam/">Parallel Team Blog</a> or <a href="http://msmvps.com/blogs/jon_skeet/Default.aspx">Jon Skeet’s Blog</a>.</p>
+<p>That’s all I’m going to say about making your own awaitables. I’ve only had to write a couple of awaitables in the entire time I’ve used async/await. If you want to know more about writing your own awaitables, see the <a href="http://blogs.msdn.com/b/pfxteam/">Parallel Team Blog</a> or <a href="http://codeblog.jonskeet.uk/">Jon Skeet’s Blog</a>.</p>
 
 <p>One important point about awaitables is this: it is the <em>type</em> that is awaitable, not the method returning the type. In other words, you can await the result of an async method that returns Task … <em>because the method returns Task, not because it’s async</em>. So you can also await the result of a <em>non-async</em> method that returns Task:</p>
 
