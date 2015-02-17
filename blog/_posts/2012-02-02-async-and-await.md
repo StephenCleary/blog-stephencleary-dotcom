@@ -42,7 +42,7 @@ As I mentioned, "await" takes a single argument - an "awaitable" - which is an a
 
 There are also other awaitable types: special methods such as "Task.Yield" return awaitables that are not Tasks, and the WinRT runtime (coming in Windows 8) has an unmanaged awaitable type. You can also create your own awaitable (usually for performance reasons), or use extension methods to make a non-awaitable type awaitable.
 
-That's all I'm going to say about making your own awaitables. I've only had to write a couple of awaitables in the entire time I've used async/await. If you want to know more about writing your own awaitables, see the [Parallel Team Blog](http://blogs.msdn.com/b/pfxteam/) or [Jon Skeet's Blog](http://msmvps.com/blogs/jon_skeet/Default.aspx).
+That's all I'm going to say about making your own awaitables. I've only had to write a couple of awaitables in the entire time I've used async/await. If you want to know more about writing your own awaitables, see the [Parallel Team Blog](http://blogs.msdn.com/b/pfxteam/) or [Jon Skeet's Blog](http://codeblog.jonskeet.uk/).
 
 One important point about awaitables is this: it is the _type_ that is awaitable, not the method returning the type. In other words, you can await the result of an async method that returns Task ... _because the method returns Task, not because it's async_. So you can also await the result of a _non-async_ method that returns Task:
 

@@ -4,7 +4,7 @@ title: "Async Coroutines"
 ---
 We've been [introduced to scheduled concurrency]({% post_url 2012-08-23-async-and-scheduled-concurrency %}). Now how about a quick example?
 
-Today we're going to use the exclusive scheduler to create a simplistic kind of round-robin co-routine, similar to [Jon Skeet's EduAsync Coroutines](http://msmvps.com/blogs/jon_skeet/archive/2011/06/22/eduasync-part-13-first-look-at-coroutines-with-async.aspx).
+Today we're going to use the exclusive scheduler to create a simplistic kind of round-robin co-routine, similar to [Jon Skeet's EduAsync Coroutines](http://codeblog.jonskeet.uk/2011/06/22/eduasync-part-13-first-look-at-coroutines-with-async/).
 
 <div class="alert alert-danger" markdown="1">
 <i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
