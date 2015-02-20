@@ -44,6 +44,6 @@ That's all for today; next week we'll start looking at asynchronous unit tests, 
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
-For a similar example, see Recipe 2.9 in my [Concurrency Cookbook](http://tinyurl.com/ConcurrencyCookbook){:.alert-link}.
+For a similar example, see Recipe 2.9 in my [Concurrency Cookbook]({{ '/book/' | prepend: site.url_www }}){:.alert-link}.
 </div>
 

@@ -47,7 +47,7 @@ You _probably_ won't have to use TaskCompletionSource\<TResult> directly; you ca
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
-Update (2014-12-01): For more details, see Recipes 7.1, 7.2, and 7.3 in my [Concurrency Cookbook](http://tinyurl.com/ConcurrencyCookbook){:.alert-link}.
+Update (2014-12-01): For more details, see Recipes 7.1, 7.2, and 7.3 in my [Concurrency Cookbook]({{ '/book/' | prepend: site.url_www }}){:.alert-link}.
 </div>
 
 ## Tasks as Code
@@ -95,7 +95,7 @@ There are some pretty cool tricks we can pull off using the built-in TaskSchedul
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
-Update (2014-12-01): For more details, see Recipes 7.4 and 3.4 in my [Concurrency Cookbook](http://tinyurl.com/ConcurrencyCookbook){:.alert-link}.
+Update (2014-12-01): For more details, see Recipes 7.4 and 3.4 in my [Concurrency Cookbook]({{ '/book/' | prepend: site.url_www }}){:.alert-link}.
 </div>
 
 ## Tasks as Async Methods
@@ -119,5 +119,5 @@ That's the easiest way to create Task objects! However, it only works if you're 
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
-Update (2014-12-01): For more details, see Section 1.2 and Chapter 2 in my [Concurrency Cookbook](http://tinyurl.com/ConcurrencyCookbook){:.alert-link}.
+Update (2014-12-01): For more details, see Section 1.2 and Chapter 2 in my [Concurrency Cookbook]({{ '/book/' | prepend: site.url_www }}){:.alert-link}.
 </div>

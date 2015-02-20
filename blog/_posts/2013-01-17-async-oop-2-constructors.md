@@ -245,5 +245,5 @@ The first two solutions in this post (asynchronous factory method and `AsyncLazy
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
-Update (2014-12-01): For more details, see Recipes 10.2, 10.3, and 13.1 in my [Concurrency Cookbook](http://tinyurl.com/ConcurrencyCookbook){:.alert-link}.
+Update (2014-12-01): For more details, see Recipes 10.2, 10.3, and 13.1 in my [Concurrency Cookbook]({{ '/book/' | prepend: site.url_www }}){:.alert-link}.
 </div>

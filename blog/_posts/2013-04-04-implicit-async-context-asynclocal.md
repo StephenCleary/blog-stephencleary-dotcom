@@ -268,5 +268,5 @@ As a final reminder: this will work **only on .NET 4.5** and it only works becau
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
-Update (2014-12-01): For more details, see Recipe 13.4 in my [Concurrency Cookbook](http://tinyurl.com/ConcurrencyCookbook){:.alert-link}.
+Update (2014-12-01): For more details, see Recipe 13.4 in my [Concurrency Cookbook]({{ '/book/' | prepend: site.url_www }}){:.alert-link}.
 </div>
