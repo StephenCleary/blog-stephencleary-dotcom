@@ -51,49 +51,19 @@ Task<TResult> StartNew<TResult>(Func<TResult>, CancellationToken, TaskCreationOp
 
 The "default values" for the `StartNew` overloads come from their `TaskFactory` instance. The `CancellationToken` parameter defaults to `TaskFactory.CancellationToken`. The `TaskCreationOptions` parameter defaults to `TaskFactory.CreationOptions`. The `TaskScheduler` parameter defaults to `TaskFactory.Scheduler`. Let's consider each of these parameters in turn.
 
-First, the `CancellationToken`. This paramter is often misunderstood.
+First, the `CancellationToken`. This paramter is often misunderstood. I've seen many (smart) developers pass a `CancellationToken` to `StartNew` believing that the token can be used to cancel the delegate at any time during its execution. However, this is not what happens. The `CancellationToken` passed to `StartNew` is only effective *before* the delegate starts executing. In other words, it cancels the *starting* of the delegate, not the delegate itself. Once that delegate starts executing, the `CancellationToken` argument cannot be used to cancel that delegate. The delegate itself must observe the `CancellationToken` (e.g., with `CancellationToken.ThrowIfCancellationRequested`) in order to support cancellation after it starts executing.
 
-// TODO: You keep using that CancellationToken there. I do not think it means what you think it means.
+{:.center}
+[![]({{ site_url }}/assets/i-do-not-think-it-means.jpg)]({{ site_url }}/assets/i-do-not-think-it-means.jpg)
 
-        [TestMethod]
-        public void CancellationTokenUsed()
-        {
-            var cts = new CancellationTokenSource();
-            cts.Cancel();
-            var task = Task.Factory.StartNew(() => { }, cts.Token);
-            TaskCanceledException exception = null;
-            try
-            {
-                task.Wait();
-            }
-            catch (AggregateException ex)
-            {
-                exception = ex.InnerException as TaskCanceledException;
-            }
-            Assert.IsTrue(task.IsCanceled);
-            Assert.IsNotNull(exception);
-            Assert.AreEqual(cts.Token, exception.CancellationToken);
-        }
+There is a minor difference in behavior if you specify a `CancellationToken`. If the delegate itself observes the `CancellationToken`, then it will raise an `OperationCanceledException`. If the `StartNew` call does not include that `CancellationToken`, then the returned task is faulted with that exception. However, if the delegate raises an `OperationCanceledException` from the same `CancellationToken` passed to `StartNew`, then the returned task is *canceled* instead of faulted, and the `OperationCanceledException` is replaced with a `TaskCanceledException`.
 
-        [TestMethod]
-        public void TestMethod1()
-        {
-            var cts = new CancellationTokenSource();
-            cts.Cancel();
-            var task = Task.Factory.StartNew(() => { cts.Token.ThrowIfCancellationRequested(); });
-            OperationCanceledException exception = null;
-            try
-            {
-                task.Wait();
-            }
-            catch (AggregateException ex)
-            {
-                exception = ex.InnerException as OperationCanceledException;
-            }
-            Assert.IsTrue(task.IsFaulted);
-            Assert.IsNotNull(exception);
-            Assert.AreEqual(cts.Token, exception.CancellationToken);
-        }
+OK, that was a bit much to describe in words. If you want to see the same details expressed in code, see the unit tests in this gist. (TODO: link)
+
+However, this difference in behavior does not impact your code as long as you use this pattern for detecting cancellation asynchronously: (TODO: gist)
+
+
+
 
 ## Run
 
