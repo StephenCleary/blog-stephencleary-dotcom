@@ -46,7 +46,7 @@ void RunSynchronously();
 void RunSynchronously(TaskScheduler);
 {% endhighlight %}
 
-`RunSynchronously` will attempt to start the task immediately and execute it *on the current thread*. This does not always happen, however; the final decision is up to the task scheduler that is passed to `RunSynchronously`. For example, a task scheduler for the UI thread will not permit a task to run on a thread pool thread. If the task scheduler refuses to execute the task synchronously, then `RunSynchronously` behaves just like `Start`; that is, the task is queued to the task scheduler for future execution.
+`RunSynchronously` will attempt to start the task immediately and execute it *on the current thread*. This does not always happen, however; the final decision is up to the task scheduler that is passed to `RunSynchronously`. For example, a task scheduler for the UI thread will not permit a task to run on a thread pool thread. If the task scheduler refuses to execute the task synchronously, then `RunSynchronously` behaves just like `Start`; that is, the task is queued to the task scheduler for future execution. Also just like `Start`, `RunSynchronously` can only be called on a task that is in the `Created` state, and can only be called on a task once.
 
 Once again, the default `TaskSchedler` is `TaskScheduler.Current`. However, this time this behavior does make sense: since `RunSynchronously` will attempt to execute the task's delegate on the current thread, it is reasonable to assume the current task scheduler is the correct one to use.
 
