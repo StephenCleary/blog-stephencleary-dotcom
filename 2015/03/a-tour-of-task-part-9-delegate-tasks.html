@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>A Tour of Task, Part 9: Delegate Tasks</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="An analysis of TaskFactory.StartNew and Task.Run; and discussion of whether they should be used for asynchronous and/or parallel code." />
+    <link rel="canonical" href="http://blog.stephencleary.com/2015/03/a-tour-of-task-part-9-delegate-tasks.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
+    
+    <link type="text/css" rel="stylesheet" href="//netdna.bootstrapcdn.com/bootswatch/3.2.0/spacelab/bootstrap.min.css" />
+    <link type="text/css" rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" />
+    <style type="text/css">/* Layout Styles */
+/* ----------------------------------------------------------*/
+
+body {
+    padding-top: 50px;
+}
+
+.affix {
+    top: 70px;
+    bottom: 0;
+    overflow-y: auto;
+}
+
+.navbar-brand {
+    font-weight: bold;
+}
+
+.navbar-brand-container.active>a, .navbar-brand-container.active>a:hover, .navbar-brand-container.active>a:focus {
+    color: #3399f3;
+    background-color: transparent;
+}
+
+.sidebar {
+    margin-top: 20px;
+}
+
+.sidenavitem {
+    height: auto;
+}
+
+.sidebar img {
+    /* Responsive images */
+    display: inline-block;
+    height: auto;
+    max-width: 100%;
+}
+
+@media(max-width:767px) {
+    .affix {
+        position: static;
+    }
+}
+
+div .vertical-margins {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.page-header {
+    margin-top: 20px;
+}
+
+.center {
+    text-align: center;
+}
+
+.project-icon {
+    height: 128px;
+    width: 128px;
+}
+
+.list-group-item h2 {
+    margin-top: 10px;
+}
+
+/* Fixes for Google Custom Search in a Bootstrap page */
+/* ----------------------------------------------------------*/
+.google, .google *, .google *:before, .google *:after {
+    -webkit-box-sizing: content-box;
+    -moz-box-sizing: content-box;
+    box-sizing: content-box;
+}
+
+.google table {
+    border-collapse: separate;
+}
+
+.gsc-input-box {
+    height: auto !important;
+}
+
+/* Fixes for Amazon widget in Bootstrap page */
+.amzn_wdgt * {
+    -webkit-box-sizing: content-box;
+    -moz-box-sizing: content-box;
+    box-sizing: content-box;
+}
+
+/* Post styles */
+/* ----------------------------------------------------------*/
+
+code {
+    background-color: #F2F3F9;
+    color: inherit;
+}
+
+.post img {
+    /* Responsive images */
+    display: inline-block;
+    height: auto;
+    max-width: 100%;
+}
+
+.post .table {
+    table-layout: fixed;
+}
+
+.post .table code {
+    white-space: normal;
+}
+
+.post .yes {
+    color: #008000;
+}
+
+.post .no {
+    color: #FF0000;
+}
+
+/* Syntax highlighting styles */
+/* ----------------------------------------------------------*/
+
+.highlight  { background: #ffffff; }
+.highlight .c { color: #008000 } /* Comment */
+.highlight .k { color: #0000ff } /* Keyword */
+.highlight .cm { color: #008000 } /* Comment.Multiline */
+.highlight .cp { color: #0000ff } /* Comment.Preproc */
+.highlight .c1 { color: #008000 } /* Comment.Single */
+.highlight .cs { color: #008000 } /* Comment.Special */
+.highlight .ge { font-style: italic } /* Generic.Emph */
+.highlight .gh { font-weight: bold } /* Generic.Heading */
+.highlight .gp { font-weight: bold } /* Generic.Prompt */
+.highlight .gs { font-weight: bold } /* Generic.Strong */
+.highlight .gu { font-weight: bold } /* Generic.Subheading */
+.highlight .kc { color: #0000ff } /* Keyword.Constant */
+.highlight .kd { color: #0000ff } /* Keyword.Declaration */
+.highlight .kn { color: #0000ff } /* Keyword.Namespace */
+.highlight .kp { color: #0000ff } /* Keyword.Pseudo */
+.highlight .kr { color: #0000ff } /* Keyword.Reserved */
+.highlight .kt { color: #2b91af } /* Keyword.Type */
+.highlight .s { color: #a31515 } /* Literal.String */
+.highlight .nc { color: #2b91af } /* Name.Class */
+.highlight .ow { color: #0000ff } /* Operator.Word */
+.highlight .sb { color: #a31515 } /* Literal.String.Backtick */
+.highlight .sc { color: #a31515 } /* Literal.String.Char */
+.highlight .sd { color: #a31515 } /* Literal.String.Doc */
+.highlight .s2 { color: #a31515 } /* Literal.String.Double */
+.highlight .se { color: #a31515 } /* Literal.String.Escape */
+.highlight .sh { color: #a31515 } /* Literal.String.Heredoc */
+.highlight .si { color: #a31515 } /* Literal.String.Interpol */
+.highlight .sx { color: #a31515 } /* Literal.String.Other */
+.highlight .sr { color: #a31515 } /* Literal.String.Regex */
+.highlight .s1 { color: #a31515 } /* Literal.String.Single */
+.highlight .ss { color: #a31515 } /* Literal.String.Symbol */
+</style>
+    
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://stephencleary.com/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://stephencleary.com/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://stephencleary.com/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://stephencleary.com/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://stephencleary.com/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://stephencleary.com/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://stephencleary.com/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://stephencleary.com/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://stephencleary.com/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://stephencleary.com/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-32x32.png" sizes="32x32">
+    
+</head>
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <div class="navbar-brand-container"><a class="navbar-brand" href="http://stephencleary.com">Stephen Cleary</a></div>
+    </div>
+
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+        <ul class="nav navbar-nav">
+            <li  class="active"  ><a href="http://blog.stephencleary.com">Blog</a></li>
+            <li  ><a href="http://stephencleary.com/projects/">Projects</a></li>
+            <li  ><a href="http://stephencleary.com/publications/">Publications</a></li>
+            <li  ><a href="http://stephencleary.com/book/">Book</a></li>
+            <li  ><a href="http://stephencleary.com/contact/">Contact</a></li>
+            <li><a href="http://feeds.feedburner.com/NitoPrograms"><i class="fa fa-rss-square fa-lg"></i></a></li>
+            <li  ><a href="http://stephencleary.com/search/"><i class="fa fa-search"></i></a></li>
+        </ul>
+    </div>
+</nav>
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>A Tour of Task, Part 9: Delegate Tasks</h1>
+          <small><time datetime="2015-03-03">Mar 3, 2015</time> &bull; <a data-disqus-identifier="/2015/03/a-tour-of-task-part-9-delegate-tasks" href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>Last time, we looked at <a href="/2015/02/a-tour-of-task-part-8-starting.html">some archaic ways to start Delegate Tasks</a>. Today we’ll look at a few members for creating Delegate Tasks in more modern code. Unline the task constructor, these methods return a Delegate Task that is <em>already running</em> (or at least <em>already scheduled to run</em>).</p>
+
+<h2 id="taskfactorystartnew">TaskFactory.StartNew</h2>
+
+<p>First up is the oft-overused <code>TaskFactory.StartNew</code> method. There are a few overloads available:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span> <span class="nf">StartNew</span><span class="p">(</span><span class="n">Action</span><span class="p">);</span>
+<span class="n">Task</span> <span class="nf">StartNew</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span>
+<span class="n">Task</span> <span class="nf">StartNew</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">);</span>
+<span class="n">Task</span> <span class="nf">StartNew</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span>
+
+<span class="n">Task</span> <span class="nf">StartNew</span><span class="p">(</span><span class="n">Action</span><span class="p">&lt;</span><span class="kt">object</span><span class="p">&gt;,</span> <span class="kt">object</span><span class="p">);</span>
+<span class="n">Task</span> <span class="nf">StartNew</span><span class="p">(</span><span class="n">Action</span><span class="p">&lt;</span><span class="kt">object</span><span class="p">&gt;,</span> <span class="kt">object</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span>
+<span class="n">Task</span> <span class="nf">StartNew</span><span class="p">(</span><span class="n">Action</span><span class="p">&lt;</span><span class="kt">object</span><span class="p">&gt;,</span> <span class="kt">object</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">);</span>
+<span class="n">Task</span> <span class="nf">StartNew</span><span class="p">(</span><span class="n">Action</span><span class="p">&lt;</span><span class="kt">object</span><span class="p">&gt;,</span> <span class="kt">object</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span>
+
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">StartNew</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">StartNew</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">StartNew</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">TaskCreationOptions</span><span class="p">);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">StartNew</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span>
+
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">StartNew</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="kt">object</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="kt">object</span><span class="p">);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">StartNew</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="kt">object</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="kt">object</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">StartNew</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="kt">object</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="kt">object</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">StartNew</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="kt">object</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="kt">object</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span></code></pre></div>
+
+<p>The overloads containing an <code>object</code> parameter simply pass that value through to the continuation delegate; this is just an optimization to avoid an extra allocation in some cases, so we can ignore those overloads for now. That leaves two sets of overloads, which act like default parameters for the two core methods:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span> <span class="nf">StartNew</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">StartNew</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span></code></pre></div>
+
+<p><code>StartNew</code> can take a delegate without a return value (<code>Action</code>) or with a return value (<code>Task&lt;TResult&gt;</code>), and returns an appropriate task type based on whether the delegate returns a value. Note that neither of these delegate types are <a href="/2014/02/synchronous-and-asynchronous-delegate.html"><code>async</code>-aware delegates</a>; this causes complications when developers try to use <code>StartNew</code> to start an asynchronous task.</p>
+
+<div class="alert alert-danger">
+  <p><i class="fa fa-exclamation-triangle fa-2x pull-left"></i></p>
+
+  <p><code>TaskFactory.StartNew</code> doesn’t support <code>async</code>-aware delegates. <code>Task.Run</code> does.</p>
+</div>
+
+<p>The “default values” for the <code>StartNew</code> overloads come from their <code>TaskFactory</code> instance. The <code>CancellationToken</code> parameter defaults to <code>TaskFactory.CancellationToken</code>. The <code>TaskCreationOptions</code> parameter defaults to <code>TaskFactory.CreationOptions</code>. The <code>TaskScheduler</code> parameter defaults to <code>TaskFactory.Scheduler</code>. Let’s consider each of these parameters in turn.</p>
+
+<h3 id="cancellationtoken">CancellationToken</h3>
+
+<p>First, the <code>CancellationToken</code>. This paramter is often misunderstood. I’ve seen many (smart) developers pass a <code>CancellationToken</code> to <code>StartNew</code> believing that the token can be used to cancel the delegate at any time during its execution. However, this is not what happens. The <code>CancellationToken</code> passed to <code>StartNew</code> is only effective <em>before</em> the delegate starts executing. In other words, it cancels the <em>starting</em> of the delegate, not the delegate itself. Once that delegate starts executing, the <code>CancellationToken</code> argument cannot be used to cancel that delegate. The delegate itself must observe the <code>CancellationToken</code> (e.g., with <code>CancellationToken.ThrowIfCancellationRequested</code>) in order to support cancellation after it starts executing.</p>
+
+<p class="center"><a href="/assets/i-do-not-think-it-means.jpg"><img src="/assets/i-do-not-think-it-means.jpg" alt="" /></a></p>
+
+<p>However, there is a minor difference in behavior if you do also pass a <code>CancellationToken</code> to <code>StartNew</code>. If the delegate itself observes the <code>CancellationToken</code>, then it will raise an <code>OperationCanceledException</code>. If the <code>StartNew</code> call does not include that <code>CancellationToken</code>, then the returned task is faulted with that exception. However, if the delegate raises an <code>OperationCanceledException</code> from the same <code>CancellationToken</code> passed to <code>StartNew</code>, then the returned task is <em>canceled</em> instead of faulted, and the <code>OperationCanceledException</code> is replaced with a <code>TaskCanceledException</code>.</p>
+
+<p>OK, that was a bit much to describe in words. If you want to see the same details expressed in code, see the unit tests in <a href="https://gist.github.com/StephenCleary/37d95619f7803f444d3d">this gist</a>.</p>
+
+<p>However, this difference in behavior does not impact your code as long as you use one of the the common patterns for detecting cancellation. For asynchronous code, you’d <code>await</code> the task and catch an <code>OperationCanceledException</code> (for more complete examples, see the unit tests in <a href="https://gist.github.com/StephenCleary/dfd2a8b0a50ea3040695">this gist</a>):</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">try</span>
+<span class="p">{</span>
+  <span class="c1">// &quot;task&quot; was started by StartNew, and either StartNew or</span>
+  <span class="c1">// the task delegate observes a cancellation token.</span>
+  <span class="k">await</span> <span class="n">task</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="k">catch</span> <span class="p">(</span><span class="n">OperationCanceledException</span> <span class="n">ex</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="c1">// ex.CancellationToken contains the cancellation token,</span>
+  <span class="c1">// if you need it.</span>
+<span class="p">}</span></code></pre></div>
+
+<p>For synchronous code, you’d call <code>Wait</code> (or <code>Result</code>) on the task and expect an <code>AggregateException</code> whose <code>InnerException</code> is an <code>OperationCanceledException</code> (for more complete examples, see the unit tests in <a href="https://gist.github.com/StephenCleary/6674ae30974f478a4b7f">this gist</a>):</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">try</span>
+<span class="p">{</span>
+  <span class="c1">// &quot;task&quot; was started by StartNew, and either StartNew or</span>
+  <span class="c1">// the task delegate observes a cancellation token.</span>
+  <span class="n">task</span><span class="p">.</span><span class="n">Wait</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="k">catch</span> <span class="p">(</span><span class="n">AggregateException</span> <span class="n">exception</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="kt">var</span> <span class="n">ex</span> <span class="p">=</span> <span class="n">exception</span><span class="p">.</span><span class="n">InnerException</span> <span class="k">as</span> <span class="n">OperationCanceledException</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">ex</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="c1">// ex.CancellationToken contains the cancellation token,</span>
+    <span class="c1">// if you need it.</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>In conclusion, the <code>CancellationToken</code> parameter of <code>StarNew</code> is nearly useless. It introduces some subtle changes in behavior, and is confusing to many developers. I never use it, myself.</p>
+
+<h3 id="taskcreationoptions">TaskCreationOptions</h3>
+
+<p>There are a couple of “scheduling options” that are just passed to the <code>TaskScheduler</code> that schedules the task. <code>PreferFairness</code> is a hint asking for FIFO behavior. <code>LongRunning</code> is a hint that the task will execute for a long time. As of this writing, the <code>TaskScheduler.Default</code> task scheduler will create a separate thread (outside the thread pool) for tasks with the <code>LongRunning</code> flag; however, this behavior is not guaranteed. Note that both of these options are just hints; it is entirely appropriate for the <code>TaskScheduler</code> to ignore them both.</p>
+
+<p>There are a few more “scheduling options” that are not passed to the <code>TaskScheduler</code>. The <code>HideScheduler</code> option (introduced in .NET 4.5) will use the given task scheulder to schedule the task, but then will pretend that there is no current task scheduler while the task is executing; this can be used as a workaround for the unexpected default task scheduler (described below). The <code>RunContinuationsAsynchronously</code> option (introduced in .NET 4.6) will force any continuations of this task to execute asynchronously.</p>
+
+<p>The “parenting options” control how the task is attached to the currently-executing task. <a href="https://msdn.microsoft.com/en-us/library/vstudio/dd997417(v=vs.110).aspx">Attached child tasks</a> change the <a href="/2014/06/a-tour-of-task-part-3-status.html">behavior of their parent task</a> in ways that are convenient in some <a href="https://msdn.microsoft.com/en-us/library/ff963551.aspx">dynamic task parallelism</a> scenarios, but are unexpected and awkward anywhere outside that (extremely small) use case. <code>AttachedToParent</code> will attach the task as a child task of the currently-executing task. In modern code, you almost never want this option; more importantly, you almost never want <em>other</em> code to attach child tasks to your tasks. For this reason, the <code>DenyChildAttach</code> option was introduced in .NET 4.5, which prevents any other tasks from using <code>AttachedToParent</code> to attach to this task.</p>
+
+<div class="alert alert-danger">
+  <p><i class="fa fa-exclamation-triangle fa-2x pull-left"></i></p>
+
+  <p><code>Task.Factory.StartNew</code> has a non-optimal default option setting of <code>TaskCreationOptions.None</code>. <code>Task.Run</code> uses the more appropriate default of <code>TaskCreationOptions.DenyChildAttach</code>.</p>
+</div>
+
+<h3 id="taskscheduler">TaskScheduler</h3>
+
+<p>The <code>TaskScheduler</code> is used to schedule the continuation. A <code>TaskFactory</code> may define its own <code>TaskScheduler</code> which it uses by default. Note that the default <code>TaskScheduler</code> of the static <code>Task.Factory</code> instance is <em>not</em> <code>TaskScheduler.Default</code>, but rather <code>TaskScheduler.Current</code>. This fact has caused quite a bit of confusion over the years, because the vast majority of the time, developers expect (and desire) <code>TaskScheduler.Default</code>. I’ve <a href="/2013/08/startnew-is-dangerous.html">described this problem in detail before</a>, but a little review never hurts.</p>
+
+<p>The following code first creates a UI task factory to schedule work to the UI thread. Then, as a part of that work, it starts some work to run in the background.</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">void</span> <span class="nf">Button_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">var</span> <span class="n">ui</span> <span class="p">=</span> <span class="k">new</span> <span class="n">TaskFactory</span><span class="p">(</span><span class="n">TaskScheduler</span><span class="p">.</span><span class="n">FromCurrentSynchronizationContext</span><span class="p">());</span>
+    <span class="n">ui</span><span class="p">.</span><span class="n">StartNew</span><span class="p">(()</span> <span class="p">=&gt;</span>
+    <span class="p">{</span>
+        <span class="n">Debug</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;UI on thread &quot;</span> <span class="p">+</span> <span class="n">Environment</span><span class="p">.</span><span class="n">CurrentManagedThreadId</span><span class="p">);</span>
+        <span class="n">Task</span><span class="p">.</span><span class="n">Factory</span><span class="p">.</span><span class="n">StartNew</span><span class="p">(()</span> <span class="p">=&gt;</span>
+        <span class="p">{</span>
+            <span class="n">Debug</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Background work on thread &quot;</span> <span class="p">+</span> <span class="n">Environment</span><span class="p">.</span><span class="n">CurrentManagedThreadId</span><span class="p">);</span>
+        <span class="p">});</span>
+    <span class="p">});</span>
+<span class="p">}</span></code></pre></div>
+
+<p>The output on my system is:</p>
+
+<pre><code>UI on thread 9
+Background work on thread 9
+</code></pre>
+
+<p>The problem is that while the outer <code>StartNew</code> is running, <code>TaskScheduler.Current</code> is the UI task scheduler. This is picked up as the default value for the <code>TaskScheduler</code> parameter by the inner <code>StartNew</code>, which causes the background work to be scheduled to the UI thread rather than a thread pool thread. This scenario can be avoided by passing <code>HideScheduler</code> to the outer <code>StartNew</code> task, or by passing an explicit <code>TaskScheduler.Default</code> to the inner <code>StartNew</code>.</p>
+
+<div class="alert alert-danger">
+  <p><i class="fa fa-exclamation-triangle fa-2x pull-left"></i></p>
+
+  <p><code>Task.Factory.StartNew</code> has a confusing default scheduler <code>TaskScheduler.Current</code>. <code>Task.Run</code> always uses the appropriate default of <code>TaskScheduler.Default</code>.</p>
+</div>
+
+<p><strong>In conclusion</strong>, I do not recommend using <code>Task.Factory.StartNew</code> at all, unless you are doing <a href="https://msdn.microsoft.com/en-us/library/ff963551.aspx">dynamic task parallelism</a> (which is extremely rare). In modern code, you should almost always use <code>Task.Run</code> instead. If you do have a custom <code>TaskScheduler</code> (e.g., one of the schedulers in <code>ConcurrentExclusiveSchedulerPair</code>), then it is appropriate to create your own <code>TaskFactory</code> instance and use <code>StartNew</code> on that; however, <code>Task.Factory.StartNew</code> should be avoided.</p>
+
+<h2 id="taskrun">Task.Run</h2>
+
+<p><code>Task.Run</code> is the modern, preferred method for queueing work to the thread pool. It does not work with custom schedulers, but provides a simpler API than <code>Task.Factory.StartNew</code>, and is <code>async</code>-aware to boot:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span> <span class="nf">Run</span><span class="p">(</span><span class="n">Action</span><span class="p">);</span>
+<span class="n">Task</span> <span class="nf">Run</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span>
+
+<span class="n">Task</span> <span class="nf">Run</span><span class="p">(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&gt;);</span>
+<span class="n">Task</span> <span class="nf">Run</span><span class="p">(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">);</span>
+
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">Run</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">Run</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">);</span>
+
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">Run</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;&gt;);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">Run</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;&gt;,</span> <span class="n">CancellationToken</span><span class="p">);</span></code></pre></div>
+
+<p>There are three axis of overloading going on here: whether or not there is a <code>CancellationToken</code>, whether the delegate returns a <code>TResult</code> value, and whether the delegate is synchronous (<code>Action</code>/<code>Func&lt;TResult&gt;</code>) or asynchronous (<code>Func&lt;Task&gt;</code>/<code>Func&lt;Task&lt;TResult&gt;&gt;</code>). Technically, <code>Task.Run</code> does not always create a Delegate Task; when it is given an asynchronous delegate, it actually returns a Promise Task. But conceptually, <code>Task.Run</code> is specifically for executing delegates on the thread pool, so I’m covering this set of overloads along with <code>StartNew</code> (which always does create Delegate Tasks).</p>
+
+<p>The <code>CancellationToken</code> parameter sadly has the same problems described above for <code>StartNew</code>. That is, it really only cancels the <em>scheduling</em> of the delegate, which happens almost immediately. The presence of the <code>CancellationToken</code> argument does change the semantics slightly, similarly to <code>StartNew</code>. The full unit tests are <a href="https://gist.github.com/StephenCleary/37d95619f7803f444d3d">in this gist</a>, which has only one result that may be surprising: if an asynchronous delegate explicitly observes a <code>CancellationToken</code>, the returned task will be <em>canceled</em> instead of <em>faulted</em>. Just like <code>TaskFactory.StartNew</code>, these minor differences in semantics don’t matter if the consuming code uses the standard pattern for detecting cancellation.</p>
+
+<p>So, I conclude that the <code>CancellationToken</code> parameter of <code>Task.Run</code> is pretty much useless.</p>
+
+<p>However, the other overloads are quite useful, and <code>Task.Run</code> is the best modern way for most code to queue work to the thread pool.</p>
+
+  </article>
+    
+    <footer>
+        
+            <ul class="pager">
+                <li class="previous"><a href="/2015/02/a-tour-of-task-part-8-starting.html" title="A Tour of Task, Part 8: Starting">&larr; Previous in A Tour of Task</a></li>
+            </ul>
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2015/02/a-tour-of-task-part-8-starting.html" title="A Tour of Task, Part 8: Starting">&larr; Previous Post</a></li>
+            
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+                <div class="panel panel-primary">
+                    <div class="panel-heading">A Tour of Task</div>
+                    <div class="panel-body sidenav">
+                        <ul class="nav nav-pills nav-stacked">
+                                            <li class="sidenavitem"><a href="/2014/04/a-tour-of-task-part-0-overview.html">Overview</a></li>
+                                            <li class="sidenavitem"><a href="/2014/05/a-tour-of-task-part-1-constructors.html">Constructors</a></li>
+                                            <li class="sidenavitem"><a href="/2014/05/a-tour-of-task-part-2-asyncstate-and-creationoptions.html">AsyncState and CreationOptions</a></li>
+                                            <li class="sidenavitem"><a href="/2014/06/a-tour-of-task-part-3-status.html">Status</a></li>
+                                            <li class="sidenavitem"><a href="/2014/06/a-tour-of-task-part-4-id.html">Id</a></li>
+                                            <li class="sidenavitem"><a href="/2014/10/a-tour-of-task-part-5-wait.html">Waiting</a></li>
+                                            <li class="sidenavitem"><a href="/2014/12/a-tour-of-task-part-6-results.html">Results</a></li>
+                                            <li class="sidenavitem"><a href="/2015/01/a-tour-of-task-part-7-continuations.html">Continuations</a></li>
+                                            <li class="sidenavitem"><a href="/2015/02/a-tour-of-task-part-8-starting.html">Starting</a></li>
+                                            <li class="active sidenavitem"><a href="/2015/03/a-tour-of-task-part-9-delegate-tasks.html">Delegate Tasks</a></li>
+                        </ul>
+                    </div>
+                </div>
+            
+        </div>
+        <div class="col-sm-2 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://stephencleary.com/www.assets/Me-large.jpg"/></div>
+                    <div class="center vertical-margins">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://stephencleary.com/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://stephencleary.com/book/"><img src="http://stephencleary.com/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+    (function($) {
+        $(function() {
+            if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+                $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+            }
+        });
+    })(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+    (function($) {
+        $(function() {
+            if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+                $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+            }
+        });
+    })(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+<script src="/lib/jquery.scrollTo.min.js"></script>
+<script type="text/javascript">
+    (function ($) {
+        $(function () {
+            var container = $('.affix').filter(function() { return $(this).css('position') == 'fixed'; });
+            var target = container.find('.active');
+            container.scrollTo(target, { offset: - (container.height() / 2 - target.height() / 2) });
+        });
+    })(window.jQuery);
+</script>
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-8910661-5', 'stephencleary.com');
+    ga('send', 'pageview');
+</script>
+
+
+
+
+
+
+
+<!-- Disqus variables -->
+<script type="text/javascript">
+    var disqus_shortname = 'stephencleary';
+    var disqus_identifier = "/2015/03/a-tour-of-task-part-9-delegate-tasks";
+    var disqus_title = "A Tour of Task, Part 9: Delegate Tasks";
+    var disqus_url = "http://blog.stephencleary.com/2015/03/a-tour-of-task-part-9-delegate-tasks.html";
+</script>
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(s);
+    }());
+</script>
+
+<!-- Disqus comment section -->
+<script type="text/javascript">
+    (function() {
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<!-- Moment -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.6.0/moment.min.js"></script>
+<script type="text/javascript">window.moment || document.write('<script src="/lib/moment.min.js"><\/script>')</script>
+<script type="text/javascript">
+    (function($) {
+        $(function() {
+            $('time').each(function (_, e) {
+                var text = moment($(e).attr('datetime'), 'YYYY-MM-DD').fromNow();
+                $(e).text(function(_, oldText) { return text + ' (' + oldText + ')'; });
+            });
+        });
+    })(window.jQuery);
+</script>
+
+
+
+
+</body>
+</html>
