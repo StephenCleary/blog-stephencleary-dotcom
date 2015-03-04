@@ -255,7 +255,7 @@ code {
 
 <p>TPL has a concept of parent and child tasks. Async tasks do not use this mechanism. There <em>is</em> a <em>logical</em> hierarchy among async tasks, but they do not use the <a href="http://msdn.microsoft.com/en-us/library/dd997417.aspx">parent/child relationship provided by the TPL</a>.</p>
 
-<p>Each TPL task may have multiple errors. Even if a task only has one exception, it is wrapped in an AggregateException. Async tasks are only expected to have one error, so the await operator will automatically unwrap the single exception if necessary.</p>
+<p>Each TPL task may have multiple errors. Even if a task only has one exception, it is wrapped in an AggregateException. Async tasks are only expected to have one error, so the await operator will avoid this AggregateException wrapper.</p>
 
 <h2 id="differences-between-async-tasks-and-awaitables">Differences between Async Tasks and Awaitables</h2>
 

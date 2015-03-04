@@ -254,7 +254,7 @@ code {
 <div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span> <span class="nf">StartNew</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span>
 <span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">StartNew</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span></code></pre></div>
 
-<p><code>StartNew</code> can take a delegate without a return value (<code>Action</code>) or with a return value (<code>Task&lt;TResult&gt;</code>), and returns an appropriate task type based on whether the delegate returns a value. Note that neither of these delegate types are <a href="/2014/02/synchronous-and-asynchronous-delegate.html"><code>async</code>-aware delegates</a>; this causes complications when developers try to use <code>StartNew</code> to start an asynchronous task.</p>
+<p><code>StartNew</code> can take a delegate without a return value (<code>Action</code>) or with a return value (<code>Func&lt;TResult&gt;</code>), and returns an appropriate task type based on whether the delegate returns a value. Note that neither of these delegate types are <a href="/2014/02/synchronous-and-asynchronous-delegate.html"><code>async</code>-aware delegates</a>; this causes complications when developers try to use <code>StartNew</code> to start an asynchronous task.</p>
 
 <div class="alert alert-danger">
   <p><i class="fa fa-exclamation-triangle fa-2x pull-left"></i></p>
@@ -356,6 +356,8 @@ Background work on thread 9
 </div>
 
 <p><strong>In conclusion</strong>, I do not recommend using <code>Task.Factory.StartNew</code> at all, unless you are doing <a href="https://msdn.microsoft.com/en-us/library/ff963551.aspx">dynamic task parallelism</a> (which is extremely rare). In modern code, you should almost always use <code>Task.Run</code> instead. If you do have a custom <code>TaskScheduler</code> (e.g., one of the schedulers in <code>ConcurrentExclusiveSchedulerPair</code>), then it is appropriate to create your own <code>TaskFactory</code> instance and use <code>StartNew</code> on that; however, <code>Task.Factory.StartNew</code> should be avoided.</p>
+
+<p><strong>Update, 2015-03-04 <a href="https://twitter.com/i3arnon/status/573169519482540033">(suggested by Bar Arnon)</a>:</strong> If you do choose to use <code>StartNew</code> (i.e., if you need to use a custom <code>TaskScheduler</code>), bear in mind that <code>StartNew</code> does not automatically handle asynchronous delegates. To run asynchronous code on a custom task scheduler, you’ll need to use <code>Unwrap</code>.</p>
 
 <h2 id="taskrun">Task.Run</h2>
 
