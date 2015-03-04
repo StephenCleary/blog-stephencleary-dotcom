@@ -41,7 +41,7 @@ Task StartNew(Action, CancellationToken, TaskCreationOptions, TaskScheduler);
 Task<TResult> StartNew<TResult>(Func<TResult>, CancellationToken, TaskCreationOptions, TaskScheduler);
 {% endhighlight %}
 
-`StartNew` can take a delegate without a return value (`Action`) or with a return value (`Task<TResult>`), and returns an appropriate task type based on whether the delegate returns a value. Note that neither of these delegate types are [`async`-aware delegates]({% post_url 2014-02-20-synchronous-and-asynchronous-delegate %}); this causes complications when developers try to use `StartNew` to start an asynchronous task.
+`StartNew` can take a delegate without a return value (`Action`) or with a return value (`Func<TResult>`), and returns an appropriate task type based on whether the delegate returns a value. Note that neither of these delegate types are [`async`-aware delegates]({% post_url 2014-02-20-synchronous-and-asynchronous-delegate %}); this causes complications when developers try to use `StartNew` to start an asynchronous task.
 
 <div class="alert alert-danger" markdown="1">
 <i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
