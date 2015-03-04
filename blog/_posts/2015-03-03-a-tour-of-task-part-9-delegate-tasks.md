@@ -150,6 +150,8 @@ The problem is that while the outer `StartNew` is running, `TaskScheduler.Curren
 
 **In conclusion**, I do not recommend using `Task.Factory.StartNew` at all, unless you are doing [dynamic task parallelism](https://msdn.microsoft.com/en-us/library/ff963551.aspx) (which is extremely rare). In modern code, you should almost always use `Task.Run` instead. If you do have a custom `TaskScheduler` (e.g., one of the schedulers in `ConcurrentExclusiveSchedulerPair`), then it is appropriate to create your own `TaskFactory` instance and use `StartNew` on that; however, `Task.Factory.StartNew` should be avoided.
 
+**Update, 2015-03-04 [(suggested by Bar Arnon)](https://twitter.com/i3arnon/status/573169519482540033):** If you do choose to use `StartNew` (i.e., if you need to use a custom `TaskScheduler`), bear in mind that `StartNew` does not automatically handle asynchronous delegates. To run asynchronous code on a custom task scheduler, you'll need to use `Unwrap`.
+
 ## Task.Run
 
 `Task.Run` is the modern, preferred method for queueing work to the thread pool. It does not work with custom schedulers, but provides a simpler API than `Task.Factory.StartNew`, and is `async`-aware to boot:
