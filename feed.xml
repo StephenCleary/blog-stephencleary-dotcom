@@ -7,6 +7,228 @@
     <atom:link href="http://blog.stephencleary.com/feed.xml" rel="self" type="application/rss+xml" />
     
       <item>
+        <title>Async Console Apps on .NET CoreCLR</title>
+        <description>&lt;p&gt;I finally had a chance this week to play around a bit with &lt;a href=&quot;https://www.visualstudio.com/en-us/downloads/visual-studio-2015-ctp-vs&quot;&gt;Visual Studio 2015 CTP 6&lt;/a&gt;. I hardly ever have the time to use CTP bits, but with &lt;a href=&quot;http://blogs.msdn.com/b/dotnet/archive/2014/12/04/introducing-net-core.aspx&quot;&gt;all the talk about CoreCLR&lt;/a&gt; I just &lt;em&gt;had&lt;/em&gt; to try it out. :)&lt;/p&gt;
+
+&lt;div class=&quot;alert alert-danger&quot;&gt;
+  &lt;p&gt;&lt;i class=&quot;fa fa-exclamation-triangle fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
+
+  &lt;p&gt;This entire post is about prerelease technologies. Everything is subject to change.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;p&gt;In &lt;a href=&quot;https://msdn.microsoft.com/en-us/magazine/dn913182.aspx&quot;&gt;one of the recent articles about CoreCLR&lt;/a&gt;, Daniel Roth mentions in passing “You can even make the main entry point asynchronous and return a Task.”&lt;/p&gt;
+
+&lt;p&gt;Wait, what?&lt;/p&gt;
+
+&lt;p&gt;Yup, that’s right! Asynchronous &lt;code&gt;Main&lt;/code&gt; methods for Console applications! Let’s see how this works…&lt;/p&gt;
+
+&lt;h2 id=&quot;getting-started-with-the-coreclr-ctp&quot;&gt;Getting Started with the CoreCLR CTP&lt;/h2&gt;
+
+&lt;p&gt;If you want to follow along at home, first &lt;a href=&quot;https://www.visualstudio.com/en-us/downloads/visual-studio-2015-ctp-vs&quot;&gt;install the VS2015 CTP&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Next, you’ll need to install some K runtime stuff. The best instructions I’ve found for this are on the &lt;a href=&quot;https://github.com/aspnet/home&quot;&gt;home page of the ASP.NET 5 GitHub repo&lt;/a&gt;. If you just want to get started quickly, open up PowerShell and execute the following commands:&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-powershell&quot; data-lang=&quot;powershell&quot;&gt;&lt;span class=&quot;nv&quot;&gt;@powershell&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;-NoProfile&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;-ExecutionPolicy&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;unrestricted&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;-Command&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;iex ((new-object net.webclient).DownloadString(&amp;#39;https://raw.githubusercontent.com/aspnet/Home/master/kvminstall.ps1&amp;#39;))&amp;quot;&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;kvm&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;upgrade&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;aside-how-many-runtimes&quot;&gt;Aside: How Many Runtimes?&lt;/h2&gt;
+
+&lt;p&gt;It’s important to note that there are &lt;em&gt;two&lt;/em&gt; K runtimes installed (well, four, if you count 32/64-bit variants). There’s the “ordinary” desktop CLR and the new CoreCLR. You can type &lt;code&gt;kvm list&lt;/code&gt; to show the installed runtimes and switch between them with &lt;code&gt;kvm upgrade -r coreclr&lt;/code&gt; and &lt;code&gt;kvm upgrade -r clr&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;PS&amp;gt; kvm list
+
+Active Version     Runtime Architecture Location                     Alias
+------ -------     ------- ------------ --------                     -----
+       1.0.0-beta3 clr     x64          C:\Users\stephen\.k\runtimes
+  *    1.0.0-beta3 clr     x86          C:\Users\stephen\.k\runtimes default
+       1.0.0-beta3 coreclr x64          C:\Users\stephen\.k\runtimes
+       1.0.0-beta3 coreclr x86          C:\Users\stephen\.k\runtimes
+
+
+PS&amp;gt; kvm upgrade -r coreclr
+Determining latest version
+kre-coreclr-win-x86.1.0.0-beta3 already installed.
+Adding C:\Users\stephen\.k\runtimes\kre-coreclr-win-x86.1.0.0-beta3\bin to process PATH
+Adding C:\Users\stephen\.k\runtimes\kre-coreclr-win-x86.1.0.0-beta3\bin to user PATH
+Updating alias &#39;default&#39; to &#39;kre-coreclr-win-x86.1.0.0-beta3&#39;
+
+
+PS&amp;gt; kvm list
+
+Active Version     Runtime Architecture Location                     Alias
+------ -------     ------- ------------ --------                     -----
+       1.0.0-beta3 clr     x64          C:\Users\stephen\.k\runtimes
+       1.0.0-beta3 clr     x86          C:\Users\stephen\.k\runtimes
+       1.0.0-beta3 coreclr x64          C:\Users\stephen\.k\runtimes
+  *    1.0.0-beta3 coreclr x86          C:\Users\stephen\.k\runtimes default
+
+
+PS&amp;gt; kvm upgrade -r clr
+Determining latest version
+kre-clr-win-x86.1.0.0-beta3 already installed.
+Adding C:\Users\stephen\.k\runtimes\kre-clr-win-x86.1.0.0-beta3\bin to process PATH
+Adding C:\Users\stephen\.k\runtimes\kre-clr-win-x86.1.0.0-beta3\bin to user PATH
+Updating alias &#39;default&#39; to &#39;kre-clr-win-x86.1.0.0-beta3&#39;
+
+
+PS&amp;gt; kvm list
+
+Active Version     Runtime Architecture Location                     Alias
+------ -------     ------- ------------ --------                     -----
+       1.0.0-beta3 clr     x64          C:\Users\stephen\.k\runtimes
+  *    1.0.0-beta3 clr     x86          C:\Users\stephen\.k\runtimes default
+       1.0.0-beta3 coreclr x64          C:\Users\stephen\.k\runtimes
+       1.0.0-beta3 coreclr x86          C:\Users\stephen\.k\runtimes
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The regular desktop CLR is sitting on top of the full .NET framework. The CoreCLR is a new runtime. This is the one that a lot of people refer to as “cloud optimized” - though in reality, it’s just more of a microkernel-based framework as opposed to the traditional monolithic one. I expect we’ll see some great things from CoreCLR other than just running ASP.NET apps in the cloud (though it will of course be good for that too!) - the microkernel “only pay for what you use” architecture is perfectly suited for mobile platforms - and even smaller-than-mobile platforms!&lt;/p&gt;
+
+&lt;h2 id=&quot;creating-a-coreclr-console-application&quot;&gt;Creating a CoreCLR Console Application&lt;/h2&gt;
+
+&lt;p&gt;Let’s get started! In the CTP6, to create a CoreCLR console app, you choose New Project, and then…&lt;/p&gt;
+
+&lt;p&gt;Select “Web” on the left-hand side, and then “ASP.NET 5 Console Application”.&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/AspNetConsoleApplication.png&quot;&gt;&lt;img src=&quot;/assets/AspNetConsoleApplication.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Wait, what?&lt;/p&gt;
+
+&lt;p&gt;Yeah, “ASP.NET Console Application” is a ridiculous juxtaposition… This will probably be renamed completely as the tooling continues to develop. For now, though, the CoreCLR has strong roots in the ASP.NET world, so we create a CoreCLR Console application as an “ASP.NET Console” application.&lt;/p&gt;
+
+&lt;h2 id=&quot;making-it-asynchronous&quot;&gt;Making It Asynchronous!&lt;/h2&gt;
+
+&lt;p&gt;The default code the template gives you is pretty straightforward:&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Program&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;args&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;Console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;WriteLine&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;Hello World&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;Console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ReadLine&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;So let’s just rewrite it to be asynchronous:&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Program&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;args&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;Console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;WriteLine&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;Hello World&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Delay&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TimeSpan&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FromSeconds&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;Console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;WriteLine&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;Still here!&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;Console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ReadLine&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Compile and run it, and you’ll see the Console application sticking around after the &lt;code&gt;await&lt;/code&gt;!&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/AsyncConsoleFullClr.png&quot;&gt;&lt;img src=&quot;/assets/AsyncConsoleFullClr.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Note the title bar. This console application is actually just a dll, which is hosted in the K runtime for the full desktop CLR. So this is actually running on whatever .NET desktop framework you have installed.&lt;/p&gt;
+
+&lt;h2 id=&quot;running-on-the-coreclr&quot;&gt;Running on the CoreCLR&lt;/h2&gt;
+
+&lt;p&gt;To run on the actual CoreCLR, select the dropdown arrow of the Start button and choose the .NET Core as your CLR:&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/SwitchToNetCore.png&quot;&gt;&lt;img src=&quot;/assets/SwitchToNetCore.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Then when you run it, you’ll be running on the CoreCLR (again, note the title bar):&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/AsyncConsoleCoreClr.png&quot;&gt;&lt;img src=&quot;/assets/AsyncConsoleCoreClr.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;compiling-for-multiple-frameworks&quot;&gt;Compiling for Multiple Frameworks&lt;/h2&gt;
+
+&lt;p&gt;It’s important to peek under the covers a bit. Pop open your &lt;code&gt;project.json&lt;/code&gt;. See the &lt;code&gt;frameworks&lt;/code&gt; section?&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;frameworks&amp;quot;&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;quot;aspnet50&amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;quot;aspnetcore50&amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; 
+        &lt;span class=&quot;nt&quot;&gt;&amp;quot;dependencies&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;nt&quot;&gt;&amp;quot;System.Console&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;4.0.0-beta-22523&amp;quot;&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;There are two frameworks for this project: &lt;code&gt;aspnet50&lt;/code&gt; is the regular desktop CLR-based framework - it’s the one that runs on the full .NET desktop framework. The &lt;code&gt;aspnetcore50&lt;/code&gt; is the CoreCLR framework - it’s the new microkernel one. Since CoreCLR is a microkernel architecture, you need to explicitly bring in nearly everything you intend to use - in this case, the VS template automatically added a dependency on &lt;code&gt;System.Console&lt;/code&gt; for you. (You can add more dependencies by installing NuGet packages; &lt;code&gt;System.Console&lt;/code&gt; is in fact just a NuGet package that is already installed into this project).&lt;/p&gt;
+
+&lt;p&gt;The important takeaway here is that this project is compiled &lt;em&gt;twice&lt;/em&gt;, once for each framework. And there are APIs in each framework that the other doesn’t have. For example, I have a weird quirk where I strongly prefer using &lt;code&gt;ReadKey&lt;/code&gt; instead of &lt;code&gt;ReadLine&lt;/code&gt; in my throwaway Console applications. But CoreCLR’s &lt;code&gt;System.Console&lt;/code&gt; package doesn’t support &lt;code&gt;ReadKey&lt;/code&gt;!&lt;/p&gt;
+
+&lt;p&gt;So, what happens if I change &lt;code&gt;ReadLine&lt;/code&gt; to &lt;code&gt;ReadKey&lt;/code&gt;? At first, it looks OK, but it will no longer build.&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/ConsoleReadKeyError.png&quot;&gt;&lt;img src=&quot;/assets/ConsoleReadKeyError.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;The confusing part here is that there’s no “red squigglies” or anything indicating that &lt;code&gt;Console&lt;/code&gt; doesn’t have a &lt;code&gt;ReadKey&lt;/code&gt; method. Just an error that seems to come out of nowhere.&lt;/p&gt;
+
+&lt;p&gt;The key is to &lt;em&gt;use the navigation bar&lt;/em&gt; - VS is aware that this file is compiled two different ways because our project is supporting two frameworks. By switching the &lt;em&gt;view&lt;/em&gt; of the file to the CoreCLR, I can now see the error:&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/ConsoleReadKeyErrorVisible.png&quot;&gt;&lt;img src=&quot;/assets/ConsoleReadKeyErrorVisible.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;div class=&quot;alert alert-info&quot;&gt;
+  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
+
+  &lt;p&gt;Note that the “Project” column of the Error List window specifies the &lt;em&gt;framework&lt;/em&gt; as well as the project. This should be the first thing to check if you’re seeing “impossible” or mysterious errors like this.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;conditional-compilation&quot;&gt;Conditional Compilation&lt;/h2&gt;
+
+&lt;p&gt;Well, let’s say I really &lt;em&gt;want&lt;/em&gt; to use &lt;code&gt;ReadKey&lt;/code&gt;?&lt;/p&gt;
+
+&lt;p&gt;One solution is to make use of conditional compilation. Remember, this project is being compiled separately for each platform. As &lt;a href=&quot;http://weblog.west-wind.com/posts/2014/Dec/02/Creating-multitarget-NuGet-Packages-with-vNext&quot;&gt;Rick Strahl pointed out&lt;/a&gt;, each platform defines a compiler directive that is just the platform name in all uppercase:&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Program&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;args&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;Console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;WriteLine&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;Hello World&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Delay&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TimeSpan&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FromSeconds&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;Console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;WriteLine&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;Still here!&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#if ASPNET50&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;Console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ReadKey&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#else&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;Console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ReadLine&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#endif&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;That works! So, you can use conditional compilation to take advantage of different APIs for different frameworks.&lt;/p&gt;
+
+&lt;h2 id=&quot;limiting-frameworks&quot;&gt;Limiting Frameworks&lt;/h2&gt;
+
+&lt;p&gt;The conditional compilation does work, but it also causes a change in behavior between the frameworks. This is not ideal.&lt;/p&gt;
+
+&lt;p&gt;Instead, I’m going to decide that &lt;code&gt;ReadKey&lt;/code&gt; is just plain critical for my demos, and so CoreCLR is out. Thanks for playing.&lt;/p&gt;
+
+&lt;p&gt;To limit the frameworks for my project, I just have to edit the &lt;code&gt;project.json&lt;/code&gt; file and remove the CoreCLR:&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;frameworks&amp;quot;&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;quot;aspnet50&amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Save the file, and now my project only targets the full desktop CLR.&lt;/p&gt;
+
+&lt;div class=&quot;alert alert-info&quot;&gt;
+  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
+
+  &lt;p&gt;Removing the &lt;code&gt;aspnetcore50&lt;/code&gt; framework will probably have to be done a &lt;em&gt;lot&lt;/em&gt; over the next few months. There are a lot of third-party libraries that do not support the CoreCLR (yet).&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Incidentally, I provided this technique as a &lt;a href=&quot;http://stackoverflow.com/a/28887513/263693&quot;&gt;Stack Overflow answer&lt;/a&gt; earlier today.&lt;/p&gt;
+
+&lt;h2 id=&quot;future-speculations&quot;&gt;Future Speculations&lt;/h2&gt;
+
+&lt;p&gt;Currently, the “console application” we’re building is actually just a dll that’s hosted by a K runtime. I &lt;em&gt;expect&lt;/em&gt; that when VS2015 gets to RTM, they’ll have a real executable popping out of the build. They have &lt;a href=&quot;http://blogs.msdn.com/b/dotnet/archive/2015/02/03/coreclr-is-now-open-source.aspx&quot;&gt;already started on something like that&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;The old Console application type will undoubtedly stick around, for backwards compatibility at least. So, I’d expect VS2015 will have two Console application types: a legacy one that runs directly on the .NET Desktop Framework, and a new one that run on the K runtime (which in turn can run on either .NET Core CLR or .NET Desktop CLR). It’s the K runtime that gives us the power of an asynchronous entry point, so I’d expect only the new console application type would be able to have an &lt;code&gt;async Main&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;I just have to say that it’s &lt;strong&gt;so cool&lt;/strong&gt; to get &lt;code&gt;async Main&lt;/code&gt; support! :)&lt;/p&gt;
+</description>
+        <pubDate>Thu, 05 Mar 2015 00:00:00 -0500</pubDate>
+        <link>http://blog.stephencleary.com/2015/03/async-console-apps-on-net-coreclr.html</link>
+        <guid isPermaLink="true">http://blog.stephencleary.com/2015/03/async-console-apps-on-net-coreclr.html</guid>
+      </item>
+    
+      <item>
         <title>A Tour of Task, Part 9: Delegate Tasks</title>
         <description>&lt;p&gt;Last time, we looked at &lt;a href=&quot;/2015/02/a-tour-of-task-part-8-starting.html&quot;&gt;some archaic ways to start Delegate Tasks&lt;/a&gt;. Today we’ll look at a few members for creating Delegate Tasks in more modern code. Unline the task constructor, these methods return a Delegate Task that is &lt;em&gt;already running&lt;/em&gt; (or at least &lt;em&gt;already scheduled to run&lt;/em&gt;).&lt;/p&gt;
 
@@ -39,7 +261,7 @@
 &lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;StartNew&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskCreationOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskScheduler&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
 &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;StartNew&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskCreationOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskScheduler&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
-&lt;p&gt;&lt;code&gt;StartNew&lt;/code&gt; can take a delegate without a return value (&lt;code&gt;Action&lt;/code&gt;) or with a return value (&lt;code&gt;Task&amp;lt;TResult&amp;gt;&lt;/code&gt;), and returns an appropriate task type based on whether the delegate returns a value. Note that neither of these delegate types are &lt;a href=&quot;/2014/02/synchronous-and-asynchronous-delegate.html&quot;&gt;&lt;code&gt;async&lt;/code&gt;-aware delegates&lt;/a&gt;; this causes complications when developers try to use &lt;code&gt;StartNew&lt;/code&gt; to start an asynchronous task.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;StartNew&lt;/code&gt; can take a delegate without a return value (&lt;code&gt;Action&lt;/code&gt;) or with a return value (&lt;code&gt;Func&amp;lt;TResult&amp;gt;&lt;/code&gt;), and returns an appropriate task type based on whether the delegate returns a value. Note that neither of these delegate types are &lt;a href=&quot;/2014/02/synchronous-and-asynchronous-delegate.html&quot;&gt;&lt;code&gt;async&lt;/code&gt;-aware delegates&lt;/a&gt;; this causes complications when developers try to use &lt;code&gt;StartNew&lt;/code&gt; to start an asynchronous task.&lt;/p&gt;
 
 &lt;div class=&quot;alert alert-danger&quot;&gt;
   &lt;p&gt;&lt;i class=&quot;fa fa-exclamation-triangle fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
@@ -141,6 +363,8 @@ Background work on thread 9
 &lt;/div&gt;
 
 &lt;p&gt;&lt;strong&gt;In conclusion&lt;/strong&gt;, I do not recommend using &lt;code&gt;Task.Factory.StartNew&lt;/code&gt; at all, unless you are doing &lt;a href=&quot;https://msdn.microsoft.com/en-us/library/ff963551.aspx&quot;&gt;dynamic task parallelism&lt;/a&gt; (which is extremely rare). In modern code, you should almost always use &lt;code&gt;Task.Run&lt;/code&gt; instead. If you do have a custom &lt;code&gt;TaskScheduler&lt;/code&gt; (e.g., one of the schedulers in &lt;code&gt;ConcurrentExclusiveSchedulerPair&lt;/code&gt;), then it is appropriate to create your own &lt;code&gt;TaskFactory&lt;/code&gt; instance and use &lt;code&gt;StartNew&lt;/code&gt; on that; however, &lt;code&gt;Task.Factory.StartNew&lt;/code&gt; should be avoided.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Update, 2015-03-04 &lt;a href=&quot;https://twitter.com/i3arnon/status/573169519482540033&quot;&gt;(suggested by Bar Arnon)&lt;/a&gt;:&lt;/strong&gt; If you do choose to use &lt;code&gt;StartNew&lt;/code&gt; (i.e., if you need to use a custom &lt;code&gt;TaskScheduler&lt;/code&gt;), bear in mind that &lt;code&gt;StartNew&lt;/code&gt; does not automatically handle asynchronous delegates. To run asynchronous code on a custom task scheduler, you’ll need to use &lt;code&gt;Unwrap&lt;/code&gt;.&lt;/p&gt;
 
 &lt;h2 id=&quot;taskrun&quot;&gt;Task.Run&lt;/h2&gt;
 
@@ -795,126 +1019,6 @@ Background work on thread 9
         <pubDate>Sat, 07 Jun 2014 00:00:00 -0400</pubDate>
         <link>http://blog.stephencleary.com/2014/06/fire-and-forget-on-asp-net.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2014/06/fire-and-forget-on-asp-net.html</guid>
-      </item>
-    
-      <item>
-        <title>A Tour of Task, Part 3: Status</title>
-        <description>&lt;h2 id=&quot;status&quot;&gt;Status&lt;/h2&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;TaskStatus&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Status&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;If you view a &lt;code&gt;Task&lt;/code&gt; as a state machine, then the &lt;code&gt;Status&lt;/code&gt; property represents the current state. Different types of tasks take different paths through the state machine.&lt;/p&gt;
-
-&lt;div class=&quot;alert alert-info&quot;&gt;
-  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
-
-  &lt;p&gt;As usual, this post is just taking &lt;a href=&quot;http://blogs.msdn.com/b/pfxteam/archive/2009/08/30/9889070.aspx&quot; class=&quot;alert-link&quot;&gt;what Stephen Toub already said&lt;/a&gt;, expounding on it a bit, and drawing some ugly pictures. :)&lt;/p&gt;
-&lt;/div&gt;
-
-&lt;h3 id=&quot;delegate-tasks&quot;&gt;Delegate Tasks&lt;/h3&gt;
-
-&lt;p&gt;Delegate Tasks follow the basic pattern in the image below:&lt;/p&gt;
-
-&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/TaskStates.Delegate.png&quot;&gt;&lt;img src=&quot;/assets/TaskStates.Delegate.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;Usually, Delegate Tasks are created via &lt;code&gt;Task.Run&lt;/code&gt; (or &lt;code&gt;Task.Factory.StartNew&lt;/code&gt;), and enter the state machine at the &lt;code&gt;WaitingToRun&lt;/code&gt; state. &lt;code&gt;WaitingToRun&lt;/code&gt; means that the task is associated with a task scheduler, and is just waiting its turn to run.&lt;/p&gt;
-
-&lt;div class=&quot;alert alert-info&quot;&gt;
-  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
-
-  &lt;p&gt;Entering at the &lt;code&gt;WaitingToRun&lt;/code&gt; state is the normal path for Delegate Tasks, but there are a couple of other possibilities.&lt;/p&gt;
-
-  &lt;p&gt;If a Delegate Task is started with the &lt;a href=&quot;/2014/05/a-tour-of-task-part-1-constructors.html&quot; class=&quot;alert-link&quot;&gt;task constructor&lt;/a&gt;, then it starts in the &lt;code&gt;Created&lt;/code&gt; state and only moves to the &lt;code&gt;WaitingToRun&lt;/code&gt; state when you assign it to a task scheduler via &lt;code&gt;Start&lt;/code&gt; or &lt;code&gt;RunSynchronously&lt;/code&gt;.&lt;/p&gt;
-
-  &lt;p&gt;If a Delegate Task is a continuation of another task, then it starts in the &lt;code&gt;WaitingForActivation&lt;/code&gt; state and automatically moves to the &lt;code&gt;WaitingToRun&lt;/code&gt; state when that other task completes.&lt;/p&gt;
-&lt;/div&gt;
-
-&lt;p&gt;The task is in the &lt;code&gt;Running&lt;/code&gt; state when the delegate of the Delegate Task is actually executing. When it’s done, the task proceeds to the &lt;code&gt;WaitingForChildrenToComplete&lt;/code&gt; state until its children are all completed. Finally, the task ends up in one of the three final states: &lt;code&gt;RanToCompletion&lt;/code&gt; (successfully), &lt;code&gt;Faulted&lt;/code&gt;, or &lt;code&gt;Canceled&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;Remember that since Delegate Tasks represent running code, it’s quite possible that you may not see one or more of these states. For example, it’s possible to queue some very fast work to the thread pool and have that task already completed by the time it’s returned to your code.&lt;/p&gt;
-
-&lt;p&gt;Also, this state machine can be short-circuited at any point if the task is canceled. It is possible for the task to be canceled before it enters the &lt;code&gt;Running&lt;/code&gt; state, and thus not even execute its delegate.&lt;/p&gt;
-
-&lt;h3 id=&quot;promise-tasks&quot;&gt;Promise Tasks&lt;/h3&gt;
-
-&lt;p&gt;Promise Tasks have a much simpler state machine:&lt;/p&gt;
-
-&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/TaskStates.Promise.png&quot;&gt;&lt;img src=&quot;/assets/TaskStates.Promise.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
-
-&lt;div class=&quot;alert alert-info&quot;&gt;
-  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
-
-  &lt;p&gt;This diagram is slightly simplified; technically, Promise Tasks &lt;em&gt;can&lt;/em&gt; enter the &lt;code&gt;WaitingForChildrenToComplete&lt;/code&gt; state. However, this is rather non-intuitive and for this reason tasks created for &lt;code&gt;async&lt;/code&gt; use usually specify the &lt;code&gt;DenyChildAttach&lt;/code&gt; flag.&lt;/p&gt;
-&lt;/div&gt;
-
-&lt;p&gt;It is natural to speak of I/O-based operations as “running” or “executing”, e.g., “the HTTP download is currently running”. However, there is no actual &lt;em&gt;CPU code&lt;/em&gt; to be &lt;em&gt;run&lt;/em&gt;, so Promise Tasks (such as an HTTP download task) will never enter the &lt;code&gt;WaitingToRun&lt;/code&gt; or &lt;code&gt;Running&lt;/code&gt; states. And yes, this means that a Promise Task may end in the &lt;code&gt;RanToCompletion&lt;/code&gt; state without ever actually &lt;em&gt;running&lt;/em&gt;. Well, it is what it is…&lt;/p&gt;
-
-&lt;p&gt;All Promise Tasks are created “hot”, meaning that the operation is in progress. The confusing part is that this “in-progress” state is actually called &lt;code&gt;WaitingForActivation&lt;/code&gt;.&lt;/p&gt;
-
-&lt;div class=&quot;alert alert-info&quot;&gt;
-  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
-
-  &lt;p&gt;For this reason, I try to avoid using the terms “running” or “executing” when talking about Promise Tasks; instead, I prefer to say that “the operation is in progress”.&lt;/p&gt;
-&lt;/div&gt;
-
-&lt;h2 id=&quot;status-properties&quot;&gt;Status Properties&lt;/h2&gt;
-
-&lt;p&gt;&lt;code&gt;Task&lt;/code&gt; has a few convenience properties for determining the final state of a task:&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IsCompleted&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IsCanceled&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IsFaulted&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;&lt;code&gt;IsCanceled&lt;/code&gt; and &lt;code&gt;IsFaulted&lt;/code&gt; map directly to the &lt;code&gt;Canceled&lt;/code&gt; and &lt;code&gt;Faulted&lt;/code&gt; states, but &lt;code&gt;IsCompleted&lt;/code&gt; is tricky. &lt;code&gt;IsCompleted&lt;/code&gt; does not map to &lt;code&gt;RanToCompletion&lt;/code&gt;; rather, it is &lt;code&gt;true&lt;/code&gt; if the task is in &lt;em&gt;any&lt;/em&gt; final state. In other words:&lt;/p&gt;
-
-&lt;div class=&quot;panel panel-default&quot;&gt;
-
-  &lt;table class=&quot;table table-striped&quot;&gt;
-    &lt;thead&gt;
-      &lt;tr&gt;
-        &lt;th&gt;Status&lt;/th&gt;
-        &lt;th&gt;&lt;code&gt;IsCompleted&lt;/code&gt;&lt;/th&gt;
-        &lt;th&gt;&lt;code&gt;IsCanceled&lt;/code&gt;&lt;/th&gt;
-        &lt;th&gt;&lt;code&gt;IsFaulted&lt;/code&gt;&lt;/th&gt;
-      &lt;/tr&gt;
-    &lt;/thead&gt;
-    &lt;tbody&gt;
-      &lt;tr&gt;
-        &lt;td&gt;other&lt;/td&gt;
-        &lt;td&gt;&lt;i class=&quot;fa fa-times fa-lg no&quot;&gt;&lt;/i&gt;&lt;/td&gt;
-        &lt;td&gt;&lt;i class=&quot;fa fa-times fa-lg no&quot;&gt;&lt;/i&gt;&lt;/td&gt;
-        &lt;td&gt;&lt;i class=&quot;fa fa-times fa-lg no&quot;&gt;&lt;/i&gt;&lt;/td&gt;
-      &lt;/tr&gt;
-      &lt;tr&gt;
-        &lt;td&gt;&lt;code&gt;RanToCompletion&lt;/code&gt;&lt;/td&gt;
-        &lt;td&gt;&lt;i class=&quot;fa fa-check fa-lg yes&quot;&gt;&lt;/i&gt;&lt;/td&gt;
-        &lt;td&gt;&lt;i class=&quot;fa fa-times fa-lg no&quot;&gt;&lt;/i&gt;&lt;/td&gt;
-        &lt;td&gt;&lt;i class=&quot;fa fa-times fa-lg no&quot;&gt;&lt;/i&gt;&lt;/td&gt;
-      &lt;/tr&gt;
-      &lt;tr&gt;
-        &lt;td&gt;&lt;code&gt;Canceled&lt;/code&gt;&lt;/td&gt;
-        &lt;td&gt;&lt;i class=&quot;fa fa-check fa-lg yes&quot;&gt;&lt;/i&gt;&lt;/td&gt;
-        &lt;td&gt;&lt;i class=&quot;fa fa-check fa-lg yes&quot;&gt;&lt;/i&gt;&lt;/td&gt;
-        &lt;td&gt;&lt;i class=&quot;fa fa-times fa-lg no&quot;&gt;&lt;/i&gt;&lt;/td&gt;
-      &lt;/tr&gt;
-      &lt;tr&gt;
-        &lt;td&gt;&lt;code&gt;Faulted&lt;/code&gt;&lt;/td&gt;
-        &lt;td&gt;&lt;i class=&quot;fa fa-check fa-lg yes&quot;&gt;&lt;/i&gt;&lt;/td&gt;
-        &lt;td&gt;&lt;i class=&quot;fa fa-times fa-lg no&quot;&gt;&lt;/i&gt;&lt;/td&gt;
-        &lt;td&gt;&lt;i class=&quot;fa fa-check fa-lg yes&quot;&gt;&lt;/i&gt;&lt;/td&gt;
-      &lt;/tr&gt;
-    &lt;/tbody&gt;
-  &lt;/table&gt;
-
-&lt;/div&gt;
-
-&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
-
-&lt;p&gt;As interesting as these state properties all are, they are hardly ever actually &lt;em&gt;used&lt;/em&gt; (except for debugging). Both asynchronous and parallel code do not normally use &lt;code&gt;Status&lt;/code&gt; or the three convenience properties; instead, the normal usage is to wait for the tasks to complete and extract the results.&lt;/p&gt;
-</description>
-        <pubDate>Thu, 05 Jun 2014 00:00:00 -0400</pubDate>
-        <link>http://blog.stephencleary.com/2014/06/a-tour-of-task-part-3-status.html</link>
-        <guid isPermaLink="true">http://blog.stephencleary.com/2014/06/a-tour-of-task-part-3-status.html</guid>
       </item>
     
   </channel>

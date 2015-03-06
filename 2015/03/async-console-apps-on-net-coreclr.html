@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Async Console Apps on .NET CoreCLR</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Asynchronous console application entry points are supported on CoreCLR." />
+    <link rel="canonical" href="http://blog.stephencleary.com/2015/03/async-console-apps-on-net-coreclr.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
+    
+    <link type="text/css" rel="stylesheet" href="//netdna.bootstrapcdn.com/bootswatch/3.2.0/spacelab/bootstrap.min.css" />
+    <link type="text/css" rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" />
+    <style type="text/css">/* Layout Styles */
+/* ----------------------------------------------------------*/
+
+body {
+    padding-top: 50px;
+}
+
+.affix {
+    top: 70px;
+    bottom: 0;
+    overflow-y: auto;
+}
+
+.navbar-brand {
+    font-weight: bold;
+}
+
+.navbar-brand-container.active>a, .navbar-brand-container.active>a:hover, .navbar-brand-container.active>a:focus {
+    color: #3399f3;
+    background-color: transparent;
+}
+
+.sidebar {
+    margin-top: 20px;
+}
+
+.sidenavitem {
+    height: auto;
+}
+
+.sidebar img {
+    /* Responsive images */
+    display: inline-block;
+    height: auto;
+    max-width: 100%;
+}
+
+@media(max-width:767px) {
+    .affix {
+        position: static;
+    }
+}
+
+div .vertical-margins {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.page-header {
+    margin-top: 20px;
+}
+
+.center {
+    text-align: center;
+}
+
+.project-icon {
+    height: 128px;
+    width: 128px;
+}
+
+.list-group-item h2 {
+    margin-top: 10px;
+}
+
+/* Fixes for Google Custom Search in a Bootstrap page */
+/* ----------------------------------------------------------*/
+.google, .google *, .google *:before, .google *:after {
+    -webkit-box-sizing: content-box;
+    -moz-box-sizing: content-box;
+    box-sizing: content-box;
+}
+
+.google table {
+    border-collapse: separate;
+}
+
+.gsc-input-box {
+    height: auto !important;
+}
+
+/* Fixes for Amazon widget in Bootstrap page */
+.amzn_wdgt * {
+    -webkit-box-sizing: content-box;
+    -moz-box-sizing: content-box;
+    box-sizing: content-box;
+}
+
+/* Post styles */
+/* ----------------------------------------------------------*/
+
+code {
+    background-color: #F2F3F9;
+    color: inherit;
+}
+
+.post img {
+    /* Responsive images */
+    display: inline-block;
+    height: auto;
+    max-width: 100%;
+}
+
+.post .table {
+    table-layout: fixed;
+}
+
+.post .table code {
+    white-space: normal;
+}
+
+.post .yes {
+    color: #008000;
+}
+
+.post .no {
+    color: #FF0000;
+}
+
+/* Syntax highlighting styles */
+/* ----------------------------------------------------------*/
+
+.highlight  { background: #ffffff; }
+.highlight .c { color: #008000 } /* Comment */
+.highlight .k { color: #0000ff } /* Keyword */
+.highlight .cm { color: #008000 } /* Comment.Multiline */
+.highlight .cp { color: #0000ff } /* Comment.Preproc */
+.highlight .c1 { color: #008000 } /* Comment.Single */
+.highlight .cs { color: #008000 } /* Comment.Special */
+.highlight .ge { font-style: italic } /* Generic.Emph */
+.highlight .gh { font-weight: bold } /* Generic.Heading */
+.highlight .gp { font-weight: bold } /* Generic.Prompt */
+.highlight .gs { font-weight: bold } /* Generic.Strong */
+.highlight .gu { font-weight: bold } /* Generic.Subheading */
+.highlight .kc { color: #0000ff } /* Keyword.Constant */
+.highlight .kd { color: #0000ff } /* Keyword.Declaration */
+.highlight .kn { color: #0000ff } /* Keyword.Namespace */
+.highlight .kp { color: #0000ff } /* Keyword.Pseudo */
+.highlight .kr { color: #0000ff } /* Keyword.Reserved */
+.highlight .kt { color: #2b91af } /* Keyword.Type */
+.highlight .s { color: #a31515 } /* Literal.String */
+.highlight .nc { color: #2b91af } /* Name.Class */
+.highlight .ow { color: #0000ff } /* Operator.Word */
+.highlight .sb { color: #a31515 } /* Literal.String.Backtick */
+.highlight .sc { color: #a31515 } /* Literal.String.Char */
+.highlight .sd { color: #a31515 } /* Literal.String.Doc */
+.highlight .s2 { color: #a31515 } /* Literal.String.Double */
+.highlight .se { color: #a31515 } /* Literal.String.Escape */
+.highlight .sh { color: #a31515 } /* Literal.String.Heredoc */
+.highlight .si { color: #a31515 } /* Literal.String.Interpol */
+.highlight .sx { color: #a31515 } /* Literal.String.Other */
+.highlight .sr { color: #a31515 } /* Literal.String.Regex */
+.highlight .s1 { color: #a31515 } /* Literal.String.Single */
+.highlight .ss { color: #a31515 } /* Literal.String.Symbol */
+</style>
+    
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://stephencleary.com/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://stephencleary.com/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://stephencleary.com/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://stephencleary.com/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://stephencleary.com/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://stephencleary.com/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://stephencleary.com/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://stephencleary.com/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://stephencleary.com/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://stephencleary.com/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-32x32.png" sizes="32x32">
+    
+</head>
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <div class="navbar-brand-container"><a class="navbar-brand" href="http://stephencleary.com">Stephen Cleary</a></div>
+    </div>
+
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+        <ul class="nav navbar-nav">
+            <li  class="active"  ><a href="http://blog.stephencleary.com">Blog</a></li>
+            <li  ><a href="http://stephencleary.com/projects/">Projects</a></li>
+            <li  ><a href="http://stephencleary.com/publications/">Publications</a></li>
+            <li  ><a href="http://stephencleary.com/book/">Book</a></li>
+            <li  ><a href="http://stephencleary.com/contact/">Contact</a></li>
+            <li><a href="http://feeds.feedburner.com/NitoPrograms"><i class="fa fa-rss-square fa-lg"></i></a></li>
+            <li  ><a href="http://stephencleary.com/search/"><i class="fa fa-search"></i></a></li>
+        </ul>
+    </div>
+</nav>
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Async Console Apps on .NET CoreCLR</h1>
+          <small><time datetime="2015-03-05">Mar 5, 2015</time> &bull; <a data-disqus-identifier="/2015/03/async-console-apps-on-net-coreclr" href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>I finally had a chance this week to play around a bit with <a href="https://www.visualstudio.com/en-us/downloads/visual-studio-2015-ctp-vs">Visual Studio 2015 CTP 6</a>. I hardly ever have the time to use CTP bits, but with <a href="http://blogs.msdn.com/b/dotnet/archive/2014/12/04/introducing-net-core.aspx">all the talk about CoreCLR</a> I just <em>had</em> to try it out. :)</p>
+
+<div class="alert alert-danger">
+  <p><i class="fa fa-exclamation-triangle fa-2x pull-left"></i></p>
+
+  <p>This entire post is about prerelease technologies. Everything is subject to change.</p>
+</div>
+
+<p>In <a href="https://msdn.microsoft.com/en-us/magazine/dn913182.aspx">one of the recent articles about CoreCLR</a>, Daniel Roth mentions in passing “You can even make the main entry point asynchronous and return a Task.”</p>
+
+<p>Wait, what?</p>
+
+<p>Yup, that’s right! Asynchronous <code>Main</code> methods for Console applications! Let’s see how this works…</p>
+
+<h2 id="getting-started-with-the-coreclr-ctp">Getting Started with the CoreCLR CTP</h2>
+
+<p>If you want to follow along at home, first <a href="https://www.visualstudio.com/en-us/downloads/visual-studio-2015-ctp-vs">install the VS2015 CTP</a>.</p>
+
+<p>Next, you’ll need to install some K runtime stuff. The best instructions I’ve found for this are on the <a href="https://github.com/aspnet/home">home page of the ASP.NET 5 GitHub repo</a>. If you just want to get started quickly, open up PowerShell and execute the following commands:</p>
+
+<div class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span class="nv">@powershell</span> <span class="n">-NoProfile</span> <span class="n">-ExecutionPolicy</span> <span class="n">unrestricted</span> <span class="n">-Command</span> <span class="s2">&quot;iex ((new-object net.webclient).DownloadString(&#39;https://raw.githubusercontent.com/aspnet/Home/master/kvminstall.ps1&#39;))&quot;</span>
+<span class="n">kvm</span> <span class="n">upgrade</span></code></pre></div>
+
+<h2 id="aside-how-many-runtimes">Aside: How Many Runtimes?</h2>
+
+<p>It’s important to note that there are <em>two</em> K runtimes installed (well, four, if you count 32/64-bit variants). There’s the “ordinary” desktop CLR and the new CoreCLR. You can type <code>kvm list</code> to show the installed runtimes and switch between them with <code>kvm upgrade -r coreclr</code> and <code>kvm upgrade -r clr</code>:</p>
+
+<pre><code>PS&gt; kvm list
+
+Active Version     Runtime Architecture Location                     Alias
+------ -------     ------- ------------ --------                     -----
+       1.0.0-beta3 clr     x64          C:\Users\stephen\.k\runtimes
+  *    1.0.0-beta3 clr     x86          C:\Users\stephen\.k\runtimes default
+       1.0.0-beta3 coreclr x64          C:\Users\stephen\.k\runtimes
+       1.0.0-beta3 coreclr x86          C:\Users\stephen\.k\runtimes
+
+
+PS&gt; kvm upgrade -r coreclr
+Determining latest version
+kre-coreclr-win-x86.1.0.0-beta3 already installed.
+Adding C:\Users\stephen\.k\runtimes\kre-coreclr-win-x86.1.0.0-beta3\bin to process PATH
+Adding C:\Users\stephen\.k\runtimes\kre-coreclr-win-x86.1.0.0-beta3\bin to user PATH
+Updating alias 'default' to 'kre-coreclr-win-x86.1.0.0-beta3'
+
+
+PS&gt; kvm list
+
+Active Version     Runtime Architecture Location                     Alias
+------ -------     ------- ------------ --------                     -----
+       1.0.0-beta3 clr     x64          C:\Users\stephen\.k\runtimes
+       1.0.0-beta3 clr     x86          C:\Users\stephen\.k\runtimes
+       1.0.0-beta3 coreclr x64          C:\Users\stephen\.k\runtimes
+  *    1.0.0-beta3 coreclr x86          C:\Users\stephen\.k\runtimes default
+
+
+PS&gt; kvm upgrade -r clr
+Determining latest version
+kre-clr-win-x86.1.0.0-beta3 already installed.
+Adding C:\Users\stephen\.k\runtimes\kre-clr-win-x86.1.0.0-beta3\bin to process PATH
+Adding C:\Users\stephen\.k\runtimes\kre-clr-win-x86.1.0.0-beta3\bin to user PATH
+Updating alias 'default' to 'kre-clr-win-x86.1.0.0-beta3'
+
+
+PS&gt; kvm list
+
+Active Version     Runtime Architecture Location                     Alias
+------ -------     ------- ------------ --------                     -----
+       1.0.0-beta3 clr     x64          C:\Users\stephen\.k\runtimes
+  *    1.0.0-beta3 clr     x86          C:\Users\stephen\.k\runtimes default
+       1.0.0-beta3 coreclr x64          C:\Users\stephen\.k\runtimes
+       1.0.0-beta3 coreclr x86          C:\Users\stephen\.k\runtimes
+</code></pre>
+
+<p>The regular desktop CLR is sitting on top of the full .NET framework. The CoreCLR is a new runtime. This is the one that a lot of people refer to as “cloud optimized” - though in reality, it’s just more of a microkernel-based framework as opposed to the traditional monolithic one. I expect we’ll see some great things from CoreCLR other than just running ASP.NET apps in the cloud (though it will of course be good for that too!) - the microkernel “only pay for what you use” architecture is perfectly suited for mobile platforms - and even smaller-than-mobile platforms!</p>
+
+<h2 id="creating-a-coreclr-console-application">Creating a CoreCLR Console Application</h2>
+
+<p>Let’s get started! In the CTP6, to create a CoreCLR console app, you choose New Project, and then…</p>
+
+<p>Select “Web” on the left-hand side, and then “ASP.NET 5 Console Application”.</p>
+
+<p class="center"><a href="/assets/AspNetConsoleApplication.png"><img src="/assets/AspNetConsoleApplication.png" alt="" /></a></p>
+
+<p>Wait, what?</p>
+
+<p>Yeah, “ASP.NET Console Application” is a ridiculous juxtaposition… This will probably be renamed completely as the tooling continues to develop. For now, though, the CoreCLR has strong roots in the ASP.NET world, so we create a CoreCLR Console application as an “ASP.NET Console” application.</p>
+
+<h2 id="making-it-asynchronous">Making It Asynchronous!</h2>
+
+<p>The default code the template gives you is pretty straightforward:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">Program</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Hello World&quot;</span><span class="p">);</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">ReadLine</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>So let’s just rewrite it to be asynchronous:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">Program</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Hello World&quot;</span><span class="p">);</span>
+        <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">FromSeconds</span><span class="p">(</span><span class="m">1</span><span class="p">));</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Still here!&quot;</span><span class="p">);</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">ReadLine</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>Compile and run it, and you’ll see the Console application sticking around after the <code>await</code>!</p>
+
+<p class="center"><a href="/assets/AsyncConsoleFullClr.png"><img src="/assets/AsyncConsoleFullClr.png" alt="" /></a></p>
+
+<p>Note the title bar. This console application is actually just a dll, which is hosted in the K runtime for the full desktop CLR. So this is actually running on whatever .NET desktop framework you have installed.</p>
+
+<h2 id="running-on-the-coreclr">Running on the CoreCLR</h2>
+
+<p>To run on the actual CoreCLR, select the dropdown arrow of the Start button and choose the .NET Core as your CLR:</p>
+
+<p class="center"><a href="/assets/SwitchToNetCore.png"><img src="/assets/SwitchToNetCore.png" alt="" /></a></p>
+
+<p>Then when you run it, you’ll be running on the CoreCLR (again, note the title bar):</p>
+
+<p class="center"><a href="/assets/AsyncConsoleCoreClr.png"><img src="/assets/AsyncConsoleCoreClr.png" alt="" /></a></p>
+
+<h2 id="compiling-for-multiple-frameworks">Compiling for Multiple Frameworks</h2>
+
+<p>It’s important to peek under the covers a bit. Pop open your <code>project.json</code>. See the <code>frameworks</code> section?</p>
+
+<div class="highlight"><pre><code class="language-json" data-lang="json"><span class="s2">&quot;frameworks&quot;</span> <span class="err">:</span> <span class="p">{</span>
+    <span class="nt">&quot;aspnet50&quot;</span> <span class="p">:</span> <span class="p">{</span> <span class="p">},</span>
+    <span class="nt">&quot;aspnetcore50&quot;</span> <span class="p">:</span> <span class="p">{</span> 
+        <span class="nt">&quot;dependencies&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;System.Console&quot;</span><span class="p">:</span> <span class="s2">&quot;4.0.0-beta-22523&quot;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>There are two frameworks for this project: <code>aspnet50</code> is the regular desktop CLR-based framework - it’s the one that runs on the full .NET desktop framework. The <code>aspnetcore50</code> is the CoreCLR framework - it’s the new microkernel one. Since CoreCLR is a microkernel architecture, you need to explicitly bring in nearly everything you intend to use - in this case, the VS template automatically added a dependency on <code>System.Console</code> for you. (You can add more dependencies by installing NuGet packages; <code>System.Console</code> is in fact just a NuGet package that is already installed into this project).</p>
+
+<p>The important takeaway here is that this project is compiled <em>twice</em>, once for each framework. And there are APIs in each framework that the other doesn’t have. For example, I have a weird quirk where I strongly prefer using <code>ReadKey</code> instead of <code>ReadLine</code> in my throwaway Console applications. But CoreCLR’s <code>System.Console</code> package doesn’t support <code>ReadKey</code>!</p>
+
+<p>So, what happens if I change <code>ReadLine</code> to <code>ReadKey</code>? At first, it looks OK, but it will no longer build.</p>
+
+<p class="center"><a href="/assets/ConsoleReadKeyError.png"><img src="/assets/ConsoleReadKeyError.png" alt="" /></a></p>
+
+<p>The confusing part here is that there’s no “red squigglies” or anything indicating that <code>Console</code> doesn’t have a <code>ReadKey</code> method. Just an error that seems to come out of nowhere.</p>
+
+<p>The key is to <em>use the navigation bar</em> - VS is aware that this file is compiled two different ways because our project is supporting two frameworks. By switching the <em>view</em> of the file to the CoreCLR, I can now see the error:</p>
+
+<p class="center"><a href="/assets/ConsoleReadKeyErrorVisible.png"><img src="/assets/ConsoleReadKeyErrorVisible.png" alt="" /></a></p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>Note that the “Project” column of the Error List window specifies the <em>framework</em> as well as the project. This should be the first thing to check if you’re seeing “impossible” or mysterious errors like this.</p>
+</div>
+
+<h2 id="conditional-compilation">Conditional Compilation</h2>
+
+<p>Well, let’s say I really <em>want</em> to use <code>ReadKey</code>?</p>
+
+<p>One solution is to make use of conditional compilation. Remember, this project is being compiled separately for each platform. As <a href="http://weblog.west-wind.com/posts/2014/Dec/02/Creating-multitarget-NuGet-Packages-with-vNext">Rick Strahl pointed out</a>, each platform defines a compiler directive that is just the platform name in all uppercase:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">Program</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Hello World&quot;</span><span class="p">);</span>
+        <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">FromSeconds</span><span class="p">(</span><span class="m">1</span><span class="p">));</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Still here!&quot;</span><span class="p">);</span>
+<span class="cp">#if ASPNET50</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">ReadKey</span><span class="p">();</span>
+<span class="cp">#else</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">ReadLine</span><span class="p">();</span>
+<span class="cp">#endif</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>That works! So, you can use conditional compilation to take advantage of different APIs for different frameworks.</p>
+
+<h2 id="limiting-frameworks">Limiting Frameworks</h2>
+
+<p>The conditional compilation does work, but it also causes a change in behavior between the frameworks. This is not ideal.</p>
+
+<p>Instead, I’m going to decide that <code>ReadKey</code> is just plain critical for my demos, and so CoreCLR is out. Thanks for playing.</p>
+
+<p>To limit the frameworks for my project, I just have to edit the <code>project.json</code> file and remove the CoreCLR:</p>
+
+<div class="highlight"><pre><code class="language-json" data-lang="json"><span class="s2">&quot;frameworks&quot;</span> <span class="err">:</span> <span class="p">{</span>
+    <span class="nt">&quot;aspnet50&quot;</span> <span class="p">:</span> <span class="p">{</span> <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>Save the file, and now my project only targets the full desktop CLR.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>Removing the <code>aspnetcore50</code> framework will probably have to be done a <em>lot</em> over the next few months. There are a lot of third-party libraries that do not support the CoreCLR (yet).</p>
+</div>
+
+<p>Incidentally, I provided this technique as a <a href="http://stackoverflow.com/a/28887513/263693">Stack Overflow answer</a> earlier today.</p>
+
+<h2 id="future-speculations">Future Speculations</h2>
+
+<p>Currently, the “console application” we’re building is actually just a dll that’s hosted by a K runtime. I <em>expect</em> that when VS2015 gets to RTM, they’ll have a real executable popping out of the build. They have <a href="http://blogs.msdn.com/b/dotnet/archive/2015/02/03/coreclr-is-now-open-source.aspx">already started on something like that</a>.</p>
+
+<p>The old Console application type will undoubtedly stick around, for backwards compatibility at least. So, I’d expect VS2015 will have two Console application types: a legacy one that runs directly on the .NET Desktop Framework, and a new one that run on the K runtime (which in turn can run on either .NET Core CLR or .NET Desktop CLR). It’s the K runtime that gives us the power of an asynchronous entry point, so I’d expect only the new console application type would be able to have an <code>async Main</code>.</p>
+
+<p>I just have to say that it’s <strong>so cool</strong> to get <code>async Main</code> support! :)</p>
+
+  </article>
+    
+    <footer>
+        
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2015/03/a-tour-of-task-part-9-delegate-tasks.html" title="A Tour of Task, Part 9: Delegate Tasks">&larr; Previous Post</a></li>
+            
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+            
+        </div>
+        <div class="col-sm-2 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://stephencleary.com/www.assets/Me-large.jpg"/></div>
+                    <div class="center vertical-margins">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://stephencleary.com/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://stephencleary.com/book/"><img src="http://stephencleary.com/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+    (function($) {
+        $(function() {
+            if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+                $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+            }
+        });
+    })(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+    (function($) {
+        $(function() {
+            if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+                $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+            }
+        });
+    })(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-8910661-5', 'stephencleary.com');
+    ga('send', 'pageview');
+</script>
+
+
+
+
+
+
+
+<!-- Disqus variables -->
+<script type="text/javascript">
+    var disqus_shortname = 'stephencleary';
+    var disqus_identifier = "/2015/03/async-console-apps-on-net-coreclr";
+    var disqus_title = "Async Console Apps on .NET CoreCLR";
+    var disqus_url = "http://blog.stephencleary.com/2015/03/async-console-apps-on-net-coreclr.html";
+</script>
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(s);
+    }());
+</script>
+
+<!-- Disqus comment section -->
+<script type="text/javascript">
+    (function() {
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<!-- Moment -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.6.0/moment.min.js"></script>
+<script type="text/javascript">window.moment || document.write('<script src="/lib/moment.min.js"><\/script>')</script>
+<script type="text/javascript">
+    (function($) {
+        $(function() {
+            $('time').each(function (_, e) {
+                var text = moment($(e).attr('datetime'), 'YYYY-MM-DD').fromNow();
+                $(e).text(function(_, oldText) { return text + ' (' + oldText + ')'; });
+            });
+        });
+    })(window.jQuery);
+</script>
+
+
+
+
+</body>
+</html>
