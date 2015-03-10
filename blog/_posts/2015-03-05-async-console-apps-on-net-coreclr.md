@@ -44,6 +44,7 @@ It's important to note that there are *two* K runtimes installed (well, four, if
 
 
     PS> kvm upgrade -r coreclr
+
     Determining latest version
     kre-coreclr-win-x86.1.0.0-beta3 already installed.
     Adding C:\Users\stephen\.k\runtimes\kre-coreclr-win-x86.1.0.0-beta3\bin to process PATH
@@ -62,6 +63,7 @@ It's important to note that there are *two* K runtimes installed (well, four, if
 
 
     PS> kvm upgrade -r clr
+
     Determining latest version
     kre-clr-win-x86.1.0.0-beta3 already installed.
     Adding C:\Users\stephen\.k\runtimes\kre-clr-win-x86.1.0.0-beta3\bin to process PATH
