@@ -6,7 +6,7 @@ seriesTitle: "Delegate Tasks"
 description: "An analysis of TaskFactory.StartNew and Task.Run; and discussion of whether they should be used for asynchronous and/or parallel code."
 ---
 
-Last time, we looked at [some archaic ways to start Delegate Tasks]({% post_url 2015-02-05-a-tour-of-task-part-8-starting %}). Today we'll look at a few members for creating Delegate Tasks in more modern code. Unline the task constructor, these methods return a Delegate Task that is *already running* (or at least *already scheduled to run*).
+Last time, we looked at [some archaic ways to start Delegate Tasks]({% post_url 2015-02-05-a-tour-of-task-part-8-starting %}). Today we'll look at a few members for creating Delegate Tasks in more modern code. Unlike the task constructor, these methods return a Delegate Task that is *already running* (or at least *already scheduled to run*).
 
 ## TaskFactory.StartNew
 
