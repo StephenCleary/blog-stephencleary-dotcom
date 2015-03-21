@@ -7,6 +7,21 @@
     <atom:link href="http://blog.stephencleary.com/feed.xml" rel="self" type="application/rss+xml" />
     
       <item>
+        <title>GRDevDay 2015</title>
+        <description>&lt;p&gt;Once again I had the privilege of speaking at &lt;a href=&quot;http://grdevday.org/&quot;&gt;Grand Rapids DevDay 2015&lt;/a&gt;, my “most local” conference. Someday I’ll write up a bit more about GRDevDay, but for now I’ll just say it’s a conference I always enjoy. :)&lt;/p&gt;
+
+&lt;p&gt;My morning talk was &lt;strong&gt;Introduction to Async and Await&lt;/strong&gt;. Believe it or not, this was my first time presenting just an async intro talk at a conference. It went pretty well once I got the projector working. :)&lt;/p&gt;
+
+&lt;p&gt;Slides and demo code are &lt;a href=&quot;https://github.com/StephenCleary/Presentations/tree/57ff9987955ae098ddfd4b4c46201e0eeeeae49f/Intro%20to%20Async&quot;&gt;available on GitHub&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;My afternoon talk is on &lt;strong&gt;Async Unit Testing&lt;/strong&gt;. Full slides and demo are also &lt;a href=&quot;https://github.com/StephenCleary/Presentations/tree/9173ae58793ae0dd10ab0af0840656121e0cb8b9/Async%20Unit%20Testing&quot;&gt;available on GitHub&lt;/a&gt;.&lt;/p&gt;
+</description>
+        <pubDate>Sat, 21 Mar 2015 00:00:00 -0400</pubDate>
+        <link>http://blog.stephencleary.com/2015/03/grdevday-2015.html</link>
+        <guid isPermaLink="true">http://blog.stephencleary.com/2015/03/grdevday-2015.html</guid>
+      </item>
+    
+      <item>
         <title>Async Console Apps on .NET CoreCLR</title>
         <description>&lt;p&gt;I finally had a chance this week to play around a bit with &lt;a href=&quot;https://www.visualstudio.com/en-us/downloads/visual-studio-2015-ctp-vs&quot;&gt;Visual Studio 2015 CTP 6&lt;/a&gt;. I hardly ever have the time to use CTP bits, but with &lt;a href=&quot;http://blogs.msdn.com/b/dotnet/archive/2014/12/04/introducing-net-core.aspx&quot;&gt;all the talk about CoreCLR&lt;/a&gt; I just &lt;em&gt;had&lt;/em&gt; to try it out. :)&lt;/p&gt;
 
@@ -46,6 +61,7 @@ Active Version     Runtime Architecture Location                     Alias
 
 
 PS&amp;gt; kvm upgrade -r coreclr
+
 Determining latest version
 kre-coreclr-win-x86.1.0.0-beta3 already installed.
 Adding C:\Users\stephen\.k\runtimes\kre-coreclr-win-x86.1.0.0-beta3\bin to process PATH
@@ -64,6 +80,7 @@ Active Version     Runtime Architecture Location                     Alias
 
 
 PS&amp;gt; kvm upgrade -r clr
+
 Determining latest version
 kre-clr-win-x86.1.0.0-beta3 already installed.
 Adding C:\Users\stephen\.k\runtimes\kre-clr-win-x86.1.0.0-beta3\bin to process PATH
@@ -230,7 +247,7 @@ Active Version     Runtime Architecture Location                     Alias
     
       <item>
         <title>A Tour of Task, Part 9: Delegate Tasks</title>
-        <description>&lt;p&gt;Last time, we looked at &lt;a href=&quot;/2015/02/a-tour-of-task-part-8-starting.html&quot;&gt;some archaic ways to start Delegate Tasks&lt;/a&gt;. Today we’ll look at a few members for creating Delegate Tasks in more modern code. Unline the task constructor, these methods return a Delegate Task that is &lt;em&gt;already running&lt;/em&gt; (or at least &lt;em&gt;already scheduled to run&lt;/em&gt;).&lt;/p&gt;
+        <description>&lt;p&gt;Last time, we looked at &lt;a href=&quot;/2015/02/a-tour-of-task-part-8-starting.html&quot;&gt;some archaic ways to start Delegate Tasks&lt;/a&gt;. Today we’ll look at a few members for creating Delegate Tasks in more modern code. Unlike the task constructor, these methods return a Delegate Task that is &lt;em&gt;already running&lt;/em&gt; (or at least &lt;em&gt;already scheduled to run&lt;/em&gt;).&lt;/p&gt;
 
 &lt;h2 id=&quot;taskfactorystartnew&quot;&gt;TaskFactory.StartNew&lt;/h2&gt;
 
@@ -945,80 +962,6 @@ Background work on thread 9
         <pubDate>Thu, 12 Jun 2014 00:00:00 -0400</pubDate>
         <link>http://blog.stephencleary.com/2014/06/a-tour-of-task-part-4-id.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2014/06/a-tour-of-task-part-4-id.html</guid>
-      </item>
-    
-      <item>
-        <title>Fire and Forget on ASP.NET</title>
-        <description>&lt;p&gt;.NET 4.5.2 added a built-in way to queue background (a.k.a. “fire and forget”) work in ASP.NET. This post is a summary of the different techniques available today.&lt;/p&gt;
-
-&lt;h2 id=&quot;threadpool&quot;&gt;ThreadPool&lt;/h2&gt;
-
-&lt;p&gt;The easiest method is to just throw work onto a background thread, e.g., &lt;code&gt;Task.Run&lt;/code&gt;, &lt;code&gt;Task.Factory.StartNew&lt;/code&gt;, &lt;code&gt;Delegate.BeginInvoke&lt;/code&gt;, &lt;code&gt;ThreadPool.QueueUserWorkItem&lt;/code&gt;, etc. However, this is a &lt;strong&gt;really bad idea&lt;/strong&gt;!&lt;/p&gt;
-
-&lt;p&gt;The reason is that the ASP.NET runtime has no idea that you’ve queued this work, so it’s not aware that the background work even &lt;em&gt;exists&lt;/em&gt;. For a variety of reasons, IIS/ASP.NET has to occasionally recycle your application. If you have background work running when this recycling takes place, that work will mysteriously disappear.&lt;/p&gt;
-
-&lt;h2 id=&quot;hostingenvironmentqueuebackgroundworkitem&quot;&gt;HostingEnvironment.QueueBackgroundWorkItem&lt;/h2&gt;
-
-&lt;p&gt;&lt;code&gt;QueueBackgroundWorkItem&lt;/code&gt; (QBWI) was added in .NET 4.5.2 to help mitigate loss of background work. &lt;a href=&quot;http://blogs.msdn.com/b/webdev/archive/2014/06/04/queuebackgroundworkitem-to-reliably-schedule-and-run-long-background-process-in-asp-net.aspx&quot;&gt;QBWI will register its background work with the ASP.NET runtime&lt;/a&gt;. &lt;/p&gt;
-
-&lt;p&gt;Since the ASP.NET runtime is aware of the background work, it will not immediately yank your AppDomain when it’s time to recycle. However, this does not mean that the background work can just do whatever it wants!&lt;/p&gt;
-
-&lt;p&gt;QBWI will register the work with ASP.NET. When ASP.NET has to recycle, it will notify the background work (by setting a &lt;code&gt;CancellationToken&lt;/code&gt;) and will then wait up to 30 seconds for the work to complete. If the background work doesn’t complete in that time frame, the work will mysteriously disappear.&lt;/p&gt;
-
-&lt;p&gt;So, QBWI is a step in the right direction. I would say it’s the “minimum viable” alternative.&lt;/p&gt;
-
-&lt;h2 id=&quot;iregisteredobject&quot;&gt;IRegisteredObject&lt;/h2&gt;
-
-&lt;p&gt;The standard way to register with ASP.NET is via &lt;code&gt;IRegisteredObject&lt;/code&gt;. The semantics aren’t officially documented, but they’re described in &lt;a href=&quot;http://blogs.msdn.com/b/tmarq/archive/2010/04/14/performing-asynchronous-work-or-tasks-in-asp-net-applications.aspx&quot;&gt;this blog post under the third answer of question 5&lt;/a&gt;:&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;You can create an object that implements the &lt;code&gt;IRegisteredObject&lt;/code&gt; interface and call &lt;code&gt;HostingEnvironment.RegisterObject&lt;/code&gt; to “register” it with ASP.NET.  When the AppDomain is about to be unloaded, we will call your implementation of &lt;code&gt;IRegisteredObject.Stop(bool immediate)&lt;/code&gt;.  The &lt;code&gt;Stop&lt;/code&gt; method is called twice by ASP.NET, once with the &lt;code&gt;immediate&lt;/code&gt; parameter set to &lt;code&gt;false&lt;/code&gt; and once again with that argument set to &lt;code&gt;true&lt;/code&gt;.  You are supposed to call &lt;code&gt;HostingEnvironment.UnregisterObject&lt;/code&gt; as soon as your registered object has stopped, so ASP.NET knows it doesn’t need to call your &lt;code&gt;Stop&lt;/code&gt; method.  You can call it at anytime, but you definitely should call it before returning from &lt;code&gt;Stop&lt;/code&gt; when it is called with &lt;code&gt;immediate&lt;/code&gt; set to &lt;code&gt;true&lt;/code&gt;, because that’s your final chance and if you’re still running after that you will be rudely aborted…  If you need to, you can hold up the unload as long as you like, because we won’t unload until your &lt;code&gt;Stop&lt;/code&gt; method returns the second time.&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;This blog post clarifies the semantics. Essentially, they boil down to this:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;When ASP.NET wants to unload your application, it will call &lt;code&gt;IRegisteredObject.Stop(false)&lt;/code&gt; on all objects registered with the ASP.NET runtime.&lt;/li&gt;
-  &lt;li&gt;This is a friendly notification that the AppDomain is going away. Registered objects should start cleaning up and call &lt;code&gt;UnregisterObject&lt;/code&gt; when their cleanup is complete.&lt;/li&gt;
-  &lt;li&gt;If there are still registered objects running after 30 seconds, ASP.NET will call &lt;code&gt;IRegisteredObject.Stop(true)&lt;/code&gt; on them.&lt;/li&gt;
-  &lt;li&gt;ASP.NET will unload the AppDomain after all those second notifications have returned.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;I use &lt;code&gt;IRegisteredObject&lt;/code&gt; in my &lt;a href=&quot;https://github.com/StephenCleary/AspNetBackgroundTasks&quot;&gt;ASP.NET Background Tasks library&lt;/a&gt;, and (as of this writing) the built-in &lt;code&gt;QueueBackgroundWorkItem&lt;/code&gt; &lt;em&gt;also&lt;/em&gt; uses &lt;code&gt;IRegisteredObject&lt;/code&gt;. These approaches are slightly different, though. &lt;code&gt;QueueBackgroundWorkItem&lt;/code&gt; ignores the second call to &lt;code&gt;Stop&lt;/code&gt; and returns immediately, so any background work that takes longer than 30 seconds will be terminated. My AspNetBackgroundTasks library will wait for the background work to complete, and will delay the AppDomain shutdown indefinitely.&lt;/p&gt;
-
-&lt;p&gt;Also, QBWI will log any exceptions from the background work, while AspNetBackgroundTasks will not.&lt;/p&gt;
-
-&lt;p&gt;Neither one of those choices is better; they’re just different. &lt;code&gt;QueueBackgroundWorkItem&lt;/code&gt; chose to keep the system as a whole more reliable by sacrificing long-running background work items. AspNetBackgroundTasks chose not to terminate background tasks, which could impact the regular application recycling if one of those tasks is misbehaved.&lt;/p&gt;
-
-&lt;p&gt;Neither of these solutions is ideal. They have to make tradeoffs, and of course neither of them can recover from situations like power losses and server failures. So, I characterize these registration-based solutions as “more reliable” than just queueing work to the thread pool (which is totally unreliable), but even registering with ASP.NET is not totally reliable.&lt;/p&gt;
-
-&lt;h2 id=&quot;hangfire&quot;&gt;HangFire&lt;/h2&gt;
-
-&lt;p&gt;One interesting low-entry reliable solution is &lt;a href=&quot;http://hangfire.io/&quot;&gt;HangFire&lt;/a&gt;. This library is pretty easy to use but does make some assumptions.&lt;/p&gt;
-
-&lt;p&gt;The first and most obvious assumption is that it relies on some kind of reliable storage already in your architecture: specifically, SQL Server, Redis, or Microsoft Message Queues (MSMQ). This is a good start, but I’d like to see support for Azure tables and queues as well.&lt;/p&gt;
-
-&lt;p&gt;The second assumption is that the code will not significantly change. The way that HangFire serializes the background work makes assumptions around the delegates that are queued. If the code changes significantly and ASP.NET restarts with the new code, I’m not sure how the system will respond when it attempts to run the old background work.&lt;/p&gt;
-
-&lt;p&gt;So, I’d need to research this library more to feel comfortable using it (and extend it to support Azure queues), but it does look like a very interesting library with a low bar to entry.&lt;/p&gt;
-
-&lt;h2 id=&quot;distributed-architecture&quot;&gt;Distributed Architecture&lt;/h2&gt;
-
-&lt;p&gt;The proper solution is to use a basic distributed architecture.&lt;/p&gt;
-
-&lt;p&gt;The first thing you need is a reliable storage medium. I prefer queues (e.g., Azure queues, WebSphere message queues, Microsoft message queueing, etc), but any kind of reliable storage would work (as previously mentioned, HangFire prefers databases).&lt;/p&gt;
-
-&lt;p&gt;Then you’ll need a way to store the background work in that storage. HangFire uses an interesting method of serializing the delegate, which I am a little leery of. I’d prefer a solution that stored the background work &lt;em&gt;semantically&lt;/em&gt;. This also means that the schema for the background work should be versioned.&lt;/p&gt;
-
-&lt;p&gt;The next thing is a host to perform the background work. These days I’d prefer an Azure WebJob, but you could also use a separate thread in an ASP.NET app. The host must be reliable in the sense that it should either complete the work or leave the work in storage to try again, but not both. Usually, the easiest way to satisfy this is to make all the work items idempoent and use a “lease” when reading from storage. Most reliable queues have built-in support for leases, but it’s up to you to make the background work idempotent.&lt;/p&gt;
-
-&lt;p&gt;The last thing in this kind of architecture is some kind of “poison message” recovery. That is, if there is some background work that gets into the system, and that work cannot complete successfully for whatever reason, there has to be some procedure for removing that piece of background work and setting it aside so that the system as a whole can continue processing.&lt;/p&gt;
-
-&lt;p&gt;Distributed architecture is complex, but it’s The Right Way™. It is the most reliable and resilient option available.&lt;/p&gt;
-</description>
-        <pubDate>Sat, 07 Jun 2014 00:00:00 -0400</pubDate>
-        <link>http://blog.stephencleary.com/2014/06/fire-and-forget-on-asp-net.html</link>
-        <guid isPermaLink="true">http://blog.stephencleary.com/2014/06/fire-and-forget-on-asp-net.html</guid>
       </item>
     
   </channel>
