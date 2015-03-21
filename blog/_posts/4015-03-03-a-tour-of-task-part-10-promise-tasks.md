@@ -3,175 +3,199 @@ layout: post
 title: "A Tour of Task, Part 10: Promise Tasks"
 series: "A Tour of Task"
 seriesTitle: "Promise Tasks"
-description: "An analysis of Task.Delay, Task.Yield, Task.FromResult, Task.Factory.FromAsync, and TaskCompletionSource; and discussion of whether they should be used for asynchronous and/or parallel code."
+description: "An analysis of Task.Delay, Task.Yield, Task.FromResult, Task.Factory.FromAsync, TaskCompletionSource, and TaskExtensions.Unwrap; and discussion of whether they should be used for asynchronous and/or parallel code."
 ---
 
-Last time, we looked at [ways to start Delegate Tasks]({% post_url 2015-03-03-a-tour-of-task-part-9-delegate-tasks %}). Today we'll look at the most common ways to create Promise Tasks.
+Last time, we looked at [ways to start Delegate Tasks]({% post_url 2015-03-03-a-tour-of-task-part-9-delegate-tasks %}). Today we'll look at the most common ways to create Promise Tasks. As a reminder, Promise Tasks are tasks that represent a kind of "event" within a system; they don't have any user-defined code to execute.
 
 ## Task.Delay
 
-First up is the oft-overused `TaskFactory.StartNew` method. There are a few overloads available:
+`Task.Delay` is the asynchronous equivalent of `Thread.Sleep`.
 
 {% highlight csharp %}
-Task StartNew(Action);
-Task StartNew(Action, CancellationToken);
-Task StartNew(Action, TaskCreationOptions);
-Task StartNew(Action, CancellationToken, TaskCreationOptions, TaskScheduler);
+Task Delay(int);
+Task Delay(TimeSpan);
 
-Task StartNew(Action<object>, object);
-Task StartNew(Action<object>, object, CancellationToken);
-Task StartNew(Action<object>, object, TaskCreationOptions);
-Task StartNew(Action<object>, object, CancellationToken, TaskCreationOptions, TaskScheduler);
-
-Task<TResult> StartNew<TResult>(Func<TResult>);
-Task<TResult> StartNew<TResult>(Func<TResult>, CancellationToken);
-Task<TResult> StartNew<TResult>(Func<TResult>, TaskCreationOptions);
-Task<TResult> StartNew<TResult>(Func<TResult>, CancellationToken, TaskCreationOptions, TaskScheduler);
-
-Task<TResult> StartNew<TResult>(Func<object, TResult>, object);
-Task<TResult> StartNew<TResult>(Func<object, TResult>, object, CancellationToken);
-Task<TResult> StartNew<TResult>(Func<object, TResult>, object, TaskCreationOptions);
-Task<TResult> StartNew<TResult>(Func<object, TResult>, object, CancellationToken, TaskCreationOptions, TaskScheduler);
+Task Delay(int, CancellationToken);
+Task Delay(TimeSpan, CancellationToken);
 {% endhighlight %}
 
-The overloads containing an `object` parameter simply pass that value through to the continuation delegate; this is just an optimization to avoid an extra allocation in some cases, so we can ignore those overloads for now. That leaves two sets of overloads, which act like default parameters for the two core methods:
+The `int` argument is treated as a number of milliseconds; I usually prefer the `TimeSpan` versions since they are more explicit. Using `int` millisecond values for timeouts is a holdover from an older API design; many Win32-level APIs only take timeout values as integer milliseconds. So, it makes sense to expose an `int` parameter for lower-level waits like `WaitHandle.WaitOne` or even `Task.Wait`. However, `Task.Delay` isn't a thin wrapper over any Win32 API; the `int` parameter in this case is just provided for tradition.
+
+`Delay` may also take a `CancellationToken`, which allows the delay to be cancelled.
+
+Under the hood, `Delay` starts a timer and completes its returned task when that timer fires. Or, if the `CancellationToken` is signaled first, then `Delay` cancels its returned task.
+
+In real-world code, `Delay` is almost never used. Its primary use case is as a retry timeout, i.e., if an asynchronous operation failed, the code will (asynchronously) wait a period of time before trying again. Generally, retry logic is wrapped into a separate library (such as [Transient Fault Handling](https://msdn.microsoft.com/en-us/library/hh675232.aspx) or [Polly](https://github.com/michael-wolfenden/Polly)), and `Delay` is only used internally by those libraries, not directly by application code.
+
+## Task.Yield
+
+`Task.Yield` has several interesting aspects. To begin with, it doesn't actually return a `Task`, so it's not really a Promise Task kind of method:
 
 {% highlight csharp %}
-Task StartNew(Action, CancellationToken, TaskCreationOptions, TaskScheduler);
-Task<TResult> StartNew<TResult>(Func<TResult>, CancellationToken, TaskCreationOptions, TaskScheduler);
+YieldAwaitable Yield();
 {% endhighlight %}
 
-`StartNew` can take a delegate without a return value (`Action`) or with a return value (`Task<TResult>`), and returns an appropriate task type based on whether the delegate returns a value. Note that neither of these delegate types are [`async`-aware delegates]({% post_url 2014-02-20-synchronous-and-asynchronous-delegate %}); this causes complications when developers try to use `StartNew` to start an asynchronous task.
+But it does kind of *act* kind of like a Promise Task. The `YieldAwaitable` type interacts with the `async` compiler transformation to *force* an asynchronous point within a method. By default, if `await` is used on an operation that has already completed, then the execution of the `async` method continues synchronously. `YieldAwaitable` throws a wrench into this by always claiming it is *not* completed, and then scheduling its continuations immediately. This causes `await` to schedule the rest of the `async` method for immediate execution and return.
 
-<div class="alert alert-danger" markdown="1">
-<i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
+I've used `Task.Yield` only occasionally during unit testing, when I needed to ensure that a particular method would in fact work if its asynchronous operation did not complete synchronously. I've found `Yield` most useful when the asynchronous operation in question normally *does* complete synchronously, and I need to force asynchrony to ensure the method behavior is correct.
 
-`TaskFactory.StartNew` doesn't support `async`-aware delegates. `Task.Run` does.
-</div>
-
-The "default values" for the `StartNew` overloads come from their `TaskFactory` instance. The `CancellationToken` parameter defaults to `TaskFactory.CancellationToken`. The `TaskCreationOptions` parameter defaults to `TaskFactory.CreationOptions`. The `TaskScheduler` parameter defaults to `TaskFactory.Scheduler`. Let's consider each of these parameters in turn.
-
-### CancellationToken
-
-First, the `CancellationToken`. This paramter is often misunderstood. I've seen many (smart) developers pass a `CancellationToken` to `StartNew` believing that the token can be used to cancel the delegate at any time during its execution. However, this is not what happens. The `CancellationToken` passed to `StartNew` is only effective *before* the delegate starts executing. In other words, it cancels the *starting* of the delegate, not the delegate itself. Once that delegate starts executing, the `CancellationToken` argument cannot be used to cancel that delegate. The delegate itself must observe the `CancellationToken` (e.g., with `CancellationToken.ThrowIfCancellationRequested`) in order to support cancellation after it starts executing.
-
-{:.center}
-[![]({{ site_url }}/assets/i-do-not-think-it-means.jpg)]({{ site_url }}/assets/i-do-not-think-it-means.jpg)
-
-However, there is a minor difference in behavior if you do also pass a `CancellationToken` to `StartNew`. If the delegate itself observes the `CancellationToken`, then it will raise an `OperationCanceledException`. If the `StartNew` call does not include that `CancellationToken`, then the returned task is faulted with that exception. However, if the delegate raises an `OperationCanceledException` from the same `CancellationToken` passed to `StartNew`, then the returned task is *canceled* instead of faulted, and the `OperationCanceledException` is replaced with a `TaskCanceledException`.
-
-OK, that was a bit much to describe in words. If you want to see the same details expressed in code, see the unit tests in [this gist](https://gist.github.com/StephenCleary/37d95619f7803f444d3d).
-
-However, this difference in behavior does not impact your code as long as you use one of the the common patterns for detecting cancellation. For asynchronous code, you'd `await` the task and catch an `OperationCanceledException` (for more complete examples, see the unit tests in [this gist](https://gist.github.com/StephenCleary/dfd2a8b0a50ea3040695)):
+However, I've never needed `Yield` in production code. There is one use case where developers sometimes (incorrectly) attempt to use `Yield`: to try to "refresh" the UI.
 
 {% highlight csharp %}
-try
+// Bad code, do not use!!
+async Task LongRunningCpuBoundWorkAsync()
 {
-  // "task" was started by StartNew, and either StartNew or
-  // the task delegate observes a cancellation token.
-  await task;
-}
-catch (OperationCanceledException ex)
-{
-  // ex.CancellationToken contains the cancellation token,
-  // if you need it.
-}
-{% endhighlight %}
-
-For synchronous code, you'd call `Wait` (or `Result`) on the task and expect an `AggregateException` whose `InnerException` is an `OperationCanceledException` (for more complete examples, see the unit tests in [this gist](https://gist.github.com/StephenCleary/6674ae30974f478a4b7f)):
-
-{% highlight csharp %}
-try
-{
-  // "task" was started by StartNew, and either StartNew or
-  // the task delegate observes a cancellation token.
-  task.Wait();
-}
-catch (AggregateException exception)
-{
-  var ex = exception.InnerException as OperationCanceledException;
-  if (ex != null)
+  // This method is called directly from the UI, and
+  //  does lots of CPU-bound work.
+  // Since this blocks the UI, this method is given
+  //  an async signature and periodically "yields".
+  for (int i = 0; i != 1000000; ++i)
   {
-    // ex.CancellationToken contains the cancellation token,
-    // if you need it.
+    ... // CPU-bound work.
+    await Task.Yield();
   }
 }
 {% endhighlight %}
 
-In conclusion, the `CancellationToken` parameter of `StarNew` is nearly useless. It introduces some subtle changes in behavior, and is confusing to many developers. I never use it, myself.
+However, this approach will not work. The reason is that UI message loops are *priority* queues, and any scheduled continuations have a much higher priority than "repaint the window". So, the `Yield` schedules the continuation and returns to the message loop, and the message loop immediately executes that continuation without processing any of its `WM_PAINT` messages.
 
-### TaskCreationOptions
-
-There are a couple of "scheduling options" that are just passed to the `TaskScheduler` that schedules the task. `PreferFairness` is a hint asking for FIFO behavior. `LongRunning` is a hint that the task will execute for a long time. As of this writing, the `TaskScheduler.Default` task scheduler will create a separate thread (outside the thread pool) for tasks with the `LongRunning` flag; however, this behavior is not guaranteed. Note that both of these options are just hints; it is entirely appropriate for the `TaskScheduler` to ignore them both.
-
-There are a few more "scheduling options" that are not passed to the `TaskScheduler`. The `HideScheduler` option (introduced in .NET 4.5) will use the given task scheulder to schedule the task, but then will pretend that there is no current task scheduler while the task is executing; this can be used as a workaround for the unexpected default task scheduler (described below). The `RunContinuationsAsynchronously` option (introduced in .NET 4.6) will force any continuations of this task to execute asynchronously.
-
-The "parenting options" control how the task is attached to the currently-executing task. [Attached child tasks](https://msdn.microsoft.com/en-us/library/vstudio/dd997417(v=vs.110).aspx) change the [behavior of their parent task]({% post_url 2014-06-05-a-tour-of-task-part-3-status %}) in ways that are convenient in some [dynamic task parallelism](https://msdn.microsoft.com/en-us/library/ff963551.aspx) scenarios, but are unexpected and awkward anywhere outside that (extremely small) use case. `AttachedToParent` will attach the task as a child task of the currently-executing task. In modern code, you almost never want this option; more importantly, you almost never want *other* code to attach child tasks to your tasks. For this reason, the `DenyChildAttach` option was introduced in .NET 4.5, which prevents any other tasks from using `AttachedToParent` to attach to this task.
-
-<div class="alert alert-danger" markdown="1">
-<i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
-
-`Task.Factory.StartNew` has a non-optimal default option setting of `TaskCreationOptions.None`. `Task.Run` uses the more appropriate default of `TaskCreationOptions.DenyChildAttach`.
-</div>
-
-### TaskScheduler
-
-The `TaskScheduler` is used to schedule the continuation. A `TaskFactory` may define its own `TaskScheduler` which it uses by default. Note that the default `TaskScheduler` of the static `Task.Factory` instance is *not* `TaskScheduler.Default`, but rather `TaskScheduler.Current`. This fact has caused quite a bit of confusion over the years, because the vast majority of the time, developers expect (and desire) `TaskScheduler.Default`. I've [described this problem in detail before]({% post_url 2013-08-29-startnew-is-dangerous %}), but a little review never hurts.
-
-The following code first creates a UI task factory to schedule work to the UI thread. Then, as a part of that work, it starts some work to run in the background.
+Some developers have discovered that using `Task.Delay` instead of `Task.Yield` will allow message processing (messages are processed until the timer fires). However, a far cleaner solution is to do the CPU-bound work on a background thread:
 
 {% highlight csharp %}
-private void Button_Click(object sender, RoutedEventArgs e)
+void LongRunningCpuBoundWork()
 {
-    var ui = new TaskFactory(TaskScheduler.FromCurrentSynchronizationContext());
-    ui.StartNew(() =>
-    {
-        Debug.WriteLine("UI on thread " + Environment.CurrentManagedThreadId);
-        Task.Factory.StartNew(() =>
-        {
-            Debug.WriteLine("Background work on thread " + Environment.CurrentManagedThreadId);
-        });
-    });
+  for (int i = 0; i != 1000000; ++i)
+  {
+    ... // CPU-bound work.
+  }
 }
-{% endhighlight %} 
 
-The output on my system is:
-
-    UI on thread 9
-    Background work on thread 9
-
-The problem is that while the outer `StartNew` is running, `TaskScheduler.Current` is the UI task scheduler. This is picked up as the default value for the `TaskScheduler` parameter by the inner `StartNew`, which causes the background work to be scheduled to the UI thread rather than a thread pool thread. This scenario can be avoided by passing `HideScheduler` to the outer `StartNew` task, or by passing an explicit `TaskScheduler.Default` to the inner `StartNew`.
-
-<div class="alert alert-danger" markdown="1">
-<i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
-
-`Task.Factory.StartNew` has a confusing default scheduler `TaskScheduler.Current`. `Task.Run` always uses the appropriate default of `TaskScheduler.Default`.
-</div>
-
-**In conclusion**, I do not recommend using `Task.Factory.StartNew` at all, unless you are doing [dynamic task parallelism](https://msdn.microsoft.com/en-us/library/ff963551.aspx) (which is extremely rare). In modern code, you should almost always use `Task.Run` instead. If you do have a custom `TaskScheduler` (e.g., one of the schedulers in `ConcurrentExclusiveSchedulerPair`), then it is appropriate to create your own `TaskFactory` instance and use `StartNew` on that; however, `Task.Factory.StartNew` should be avoided.
-
-## Task.Run
-
-`Task.Run` is the modern, preferred method for queueing work to the thread pool. It does not work with custom schedulers, but provides a simpler API than `Task.Factory.StartNew`, and is `async`-aware to boot:
-
-{% highlight csharp %}
-Task Run(Action);
-Task Run(Action, CancellationToken);
-
-Task Run(Func<Task>);
-Task Run(Func<Task>, CancellationToken);
-
-Task<TResult> Run<TResult>(Func<TResult>);
-Task<TResult> Run<TResult>(Func<TResult>, CancellationToken);
-
-Task<TResult> Run<TResult>(Func<Task<TResult>>);
-Task<TResult> Run<TResult>(Func<Task<TResult>>, CancellationToken);
+// Called as:
+await Task.Run(() => LongRunningCpuBoundWork());
 {% endhighlight %}
 
-There are three axis of overloading going on here: whether or not there is a `CancellationToken`, whether the delegate returns a `TResult` value, and whether the delegate is synchronous (`Action`/`Func<TResult>`) or asynchronous (`Func<Task>`/`Func<Task<TResult>>`). Technically, `Task.Run` does not always create a Delegate Task; when it is given an asynchronous delegate, it actually returns a Promise Task. But conceptually, `Task.Run` is specifically for executing delegates on the thread pool, so I'm covering this set of overloads along with `StartNew` (which always does create Delegate Tasks).
+In conclusion, `Task.Yield` is occasionally useful when unit testing, but much less so for production code.
 
-The `CancellationToken` parameter sadly has the same problems described above for `StartNew`. That is, it really only cancels the *scheduling* of the delegate, which happens almost immediately. The presence of the `CancellationToken` argument does change the semantics slightly, similarly to `StartNew`. The full unit tests are [in this gist](https://gist.github.com/StephenCleary/37d95619f7803f444d3d), which has only one result that may be surprising: if an asynchronous delegate explicitly observes a `CancellationToken`, the returned task will be *canceled* instead of *faulted*. Just like `TaskFactory.StartNew`, these minor differences in semantics don't matter if the consuming code uses the standard pattern for detecting cancellation.
+## Task.FromResult
 
-So, I conclude that the `CancellationToken` parameter of `Task.Run` is pretty much useless.
+`Task.FromResult` will create a *completed* task with the specified value:
 
-However, the other overloads are quite useful, and are the best general way to queue work to the thread pool.
+{% highlight csharp %}
+Task<TResult> FromResult<TResult>(TResult);
+{% endhighlight %}
+
+It might seem silly at first to return a completed task, but this is actually useful in several scenarios.
+
+For instance, an interface method may have an asynchronous (task-returning) signature, and if an implementation is synchronous, then it can use `Task.FromResult` to wrap up its (synchronous) result within a task. This is particularly useful when creating asynchronous stubs for unit testing, but is also occasionally useful in production code:
+
+{% highlight csharp %}
+interface IMyInterface
+{
+  // Implementations *might* need to be asynchronous,
+  //  so we define an asynchronous API.
+  Task<int> DoSomethingAsync();
+}
+
+class MyClass : IMyInterface
+{
+  // This particular implementation is not asynchronous.
+  public Task<int> DoSomethingAsync()
+  {
+    int result = 42; // Do synchronous work.
+    return Task.FromResult(result);
+  }
+}
+{% endhighlight %}
+
+Be careful, though, that your synchronous implementation is not *blocking*. Implementing an asynchronous API with a blocking method is surprising behavior.
+
+Another use case of `Task.FromResult` is when doing some form of caching. In this case, you have some data that is synchronously retrieved (from the cache), and need to return it directly. In the case of a cache miss, then a true asynchronous operation is performed:
+
+{% highlight csharp %}
+public Task<string> GetValueAsync(int key)
+{
+  string result;
+  if (cache.TryGetValue(key, out result))
+    return Task.FromResult(result);
+  return DoGetValueAsync(key);
+}
+
+private async Task<string> DoGetValueAsync(int key)
+{
+  string result = await ...;
+  cache.TrySetValue(key, result);
+  return result;
+}
+{% endhighlight %}
+
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Tip: If you can, cache the task objects themselves instead of their resulting values; maintain a cache of *operations* rather than *results*.
+</div>
+
+As of this writing, one final common use of `Task.FromResult` is just as a completed task. For this, the expressions `Task.FromResult(0)` or `Task.FromResult<object>(null)` are commonly used. This use case is similar to the synchronous implementation of an asynchronous API:
+
+{% highlight csharp %}
+interface IPlugin
+{
+  // Permit each plugin to initialize asynchronously.
+  Task InitializeAsync();
+}
+
+class MyPlugin : IPlugin
+{
+  public Task InitializeAsync()
+  {
+    // The async equivalent of a noop.
+    return Task.FromResult<object>(null);
+  }
+}
+{% endhighlight %}
+
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+In the preview builds of .NET 4.6, there is a static `Task.CompletedTask` that should be used instead of `Task.FromResult(0)` or `Task.FromResult<object>(null)`.
+</div>
+
+You might be wondering if there's a way to return already-completed tasks in other states - particularly, canceled or faulted tasks. As of now, you have to write this yourself (see `TaskCompletionSource`, below), but .NET 4.6 will introduce the `Task.FromCanceled` and `Task.FromException` methods to return synchronously canceled or faulted tasks.
+
+## Task.Factory.FromAsync
+
+The `FromAsync` methods are used to create [TAP wrappers for APM APIs](https://msdn.microsoft.com/en-us/library/hh873178%28v=vs.110%29.aspx#ApmToTap). A [TAP API](https://msdn.microsoft.com/en-us/library/hh873175(v=vs.110).aspx) is one that returns a task ready for use with `await`. An [APM API](https://msdn.microsoft.com/en-us/library/ms228963(v=vs.110).aspx) is an older style of asynchronous programming that uses `Begin`/`End` methods pairs and an `IAsyncResult` object that represents the asynchronous operation.
+
+`FromAsync` has two different sets of overloads. The first set is the :
+
+{% highlight csharp %}
+Task FromAsync(Func<AsyncCallback, Object, IAsyncResult>, Action<IAsyncResult>,	object);
+Task FromAsync(Func<AsyncCallback, Object, IAsyncResult>, Action<IAsyncResult>, object, TaskCreationOptions);
+Task<TResult> FromAsync<TResult>(Func<AsyncCallback, Object, IAsyncResult>, Func<IAsyncResult, TResult>, object);
+Task<TResult> FromAsync<TResult>(Func<AsyncCallback, Object, IAsyncResult>, Func<IAsyncResult, TResult>, object, TaskCreationOptions);
+
+Task FromAsync<TArg1>(Func<TArg1, AsyncCallback, Object, IAsyncResult>, Action<IAsyncResult>, TArg1, object);
+Task FromAsync<TArg1>(Func<TArg1, AsyncCallback, Object, IAsyncResult>, Action<IAsyncResult>, TArg1, object, TaskCreationOptions);
+Task<TResult> FromAsync<TArg1, TResult>(Func<TArg1, AsyncCallback, Object, IAsyncResult>, Func<IAsyncResult, TResult>, TArg1, object);
+Task<TResult> FromAsync<TArg1, TResult>(Func<TArg1, AsyncCallback, Object, IAsyncResult>, Func<IAsyncResult, TResult>, TArg1, object, TaskCreationOptions);
+
+Task FromAsync<TArg1, TArg2>(Func<TArg1, TArg2, AsyncCallback, Object, IAsyncResult>, Action<IAsyncResult>, TArg1, TArg2, object);
+Task FromAsync<TArg1, TArg2>(Func<TArg1, TArg2, AsyncCallback, Object, IAsyncResult>, Action<IAsyncResult>, TArg1, TArg2, object, TaskCreationOptions);
+Task<TResult> FromAsync<TArg1, TArg2, TResult>(Func<TArg1, TArg2, AsyncCallback, Object, IAsyncResult>, Func<IAsyncResult, TResult>, TArg1, TArg2, object);
+Task<TResult> FromAsync<TArg1, TArg2, TResult>(Func<TArg1, TArg2, AsyncCallback, Object, IAsyncResult>, Func<IAsyncResult, TResult>, TArg1, TArg2, object, TaskCreationOptions);
+
+Task FromAsync<TArg1, TArg2, TArg3>(Func<TArg1, TArg2, TArg3, AsyncCallback, Object, IAsyncResult>, Action<IAsyncResult>, TArg1, TArg2, TArg3, object);
+Task FromAsync<TArg1, TArg2, TArg3>(Func<TArg1, TArg2, TArg3, AsyncCallback, Object, IAsyncResult>, Action<IAsyncResult>, TArg1, TArg2, TArg3, object, TaskCreationOptions);
+Task<TResult> FromAsync<TArg1, TArg2, TArg3, TResult>(Func<TArg1, TArg2, TArg3, AsyncCallback, Object, IAsyncResult>, Func<IAsyncResult, TResult>, TArg1, TArg2, TArg3, object);
+Task<TResult> FromAsync<TArg1, TArg2, TArg3, TResult>(Func<TArg1, TArg2, TArg3, AsyncCallback, Object, IAsyncResult>, Func<IAsyncResult, TResult>, TArg1, TArg2, TArg3, object, TaskCreationOptions);
+{% endhighlight %}
+
+Task FromAsync(IAsyncResult, Action<IAsyncResult>);
+Task FromAsync(IAsyncResult, Action<IAsyncResult>, TaskCreationOptions);
+Task FromAsync(IAsyncResult, Action<IAsyncResult>, TaskCreationOptions, TaskScheduler);
+Task<TResult> FromAsync<TResult>(IAsyncResult, Func<IAsyncResult, TResult>);
+Task<TResult> FromAsync<TResult>(IAsyncResult, Func<IAsyncResult, TResult>, TaskCreationOptions);
+Task<TResult> FromAsync<TResult>(IAsyncResult, Func<IAsyncResult, TResult>, TaskCreationOptions, TaskScheduler);
+
+// http://blogs.msdn.com/b/pfxteam/archive/2009/06/09/9716439.aspx
+// http://blogs.msdn.com/b/pfxteam/archive/2012/02/06/10264610.aspx
