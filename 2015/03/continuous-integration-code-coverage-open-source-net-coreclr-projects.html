@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Continuous Integration and Code Coverage for Open Source .NET CoreCLR Projects</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Techniques and tools for writing open-source .NET CoreCLR projects." />
+    <link rel="canonical" href="http://blog.stephencleary.com/2015/03/continuous-integration-code-coverage-open-source-net-coreclr-projects.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
+    
+    <link type="text/css" rel="stylesheet" href="//netdna.bootstrapcdn.com/bootswatch/3.2.0/spacelab/bootstrap.min.css" />
+    <link type="text/css" rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" />
+    <style type="text/css">/* Layout Styles */
+/* ----------------------------------------------------------*/
+
+body {
+    padding-top: 50px;
+}
+
+.affix {
+    top: 70px;
+    bottom: 0;
+    overflow-y: auto;
+}
+
+.navbar-brand {
+    font-weight: bold;
+}
+
+.navbar-brand-container.active>a, .navbar-brand-container.active>a:hover, .navbar-brand-container.active>a:focus {
+    color: #3399f3;
+    background-color: transparent;
+}
+
+.sidebar {
+    margin-top: 20px;
+}
+
+.sidenavitem {
+    height: auto;
+}
+
+.sidebar img {
+    /* Responsive images */
+    display: inline-block;
+    height: auto;
+    max-width: 100%;
+}
+
+@media(max-width:767px) {
+    .affix {
+        position: static;
+    }
+}
+
+div .vertical-margins {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.page-header {
+    margin-top: 20px;
+}
+
+.center {
+    text-align: center;
+}
+
+.project-icon {
+    height: 128px;
+    width: 128px;
+}
+
+.list-group-item h2 {
+    margin-top: 10px;
+}
+
+/* Fixes for Google Custom Search in a Bootstrap page */
+/* ----------------------------------------------------------*/
+.google, .google *, .google *:before, .google *:after {
+    -webkit-box-sizing: content-box;
+    -moz-box-sizing: content-box;
+    box-sizing: content-box;
+}
+
+.google table {
+    border-collapse: separate;
+}
+
+.gsc-input-box {
+    height: auto !important;
+}
+
+/* Fixes for Amazon widget in Bootstrap page */
+.amzn_wdgt * {
+    -webkit-box-sizing: content-box;
+    -moz-box-sizing: content-box;
+    box-sizing: content-box;
+}
+
+/* Post styles */
+/* ----------------------------------------------------------*/
+
+code {
+    background-color: #F2F3F9;
+    color: inherit;
+}
+
+.post img {
+    /* Responsive images */
+    display: inline-block;
+    height: auto;
+    max-width: 100%;
+}
+
+.post .table {
+    table-layout: fixed;
+}
+
+.post .table code {
+    white-space: normal;
+}
+
+.post .yes {
+    color: #008000;
+}
+
+.post .no {
+    color: #FF0000;
+}
+
+/* Syntax highlighting styles */
+/* ----------------------------------------------------------*/
+
+.highlight  { background: #ffffff; }
+.highlight .c { color: #008000 } /* Comment */
+.highlight .k { color: #0000ff } /* Keyword */
+.highlight .cm { color: #008000 } /* Comment.Multiline */
+.highlight .cp { color: #0000ff } /* Comment.Preproc */
+.highlight .c1 { color: #008000 } /* Comment.Single */
+.highlight .cs { color: #008000 } /* Comment.Special */
+.highlight .ge { font-style: italic } /* Generic.Emph */
+.highlight .gh { font-weight: bold } /* Generic.Heading */
+.highlight .gp { font-weight: bold } /* Generic.Prompt */
+.highlight .gs { font-weight: bold } /* Generic.Strong */
+.highlight .gu { font-weight: bold } /* Generic.Subheading */
+.highlight .kc { color: #0000ff } /* Keyword.Constant */
+.highlight .kd { color: #0000ff } /* Keyword.Declaration */
+.highlight .kn { color: #0000ff } /* Keyword.Namespace */
+.highlight .kp { color: #0000ff } /* Keyword.Pseudo */
+.highlight .kr { color: #0000ff } /* Keyword.Reserved */
+.highlight .kt { color: #2b91af } /* Keyword.Type */
+.highlight .s { color: #a31515 } /* Literal.String */
+.highlight .nc { color: #2b91af } /* Name.Class */
+.highlight .ow { color: #0000ff } /* Operator.Word */
+.highlight .sb { color: #a31515 } /* Literal.String.Backtick */
+.highlight .sc { color: #a31515 } /* Literal.String.Char */
+.highlight .sd { color: #a31515 } /* Literal.String.Doc */
+.highlight .s2 { color: #a31515 } /* Literal.String.Double */
+.highlight .se { color: #a31515 } /* Literal.String.Escape */
+.highlight .sh { color: #a31515 } /* Literal.String.Heredoc */
+.highlight .si { color: #a31515 } /* Literal.String.Interpol */
+.highlight .sx { color: #a31515 } /* Literal.String.Other */
+.highlight .sr { color: #a31515 } /* Literal.String.Regex */
+.highlight .s1 { color: #a31515 } /* Literal.String.Single */
+.highlight .ss { color: #a31515 } /* Literal.String.Symbol */
+</style>
+    
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="apple-touch-icon" sizes="57x57" href="http://stephencleary.com/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://stephencleary.com/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://stephencleary.com/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://stephencleary.com/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://stephencleary.com/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://stephencleary.com/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://stephencleary.com/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://stephencleary.com/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://stephencleary.com/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://stephencleary.com/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-32x32.png" sizes="32x32">
+    
+</head>
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <div class="navbar-brand-container"><a class="navbar-brand" href="http://stephencleary.com">Stephen Cleary</a></div>
+    </div>
+
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+        <ul class="nav navbar-nav">
+            <li  class="active"  ><a href="http://blog.stephencleary.com">Blog</a></li>
+            <li  ><a href="http://stephencleary.com/projects/">Projects</a></li>
+            <li  ><a href="http://stephencleary.com/publications/">Publications</a></li>
+            <li  ><a href="http://stephencleary.com/book/">Book</a></li>
+            <li  ><a href="http://stephencleary.com/contact/">Contact</a></li>
+            <li><a href="http://feeds.feedburner.com/NitoPrograms"><i class="fa fa-rss-square fa-lg"></i></a></li>
+            <li  ><a href="http://stephencleary.com/search/"><i class="fa fa-search"></i></a></li>
+        </ul>
+    </div>
+</nav>
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Continuous Integration and Code Coverage for Open Source .NET CoreCLR Projects</h1>
+          <small><time datetime="2015-03-28">Mar 28, 2015</time> &bull; <a data-disqus-identifier="/2015/03/continuous-integration-code-coverage-open-source-net-coreclr-projects" href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>So, I’ve been doing some more CoreCLR work, gradually porting over all my OSS projects. I just recently learned about some great tools during this process, so this post is for any other devs out there who want to start porting to CoreCLR.</p>
+
+<p>Here’s a screenshot of the first project that I converted to CoreCLR; it is hosted on GitHub, and is tied to a continuous integration system that kicks off on every checkin (the “build” and “coverage” badges show live data). The best part? All of this infrastructure support is free! :)</p>
+
+<p class="center"><a href="/assets/OssBadges.png"><img src="/assets/OssBadges.png" alt="" /></a></p>
+
+<h2 id="unit-tests-xunit">Unit Tests: xUnit</h2>
+
+<p>It seems like CoreCLR development is centering around xUnit, who were the first to push into this new platform. The actual Microsoft CoreCLR projects use <a href="https://github.com/dotnet/buildtools">a special runner for xUnit called <code>xunit.console.netcore</code></a>; unfortunately, that <a href="http://nuget.org/packages/Microsoft.DotNet.BuildTools">NuGet package</a> has been unlisted, so it’s difficult to use for our own projects.</p>
+
+<p>So, I took the approach of using a <a href="http://xunit.github.io/docs/getting-started-aspnet.html">standard xUnit runner for ASP.NET projects; their web page has pretty good instructions</a>. Just bear in mind that you must be in the same directory as the <code>project.json</code> for your unit test project before you can run <code>k test</code>.</p>
+
+<p>Once you have unit tests running from the command line with a simple <code>k test</code>, then it’s time to move on to continuous integration.</p>
+
+<h2 id="continuous-integration-appveyor">Continuous Integration: AppVeyor</h2>
+
+<p>AppVeyor is one of several CI solutions who provide free builds for OSS. In addition, AppVeyor is one of the few who support VS2015 preview builds. As they describe <a href="http://www.appveyor.com/blog/2015/01/20/visual-studio-2015-ctp-image">on their blog</a>, there’s two initial steps to enable VS2015 support: use a VS2015 CTP image, and modify your <code>PATH</code> so it picks up the correct <code>msbuild</code> version.</p>
+
+<p>Once you’ve linked your GitHub project to AppVeyor, selecting the image is straightforward; I’m using VS2015 CTP 6 (the most recent as of this writing):</p>
+
+<p class="center"><a href="/assets/AppVeyor.Image.png"><img src="/assets/AppVeyor.Image.png" alt="" /></a></p>
+
+<p>However, actually getting it to build is a bit more challenging. I currently have the following set up as a PowerShell “Install Script” for my AppVeyor build:</p>
+
+<div class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span class="n">iex</span> <span class="p">((</span><span class="nb">new-object</span> <span class="n">net</span><span class="p">.</span><span class="n">webclient</span><span class="p">).</span><span class="n">DownloadString</span><span class="p">(</span><span class="s1">&#39;https://raw.githubusercontent.com/aspnet/Home/master/kvminstall.ps1&#39;</span><span class="p">))</span>
+
+<span class="nv">$env:Path</span> <span class="p">=</span> <span class="s2">&quot;C:\Program Files (x86)\MSBuild\14.0\Bin;&quot;</span> <span class="p">+</span> <span class="no">[Environment]</span><span class="p">::</span><span class="n">GetEnvironmentVariables</span><span class="p">(</span><span class="s2">&quot;Machine&quot;</span><span class="p">)[</span><span class="s2">&quot;Path&quot;</span><span class="p">]</span> <span class="p">+</span> <span class="s2">&quot;;&quot;</span> <span class="p">+</span> <span class="no">[Environment]</span><span class="p">::</span><span class="n">GetEnvironmentVariables</span><span class="p">(</span><span class="s2">&quot;User&quot;</span><span class="p">)[</span><span class="s2">&quot;Path&quot;</span><span class="p">]</span>
+
+<span class="n">kvm</span> <span class="n">upgrade</span></code></pre></div>
+
+<p>The first line downloads and installs KVM, just like the <a href="https://github.com/aspnet/home">instructions on the ASP.NET 5 repository home page say to do</a>. As part of that install, it modifies the <code>PATH</code>, so the next line refreshes that script’s path and also modifies it to pick up the correct <code>msbuild</code> version. Finally, <code>kvm upgrade</code> downloads and installs the most recent K runtimes.</p>
+
+<p>There’s just one more step: we need to restore packages before building. I have the following set up as a PowerShell “Before Build Script”:</p>
+
+<div class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span class="n">kpm</span> <span class="n">restore</span></code></pre></div>
+
+<p>You should now be able to kick off a build without errors.</p>
+
+<p>Before moving on, let’s add in just a bit to get unit tests working. AppVeyor tries to do as much as possible for you using reasonable defaults, but it’s not (yet) capable of auto-detecting the xUnit .NET Core unit test project. You should be able to get unit tests running in your build by changing the test settings from <code>Auto</code> to <code>Script</code> and specifying this PowerShell script to run:</p>
+
+<div class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span class="n">cd</span> <span class="n">test</span><span class="p">/</span><span class="n">UnitTests</span>
+<span class="n">k</span> <span class="n">test</span></code></pre></div>
+
+<p>The first line changes to the directory where my unit test <code>project.json</code> file is (you may need to change this if your unit test project is named differently). The second line simply executes the tests.</p>
+
+<h2 id="code-coverage-opencover--coveralls">Code Coverage: OpenCover + Coveralls</h2>
+
+<p>OK, so on to code coverage! I’m using the <a href="https://github.com/dotnet/buildtools/blob/25decb2fe02edd3b7ab32a325e2281c2a2df9ea9/src/Microsoft.DotNet.Build.Tasks/Targets/CodeCoverage.targets">same basic approach as the .NET Core team</a> - that is to say, <a href="https://github.com/OpenCover/opencover">OpenCover</a> for generating code coverage, <a href="https://coveralls.io/">Coveralls</a> for publishing the code coverage publicly, and <a href="https://github.com/danielpalme/ReportGenerator">ReportGenerator</a> for generating local code coverage reports. But my solution uses PowerShell scripts instead of MSBuild tasks.</p>
+
+<p>First, you need to declare dependencies on the <code>OpenCover</code>, <code>coveralls.io</code>, and <code>ReportGenerator</code> packages in your unit test project. This way they’ll be picked up by <code>kpm restore</code> and installed on the AppVeyor build server. The <a href="https://github.com/StephenCleary/Deque/blob/cf0b28933befe5303c037739c94f16267de8b71e/test/UnitTests/project.json"><code>project.json</code> for my unit test project</a> has these dependencies:</p>
+
+<div class="highlight"><pre><code class="language-json" data-lang="json"><span class="s2">&quot;dependencies&quot;</span><span class="err">:</span> <span class="p">{</span>
+    <span class="nt">&quot;Nito.Collections.Deque&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;xunit&quot;</span><span class="p">:</span> <span class="s2">&quot;2.0.0.0-rc3-build2880&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;xunit.runner.aspnet&quot;</span><span class="p">:</span> <span class="s2">&quot;2.0.0.0-rc3-build52&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;OpenCover&quot;</span><span class="p">:</span> <span class="s2">&quot;4.5.3809-rc94&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;coveralls.io&quot;</span><span class="p">:</span> <span class="s2">&quot;1.3.2.0&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;ReportGenerator&quot;</span><span class="p">:</span> <span class="s2">&quot;2.1.4.0&quot;</span>
+<span class="p">}</span><span class="err">,</span></code></pre></div>
+
+<p>These dependencies should all be straightforward: <code>Nito.Collections.Deque</code> is the library these tests are testing, <code>xunit</code> and <code>xunit.runner.aspnet</code> are the standard packages for running xUnit on .NET Core projects, and <code>OpenCover</code>, <code>coveralls.io</code>, and <code>ReportGenerator</code> are for code coverage.</p>
+
+<p>I recommend getting this working locally first, and then it’ll be clearer to understand why my AppVeyor test script does what it does.</p>
+
+<p>First, you have to be sure to be building in the <code>Debug</code> configuration. I’ve had problems with OpenCover not showing coverage for optimized builds.</p>
+
+<p>Second, you need to enable outputs (as in, physical disk files) for the <code>Debug</code> build of the library you’re testing. This checkbox is under your project settings, under the <code>Build</code> tab.</p>
+
+<p>Third, you have to really pay attention to your directories, because OpenCover has a hard time finding PDBs for .NET Core assemblies. I <em>believe</em> that the K runtime is using a different form of assembly loading than the traditional .NET platform, and OpenCover doesn’t (yet) support finding PDBs in a K-runtime-compatible way. So we have to help it out a bit with PDB location.</p>
+
+<p>With all that said, you should be able to execute something like the following to generate a code coverage report:</p>
+
+<div class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span class="n">cd</span> <span class="n">artifacts</span><span class="p">\</span><span class="n">bin</span><span class="p">\</span><span class="n">Nito</span><span class="p">.</span><span class="n">Collections</span><span class="p">.</span><span class="n">Deque</span><span class="p">\</span><span class="n">Debug</span><span class="p">\</span><span class="n">net45</span>
+
+<span class="nv">$env:KRE_APPBASE</span> <span class="p">=</span> <span class="s2">&quot;../../../../../test/UnitTests&quot;</span>
+
+<span class="n">C</span><span class="err">:</span><span class="p">\</span><span class="n">users</span><span class="p">\</span><span class="n">stephen</span><span class="p">\.</span><span class="n">k</span><span class="p">\</span><span class="n">packages</span><span class="p">\</span><span class="n">OpenCover</span><span class="p">\</span><span class="n">4</span><span class="p">.</span><span class="n">5</span><span class="p">.</span><span class="n">3809-rc94</span><span class="p">\</span><span class="n">OpenCover</span><span class="p">.</span><span class="n">Console</span><span class="p">.</span><span class="n">exe</span> <span class="n">-register</span><span class="err">:</span><span class="n">user</span> <span class="n">-target</span><span class="err">:</span><span class="s2">&quot;k.cmd&quot;</span> <span class="n">-targetargs</span><span class="err">:</span><span class="s2">&quot;test&quot;</span> <span class="n">-output</span><span class="err">:</span><span class="n">coverage</span><span class="p">.</span><span class="n">xml</span> <span class="n">-skipautoprops</span> <span class="n">-returntargetcode</span> <span class="n">-filter</span><span class="err">:</span><span class="s2">&quot;+[Nito*]*&quot;</span></code></pre></div>
+
+<p>First, I’m changing to the directory where my PDB files are for the project I’m <em>testing</em> (you’ll have to change to your own debug output directory, of course). Then, I’m setting the <code>KRE_APPBASE</code> environment variable so that the K runtime can find the <code>project.json</code> for my <em>unit test</em> project (if yours is named differently, you’ll need to change this, too).</p>
+
+<p>Finally, I’m executing OpenCover with a few <a href="https://github.com/opencover/opencover/wiki/Usage">command line options</a>. You’ll probably have to change the <code>filter</code> argument for your library; my filter is requesting coverage data only for types in namespaces that start with <code>Nito</code>. The <code>target</code> and <code>targetargs</code> options are telling OpenCover to execute the command <code>k.cmd test</code> (I found I did have to specify <code>k.cmd</code> and not just <code>k</code> for OpenCover to find the command script).</p>
+
+<p>If you have all the paths (and filters) set correctly, you should see some output that looks like this:</p>
+
+<pre><code>Executing: C:\Users\stephen\.k\runtimes\kre-clr-win-x86.1.0.0-beta3\bin\k.cmd
+xUnit.net ASP.NET test runner (32-bit Asp.Net 5.0)
+Copyright (C) 2015 Outercurve Foundation.
+
+Discovering: UnitTests
+Discovered:  UnitTests
+Starting:    UnitTests
+Finished:    UnitTests
+
+=== TEST EXECUTION SUMMARY ===
+   UnitTests  Total: 88, Errors: 0, Failed: 0, Skipped: 0, Time: 2.310s
+Committing...
+Visited Classes 3 of 7 (42.86)
+Visited Methods 59 of 70 (84.29)
+Visited Points 390 of 442 (88.24)
+Visited Branches 167 of 196 (85.20)
+
+==== Alternative Results (includes all methods including those without corresponding source) ====
+Alternative Visited Classes 3 of 7 (42.86)
+Alternative Visited Methods 64 of 83 (77.11)
+</code></pre>
+
+<p>The detailed code coverage data is also written out to a local file, in this case, <code>artifacts\bin\Nito.Collections.Deque\Debug\net45\coverage.xml</code>. To upload this coverage data to Coveralls, first link the GitHub project to Coveralls using their dashboard. Then, copy your <strong>Repo Token</strong> and set it as an environment variable <code>COVERALLS_REPO_TOKEN</code>:</p>
+
+<div class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span class="nv">$env:COVERALLS_REPO_TOKEN</span> <span class="p">=</span> <span class="s2">&quot;Repo Token&quot;</span></code></pre></div>
+
+<p>You can now use <code>coveralls.io</code> to upload the code coverage data to Coveralls. The only gotcha I ran into here is that the <code>coverall.io</code> package runs into errors if it tries to use a hash of the source files (instead of the source files themselves), so I just pass <code>--full-sources</code> to force it to load the full source files:</p>
+
+<div class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span class="n">C</span><span class="err">:</span><span class="p">\</span><span class="n">Users</span><span class="p">\</span><span class="n">stephen</span><span class="p">\.</span><span class="n">k</span><span class="p">\</span><span class="n">packages</span><span class="p">\</span><span class="n">coveralls</span><span class="p">.</span><span class="n">io</span><span class="p">\</span><span class="n">1</span><span class="p">.</span><span class="n">3</span><span class="p">.</span><span class="n">2</span><span class="p">\</span><span class="n">tools</span><span class="p">\</span><span class="n">coveralls</span><span class="p">.</span><span class="n">net</span><span class="p">.</span><span class="n">exe</span> <span class="p">-</span><span class="n">-opencover</span> <span class="n">coverage</span><span class="p">.</span><span class="n">xml</span> <span class="p">-</span><span class="n">-full-sources</span></code></pre></div>
+
+<p>It can take a few minutes for Coveralls.io to actually process and dispaly the coverage data, but after a few browser refreshes you should see the coverage data on their website!</p>
+
+<p>Note that if you select a specific source file, Coveralls will need a bit of help to find the matching source in the repo; you should be able to specify a value of <code>../../../../../</code> as your “Git repo root directory”:</p>
+
+<p class="center"><a href="/assets/CoverallsSourceLocation.png"><img src="/assets/CoverallsSourceLocation.png" alt="" /></a></p>
+
+<p>Then it should refresh with the complete source file from GitHub, highlighted with statement coverage data:</p>
+
+<p class="center"><a href="/assets/CoverallsSourceDisplay.png"><img src="/assets/CoverallsSourceDisplay.png" alt="" /></a></p>
+
+<h2 id="continuous-integration-code-coverage">Continuous Integration Code Coverage</h2>
+
+<p>OK, so let’s move all of this into AppVeyor!</p>
+
+<p>First, under your <code>Environment</code> settings, create an environment variable called <code>COVERALLS_REPO_TOKEN</code> with your <strong>Repo Token</strong> from the Coveralls page for this project. Be sure to turn on encryption (the little shield icon).</p>
+
+<p>Next, we can replace our existing test script with something a bit more fancy:</p>
+
+<div class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span class="n">cd</span> <span class="n">artifacts</span><span class="p">\</span><span class="n">bin</span><span class="p">\</span><span class="n">Nito</span><span class="p">.</span><span class="n">Collections</span><span class="p">.</span><span class="n">Deque</span><span class="p">\</span><span class="n">Debug</span><span class="p">\</span><span class="n">net45</span>
+
+<span class="nv">$env:KRE_APPBASE</span> <span class="p">=</span> <span class="s2">&quot;../../../../../test/UnitTests&quot;</span>
+
+<span class="n">iex</span> <span class="p">((</span><span class="nb">Get-ChildItem</span> <span class="p">(</span><span class="nv">$env:USERPROFILE</span> <span class="p">+</span> <span class="s1">&#39;\.k\packages\OpenCover&#39;</span><span class="p">))[</span><span class="n">0</span><span class="p">].</span><span class="n">FullName</span> <span class="p">+</span> <span class="s1">&#39;\OpenCover.Console.exe&#39;</span> <span class="p">+</span> <span class="s1">&#39; -register:user -target:&quot;k.cmd&quot; -targetargs:&quot;test&quot; -output:coverage.xml -skipautoprops -returntargetcode -filter:&quot;+[Nito*]*&quot;&#39;</span><span class="p">)</span>
+
+<span class="n">iex</span> <span class="p">((</span><span class="nb">Get-ChildItem</span> <span class="p">(</span><span class="nv">$env:USERPROFILE</span> <span class="p">+</span> <span class="s1">&#39;\.k\packages\coveralls.io&#39;</span><span class="p">))[</span><span class="n">0</span><span class="p">].</span><span class="n">FullName</span> <span class="p">+</span> <span class="s1">&#39;\tools\coveralls.net.exe&#39;</span> <span class="p">+</span> <span class="s1">&#39; --opencover coverage.xml --full-sources&#39;</span><span class="p">)</span></code></pre></div>
+
+<p>This is doing the same thing that we did “by hand”, but the invocations of OpenCover and Coveralls are a bit different. The only thing I’m doing here is running “whatever package is installed” instead of depending on a specific user profile location and package version. My original command line <code>C:\users\stephen\.k\packages\OpenCover\4.5.3809-rc94\OpenCover.Console.exe</code> would of course only work for users named <code>stephen</code> using version <code>4.5.3809-rc94</code> of OpenCover. The fancier <code>(Get-ChildItem ($env:USERPROFILE + '\.k\packages\OpenCover'))[0].FullName + '\OpenCover.Console.exe'</code> works for whoever the current user is (<code>USERPROFILE</code>) and whatever version of OpenCover is installed (it does, however, assume there is only one version installed - it just grabs the first one it finds).</p>
+
+<p>Now you should be able to kick off a new AppVeyor build, and within a few minutes, see the code coverage results automatically in Coveralls.io!</p>
+
+<h2 id="badger-badger-badger-badger">Badger, Badger, Badger, Badger</h2>
+
+<p>This is a good point to add some fancy badges to our GitHub readme. The OSS community has more-or-less standardized on <a href="http://shields.io/">shields.io</a> for consistent, scalable, nice-looking badges. Shields.io supports a number of “badge providers”, including AppVeyor and Coveralls.</p>
+
+<p>Their webpage is not the most intuitive, IMO, but it wasn’t <em>too</em> hard to get working. The URL for my AppVeyor build is <code>https://img.shields.io/appveyor/ci/StephenCleary/Deque.svg</code> - that is, telling the shields.io service to use the AppVeyor CI badge provider for my (GitHub) username and project. The URL for Coveralls is similar: <code>https://img.shields.io/coveralls/StephenCleary/Deque.svg</code> - in this case, telling the shields.io service to use the Coveralls provider for my (GitHub) username and project.</p>
+
+<p>I did notice several problems with the badges when I was first getting this working. For example, if there’s an AppVeyor build <em>in progress</em> (i.e., if you just modified your <code>Readme.md</code>), then the badges tend to time out. Just be patient and wait a bit, and then see if they start working again.</p>
+
+<h2 id="better-code-coverage-reports">Better Code Coverage Reports</h2>
+
+<p>There’s one big problem with Coveralls that not a lot of people have brought to the front: it <em>only supports line coverage</em>, which is the weakest (and most misleading) form of code coverage. As of this writing, this is basically a <a href="https://github.com/lemurheavy/coveralls-public/issues/31">limitation of the Coveralls.io service itself</a>.</p>
+
+<p>In particular, OpenCover is generating branch coverage as well as statement coverage, but all that branch coverage data (and part of that statement coverage data) is thrown away when the data is uploaded to Coveralls. I was unable to find a Coveralls alternative that supports .NET, understands branch coverage, <em>and</em> is free for OSS. Maybe someday…</p>
+
+<p>In the meantime, you really do want better coverage information than you can get from Coveralls. Don’t get me wrong - Coveralls is great for integrating with your build process and updating badges, but it’s <em>not</em> actually a good measurement of test coverage.</p>
+
+<p>Enter <code>ReportGenerator</code>. You may have noticed earlier on that we installed that NuGet package, but never actually used it. Well, now we’re going to use it. :)</p>
+
+<p><code>ReportGenerator</code> takes the output from OpenCover (that same <code>coverage.xml</code> file) and generates reports with the full code coverage information. I added a <a href="https://github.com/StephenCleary/Deque/blob/cf0b28933befe5303c037739c94f16267de8b71e/Coverage.ps1"><code>Coverage.ps1</code> script to my solution</a> that does <em>almost</em> the same thing as the AppVeyor test script, except it generates a local report instead of uploading to Coveralls:</p>
+
+<div class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span class="n">pushd</span>
+
+<span class="n">cd</span> <span class="n">artifacts</span><span class="p">\</span><span class="n">bin</span><span class="p">\</span><span class="n">Nito</span><span class="p">.</span><span class="n">Collections</span><span class="p">.</span><span class="n">Deque</span><span class="p">\</span><span class="n">Debug</span><span class="p">\</span><span class="n">net45</span>
+
+<span class="nv">$env:KRE_APPBASE</span> <span class="p">=</span> <span class="s2">&quot;../../../../../test/UnitTests&quot;</span>
+
+<span class="n">iex</span> <span class="p">((</span><span class="nb">Get-ChildItem</span> <span class="p">(</span><span class="nv">$env:USERPROFILE</span> <span class="p">+</span> <span class="s1">&#39;\.k\packages\OpenCover&#39;</span><span class="p">))[</span><span class="n">0</span><span class="p">].</span><span class="n">FullName</span> <span class="p">+</span> <span class="s1">&#39;\OpenCover.Console.exe&#39;</span> <span class="p">+</span> <span class="s1">&#39; -register:user -target:&quot;k.cmd&quot; -targetargs:&quot;test&quot; -output:coverage.xml -skipautoprops -returntargetcode -filter:&quot;+[Nito*]*&quot;&#39;</span><span class="p">)</span>
+
+<span class="n">iex</span> <span class="p">((</span><span class="nb">Get-ChildItem</span> <span class="p">(</span><span class="nv">$env:USERPROFILE</span> <span class="p">+</span> <span class="s1">&#39;\.k\packages\ReportGenerator&#39;</span><span class="p">))[</span><span class="n">0</span><span class="p">].</span><span class="n">FullName</span> <span class="p">+</span> <span class="s1">&#39;\ReportGenerator.exe -reports:coverage.xml -targetdir:.&#39;</span><span class="p">)</span>
+
+<span class="p">./</span><span class="n">index</span><span class="p">.</span><span class="n">htm</span>
+
+<span class="n">popd</span></code></pre></div>
+
+<p>It should be pretty straightforward by this point, with the added twist that I push the current directory at the beginning and pop it at the end. I change into the directory where the PDBs are, set <code>KRE_APPBASE</code> so the K runtime can find my <code>project.json</code>, run the tests with code coverage, generate HTML reports using <code>ReportGenerator</code>, and open up the resulting reports. This script was designed to be run from the Package Manager Console within Visual Studio, so it’s easy to use.</p>
+
+<p>There is just one gotcha with this script as-is: it just grabs the first version of OpenCover and ReportGenerator that it finds. So, when these packages release newer versions, you’ll want to delete the old versions from your development machine.</p>
+
+<h2 id="final-notes">Final Notes</h2>
+
+<p>I don’t actually do continuous <em>deployment</em> with AppVeyor. If you want to, I’m sure it would not be too difficult to get working. Right now, though, nothing supports reading/writing versions in <code>project.json</code>, so keeping the versioning correct would be a bit awkward. Even more scripting, and (for me) it’s not worth it.</p>
+
+<p>My current workflow is to use AppVeyor for continuous builds and tests, and for publishing unit test coverage data (such as it is). I still build locally (actually on an Azure VM) when I want to deploy or have a better picture of my <em>actual</em> unit test coverage data with a local coverage report.</p>
+
+  </article>
+    
+    <footer>
+        
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2015/03/grdevday-2015.html" title="GRDevDay 2015">&larr; Previous Post</a></li>
+            
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+            
+        </div>
+        <div class="col-sm-2 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://stephencleary.com/www.assets/Me-large.jpg"/></div>
+                    <div class="center vertical-margins">Stephen Cleary is a <a href="http://www.landmarkbaptist.ws/salvation">Christian</a>, <a href="http://picasaweb.google.com/stephenandmandy">husband, father,</a> and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://stephencleary.com/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">MVP Virtual Conference</div>
+                <div class="panel-body center">
+                    <div><a href="http://mvp.microsoft.com/en-us/virtualconference.aspx"><img src="http://stephencleary.com/www.assets/2015vconf.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://stephencleary.com/book/"><img src="http://stephencleary.com/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+    (function($) {
+        $(function() {
+            if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+                $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+            }
+        });
+    })(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+    (function($) {
+        $(function() {
+            if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+                $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+            }
+        });
+    })(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-8910661-5', 'stephencleary.com');
+    ga('send', 'pageview');
+</script>
+
+
+
+
+
+
+
+<!-- Disqus variables -->
+<script type="text/javascript">
+    var disqus_shortname = 'stephencleary';
+    var disqus_identifier = "/2015/03/continuous-integration-code-coverage-open-source-net-coreclr-projects";
+    var disqus_title = "Continuous Integration and Code Coverage for Open Source .NET CoreCLR Projects";
+    var disqus_url = "http://blog.stephencleary.com/2015/03/continuous-integration-code-coverage-open-source-net-coreclr-projects.html";
+</script>
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(s);
+    }());
+</script>
+
+<!-- Disqus comment section -->
+<script type="text/javascript">
+    (function() {
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<!-- Moment -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.6.0/moment.min.js"></script>
+<script type="text/javascript">window.moment || document.write('<script src="/lib/moment.min.js"><\/script>')</script>
+<script type="text/javascript">
+    (function($) {
+        $(function() {
+            $('time').each(function (_, e) {
+                var text = moment($(e).attr('datetime'), 'YYYY-MM-DD').fromNow();
+                $(e).text(function(_, oldText) { return text + ' (' + oldText + ')'; });
+            });
+        });
+    })(window.jQuery);
+</script>
+
+
+
+
+</body>
+</html>
