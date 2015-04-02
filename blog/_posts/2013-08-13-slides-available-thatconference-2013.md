@@ -2,7 +2,7 @@
 layout: post
 title: "Slides Available: ThatConference 2013"
 ---
-I have [uploaded the slides](https://github.com/StephenCleary/Presentations/tree/master/Async%20Servers) for the talk I gave this morning at ThatConference 2013, entitled "Making the Best of the Short Bunk: Scaling Your Servers with Async/Await". This was a highly technical async/await talk that focused specifically on the server side.
+I have [uploaded the slides](https://github.com/StephenCleary/Presentations/raw/53e45f9a74cbf551b293d40cdb4c7615c53eee55/Async%20Servers/Scaling%20your%20servers%20with%20async%20and%20await.pptx) for the talk I gave this morning at ThatConference 2013, entitled "Making the Best of the Short Bunk: Scaling Your Servers with Async/Await". This was a highly technical async/await talk that focused specifically on the server side.
 
 This talk specifically was _not_ an intro to async/await. If you need an intro, I recommend starting with my [intro blog post]({% post_url 2012-02-02-async-and-await %}) and following up with the links at the bottom (in particular, don't ignore the MSDN docs; they're actually quite good!). An intermediate-level followup is my MSDN article [Best Practices in Asynchronous Programming](http://msdn.microsoft.com/en-us/magazine/jj991977.aspx).
 
