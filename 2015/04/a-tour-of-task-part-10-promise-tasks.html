@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>A Tour of Task, Part 8: Starting</title>
+    <title>A Tour of Task, Part 10: Promise Tasks</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="An analysis of Task.Start, Task.RunSynchronously, and Task.CompletedSynchronously; and discussion of whether they should be used for asynchronous and/or parallel code." />
-    <link rel="canonical" href="http://blog.stephencleary.com/2015/02/a-tour-of-task-part-8-starting.html" />
+    <meta name="description" content="An analysis of Task.Delay, Task.Yield, and Task.FromResult; and discussion of whether they should be used for asynchronous and/or parallel code." />
+    <link rel="canonical" href="http://blog.stephencleary.com/2015/04/a-tour-of-task-part-10-promise-tasks.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -219,77 +219,164 @@ code {
 
   <header>
       <div class="page-header">
-          <h1>A Tour of Task, Part 8: Starting</h1>
-          <small><time datetime="2015-02-05">Feb 5, 2015</time> &bull; <a data-disqus-identifier="/2015/02/a-tour-of-task-part-8-starting" href="#disqus_thread">Comments</a></small>
+          <h1>A Tour of Task, Part 10: Promise Tasks</h1>
+          <small><time datetime="2015-04-30">Apr 30, 2015</time> &bull; <a data-disqus-identifier="/2015/04/a-tour-of-task-part-10-promise-tasks" href="#disqus_thread">Comments</a></small>
       </div>
   </header>
 
   <article>
-  <p>When a task is <a href="/2014/05/a-tour-of-task-part-1-constructors.html">created using its constructor</a>, it is <a href="/2014/06/a-tour-of-task-part-3-status.html">initially in a <code>Created</code> state</a>. This is a kind of “holding” state, where the task won’t do anything until it is started. Today’s post considers ways to start tasks that have already been created.</p>
+  <p>Last time, we looked at <a href="/2015/03/a-tour-of-task-part-9-delegate-tasks.html">ways to start Delegate Tasks</a>. Today we’ll look at the most common ways to create Promise Tasks. As a reminder, Promise Tasks are tasks that represent a kind of “event” within a system; they don’t have any user-defined code to execute.</p>
 
-<div class="alert alert-danger">
-  <p><i class="fa fa-exclamation-triangle fa-2x pull-left"></i></p>
+<h2 id="taskdelay">Task.Delay</h2>
 
-  <p>There is <em>absolutely nothing</em> in this blog post that is recommended for modern code. If you’re looking for <em>best</em> practices, move along; there’s nothing to see here.</p>
-</div>
+<p><code>Task.Delay</code> is the asynchronous equivalent of <code>Thread.Sleep</code>.</p>
 
-<h2 id="start">Start</h2>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span> <span class="nf">Delay</span><span class="p">(</span><span class="kt">int</span><span class="p">);</span>
+<span class="n">Task</span> <span class="nf">Delay</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">);</span>
 
-<p>The most basic way to start a task is to just call its <code>Start</code> method. Sounds simple, right?</p>
+<span class="n">Task</span> <span class="nf">Delay</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span>
+<span class="n">Task</span> <span class="nf">Delay</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span></code></pre></div>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">void</span> <span class="nf">Start</span><span class="p">();</span>
-<span class="k">void</span> <span class="nf">Start</span><span class="p">(</span><span class="n">TaskScheduler</span><span class="p">);</span></code></pre></div>
+<p>The <code>int</code> argument is treated as a number of milliseconds; I usually prefer the <code>TimeSpan</code> versions since they are more explicit. Using <code>int</code> millisecond values for timeouts is a holdover from an older API design; many Win32-level APIs only take timeout values as integer milliseconds. So, it makes sense to expose an <code>int</code> parameter for lower-level waits like <code>WaitHandle.WaitOne</code> or even <code>Task.Wait</code>. However, <code>Task.Delay</code> isn’t a thin wrapper over any Win32 API; the <code>int</code> parameter in this case is just provided for tradition.</p>
 
-<p>As you may guess by now, the default <code>TaskScheduler</code> is not <code>TaskScheduler.Default</code>. It is <code>TaskScheduler.Current</code>. And, once again, this brings up <a href="/2013/08/startnew-is-dangerous.html">all the same problems that <code>Task.Factory.StartNew</code> has with its similar treatment of <code>TaskScheduler</code></a>.</p>
+<p><code>Delay</code> may also take a <code>CancellationToken</code>, which allows the delay to be cancelled.</p>
 
-<p>Originally, <code>Start</code> (and the task constructors) were intended so that developers could define tasks to be executed kind of like a fancy delegate. Then, other code could execute those tasks in whatever way it felt appropriate (e.g., on the UI thread, or on a background thread). But in the real world, this is almost never useful, because <em>what the delegate does</em> usually determines its required <em>context</em> (e.g., a delegate accessing UI elements <em>must</em> be run on the UI thread). So this separation doesn’t make sense for most code, and even when it does, developers just use delegates directly instead of tasks.</p>
+<p>Under the hood, <code>Delay</code> starts a timer and completes its returned task when that timer fires. Or, if the <code>CancellationToken</code> is signaled first, then <code>Delay</code> cancels its returned task.</p>
 
-<p><code>Start</code> can only be called on a task that is created with the task constructor; that is, it only works on Delegate Tasks that are in the <code>Created</code> state. Once <code>Start</code> is called, the task moves to the <code>WaitingToRun</code> state (and never returns to the <code>Created</code> state), so <code>Start</code> cannot be called on a task more than once. <code>Start</code> cannot be called on Promise Tasks at all, since they are never in the <code>Created</code> state.</p>
+<p>In real-world code, <code>Delay</code> is almost never used. Its primary use case is as a retry timeout, i.e., if an asynchronous operation failed, the code will (asynchronously) wait a period of time before trying again. Generally, retry logic is wrapped into a separate library (such as <a href="https://msdn.microsoft.com/en-us/library/hh675232.aspx">Transient Fault Handling</a> or <a href="https://github.com/michael-wolfenden/Polly">Polly</a>), and <code>Delay</code> is only used internally by those libraries, not directly by application code.</p>
+
+<h2 id="taskyield">Task.Yield</h2>
+
+<p><code>Task.Yield</code> has several interesting aspects. To begin with, it doesn’t actually return a <code>Task</code>, so it’s not really a Promise Task kind of method:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">YieldAwaitable</span> <span class="nf">Yield</span><span class="p">();</span></code></pre></div>
+
+<p>But it does kind of <em>act</em> kind of like a Promise Task. The <code>YieldAwaitable</code> type interacts with the <code>async</code> compiler transformation to <em>force</em> an asynchronous point within a method. By default, if <code>await</code> is used on an operation that has already completed, then the execution of the <code>async</code> method continues synchronously. <code>YieldAwaitable</code> throws a wrench into this by always claiming it is <em>not</em> completed, and then scheduling its continuations immediately. This causes <code>await</code> to schedule the rest of the <code>async</code> method for immediate execution and return.</p>
+
+<p>I’ve used <code>Task.Yield</code> only occasionally during unit testing, when I needed to ensure that a particular method would in fact work if its asynchronous operation did not complete synchronously. I’ve found <code>Yield</code> most useful when the asynchronous operation in question normally <em>does</em> complete synchronously, and I need to force asynchrony to ensure the method behavior is correct.</p>
+
+<p>However, I’ve never needed <code>Yield</code> in production code. There is one use case where developers sometimes (incorrectly) attempt to use <code>Yield</code>: to try to “refresh” the UI.</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Bad code, do not use!!</span>
+<span class="k">async</span> <span class="n">Task</span> <span class="nf">LongRunningCpuBoundWorkAsync</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="c1">// This method is called directly from the UI, and</span>
+  <span class="c1">//  does lots of CPU-bound work.</span>
+  <span class="c1">// Since this blocks the UI, this method is given</span>
+  <span class="c1">//  an async signature and periodically &quot;yields&quot;.</span>
+  <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">!=</span> <span class="m">1000000</span><span class="p">;</span> <span class="p">++</span><span class="n">i</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="p">...</span> <span class="c1">// CPU-bound work.</span>
+    <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Yield</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>However, this approach will not work. The reason is that UI message loops are <em>priority</em> queues, and any scheduled continuations have a much higher priority than “repaint the window”. So, the <code>Yield</code> schedules the continuation and returns to the message loop, and the message loop immediately executes that continuation without processing any of its <code>WM_PAINT</code> messages.</p>
+
+<p>Some developers have discovered that using <code>Task.Delay</code> instead of <code>Task.Yield</code> will allow message processing (messages are processed until the timer fires). However, a far cleaner solution is to do the CPU-bound work on a background thread:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">void</span> <span class="nf">LongRunningCpuBoundWork</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">!=</span> <span class="m">1000000</span><span class="p">;</span> <span class="p">++</span><span class="n">i</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="p">...</span> <span class="c1">// CPU-bound work.</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// Called as:</span>
+<span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">LongRunningCpuBoundWork</span><span class="p">());</span></code></pre></div>
+
+<p>In conclusion, <code>Task.Yield</code> is occasionally useful when unit testing, but much less so for production code.</p>
+
+<h2 id="taskfromresult">Task.FromResult</h2>
+
+<p><code>Task.FromResult</code> will create a <em>completed</em> task with the specified value:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">FromResult</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">TResult</span><span class="p">);</span></code></pre></div>
+
+<p>It might seem silly at first to return a task that is already completed, but this is actually useful in several scenarios.</p>
+
+<p>For instance, an interface method may have an asynchronous (task-returning) signature, and if an implementation is synchronous, then it can use <code>Task.FromResult</code> to wrap up its (synchronous) result within a task. This is particularly useful when creating stubs for unit testing, but is also occasionally useful in production code:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">interface</span> <span class="n">IMyInterface</span>
+<span class="p">{</span>
+  <span class="c1">// Implementations *might* need to be asynchronous,</span>
+  <span class="c1">//  so we define an asynchronous API.</span>
+  <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">DoSomethingAsync</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="k">class</span> <span class="nc">MyClass</span> <span class="p">:</span> <span class="n">IMyInterface</span>
+<span class="p">{</span>
+  <span class="c1">// This particular implementation is not asynchronous.</span>
+  <span class="k">public</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">DoSomethingAsync</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">result</span> <span class="p">=</span> <span class="m">42</span><span class="p">;</span> <span class="c1">// Do synchronous work.</span>
+    <span class="k">return</span> <span class="n">Task</span><span class="p">.</span><span class="n">FromResult</span><span class="p">(</span><span class="n">result</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>Be careful, though, that your synchronous implementation is not <em>blocking</em>. Implementing an asynchronous API with a blocking method is surprising behavior.</p>
+
+<p>Another use case of <code>Task.FromResult</code> is when doing some form of caching. In this case, you have some data that is synchronously retrieved (from the cache), and need to return it directly. In the case of a cache miss, then a true asynchronous operation is performed:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">GetValueAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">key</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="kt">string</span> <span class="n">result</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">cache</span><span class="p">.</span><span class="n">TryGetValue</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="k">out</span> <span class="n">result</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">Task</span><span class="p">.</span><span class="n">FromResult</span><span class="p">(</span><span class="n">result</span><span class="p">);</span>
+  <span class="k">return</span> <span class="nf">DoGetValueAsync</span><span class="p">(</span><span class="n">key</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">private</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">DoGetValueAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">key</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="kt">string</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="p">...;</span>
+  <span class="n">cache</span><span class="p">.</span><span class="n">TrySetValue</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
+  <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+<span class="p">}</span></code></pre></div>
 
 <div class="alert alert-info">
   <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
 
-  <p>For more information on the task states, Delegate Tasks, and Promise Tasks, see <a href="/2014/06/a-tour-of-task-part-3-status.html" class="alert-link">Part 3 (Status) of this series</a>.</p>
+  <p>Tip: If you can, cache the task objects themselves instead of their resulting values; maintain a cache of <em>operations</em> rather than <em>results</em>.</p>
 </div>
 
-<p>In modern code - even dynamic task parallel code - <code>Start</code> just doesn’t have a place anymore. Instead of the task constructor and <code>Start</code>, use <code>Task.Run</code>, which creates <em>and</em> schedules a task.</p>
+<p>As of this writing, one final common use of <code>Task.FromResult</code> is just as a completed task. For this, the expressions <code>Task.FromResult(0)</code> or <code>Task.FromResult&lt;object&gt;(null)</code> are commonly used. This use case is similar to the synchronous implementation of an asynchronous API:</p>
 
-<h2 id="runsynchronously">RunSynchronously</h2>
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">interface</span> <span class="n">IPlugin</span>
+<span class="p">{</span>
+  <span class="c1">// Permit each plugin to initialize asynchronously.</span>
+  <span class="n">Task</span> <span class="nf">InitializeAsync</span><span class="p">();</span>
+<span class="p">}</span>
 
-<p><code>RunSynchronously</code> is very similar to <code>Start</code>, and has the same overloads:</p>
+<span class="k">class</span> <span class="nc">MyPlugin</span> <span class="p">:</span> <span class="n">IPlugin</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="n">Task</span> <span class="nf">InitializeAsync</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="c1">// The async equivalent of a noop.</span>
+    <span class="k">return</span> <span class="n">Task</span><span class="p">.</span><span class="n">FromResult</span><span class="p">&lt;</span><span class="kt">object</span><span class="p">&gt;(</span><span class="k">null</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">void</span> <span class="nf">RunSynchronously</span><span class="p">();</span>
-<span class="k">void</span> <span class="nf">RunSynchronously</span><span class="p">(</span><span class="n">TaskScheduler</span><span class="p">);</span></code></pre></div>
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
 
-<p><code>RunSynchronously</code> will attempt to start the task immediately and execute it <em>on the current thread</em>. This does not always happen, however; the final decision is up to the task scheduler that is passed to <code>RunSynchronously</code>. For example, a task scheduler for the UI thread will not permit a task to run on a thread pool thread. If the task scheduler refuses to execute the task synchronously, then <code>RunSynchronously</code> behaves just like <code>Start</code>; that is, the task is queued to the task scheduler for future execution. Also just like <code>Start</code>, <code>RunSynchronously</code> can only be called on a task that is in the <code>Created</code> state, and can only be called on a task once.</p>
+  <p>In the preview builds of .NET 4.6, there is a static <code>Task.CompletedTask</code> that should be used instead of <code>Task.FromResult(0)</code> or <code>Task.FromResult&lt;object&gt;(null)</code>.</p>
+</div>
 
-<p>Once again, the default <code>TaskSchedler</code> is <code>TaskScheduler.Current</code>. However, this time this behavior does make sense: since <code>RunSynchronously</code> will attempt to execute the task’s delegate on the current thread, it is reasonable to assume the current task scheduler is the correct one to use.</p>
-
-<p>Similarly to <code>Start</code>, <code>RunSynchronously</code> doesn’t have any place in modern code.</p>
-
-<h2 id="iasyncresultcompletedsynchronously">IAsyncResult.CompletedSynchronously</h2>
-
-<p><code>Task</code> has an explicit interface implementation of a member called <code>CompletedSynchronously</code>:</p>
-
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="kt">bool</span> <span class="n">IAsyncResult</span><span class="p">.</span><span class="n">CompletedSynchronously</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></div>
-
-<p>If you believe the MSDN documentation, this member should return <code>true</code> if the task was completed synchronously. Unfortunately, this member actually always returns <code>false</code>, even for synchronously-completed Promise Tasks such as those returned from <code>Task.FromResult</code>.</p>
-
-<p><code>IAsyncResult.CompletedSynchronously</code> is used by some legacy <code>IAsyncResult</code>-based code. But generally speaking, this member shouldn’t be used in modern code. In particular, you can’t depend on it being anything other than <code>false</code> for tasks.</p>
+<p>You might be wondering if there’s a way to return already-completed tasks in other states - particularly, canceled or faulted tasks. As of now, you have to write this yourself (using <code>TaskCompletionSource</code>), but .NET 4.6 will introduce the <code>Task.FromCanceled</code> and <code>Task.FromException</code> methods to return synchronously canceled or faulted tasks.</p>
 
   </article>
     
     <footer>
         
             <ul class="pager">
-                <li class="previous"><a href="/2015/01/a-tour-of-task-part-7-continuations.html" title="A Tour of Task, Part 7: Continuations">&larr; Previous in A Tour of Task</a></li>
-                <li class="next"><a href="/2015/03/a-tour-of-task-part-9-delegate-tasks.html" title="A Tour of Task, Part 9: Delegate Tasks">Next in A Tour of Task &rarr;</a></li>
+                <li class="previous"><a href="/2015/03/a-tour-of-task-part-9-delegate-tasks.html" title="A Tour of Task, Part 9: Delegate Tasks">&larr; Previous in A Tour of Task</a></li>
             </ul>
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2015/01/a-tour-of-task-part-7-continuations.html" title="A Tour of Task, Part 7: Continuations">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2015/03/a-tour-of-task-part-9-delegate-tasks.html" title="A Tour of Task, Part 9: Delegate Tasks">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2015/03/continuous-integration-code-coverage-open-source-net-coreclr-projects.html" title="Continuous Integration and Code Coverage for Open Source .NET CoreCLR Projects">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="disqus_thread"></div>
@@ -312,9 +399,9 @@ code {
                                             <li class="sidenavitem"><a href="/2014/10/a-tour-of-task-part-5-wait.html">Waiting</a></li>
                                             <li class="sidenavitem"><a href="/2014/12/a-tour-of-task-part-6-results.html">Results</a></li>
                                             <li class="sidenavitem"><a href="/2015/01/a-tour-of-task-part-7-continuations.html">Continuations</a></li>
-                                            <li class="active sidenavitem"><a href="/2015/02/a-tour-of-task-part-8-starting.html">Starting</a></li>
+                                            <li class="sidenavitem"><a href="/2015/02/a-tour-of-task-part-8-starting.html">Starting</a></li>
                                             <li class="sidenavitem"><a href="/2015/03/a-tour-of-task-part-9-delegate-tasks.html">Delegate Tasks</a></li>
-                                            <li class="sidenavitem"><a href="/2015/04/a-tour-of-task-part-10-promise-tasks.html">Promise Tasks</a></li>
+                                            <li class="active sidenavitem"><a href="/2015/04/a-tour-of-task-part-10-promise-tasks.html">Promise Tasks</a></li>
                         </ul>
                     </div>
                 </div>
@@ -445,9 +532,9 @@ code {
 <!-- Disqus variables -->
 <script type="text/javascript">
     var disqus_shortname = 'stephencleary';
-    var disqus_identifier = "/2015/02/a-tour-of-task-part-8-starting";
-    var disqus_title = "A Tour of Task, Part 8: Starting";
-    var disqus_url = "http://blog.stephencleary.com/2015/02/a-tour-of-task-part-8-starting.html";
+    var disqus_identifier = "/2015/04/a-tour-of-task-part-10-promise-tasks";
+    var disqus_title = "A Tour of Task, Part 10: Promise Tasks";
+    var disqus_url = "http://blog.stephencleary.com/2015/04/a-tour-of-task-part-10-promise-tasks.html";
 </script>
 
 <!-- Disqus comment counter -->
