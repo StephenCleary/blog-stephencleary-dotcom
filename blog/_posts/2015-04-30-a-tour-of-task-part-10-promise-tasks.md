@@ -3,7 +3,7 @@ layout: post
 title: "A Tour of Task, Part 10: Promise Tasks"
 series: "A Tour of Task"
 seriesTitle: "Promise Tasks"
-description: "An analysis of Task.Delay, Task.Yield, Task.FromResult, Task.Factory.FromAsync, TaskCompletionSource, and TaskExtensions.Unwrap; and discussion of whether they should be used for asynchronous and/or parallel code."
+description: "An analysis of Task.Delay, Task.Yield, and Task.FromResult; and discussion of whether they should be used for asynchronous and/or parallel code."
 ---
 
 Last time, we looked at [ways to start Delegate Tasks]({% post_url 2015-03-03-a-tour-of-task-part-9-delegate-tasks %}). Today we'll look at the most common ways to create Promise Tasks. As a reminder, Promise Tasks are tasks that represent a kind of "event" within a system; they don't have any user-defined code to execute.
@@ -85,9 +85,9 @@ In conclusion, `Task.Yield` is occasionally useful when unit testing, but much l
 Task<TResult> FromResult<TResult>(TResult);
 {% endhighlight %}
 
-It might seem silly at first to return a completed task, but this is actually useful in several scenarios.
+It might seem silly at first to return a task that is already completed, but this is actually useful in several scenarios.
 
-For instance, an interface method may have an asynchronous (task-returning) signature, and if an implementation is synchronous, then it can use `Task.FromResult` to wrap up its (synchronous) result within a task. This is particularly useful when creating asynchronous stubs for unit testing, but is also occasionally useful in production code:
+For instance, an interface method may have an asynchronous (task-returning) signature, and if an implementation is synchronous, then it can use `Task.FromResult` to wrap up its (synchronous) result within a task. This is particularly useful when creating stubs for unit testing, but is also occasionally useful in production code:
 
 {% highlight csharp %}
 interface IMyInterface
@@ -160,42 +160,4 @@ class MyPlugin : IPlugin
 In the preview builds of .NET 4.6, there is a static `Task.CompletedTask` that should be used instead of `Task.FromResult(0)` or `Task.FromResult<object>(null)`.
 </div>
 
-You might be wondering if there's a way to return already-completed tasks in other states - particularly, canceled or faulted tasks. As of now, you have to write this yourself (see `TaskCompletionSource`, below), but .NET 4.6 will introduce the `Task.FromCanceled` and `Task.FromException` methods to return synchronously canceled or faulted tasks.
-
-## Task.Factory.FromAsync
-
-The `FromAsync` methods are used to create [TAP wrappers for APM APIs](https://msdn.microsoft.com/en-us/library/hh873178%28v=vs.110%29.aspx#ApmToTap). A [TAP API](https://msdn.microsoft.com/en-us/library/hh873175(v=vs.110).aspx) is one that returns a task ready for use with `await`. An [APM API](https://msdn.microsoft.com/en-us/library/ms228963(v=vs.110).aspx) is an older style of asynchronous programming that uses `Begin`/`End` methods pairs and an `IAsyncResult` object that represents the asynchronous operation.
-
-`FromAsync` has two different sets of overloads. The first set is the :
-
-{% highlight csharp %}
-Task FromAsync(Func<AsyncCallback, Object, IAsyncResult>, Action<IAsyncResult>,	object);
-Task FromAsync(Func<AsyncCallback, Object, IAsyncResult>, Action<IAsyncResult>, object, TaskCreationOptions);
-Task<TResult> FromAsync<TResult>(Func<AsyncCallback, Object, IAsyncResult>, Func<IAsyncResult, TResult>, object);
-Task<TResult> FromAsync<TResult>(Func<AsyncCallback, Object, IAsyncResult>, Func<IAsyncResult, TResult>, object, TaskCreationOptions);
-
-Task FromAsync<TArg1>(Func<TArg1, AsyncCallback, Object, IAsyncResult>, Action<IAsyncResult>, TArg1, object);
-Task FromAsync<TArg1>(Func<TArg1, AsyncCallback, Object, IAsyncResult>, Action<IAsyncResult>, TArg1, object, TaskCreationOptions);
-Task<TResult> FromAsync<TArg1, TResult>(Func<TArg1, AsyncCallback, Object, IAsyncResult>, Func<IAsyncResult, TResult>, TArg1, object);
-Task<TResult> FromAsync<TArg1, TResult>(Func<TArg1, AsyncCallback, Object, IAsyncResult>, Func<IAsyncResult, TResult>, TArg1, object, TaskCreationOptions);
-
-Task FromAsync<TArg1, TArg2>(Func<TArg1, TArg2, AsyncCallback, Object, IAsyncResult>, Action<IAsyncResult>, TArg1, TArg2, object);
-Task FromAsync<TArg1, TArg2>(Func<TArg1, TArg2, AsyncCallback, Object, IAsyncResult>, Action<IAsyncResult>, TArg1, TArg2, object, TaskCreationOptions);
-Task<TResult> FromAsync<TArg1, TArg2, TResult>(Func<TArg1, TArg2, AsyncCallback, Object, IAsyncResult>, Func<IAsyncResult, TResult>, TArg1, TArg2, object);
-Task<TResult> FromAsync<TArg1, TArg2, TResult>(Func<TArg1, TArg2, AsyncCallback, Object, IAsyncResult>, Func<IAsyncResult, TResult>, TArg1, TArg2, object, TaskCreationOptions);
-
-Task FromAsync<TArg1, TArg2, TArg3>(Func<TArg1, TArg2, TArg3, AsyncCallback, Object, IAsyncResult>, Action<IAsyncResult>, TArg1, TArg2, TArg3, object);
-Task FromAsync<TArg1, TArg2, TArg3>(Func<TArg1, TArg2, TArg3, AsyncCallback, Object, IAsyncResult>, Action<IAsyncResult>, TArg1, TArg2, TArg3, object, TaskCreationOptions);
-Task<TResult> FromAsync<TArg1, TArg2, TArg3, TResult>(Func<TArg1, TArg2, TArg3, AsyncCallback, Object, IAsyncResult>, Func<IAsyncResult, TResult>, TArg1, TArg2, TArg3, object);
-Task<TResult> FromAsync<TArg1, TArg2, TArg3, TResult>(Func<TArg1, TArg2, TArg3, AsyncCallback, Object, IAsyncResult>, Func<IAsyncResult, TResult>, TArg1, TArg2, TArg3, object, TaskCreationOptions);
-{% endhighlight %}
-
-Task FromAsync(IAsyncResult, Action<IAsyncResult>);
-Task FromAsync(IAsyncResult, Action<IAsyncResult>, TaskCreationOptions);
-Task FromAsync(IAsyncResult, Action<IAsyncResult>, TaskCreationOptions, TaskScheduler);
-Task<TResult> FromAsync<TResult>(IAsyncResult, Func<IAsyncResult, TResult>);
-Task<TResult> FromAsync<TResult>(IAsyncResult, Func<IAsyncResult, TResult>, TaskCreationOptions);
-Task<TResult> FromAsync<TResult>(IAsyncResult, Func<IAsyncResult, TResult>, TaskCreationOptions, TaskScheduler);
-
-// http://blogs.msdn.com/b/pfxteam/archive/2009/06/09/9716439.aspx
-// http://blogs.msdn.com/b/pfxteam/archive/2012/02/06/10264610.aspx
+You might be wondering if there's a way to return already-completed tasks in other states - particularly, canceled or faulted tasks. As of now, you have to write this yourself (using `TaskCompletionSource`), but .NET 4.6 will introduce the `Task.FromCanceled` and `Task.FromException` methods to return synchronously canceled or faulted tasks.
