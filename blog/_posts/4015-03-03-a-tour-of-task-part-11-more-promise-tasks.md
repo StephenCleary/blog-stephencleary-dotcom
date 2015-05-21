@@ -10,6 +10,27 @@ Last time we started the dicussion of Promise Tasks by covering some simple crea
 
 ## TaskCompletionSource
 
+`TaskCompletionSource<T>` gives you manual control over a `Task<T>`; you use a `TaskCompletionSource<T>` to complete a given `Task<T>`. `TaskCompletionSource<T>` is the most general-purpose way to create a Promise Task.
+
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Asynchronous terminology is still in a bit of flux at this point. In the Scala/Akka world, `Task<T>` would be a "future", and `TaskCompletionSource<T>` would be a "promise". In the Javascript world, `Task<T>` would be a "promise", and `TaskCompletionSource<T>` would be a "deferred".
+</div>
+
+{% highlight csharp %}
+TaskCompletionSource(); // constructor
+
+Task<TResult> Task { get; }
+
+bool TrySetResult(TResult);
+bool TrySetException(Exception);
+bool TrySetCanceled(CancellationToken); // Added in .NET 4.6
+bool TrySetCanceled();
+{% endhighlight %}
+
+
+
 ## TaskExtensions.Unwrap
 
 ## Task.Factory.FromAsync

@@ -8,7 +8,7 @@ There is a pattern to asynchronous delegate types, but first you must understand
 
 <!--<blockquote>Actually, if C# had a true "void type" (commonly called "unit" in functional languages), we wouldn't have this problem. But it's too late for that now.</blockquote>-->
 
-This return-type transformation can also be applied to delegate types. If the delegate is one of the `Action` delegate types, then change it to `Func` and append a `Task` (as the return type). Otherwise (that is, the delegate is already a `Func`), change the last type argument from `T` to `Func<T>`.
+This return-type transformation can also be applied to delegate types. If the delegate is one of the `Action` delegate types, then change it to `Func` and append a `Task` (as the return type). Otherwise (that is, the delegate is already a `Func`), change the last type argument from `T` to `Task<T>`.
 
 This a bit complex to describe in words, so here's a little table that lays out several examples. Each synchronous example is paired with its asynchronous counterpart:
 
