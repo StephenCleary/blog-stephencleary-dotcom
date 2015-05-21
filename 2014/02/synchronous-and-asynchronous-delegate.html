@@ -231,7 +231,7 @@ code {
 
 <!--<blockquote>Actually, if C# had a true "void type" (commonly called "unit" in functional languages), we wouldn't have this problem. But it's too late for that now.</blockquote>-->
 
-<p>This return-type transformation can also be applied to delegate types. If the delegate is one of the <code>Action</code> delegate types, then change it to <code>Func</code> and append a <code>Task</code> (as the return type). Otherwise (that is, the delegate is already a <code>Func</code>), change the last type argument from <code>T</code> to <code>Func&lt;T&gt;</code>.</p>
+<p>This return-type transformation can also be applied to delegate types. If the delegate is one of the <code>Action</code> delegate types, then change it to <code>Func</code> and append a <code>Task</code> (as the return type). Otherwise (that is, the delegate is already a <code>Func</code>), change the last type argument from <code>T</code> to <code>Task&lt;T&gt;</code>.</p>
 
 <p>This a bit complex to describe in words, so here’s a little table that lays out several examples. Each synchronous example is paired with its asynchronous counterpart:</p>
 
