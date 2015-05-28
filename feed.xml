@@ -8,6 +8,19 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="http://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>ThatConference 2015</title>
+        <description>&lt;p&gt;I’m pleased to announce that I’m returning to ThatConference this year (in August of 2015). My session is &lt;a href=&quot;https://www.thatconference.com/sessions/session/6993&quot;&gt;Unit Testing Asynchronous Code&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;I’ve given this talk a few times in the past - at GRDevDay and CodeMash - but based on feedback, I’ll be updating it to include more mocking and assertion frameworks. It should end up being quite a comprehensive overview, including the current state of async support for unit testing as well as a general conceptual overview.&lt;/p&gt;
+
+&lt;p&gt;If you’d like to register, feel free to use &lt;a href=&quot;http://thatconference2015.eventbrite.com/?discount=aStephenCleary_referral&quot;&gt;this affiliate link&lt;/a&gt;. ;)  ThatConference is one of my favorite conferences - they have a particularly great family track for young coders - but they’re still relatively new and not able to reimburse travel expenses for speakers. So every little bit helps. :)&lt;/p&gt;
+</description>
+        <pubDate>Wed, 27 May 2015 00:00:00 -0400</pubDate>
+        <link>http://blog.stephencleary.com/2015/05/thatconference.html</link>
+        <guid isPermaLink="true">http://blog.stephencleary.com/2015/05/thatconference.html</guid>
+      </item>
+    
+      <item>
         <title>MVP Virtual Conference</title>
         <description>&lt;p&gt;I’m pleased to announce that I’m speaking at the MVP Virtual Conference in a couple of weeks. My session is called “Surviving in an Async-First Development World”, and it’s kind of like a “catch-up” session for devs who haven’t had a chance to use &lt;code&gt;async&lt;/code&gt; and &lt;code&gt;await&lt;/code&gt; yet.&lt;/p&gt;
 
@@ -1081,55 +1094,6 @@ Background work on thread 9
         <pubDate>Tue, 13 Jan 2015 00:00:00 -0500</pubDate>
         <link>http://blog.stephencleary.com/2015/01/codemash-2015.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2015/01/codemash-2015.html</guid>
-      </item>
-    
-      <item>
-        <title>A Tour of Task, Part 6: Results</title>
-        <description>&lt;p&gt;The task members discussed in this blog post are concerned with retrieving results from the task. Once the task completes, the consuming code must retrieve the results of the task. Even if the task has no result, it’s important for the consuming code to examine the task for errors so it knows whether the task completed successfully or failed.&lt;/p&gt;
-
-&lt;h2 id=&quot;result&quot;&gt;Result&lt;/h2&gt;
-
-&lt;p&gt;The &lt;code&gt;Result&lt;/code&gt; member only exists on the &lt;code&gt;Task&amp;lt;T&amp;gt;&lt;/code&gt; type; it does not exist on the &lt;code&gt;Task&lt;/code&gt; type (which represents a task without a result value).&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;T&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Result&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;&lt;a href=&quot;/2014/10/a-tour-of-task-part-5-wait.html&quot;&gt;Like &lt;code&gt;Wait&lt;/code&gt;&lt;/a&gt;, &lt;code&gt;Result&lt;/code&gt; will synchronously block the calling thread until the task completes. This is generally not a good idea for the same reason it wasn’t a good idea for &lt;code&gt;Wait&lt;/code&gt;: &lt;a href=&quot;/2012/07/dont-block-on-async-code.html&quot;&gt;it’s easy to cause deadlocks&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;Furthermore, &lt;code&gt;Result&lt;/code&gt; will wrap any task exceptions inside an &lt;code&gt;AggregateException&lt;/code&gt;. This usually just complicates the error handling.&lt;/p&gt;
-
-&lt;h2 id=&quot;exception&quot;&gt;Exception&lt;/h2&gt;
-
-&lt;p&gt;Speaking of exceptions, there’s a member specifically just for retrieving the exceptions from a task:&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;AggregateException&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Exception&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;Unlike &lt;code&gt;Result&lt;/code&gt; and &lt;code&gt;Wait&lt;/code&gt;, &lt;code&gt;Exception&lt;/code&gt; will &lt;em&gt;not&lt;/em&gt; block until the task completes; if called while the task is still in progress, it will just return &lt;code&gt;null&lt;/code&gt;. If the task completes successfully &lt;em&gt;or&lt;/em&gt; is cancelled, then &lt;code&gt;Exception&lt;/code&gt; will still return &lt;code&gt;null&lt;/code&gt;. If the task is faulted, then &lt;code&gt;Exception&lt;/code&gt; will return the task’s exceptions wrapped in an &lt;code&gt;AggregateException&lt;/code&gt;. Again, this usually just serves to complicate the error handling.&lt;/p&gt;
-
-&lt;h2 id=&quot;getawaitergetresult&quot;&gt;GetAwaiter().GetResult()&lt;/h2&gt;
-
-&lt;p&gt;The &lt;code&gt;GetAwaiter&lt;/code&gt; member was added to &lt;code&gt;Task&lt;/code&gt; and &lt;code&gt;Task&amp;lt;T&amp;gt;&lt;/code&gt; in .NET 4.5, and it’s available as an extension method on .NET 4.0 using the &lt;code&gt;Microsoft.Bcl.Async&lt;/code&gt; NuGet package. Normally, the &lt;code&gt;GetAwaiter&lt;/code&gt; method is just used by &lt;code&gt;await&lt;/code&gt;, but it &lt;em&gt;is&lt;/em&gt; possible to call it yourself:&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;T&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;...;&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;T&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;GetAwaiter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;GetResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;The code above will synchronously block until the task completes. As such, it is subject to the &lt;a href=&quot;/2012/07/dont-block-on-async-code.html&quot;&gt;same old deadlock problems&lt;/a&gt; as &lt;code&gt;Wait&lt;/code&gt; and &lt;code&gt;Result&lt;/code&gt;. However, it will &lt;em&gt;not&lt;/em&gt; wrap the task exceptions in an &lt;code&gt;AggregateException&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;The code above will retrieve the result value from a &lt;code&gt;Task&amp;lt;T&amp;gt;&lt;/code&gt;. The same code pattern can also be applied to &lt;code&gt;Task&lt;/code&gt; (without a result value); in this case “GetResult” actually means “check the task for errors”:&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;...;&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;GetAwaiter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;GetResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;In general, I try my best to avoid synchronously blocking on an asynchronous task. However, there are a handful of situations where I do violate that guideline. In those rare conditions, my preferred method is &lt;code&gt;GetAwaiter().GetResult()&lt;/code&gt; because it preserves the task exceptions instead of wrapping them in an &lt;code&gt;AggregateException&lt;/code&gt;.&lt;/p&gt;
-
-&lt;h2 id=&quot;await&quot;&gt;await&lt;/h2&gt;
-
-&lt;p&gt;Of course, &lt;code&gt;await&lt;/code&gt; is not a member of the task type; however, I feel it’s important to remind today’s readers that the &lt;em&gt;best&lt;/em&gt; way of retrieving results from a &lt;a href=&quot;/2014/06/a-tour-of-task-part-3-status.html&quot;&gt;Promise Task&lt;/a&gt; is to merely use &lt;code&gt;await&lt;/code&gt;. &lt;code&gt;await&lt;/code&gt; retrieves task results in the most benign manner possible: &lt;code&gt;await&lt;/code&gt; will &lt;em&gt;asynchronously&lt;/em&gt; wait (not block); &lt;code&gt;await&lt;/code&gt; will return the result (if any) for a successful task; and &lt;code&gt;await&lt;/code&gt; will (re-)throw exceptions for a failed task &lt;em&gt;without&lt;/em&gt; wrapping them in an &lt;code&gt;AggregateException&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;In short, &lt;code&gt;await&lt;/code&gt; should be your go-to option for retrieving task results. The vast majority of the time, &lt;code&gt;await&lt;/code&gt; should be used instead of &lt;code&gt;Wait&lt;/code&gt;, &lt;code&gt;Result&lt;/code&gt;, &lt;code&gt;Exception&lt;/code&gt;, or &lt;code&gt;GetAwaiter().GetResult()&lt;/code&gt;.&lt;/p&gt;
-</description>
-        <pubDate>Fri, 05 Dec 2014 00:00:00 -0500</pubDate>
-        <link>http://blog.stephencleary.com/2014/12/a-tour-of-task-part-6-results.html</link>
-        <guid isPermaLink="true">http://blog.stephencleary.com/2014/12/a-tour-of-task-part-6-results.html</guid>
       </item>
     
   </channel>

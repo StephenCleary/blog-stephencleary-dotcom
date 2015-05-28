@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Thinking about Async Tasks</title>
+    <title>ThatConference 2015</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="In this post, I’m going to clarify how Tasks are used by async/await. This is a little bit different than Tasks as used by the Task Parallel Library, and it’s also a little bit different than awaitables as used by async/await." />
-    <link rel="canonical" href="http://blog.stephencleary.com/2012/02/thinking-about-async-tasks.html" />
+    <meta name="description" content="Announcement: I'm speaking at ThatConference in 2015." />
+    <link rel="canonical" href="http://blog.stephencleary.com/2015/05/thatconference.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -219,62 +219,17 @@ code {
 
   <header>
       <div class="page-header">
-          <h1>Thinking about Async Tasks</h1>
-          <small><time datetime="2012-02-23">Feb 23, 2012</time> &bull; <a data-disqus-identifier="/2012/02/thinking-about-async-tasks" href="#disqus_thread">Comments</a></small>
+          <h1>ThatConference 2015</h1>
+          <small><time datetime="2015-05-27">May 27, 2015</time> &bull; <a data-disqus-identifier="/2015/05/thatconference" href="#disqus_thread">Comments</a></small>
       </div>
   </header>
 
   <article>
-  <p>In this post, I’m going to clarify how Tasks are used by async/await. This is a little bit different than Tasks <em>as used by the Task Parallel Library,</em> and it’s also a little bit different than <em>awaitables</em> as used by async/await.</p>
+  <p>I’m pleased to announce that I’m returning to ThatConference this year (in August of 2015). My session is <a href="https://www.thatconference.com/sessions/session/6993">Unit Testing Asynchronous Code</a>.</p>
 
-<h2 id="tasks-are-a-future">Tasks Are a Future</h2>
+<p>I’ve given this talk a few times in the past - at GRDevDay and CodeMash - but based on feedback, I’ll be updating it to include more mocking and assertion frameworks. It should end up being quite a comprehensive overview, including the current state of async support for unit testing as well as a general conceptual overview.</p>
 
-<p>A <strong>future</strong> is <a href="http://en.wikipedia.org/wiki/Futures_and_promises">some operation that will complete at some future time</a>.</p>
-
-<p>An async Task is <em>not</em> a thread - not even a tiny one. This is one of the most common conceptual hurdles to working with async. <strong>Task != Thread</strong>.</p>
-
-<p>Similarly, an async Task is <em>not</em> a delegate.</p>
-
-<p>Some tasks do <em>contain</em> a delegate, and they represent some work to be done on a thread. However, as we saw in <a href="/2012/02/creating-tasks.html">the Creating Tasks post</a>, tasks created with TaskCompletionSource&lt;T&gt; have no code or delegate at all!</p>
-
-<h2 id="tasks-complete-once">Tasks Complete Once</h2>
-
-<p>A task will complete exactly one time. It can complete successfully or with error (cancellation is treated as a special kind of error).</p>
-
-<p>Because tasks complete only once, they’re not ideal for representing <em>streams of data</em> or <em>event subscriptions</em>. We’ll deal with stream/subscription scenarios in a later post.</p>
-
-<h2 id="tasks-support-continuations">Tasks Support Continuations</h2>
-
-<p>A <strong>continuation</strong> is <a href="http://msdn.microsoft.com/en-us/library/ee372288.aspx">some code that is attached to a task and executed when that task completes</a>. Tasks have direct support for continuations via the ContinueWith method.</p>
-
-<p>However, you usually do not need to call that method. The await keyword will use task continuations to schedule the remainder of the async method as necessary.</p>
-
-<h2 id="differences-between-async-tasks-and-tpl-tasks">Differences between Async Tasks and TPL Tasks</h2>
-
-<p>The Task class was introduced with the Task Parallel Library. The TPL usage of Task is a bit more general than the Async usage of Task. Also, the TPL was designed with fork/join parallelism in mind, and those portions of the Task class API are not used with async tasks.</p>
-
-<p>Under the TPL, the creation of a task and the scheduling of that task may be separate. It is possible to create a Task object and not start it until later. Under Async, every task is already in progress; its operation is started when the Task object is created. Because of this, you may have to call Task.Start on a Task returned from TPL code if you want to await it.</p>
-
-<p>TPL has a concept of parent and child tasks. Async tasks do not use this mechanism. There <em>is</em> a <em>logical</em> hierarchy among async tasks, but they do not use the <a href="http://msdn.microsoft.com/en-us/library/dd997417.aspx">parent/child relationship provided by the TPL</a>.</p>
-
-<p>Each TPL task may have multiple errors. Even if a task only has one exception, it is wrapped in an AggregateException. Async tasks are only expected to have one error, so the await operator will avoid this AggregateException wrapper.</p>
-
-<h2 id="differences-between-async-tasks-and-awaitables">Differences between Async Tasks and Awaitables</h2>
-
-<p>An awaitable is a very generic form of background operation. Awaitables support testing for completion (IsCompleted), scheduling continuations (OnCompleted), and retrieving the results of the operation (GetResult).</p>
-
-<p>The await operator uses <a href="http://blogs.msdn.com/b/lucian/archive/2011/04/15/async-ctp-refresh-design-changes.aspx">a well-defined pattern</a>, so it’s possible to have some very strange awaitables that do work correctly.</p>
-
-<p>For example, the awaitable returned by the Task.Yield method <em>never</em> returns true for IsCompleted, and its OnCompleted will immediately schedule the completions. So, on the one hand it never completes, but on the other hand it is already completed.</p>
-
-<p>WinRT awaitables are also not quite like Task objects. <del>The most important difference is that WinRT operations do not start their operation immediately. Normally, the WinRT awaitable will start the operation for you when it is used in an await expression. However, this won’t work as well if you want to have multiple operations running simultaneously. In this case, you can convert any WinRT awaitable into an async Task by calling the <strong>StartAsTask</strong> extension method.</del> <strong>Update:</strong> WinRT operations <a href="http://blogs.msdn.com/b/windowsappdev/archive/2012/03/20/keeping-apps-fast-and-fluid-with-asynchrony-in-the-windows-runtime.aspx">have been changed</a> so that they <em>do</em> start immediately.</p>
-
-<h2 id="functional-concepts">Functional Concepts</h2>
-
-<p>In conclusion, I’d like to point out that we’re witnessing more functional concepts gradually enter our imperative language: both <em>future</em> and <em>continuation</em> are concepts borrowed from functional languages.</p>
-
-<p>This helps explain <em>why</em> async code will gently nudge you into a functional programming style. And I’ll say it again: this is natural, and should be embraced.</p>
-
+<p>If you’d like to register, feel free to use <a href="http://thatconference2015.eventbrite.com/?discount=aStephenCleary_referral">this affiliate link</a>. ;)  ThatConference is one of my favorite conferences - they have a particularly great family track for young coders - but they’re still relatively new and not able to reimburse travel expenses for speakers. So every little bit helps. :)</p>
 
   </article>
     
@@ -283,8 +238,8 @@ code {
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2012/02/reporting-progress-from-async-tasks.html" title="Reporting Progress from Async Tasks">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2012/05/framework-profiles-in-net.html" title="Framework Profiles in .NET">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2015/05/mvp-virtual-conference.html" title="MVP Virtual Conference">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="disqus_thread"></div>
@@ -412,9 +367,9 @@ code {
 <!-- Disqus variables -->
 <script type="text/javascript">
     var disqus_shortname = 'stephencleary';
-    var disqus_identifier = "/2012/02/thinking-about-async-tasks";
-    var disqus_title = "Thinking about Async Tasks";
-    var disqus_url = "http://blog.stephencleary.com/2012/02/thinking-about-async-tasks.html";
+    var disqus_identifier = "/2015/05/thatconference";
+    var disqus_title = "ThatConference 2015";
+    var disqus_url = "http://blog.stephencleary.com/2015/05/thatconference.html";
 </script>
 
 <!-- Disqus comment counter -->
