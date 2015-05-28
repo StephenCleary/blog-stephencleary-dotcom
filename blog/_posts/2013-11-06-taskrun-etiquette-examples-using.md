@@ -95,5 +95,5 @@ class MyService
 
 And now we end up with a more correct implementation.
 
-Note that this was an example of using `Task.Run` for the _wrong thing_. To reiterate a sentence from my last post, **use `Task.Run` to call CPU-bound methods.** Do _not_ use it just to "provide something awaitable for my async method to use".
+Note that this was an example of using `Task.Run` for the _wrong thing_. To reiterate a sentence from my last post, **use `Task.Run` to call CPU-bound methods** (from GUI threads). Do _not_ use it just to "provide something awaitable for my async method to use".
 
