@@ -11,3 +11,5 @@ I gave a similar talk a few weeks ago [at GRDevDay]({% post_url 2015-03-21-grdev
 Also, my goal for this talk is to have it be very heavily influenced by Q&amp;A - I have a few primary points to cover, but there will be considerable leeway for devs to steer the presentation with their own questions. [Vidya Agarwal](https://mvp.microsoft.com/en-us/mvp/Vidya%20Vrat%20Agarwal-5000564) is acting as moderator for this session, and I'm sure we'll give him plenty of work to do. :)
 
 If you feel this session would be helpful for your colleagues (or just want a refresher yourself), you can [register online](http://aka.ms/mvpvirtualconference2015). It's entirely free!
+
+**Update, 2015-06-02:** Video is [now available](http://channel9.msdn.com/Events/MVP-Virtual-Conference/MVP-Virtual-Conference-Americas-2015/Dev2-Surviving-in-an-Async-First-Development-World).
