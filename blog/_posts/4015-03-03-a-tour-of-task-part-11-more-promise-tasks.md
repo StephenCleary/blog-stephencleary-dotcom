@@ -10,7 +10,7 @@ Last time we started the dicussion of Promise Tasks by covering some simple crea
 
 ## TaskCompletionSource
 
-`TaskCompletionSource<T>` gives you manual control over a `Task<T>`; you use a `TaskCompletionSource<T>` to complete a given `Task<T>`. `TaskCompletionSource<T>` is the most general-purpose way to create a Promise Task.
+`TaskCompletionSource<T>` gives you manual control over a `Task<T>`; you use a `TaskCompletionSource<T>` to complete a given `Task<T>`. `TaskCompletionSource<T>` is the most general-purpose way to create a Promise Task. If you find yourself needing to ""
 
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
