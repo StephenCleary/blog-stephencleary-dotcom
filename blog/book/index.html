@@ -5,334 +5,351 @@ title: 'Concurrency in C# Cookbook'
 ---
 
 <div>
-  <div class='row'>
-    <div class='col-md-10'>
-      <div class="center">
-        <h1>Concurrency in C# Cookbook</h1>
-        <img src="{{ '/www.assets/Book-small.jpg' | prepend: site.url_www }}" width="240" height="315"/>
-      </div>
+    <div class='row'>
+        <div class='col-md-10'>
+            <div class="center">
+                <h1>Concurrency in C# Cookbook</h1>
+                <img src="{{ '/www.assets/Book-small.jpg' | prepend: site.url_www }}" width="240" height="315" />
+            </div>
 
-      <div class="carousel slide" data-ride="carousel" id="quote-carousel">
-        <!-- Bottom Carousel Indicators -->
-        <ol class="carousel-indicators">
-          <li data-target="#quote-carousel" data-slide-to="0" class="active"></li>
-          <li data-target="#quote-carousel" data-slide-to="1"></li>
-          <li data-target="#quote-carousel" data-slide-to="2"></li>
-          <li data-target="#quote-carousel" data-slide-to="3"></li>
-          <li data-target="#quote-carousel" data-slide-to="4"></li>
-          <li data-target="#quote-carousel" data-slide-to="5"></li>
-          <li data-target="#quote-carousel" data-slide-to="6"></li>
-          <li data-target="#quote-carousel" data-slide-to="7"></li>
-          <li data-target="#quote-carousel" data-slide-to="8"></li>
-          <li data-target="#quote-carousel" data-slide-to="9"></li>
-          <li data-target="#quote-carousel" data-slide-to="10"></li>
-          <li data-target="#quote-carousel" data-slide-to="11"></li>
-          <li data-target="#quote-carousel" data-slide-to="12"></li>
-          <li data-target="#quote-carousel" data-slide-to="13"></li>
-          <li data-target="#quote-carousel" data-slide-to="14"></li>
-          <li data-target="#quote-carousel" data-slide-to="15"></li>
-          <li data-target="#quote-carousel" data-slide-to="16"></li>
-          <li data-target="#quote-carousel" data-slide-to="17"></li>
-        </ol>
-        
-        <!-- Carousel Slides / Quotes -->
-        <div class="carousel-inner">
-        
-          <div class="item active">
-            <blockquote>
-              <div class="row">
-                <div class="col-sm-3 text-center">
-                  <img class="img-circle" src="{{ '/www.assets/people/JonSkeet.jpg' | prepend: site.url_www }}">
-                </div>
-                <div class="col-sm-9">
-                  <p>The ideal reference book for modern .NET concurrency.</p>
-                  <small>Jon Skeet (Google)</small>
-                </div>
-              </div>
-            </blockquote>
-          </div>
+            <div class="carousel slide" data-ride="carousel" id="quote-carousel">
+                <!-- Bottom Carousel Indicators -->
+                <ol class="carousel-indicators">
+                    <li data-target="#quote-carousel" data-slide-to="0" class="active"></li>
+                    <li data-target="#quote-carousel" data-slide-to="1"></li>
+                    <li data-target="#quote-carousel" data-slide-to="2"></li>
+                    <li data-target="#quote-carousel" data-slide-to="3"></li>
+                    <li data-target="#quote-carousel" data-slide-to="4"></li>
+                    <li data-target="#quote-carousel" data-slide-to="5"></li>
+                    <li data-target="#quote-carousel" data-slide-to="6"></li>
+                    <li data-target="#quote-carousel" data-slide-to="7"></li>
+                    <li data-target="#quote-carousel" data-slide-to="8"></li>
+                    <li data-target="#quote-carousel" data-slide-to="9"></li>
+                    <li data-target="#quote-carousel" data-slide-to="10"></li>
+                    <li data-target="#quote-carousel" data-slide-to="11"></li>
+                    <li data-target="#quote-carousel" data-slide-to="12"></li>
+                    <li data-target="#quote-carousel" data-slide-to="13"></li>
+                    <li data-target="#quote-carousel" data-slide-to="14"></li>
+                    <li data-target="#quote-carousel" data-slide-to="15"></li>
+                    <li data-target="#quote-carousel" data-slide-to="16"></li>
+                    <li data-target="#quote-carousel" data-slide-to="17"></li>
+                    <li data-target="#quote-carousel" data-slide-to="18"></li>
+                </ol>
 
-          <div class="item">
-            <blockquote>
-              <div class="row">
-                <div class="col-sm-3 text-center">
-                  <img class="img-circle" src="{{ '/www.assets/people/ScottHanselman.jpg' | prepend: site.url_www }}">
-                </div>
-                <div class="col-sm-9">
-                  <p>An easy-to-read but complete reference.</p>
-                  <small>Scott Hanselman (Microsoft)</small>
-                </div>
-              </div>
-            </blockquote>
-          </div>
+                <!-- Carousel Slides / Quotes -->
+                <div class="carousel-inner">
 
-          <div class="item">
-            <blockquote>
-              <div class="row">
-                <div class="col-sm-3 text-center">
-                  <img class="img-circle" src="{{ '/www.assets/people/AndrewNosenko.jpg' | prepend: site.url_www }}">
-                </div>
-                <div class="col-sm-9">
-                  <p>A must-read for beginners and experts.</p>
-                  <small>Andrew Nosenko (Noseratio)</small>
-                </div>
-              </div>
-            </blockquote>
-          </div>
-
-          <div class="item">
-            <blockquote>
-              <div class="row">
-                <div class="col-sm-3 text-center">
-                  <img class="img-circle" src="{{ '/www.assets/people/StephenToub.jpg' | prepend: site.url_www }}">
-                </div>
-                <div class="col-sm-9">
-                  <p>Conveys the most important ... principles developers need to understand.</p>
-                  <small>Stephen Toub (Microsoft)</small>
-                </div>
-              </div>
-            </blockquote>
-          </div>
-
-          <div class="item">
-            <blockquote>
-              <div class="row">
-                <div class="col-sm-3 text-center">
-                  <img class="img-circle" src="{{ '/www.assets/people/BillWagner.jpg' | prepend: site.url_www }}">
-                </div>
-                <div class="col-sm-9">
-                  <p>This book has earned a handy place on my shelf.</p>
-                  <small>Bill Wagner</small>
-                </div>
-              </div>
-            </blockquote>
-          </div>
-
-          <div class="item">
-            <blockquote>
-              <div class="row">
-                <div class="col-sm-3 text-center">
-                  <img class="img-circle" src="{{ '/www.assets/people/JoeEnos.jpg' | prepend: site.url_www }}">
-                </div>
-                <div class="col-sm-9">
-                  <p>Highly recommended.</p>
-                  <small>Joe Enos (@jtenos)</small>
-                </div>
-              </div>
-            </blockquote>
-          </div>
-
-          <div class="item">
-            <blockquote>
-              <div class="row">
-                <div class="col-sm-3 text-center">
-                  <img class="img-circle" src="{{ '/www.assets/Book-square.jpg' | prepend: site.url_www }}">
-                </div>
-                <div class="col-sm-9">
-                  <p>Finally, an awesome book on multitasking.</p>
-                  <small>Amazon user DashNY</small>
-                </div>
-              </div>
-            </blockquote>
-          </div>
-
-          <div class="item">
-            <blockquote>
-              <div class="row">
-                <div class="col-sm-3 text-center">
-                  <img class="img-circle" src="{{ '/www.assets/Book-square.jpg' | prepend: site.url_www }}">
-                </div>
-                <div class="col-sm-9">
-                  <p>This one stands out and delivers.</p>
-                  <small>Amazon Customer</small>
-                </div>
-              </div>
-            </blockquote>
-          </div>
-
-            <div class="item">
-                <blockquote>
-                    <div class="row">
-                        <div class="col-sm-3 text-center">
-                            <img class="img-circle" src="{{ '/www.assets/Book-square.jpg' | prepend: site.url_www }}">
-                        </div>
-                        <div class="col-sm-9">
-                            <p>My colleagues are jealous as I use the modern patterns of C# Concurrency.</p>
-                            <small>Abe BG (Amazon review)</small>
-                        </div>
+                    <div class="item active">
+                        <blockquote>
+                            <div class="row">
+                                <div class="col-sm-3 text-center">
+                                    <img class="img-circle" src="{{ '/www.assets/people/JonSkeet.jpg' | prepend: site.url_www }}">
+                                </div>
+                                <div class="col-sm-9">
+                                    <p>The ideal reference book for modern .NET concurrency.</p>
+                                    <small>Jon Skeet (Google)</small>
+                                </div>
+                            </div>
+                        </blockquote>
                     </div>
-                </blockquote>
+
+                    <div class="item">
+                        <blockquote>
+                            <div class="row">
+                                <div class="col-sm-3 text-center">
+                                    <img class="img-circle" src="{{ '/www.assets/people/ScottHanselman.jpg' | prepend: site.url_www }}">
+                                </div>
+                                <div class="col-sm-9">
+                                    <p>An easy-to-read but complete reference.</p>
+                                    <small>Scott Hanselman (Microsoft)</small>
+                                </div>
+                            </div>
+                        </blockquote>
+                    </div>
+
+                    <div class="item">
+                        <blockquote>
+                            <div class="row">
+                                <div class="col-sm-3 text-center">
+                                    <img class="img-circle" src="{{ '/www.assets/people/AndrewNosenko.jpg' | prepend: site.url_www }}">
+                                </div>
+                                <div class="col-sm-9">
+                                    <p>A must-read for beginners and experts.</p>
+                                    <small>Andrew Nosenko (Noseratio)</small>
+                                </div>
+                            </div>
+                        </blockquote>
+                    </div>
+
+                    <div class="item">
+                        <blockquote>
+                            <div class="row">
+                                <div class="col-sm-3 text-center">
+                                    <img class="img-circle" src="{{ '/www.assets/people/StephenToub.jpg' | prepend: site.url_www }}">
+                                </div>
+                                <div class="col-sm-9">
+                                    <p>Conveys the most important ... principles developers need to understand.</p>
+                                    <small>Stephen Toub (Microsoft)</small>
+                                </div>
+                            </div>
+                        </blockquote>
+                    </div>
+
+                    <div class="item">
+                        <blockquote>
+                            <div class="row">
+                                <div class="col-sm-3 text-center">
+                                    <img class="img-circle" src="{{ '/www.assets/people/BillWagner.jpg' | prepend: site.url_www }}">
+                                </div>
+                                <div class="col-sm-9">
+                                    <p>This book has earned a handy place on my shelf.</p>
+                                    <small>Bill Wagner</small>
+                                </div>
+                            </div>
+                        </blockquote>
+                    </div>
+
+                    <div class="item">
+                        <blockquote>
+                            <div class="row">
+                                <div class="col-sm-3 text-center">
+                                    <img class="img-circle" src="{{ '/www.assets/people/Book-square.jpg' | prepend: site.url_www>
+                                </div>
+                                <div class="col-sm-9">
+                                    <p>208 pages of relevant, carefully guided material that has helped me to put together a plan for paying off some technical debt</p>
+                                    <small>Kevin Garner (Amazon review)</small>
+                                </div>
+                            </div>
+                        </blockquote>
+                    </div>
+
+                    <div class="item">
+                        <blockquote>
+                            <div class="row">
+                                <div class="col-sm-3 text-center">
+                                    <img class="img-circle" src="{{ '/www.assets/people/JoeEnos.jpg' | prepend: site.url_www }}">
+                                </div>
+                                <div class="col-sm-9">
+                                    <p>Highly recommended.</p>
+                                    <small>Joe Enos (@jtenos)</small>
+                                </div>
+                            </div>
+                        </blockquote>
+                    </div>
+
+                    <div class="item">
+                        <blockquote>
+                            <div class="row">
+                                <div class="col-sm-3 text-center">
+                                    <img class="img-circle" src="{{ '/www.assets/Book-square.jpg' | prepend: site.url_www }}">
+                                </div>
+                                <div class="col-sm-9">
+                                    <p>Finally, an awesome book on multitasking.</p>
+                                    <small>Amazon user DashNY</small>
+                                </div>
+                            </div>
+                        </blockquote>
+                    </div>
+
+                    <div class="item">
+                        <blockquote>
+                            <div class="row">
+                                <div class="col-sm-3 text-center">
+                                    <img class="img-circle" src="{{ '/www.assets/Book-square.jpg' | prepend: site.url_www }}">
+                                </div>
+                                <div class="col-sm-9">
+                                    <p>This one stands out and delivers.</p>
+                                    <small>Amazon Customer</small>
+                                </div>
+                            </div>
+                        </blockquote>
+                    </div>
+
+                    <div class="item">
+                        <blockquote>
+                            <div class="row">
+                                <div class="col-sm-3 text-center">
+                                    <img class="img-circle" src="{{ '/www.assets/Book-square.jpg' | prepend: site.url_www }}">
+                                </div>
+                                <div class="col-sm-9">
+                                    <p>My colleagues are jealous as I use the modern patterns of C# Concurrency.</p>
+                                    <small>Abe BG (Amazon review)</small>
+                                </div>
+                            </div>
+                        </blockquote>
+                    </div>
+
+                    <div class="item">
+                        <blockquote>
+                            <div class="row">
+                                <div class="col-sm-3 text-center">
+                                    <img class="img-circle" src="{{ '/www.assets/Book-square.jpg' | prepend: site.url_www }}">
+                                </div>
+                                <div class="col-sm-9">
+                                    <p>A really good comprehensive work on asynchronous programming.</p>
+                                    <small>P.H. Merkel (Amazon review)</small>
+                                </div>
+                            </div>
+                        </blockquote>
+                    </div>
+
+                    <div class="item">
+                        <blockquote>
+                            <div class="row">
+                                <div class="col-sm-3 text-center">
+                                    <img class="img-circle" src="{{ '/www.assets/Book-square.jpg' | prepend: site.url_www }}">
+                                </div>
+                                <div class="col-sm-9">
+                                    <p>A lot of concepts that I thought I understood, now make a lot more sense.</p>
+                                    <small>Kobi Hari (Amazon review)</small>
+                                </div>
+                            </div>
+                        </blockquote>
+                    </div>
+
+                    <div class="item">
+                        <blockquote>
+                            <div class="row">
+                                <div class="col-sm-3 text-center">
+                                    <img class="img-circle" src="{{ '/www.assets/Book-square.jpg' | prepend: site.url_www }}">
+                                </div>
+                                <div class="col-sm-9">
+                                    <p>Enlights [sic] the different aspects of concurrency in a breathtakingly easy way.</p>
+                                    <small>Novák István (Amazon review)</small>
+                                </div>
+                            </div>
+                        </blockquote>
+                    </div>
+
+                    <div class="item">
+                        <blockquote>
+                            <div class="row">
+                                <div class="col-sm-3 text-center">
+                                    <img class="img-circle" src="{{ '/www.assets/Book-square.jpg' | prepend: site.url_www }}">
+                                </div>
+                                <div class="col-sm-9">
+                                    <p>A 'must have' in your library.</p>
+                                    <small>Romasz (O'Reilly review)</small>
+                                </div>
+                            </div>
+                        </blockquote>
+                    </div>
+
+                    <div class="item">
+                        <blockquote>
+                            <div class="row">
+                                <div class="col-sm-3 text-center">
+                                    <img class="img-circle" src="{{ '/www.assets/Book-square.jpg' | prepend: site.url_www }}">
+                                </div>
+                                <div class="col-sm-9">
+                                    <p>A great approach more suited to modern development practices.</p>
+                                    <small>George (Amazon review)</small>
+                                </div>
+                            </div>
+                        </blockquote>
+                    </div>
+
+                    <div class="item">
+                        <blockquote>
+                            <div class="row">
+                                <div class="col-sm-3 text-center">
+                                    <img class="img-circle" src="{{ '/www.assets/Book-square.jpg' | prepend: site.url_www }}">
+                                </div>
+                                <div class="col-sm-9">
+                                    <p>Clear, easy to read, and highly relevant.</p>
+                                    <small>Kobi Hari (Amazon review)</small>
+                                </div>
+                            </div>
+                        </blockquote>
+                    </div>
+
+                    <div class="item">
+                        <blockquote>
+                            <div class="row">
+                                <div class="col-sm-3 text-center">
+                                    <img class="img-circle" src="{{ '/www.assets/Book-square.jpg' | prepend: site.url_www }}">
+                                </div>
+                                <div class="col-sm-9">
+                                    <p>The best path to master concurrency.</p>
+                                    <small>Bruno (O'Reilly review)</small>
+                                </div>
+                            </div>
+                        </blockquote>
+                    </div>
+
+                    <div class="item">
+                        <blockquote>
+                            <div class="row">
+                                <div class="col-sm-3 text-center">
+                                    <img class="img-circle" src="{{ '/www.assets/Book-square.jpg' | prepend: site.url_www }}">
+                                </div>
+                                <div class="col-sm-9">
+                                    <p>Well written and accessible.</p>
+                                    <small>Amazon Customer</small>
+                                </div>
+                            </div>
+                        </blockquote>
+                    </div>
+
+                    <div class="item">
+                        <blockquote>
+                            <div class="row">
+                                <div class="col-sm-3 text-center">
+                                    <img class="img-circle" src="{{ '/www.assets/Book-square.jpg' | prepend: site.url_www }}">
+                                </div>
+                                <div class="col-sm-9">
+                                    <p>I haven't read it.</p>
+                                    <small>Amanda Cleary (my wife - not a developer)</small>
+                                </div>
+                            </div>
+                        </blockquote>
+                    </div>
+
+                </div>
+
+                <!-- Carousel Buttons Next/Prev -->
+                <a data-slide="prev" href="#quote-carousel" class="left carousel-control"><i class="fa fa-chevron-left"></i></a>
+                <a data-slide="next" href="#quote-carousel" class="right carousel-control"><i class="fa fa-chevron-right"></i></a>
             </div>
 
-          <div class="item">
-            <blockquote>
-              <div class="row">
-                <div class="col-sm-3 text-center">
-                  <img class="img-circle" src="{{ '/www.assets/Book-square.jpg' | prepend: site.url_www }}">
+            <div class="panel panel-default">
+                <div class="panel-heading">Note from the author</div>
+                <div class="panel-body">
+                    <p>I had one major goal in writing this book: to cover <b>modern</b> approaches to concurrency. There are a hundred books out there that describe threads and all the various synchronization primitives in excruciating detail; this is not one of those. This book focuses specifically on how code <i>should</i> be written, not how code <i>could</i> be written.</p>
+                    <p>This book <b>does</b> contain an introduction to concurrency (multithreading, asynchronous programming, etc). However, it is <b>not</b> an introduction to C# or .NET. I do expect my readers to understand delegates, lambda expressions, LINQ, OOP, etc. If you need help in these areas, there are other great books that cover these topics far better than I could do.</p>
+                    <p>By focusing only on modern coding practices, and by avoiding "fluff", I've kept the book short. It's 200 pages, a portable size. The vast majority of these pages are recipes written with an extremely practical mindset, so they can be used as a ready reference for the modern developer.</p>
                 </div>
-                <div class="col-sm-9">
-                  <p>A really good comprehensive work on asynchronous programming.</p>
-                  <small>P.H. Merkel (Amazon review)</small>
-                </div>
-              </div>
-            </blockquote>
-          </div>
-
-          <div class="item">
-            <blockquote>
-              <div class="row">
-                <div class="col-sm-3 text-center">
-                  <img class="img-circle" src="{{ '/www.assets/Book-square.jpg' | prepend: site.url_www }}">
-                </div>
-                <div class="col-sm-9">
-                  <p>A lot of concepts that I thought I understood, now make a lot more sense.</p>
-                  <small>Kobi Hari (Amazon review)</small>
-                </div>
-              </div>
-            </blockquote>
-          </div>
-
-          <div class="item">
-            <blockquote>
-              <div class="row">
-                <div class="col-sm-3 text-center">
-                  <img class="img-circle" src="{{ '/www.assets/Book-square.jpg' | prepend: site.url_www }}">
-                </div>
-                <div class="col-sm-9">
-                  <p>Enlights [sic] the different aspects of concurrency in a breathtakingly easy way.</p>
-                  <small>Novák István (Amazon review)</small>
-                </div>
-              </div>
-            </blockquote>
-          </div>
-
-          <div class="item">
-            <blockquote>
-              <div class="row">
-                <div class="col-sm-3 text-center">
-                  <img class="img-circle" src="{{ '/www.assets/Book-square.jpg' | prepend: site.url_www }}">
-                </div>
-                <div class="col-sm-9">
-                  <p>A 'must have' in your library.</p>
-                  <small>Romasz (O'Reilly review)</small>
-                </div>
-              </div>
-            </blockquote>
-          </div>
-
-          <div class="item">
-            <blockquote>
-              <div class="row">
-                <div class="col-sm-3 text-center">
-                  <img class="img-circle" src="{{ '/www.assets/Book-square.jpg' | prepend: site.url_www }}">
-                </div>
-                <div class="col-sm-9">
-                  <p>A great approach more suited to modern development practices.</p>
-                  <small>George (Amazon review)</small>
-                </div>
-              </div>
-            </blockquote>
-          </div>
-
-          <div class="item">
-            <blockquote>
-              <div class="row">
-                <div class="col-sm-3 text-center">
-                  <img class="img-circle" src="{{ '/www.assets/Book-square.jpg' | prepend: site.url_www }}">
-                </div>
-                <div class="col-sm-9">
-                  <p>Clear, easy to read, and highly relevant.</p>
-                  <small>Kobi Hari (Amazon review)</small>
-                </div>
-              </div>
-            </blockquote>
-          </div>
-
-          <div class="item">
-            <blockquote>
-              <div class="row">
-                <div class="col-sm-3 text-center">
-                  <img class="img-circle" src="{{ '/www.assets/Book-square.jpg' | prepend: site.url_www }}">
-                </div>
-                <div class="col-sm-9">
-                  <p>The best path to master concurrency.</p>
-                  <small>Bruno (O'Reilly review)</small>
-                </div>
-              </div>
-            </blockquote>
-          </div>
-
-          <div class="item">
-            <blockquote>
-              <div class="row">
-                <div class="col-sm-3 text-center">
-                  <img class="img-circle" src="{{ '/www.assets/Book-square.jpg' | prepend: site.url_www }}">
-                </div>
-                <div class="col-sm-9">
-                  <p>Well written and accessible.</p>
-                  <small>Amazon Customer</small>
-                </div>
-              </div>
-            </blockquote>
-          </div>
-
-          <div class="item">
-            <blockquote>
-              <div class="row">
-                <div class="col-sm-3 text-center">
-                  <img class="img-circle" src="{{ '/www.assets/Book-square.jpg' | prepend: site.url_www }}">
-                </div>
-                <div class="col-sm-9">
-                  <p>I haven't read it.</p>
-                  <small>Amanda Cleary (my wife - not a developer)</small>
-                </div>
-              </div>
-            </blockquote>
-          </div>
-
-        </div>
-        
-        <!-- Carousel Buttons Next/Prev -->
-        <a data-slide="prev" href="#quote-carousel" class="left carousel-control"><i class="fa fa-chevron-left"></i></a>
-        <a data-slide="next" href="#quote-carousel" class="right carousel-control"><i class="fa fa-chevron-right"></i></a>
-      </div>      
-
-        <div class="panel panel-default">
-            <div class="panel-heading">Note from the author</div>
-            <div class="panel-body">
-                <p>I had one major goal in writing this book: to cover <b>modern</b> approaches to concurrency. There are a hundred books out there that describe threads and all the various synchronization primitives in excruciating detail; this is not one of those. This book focuses specifically on how code <i>should</i> be written, not how code <i>could</i> be written.</p>
-                <p>This book does contain an introduction to concurrency (multithreading, asynchronous programming, etc). However, it is not an introduction to C# or .NET. I do expect my readers to understand delegates, lambda expressions, LINQ, OOP, etc. If you need help in these areas, there are other great books that cover these topics far better than I could do.</p>
-                <p>By focusing only on modern coding practices, and by avoiding "fluff", I've kept the book short. It's under 200 pages, a portable size. The vast majority of these pages are recipes written with an extremely practical mindset, so they can be used as a ready reference for the modern developer.</p>
             </div>
-        </div>
 
-        <div class="panel panel-primary">
-            <div class="panel-heading">Table of contents and first chapter. <a href="http://cdn.oreillystatic.com/oreilly/booksamplers/9781449367565_sampler.pdf" target="blank">Open in new window.</a></div>
-            <div class="panel-body" style="height:500px;">
-                <object data="http://cdn.oreillystatic.com/oreilly/booksamplers/9781449367565_sampler.pdf" type="application/pdf" width="100%" height="100%"></object>
+            <div class="panel panel-primary">
+                <div class="panel-heading">Table of contents and first chapter. <a href="http://cdn.oreillystatic.com/oreilly/booksamplers/9781449367565_sampler.pdf" target="blank">Open in new window.</a></div>
+                <div class="panel-body" style="height:500px;">
+                    <object data="http://cdn.oreillystatic.com/oreilly/booksamplers/9781449367565_sampler.pdf" type="application/pdf" width="100%" height="100%"></object>
+                </div>
             </div>
-        </div>
 
-        <div class="panel panel-default">
-            <div class="panel-heading">Errata</div>
-            <div class="panel-body">
-                See the <a href="http://www.oreilly.com/catalog/errata.csp?isbn=0636920030171">official errata page</a> for a list of known errata or to submit your own errata.
+            <div class="panel panel-default">
+                <div class="panel-heading">Errata</div>
+                <div class="panel-body">
+                    See the <a href="http://www.oreilly.com/catalog/errata.csp?isbn=0636920030171">official errata page</a> for a list of known errata or to submit your own errata.
+                </div>
             </div>
-        </div>
 
-        <div class="panel panel-primary">
-            <div class="panel-heading">Buy from O'Reilly</div>
-            <div class="panel-body">
-                <div><iframe src="http://www.oreilly.com/authors/widgets/653.html" height="132px" width="550px" scrolling="no" frameborder="0"></iframe></div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">Buy from O'Reilly</div>
+                <div class="panel-body">
+                    <div><iframe src="http://www.oreilly.com/authors/widgets/653.html" height="132px" width="550px" scrolling="no" frameborder="0"></iframe></div>
+                </div>
             </div>
-        </div>
 
-        <div class="panel panel-primary">
-            <div class="panel-heading">Buy from Amazon</div>
-            <div class="panel-body">
-                <div><SCRIPT charset="utf-8" type="text/javascript" src="http://ws-na.amazon-adsystem.com/widgets/q?rt=tf_mfw&ServiceVersion=20070822&MarketPlace=US&ID=V20070822%2FUS%2Fstepheclearys-20%2F8001%2F14b39845-48f2-49c0-97c1-1d97496b1b4b"> </SCRIPT></div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">Buy from Amazon</div>
+                <div class="panel-body">
+                    <div>
+                        <SCRIPT charset="utf-8" type="text/javascript" src="http://ws-na.amazon-adsystem.com/widgets/q?rt=tf_mfw&ServiceVersion=20070822&MarketPlace=US&ID=V20070822%2FUS%2Fstepheclearys-20%2F8001%2F14b39845-48f2-49c0-97c1-1d97496b1b4b"> </SCRIPT>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-  </div>
 </div>
