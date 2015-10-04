@@ -282,7 +282,7 @@ code {
     
 <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">DoStuffAsync</span><span class="p">()</span>
 <span class="p">{</span>
-    <span class="kt">var</span> <span class="n">cpuResult</span> <span class="p">=</span> <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(</span><span class="n">MyThreadPoolMethod</span><span class="p">);</span>
+    <span class="kt">var</span> <span class="n">cpuResult</span> <span class="p">=</span> <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">MyThreadPoolMethod</span><span class="p">());</span>
     
     <span class="c1">// Use cpuResult...</span>
 <span class="p">}</span></code></pre></div>
