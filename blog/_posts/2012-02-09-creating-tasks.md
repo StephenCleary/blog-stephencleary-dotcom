@@ -62,7 +62,7 @@ public static void MyThreadPoolMethod()
     
 public async Task DoStuffAsync()
 {
-    var cpuResult = await Task.Run(MyThreadPoolMethod);
+    var cpuResult = await Task.Run(() => MyThreadPoolMethod());
     
     // Use cpuResult...
 }
