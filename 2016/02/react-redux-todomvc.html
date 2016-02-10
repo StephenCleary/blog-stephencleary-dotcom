@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Finalizers at Process Exit</title>
+    <title>React/Redux TodoMVC, Part 0: Introduction</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="I spent too long investigating a problem in a colleague’s code today; the bug was something I knew about but had forgotten:" />
-    <link rel="canonical" href="http://blog.stephencleary.com/2009/08/finalizers-at-process-exit.html" />
+    <meta name="description" content="Getting started with react and redux." />
+    <link rel="canonical" href="http://blog.stephencleary.com/2016/02/react-redux-todomvc.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -219,45 +219,61 @@ code {
 
   <header>
       <div class="page-header">
-          <h1>Finalizers at Process Exit</h1>
-          <small><time datetime="2009-08-27">Aug 27, 2009</time> &bull; <a data-disqus-identifier="/2009/08/finalizers-at-process-exit" href="#disqus_thread">Comments</a></small>
+          <h1>React/Redux TodoMVC, Part 0: Introduction</h1>
+          <small><time datetime="2016-02-10">Feb 10, 2016</time> &bull; <a data-disqus-identifier="/2016/02/react-redux-todomvc" href="#disqus_thread">Comments</a></small>
       </div>
   </header>
 
   <article>
-  <p>I spent too long investigating a problem in a colleague’s code today; the bug was something I knew about but had forgotten:</p>
+  <p>As of this writing, the front end of <a href="http://dotnetapis.com">DotNetApis</a> is entirely written in <a href="https://facebook.github.io/react/">React</a>. This was my first React project, and there were a <em>lot</em> of things that I learned along the way. My app certainly had “growing pains,” and a lot of React best practices were added rather late in that project.</p>
 
-<div class="alert alert-danger">
-  <p><i class="fa fa-exclamation-triangle fa-2x pull-left"></i></p>
+<p>So, I thought it would be beneficial to do a series of posts on how to do a new React project, with the benefit of hindsight that I did not have when writing the first version of DotNetApis.</p>
 
-  <p>During process shutdown, finalizers are given a strict timeout. If they overrun their timeout, the process is terminated.</p>
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>Disclaimer: I am still very new to React. It’s <s>possible</s> likely that I am entirely missing some really helpful best practices. If you know of any, please let me know in the comments!</p>
+
+  <p>Disclaimer Part 2: In fact, the whole React community is still new to React. Best practices are still “in flux” (heh), and may not be the same years from now.</p>
 </div>
 
-<p>This can easily happen if, say, someone you work with writes a program that leaves cleaning up database objects to the finalizers. The program works fine with their small test databases, but then seems to have no effect when used with larger databases (database engines tend to get excited and roll back operations when their client programs suddenly terminate).</p>
+<p>I’ll be developing this project in the open <a href="https://github.com/StephenCleary/todomvc-react-redux">on GitHub</a>. I’ve decided to implement the ubiquitous <a href="http://todomvc.com/">TodoMVC app</a>, which is often used to help decide on client-side MVC frameworks. You can argue that React/Redux isn’t really “MVC”-ish, but eh, whatever.</p>
 
-<p>I can’t believe that I spent over an hour today tracking this down (sigh). So, I researched it out in some depth, and collected wisdom from several others below.</p>
+<p>The only problem with TodoMVC is that it doesn’t have examples of asynchronous backend communication, which can make or break a framework decision. In keeping with the spirit of TodoMVC, my React/Redux implementation will also not have asynchronous communication; if I remember, I’ll write a separate blog post describing how to do that after this series wraps up.</p>
 
-<h2 id="supporting-statements">Supporting Statements</h2>
+<p>So, let’s get started!</p>
 
-<blockquote>"Finalization during process termination will eventually timeout." <footer>Chris Brumme, <a href="http://blogs.msdn.com/cbrumme/archive/2004/02/20/77460.aspx">Finalization</a></footer></blockquote>
+<p>Here’s what I’ve done so far, just some housekeeping work at the start:</p>
 
-<blockquote>"We run most of the above shutdown under the protection of a watchdog thread.  By this I mean that the shutdown thread signals the finalizer thread to perform most of the above steps.  Then the shutdown thread enters a wait with a timeout.  If the timeout triggers before the finalizer thread has completed the next stage of the managed shutdown, the shutdown thread wakes up and skips the rest of the managed part of the shutdown." <footer>Chris Brumme, <a href="http://blogs.msdn.com/cbrumme/archive/2003/08/20/51504.aspx">Startup, Shutdown and related matters</a></footer></blockquote>
+<ul>
+  <li>Forked the <a href="https://github.com/tastejs/todomvc-app-template">TodoMVC app template</a>.</li>
+  <li>Moved everything to the <a href="https://pages.github.com/"><code>gh-pages</code> branch</a>, where I’ll do all the development <em>and</em> deployment simultaneously.</li>
+  <li>Removed the (empty) <code>app.css</code> from the app template, since I’m quite sure I won’t be needing it.</li>
+  <li>Filled out some of the placeholders in the HTML.</li>
+  <li>Tweaked the <code>.gitignore</code> to include the “boilerplate” css that comes as dependencies of the app template.</li>
+</ul>
 
-<blockquote>"[When a process is gracefully terminating], each Finalize method is given approximately 2 seconds to return. If a Finalize method doesn't return within 2 seconds, the CLR just kills the process - no more Finalize methods are called. Also, if it takes more than 40 seconds to call all objects' Finalize methods, then again, the CLR just kills the process. Note: These timeout values were correct at the time I wrote this text, but Microsoft might change them in the future." <footer>Jeffrey Richter, <a href="http://www.amazon.com/gp/product/0735614229?ie=UTF8&amp;tag=stepheclearys-20&amp;linkCode=as2&amp;camp=1789&amp;creative=390957&amp;creativeASIN=0735614229">Applied Microsoft .NET Framework Programming</a>, pg 467; and <a href="http://www.amazon.com/gp/product/0735621632?ie=UTF8&amp;tag=stepheclearys-20&amp;linkCode=as2&amp;camp=1789&amp;creative=390957&amp;creativeASIN=0735621632">CLR via C#, 2nd ed</a>, pg 478</footer></blockquote>
+<p>Groundbreaking, eh? Don’t worry, this is just getting started! :)</p>
 
+<p><a href="https://github.com/StephenCleary/todomvc-react-redux/tree/9b881b0bea8070f850c8c78a6fcf4701287101ae">Source code at this revision</a></p>
+
+<p><a href="http://htmlpreview.github.io/?https://github.com/StephenCleary/todomvc-react-redux/blob/9b881b0bea8070f850c8c78a6fcf4701287101ae/index.html">Live site at this revision</a> (ignore the “startup flicker”; that’s just due to the way it’s hosted)</p>
+
+<p><a href="https://github.com/StephenCleary/todomvc-react-redux">Most current source code</a></p>
+
+<p><a href="http://stephencleary.github.io/todomvc-react-redux/">Most current live site</a></p>
 
   </article>
     
     <footer>
         
             <ul class="pager">
-                <li class="previous"><a href="/2010/02/q-should-i-set-variables-to-null-to.html" title="Q&amp;A: Should I Set Variables to Null to Assist Garbage Collection?">&larr; Previous in IDisposable and Finalizers</a></li>
             </ul>
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2009/08/where-has-steve-been.html" title="Where Has Steve Been?">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2009/08/first-rule-of-implementing-idisposable.html" title="The First Rule of Implementing IDisposable and Finalizers">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2016/01/dotnetapis.html" title="DotNetApis Enters Beta">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="disqus_thread"></div>
@@ -269,18 +285,10 @@ code {
         <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
             
                 <div class="panel panel-primary">
-                    <div class="panel-heading">IDisposable and Finalizers</div>
+                    <div class="panel-heading">React/Redux TodoMVC</div>
                     <div class="panel-body sidenav">
                         <ul class="nav nav-pills nav-stacked">
-                                                <li class="sidenavitem"><a href="/2009/08/how-to-implement-idisposable-and.html">Three Rules</a></li>
-                                                <li class="sidenavitem"><a href="/2009/08/first-rule-of-implementing-idisposable.html">Rule 1: Don't</a></li>
-                                                <li class="sidenavitem"><a href="/2009/08/second-rule-of-implementing-idisposable.html">Rule 2: Managed Resources</a></li>
-                                                <li class="sidenavitem"><a href="/2009/08/third-rule-of-implementing-idisposable.html">Rule 3: Unmanaged Resource</a></li>
-                                                <li class="sidenavitem"><a href="/2009/08/q-can-gcsuppressfinalizethis-be-called.html">Q&A: When to Call SuppressFinalize?</a></li>
-                                                <li class="sidenavitem"><a href="/2009/08/q-is-call-to-gckeepalivethis-required.html">Q&A: Is KeepAlive Required in Dispose?</a></li>
-                                                <li class="sidenavitem"><a href="/2009/08/q-if-dispose-calls-suppressfinalize-is.html">Q&A: Is KeepAlive Required with SuppressFinalize?</a></li>
-                                                <li class="sidenavitem"><a href="/2010/02/q-should-i-set-variables-to-null-to.html">Q&A: Seting Variables to Null</a></li>
-                                                <li class="active sidenavitem"><a href="/2009/08/finalizers-at-process-exit.html">Finalizers During Shutdown</a></li>
+                                            <li class="active sidenavitem"><a href="/2016/02/react-redux-todomvc.html">Introduction</a></li>
                         </ul>
                     </div>
                 </div>
@@ -423,9 +431,9 @@ code {
 <!-- Disqus variables -->
 <script type="text/javascript">
     var disqus_shortname = 'stephencleary';
-    var disqus_identifier = "/2009/08/finalizers-at-process-exit";
-    var disqus_title = "Finalizers at Process Exit";
-    var disqus_url = "http://blog.stephencleary.com/2009/08/finalizers-at-process-exit.html";
+    var disqus_identifier = "/2016/02/react-redux-todomvc";
+    var disqus_title = "React/Redux TodoMVC, Part 0: Introduction";
+    var disqus_url = "http://blog.stephencleary.com/2016/02/react-redux-todomvc.html";
 </script>
 
 <!-- Disqus comment counter -->

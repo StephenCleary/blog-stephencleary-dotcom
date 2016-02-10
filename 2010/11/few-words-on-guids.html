@@ -291,7 +291,7 @@ code {
 
 <p>So, when Microsoft added <a href="http://msdn.microsoft.com/en-us/library/ms189786.aspx">newsequentialid()</a> to SQL Server, they did not just return a regular sequential GUID. They <a href="http://www.jorriss.net/blog/jorriss/archive/2008/04/24/unraveling-the-mysteries-of-newsequentialid.aspx">shuffled some of the bytes</a> (<a href="http://www.webcitation.org/5ylItnhAb">webcite</a>) to make index clustering more efficient.</p>
 
-<p>Unfortunately, the shuffled bytes include the Version and Variant fields. This means that <strong>newsequentialid() GUIDs are not RFC 4122 compliant!</strong> As a result, GUIDs from newsequentialid() have a higher likelihood of colliding with RFC 4122 compliant GUIDs such as sequential or random GUIDs.</p>
+<p>Unfortunately, the shuffled bytes include the Version field. This means that <strong>newsequentialid() GUIDs are not RFC 4122 compliant!</strong> As a result, GUIDs from newsequentialid() have a higher likelihood of colliding with RFC 4122 compliant GUIDs such as sequential or random GUIDs.</p>
 
 <h2 id="conclusion">Conclusion</h2>
 
@@ -367,6 +367,7 @@ code {
                 <div class="panel-heading">Series</div>
                 <div class="panel-body">
                     <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2016/02/react-redux-todomvc.html">React/Redux TodoMVC</a></li>
                         <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
                         <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
                         <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
