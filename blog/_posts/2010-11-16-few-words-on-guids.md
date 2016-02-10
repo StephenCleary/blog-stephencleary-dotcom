@@ -70,7 +70,7 @@ So, when Microsoft added [newsequentialid()](http://msdn.microsoft.com/en-us/lib
 
  
 
-Unfortunately, the shuffled bytes include the Version and Variant fields. This means that **newsequentialid() GUIDs are not RFC 4122 compliant!** As a result, GUIDs from newsequentialid() have a higher likelihood of colliding with RFC 4122 compliant GUIDs such as sequential or random GUIDs.
+Unfortunately, the shuffled bytes include the Version field. This means that **newsequentialid() GUIDs are not RFC 4122 compliant!** As a result, GUIDs from newsequentialid() have a higher likelihood of colliding with RFC 4122 compliant GUIDs such as sequential or random GUIDs.
 
 ## Conclusion
 
