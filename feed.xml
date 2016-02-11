@@ -8,6 +8,103 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="http://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>React/Redux TodoMVC, Part 0B: Why React? Why Redux?</title>
+        <description>&lt;p&gt;I was a casualty of the Version 4 Browser Wars.&lt;/p&gt;
+
+&lt;p&gt;Those of you who are old enough to remember know exactly what I’m talking about. For those who weren’t there, maybe I’ll write a post about it someday. But anyway, I became a desktop developer for many years as a direct result of that horrible early web experience. It is only recently (the last few years) that I’ve cautiously stepped out into frontend development again.&lt;/p&gt;
+
+&lt;p&gt;I say this to emphasize that I’m not an expert frontend developer (yet). I’ve dabbled in Knockout, Angular, Durandal, and Aurelia. I’m much more familiar with common libraries like lodash and jQuery. But when it came to choose a framework for &lt;a href=&quot;http://dotnetapis.com&quot;&gt;DotNetApis&lt;/a&gt;, I chose something I had never used before: React.&lt;/p&gt;
+
+&lt;h2 id=&quot;why-react&quot;&gt;Why React?&lt;/h2&gt;
+
+&lt;p&gt;Well, in short, because &lt;a href=&quot;http://www.bitnative.com/&quot;&gt;Cory House&lt;/a&gt; convinced me. I was able to attend his excellent talk at ThatConference 2015 &lt;a href=&quot;https://www.thatconference.com/sessions/session/9108&quot;&gt;Angular, Backbone, and Knockout are great, so why choose React?&lt;/a&gt;, and followed that up with &lt;a href=&quot;https://www.pluralsight.com/courses/react-flux-building-applications&quot;&gt;his Pluralsight course on React and Flux&lt;/a&gt;. Cory House is convincing. :)&lt;/p&gt;
+
+&lt;p&gt;It all boils down to this simple fact: React represents component boundaries as files. In other words, a single component belongs in a single file.&lt;/p&gt;
+
+&lt;p&gt;In a modern MVVM-style data-binding system, you usually end up with &lt;em&gt;pairs&lt;/em&gt; of files. You have the view and the view model:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;app/
+  components/
+    todo/
+      todoViewModel.js
+      todoView.html
+    footer/
+      footerViewModel.js
+      footerView.html
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;I’ve written a few components like this, enough to know something’s wrong. In particular, when you have this kind of structure in your app and you need to modify a component, which file do you end up modifying? Usually both of them. New functionality generally requires &lt;em&gt;both&lt;/em&gt; the view and view model to change. This is an indication that the view and view model are really dealing with the same underlying concern.&lt;/p&gt;
+
+&lt;p&gt;According to Wikipedia, the Single Responsibility Principle is “every module or class should have responsibility over a single part of the functionality provided by the software, and that responsibility should be entirely encapsulated by the class.” Take special note of the second half of that definition: “that responsibility should be entirely encapsulated”. That’s why it’s harder to have multiple files making up a single component. There’s a lack of cohesion.&lt;/p&gt;
+
+&lt;p&gt;Another hurdle with modern MVVM-style data-binding systems is that they use templating. This means that you have &lt;em&gt;three&lt;/em&gt; languages to deal with: JavaScript (or some variant) for the view model, HTML for most of the view, and whatever HTML extensions exist as part of the templating solution. That’s a fair amount of context switching.&lt;/p&gt;
+
+&lt;p&gt;None of these hurdles are insurmountable, of course. Large systems have been written with these techniques, and they work well. But we can do better.&lt;/p&gt;
+
+&lt;p&gt;React addresses these problems by restructuring a “component”. Instead of having two files, with one of them containing a programming (templating) language within HTML, React just reverses that and puts HTML in the JavaScript.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;app/
+  components/
+    todo.jsx
+    footer.jsx
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This seems like a small thing, but it really does make a difference in day-to-day work. One component is in one file, which contains both the HTML and logic. When a component changes, only one file changes. And there’s only two languages: JavaScript (or some variant) and HTML. There’s no separate templating language; if you need a &lt;code&gt;for&lt;/code&gt; loop around some content, you just write it in JavaScript.&lt;/p&gt;
+
+&lt;p&gt;React &lt;em&gt;simplifies&lt;/em&gt; component work. Then it gets out of your way.&lt;/p&gt;
+
+&lt;h2 id=&quot;my-first-attempt-flux-not-redux&quot;&gt;My First Attempt (Flux, not Redux)&lt;/h2&gt;
+
+&lt;p&gt;React only addresses the “view” part of the frontend. It doesn’t have any opinions about how you store your data. There’s a pretty common pattern of data management called &lt;a href=&quot;https://facebook.github.io/flux/&quot;&gt;Flux&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;When I started using React, I decided to go with “vanilla Flux”; that is, to have a singleton dispatcher implementation. Flux works like this:&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;img src=&quot;/assets/FluxAsPromised.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;You have “action creators”, which are just functions that return actions. Those actions are data (objects) that represent some action, such as a user clicking a button or typing into a textbox. The actions are sent to the dispatcher, which is a singleton. The dispatcher then sends out the action to each store that has registered with it (this is just a simple pub/sub pattern).&lt;/p&gt;
+
+&lt;p&gt;The stores are where the application state lives. Each store updates itself by responding to actions coming from the dispatcher. Each time it updates, it notifies &lt;em&gt;its&lt;/em&gt; subscribers, which are the views (the actual JSX components). Those views in turn will respond to user interaction by calling the action creators and dispatching those actions.&lt;/p&gt;
+
+&lt;p&gt;This diagram is a bit simplified; the “Views” here are really made up of two different kind of views: &lt;a href=&quot;https://medium.com/@dan_abramov/smart-and-dumb-components-7ca2f9a7c7d0#.o5lr2g6lz&quot;&gt;“smart” or “page” or “container” or “route”&lt;/a&gt; views, which sit at the top level and subscribe to store updates, and “dumb” views, which only receive data from their parent views.&lt;/p&gt;
+
+&lt;p&gt;This is all well and good, but as DotNetApis grew more complex, I started running into problems.&lt;/p&gt;
+
+&lt;p&gt;In particular, I had several different “stores”, each one containing part of the application state, divided up logically. Also, I had several different “smart” views, some of which were children of other “smart” views, and each of which had to manage subscriptions to one or more stores. What I ended up with looked more like this diagram:&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;img src=&quot;/assets/FluxInReality.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;It was just getting too complex. I reached out for help on The Twitter, and &lt;a href=&quot;https://twitter.com/housecor&quot;&gt;Cory House&lt;/a&gt; and &lt;a href=&quot;https://twitter.com/ryanlanciaux&quot;&gt;Ryan Lanciaux&lt;/a&gt; were kind enough to point me to Redux.&lt;/p&gt;
+
+&lt;h2 id=&quot;why-redux&quot;&gt;Why Redux?&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://rackt.org/redux/&quot;&gt;Redux&lt;/a&gt; is a further simplification of React. Redux declares that you should only have one store, and all of the application state lives in that single store.&lt;/p&gt;
+
+&lt;p&gt;Hmmm, simpler:&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;img src=&quot;/assets/ReduxToTheRescue.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Now, Redux &lt;em&gt;does&lt;/em&gt; introduce some new concepts. In short, it implements your store &lt;em&gt;for&lt;/em&gt; you, so you need to fill in a few missing pieces.&lt;/p&gt;
+
+&lt;p&gt;In particular, you need to define how actions will change your application state. In Redux, these are called &lt;a href=&quot;https://rackt.org/redux/docs/basics/Reducers.html&quot;&gt;reducers&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;A real-world Redux application ends up looking more like this (note that the shaded parts are mostly or entirely implemented by libraries, not by the application author):&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;img src=&quot;/assets/ReduxInReality.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Once I started using Redux, I’ve never looked back. Everything is simpler!&lt;/p&gt;
+
+&lt;p&gt;The source hasn’t changed since last time, but if you missed it:&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/todomvc-react-redux/tree/9b881b0bea8070f850c8c78a6fcf4701287101ae&quot;&gt;Source code at this revision&lt;/a&gt; - &lt;a href=&quot;http://htmlpreview.github.io/?https://github.com/StephenCleary/todomvc-react-redux/blob/9b881b0bea8070f850c8c78a6fcf4701287101ae/index.html&quot;&gt;Live site at this revision&lt;/a&gt; (ignore the “startup flicker”; that’s just due to the way it’s hosted)&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/todomvc-react-redux&quot;&gt;Most current source code&lt;/a&gt; - &lt;a href=&quot;http://stephencleary.github.io/todomvc-react-redux/&quot;&gt;Most current live site&lt;/a&gt;&lt;/p&gt;
+</description>
+        <pubDate>Thu, 11 Feb 2016 00:00:00 -0500</pubDate>
+        <link>http://blog.stephencleary.com/2016/02/why-react-why-redux.html</link>
+        <guid isPermaLink="true">http://blog.stephencleary.com/2016/02/why-react-why-redux.html</guid>
+      </item>
+    
+      <item>
         <title>React/Redux TodoMVC, Part 0: Introduction</title>
         <description>&lt;p&gt;As of this writing, the front end of &lt;a href=&quot;http://dotnetapis.com&quot;&gt;DotNetApis&lt;/a&gt; is entirely written in &lt;a href=&quot;https://facebook.github.io/react/&quot;&gt;React&lt;/a&gt;. This was my first React project, and there were a &lt;em&gt;lot&lt;/em&gt; of things that I learned along the way. My app certainly had “growing pains,” and a lot of React best practices were added rather late in that project.&lt;/p&gt;
 
@@ -23,7 +120,7 @@
 
 &lt;p&gt;I’ll be developing this project in the open &lt;a href=&quot;https://github.com/StephenCleary/todomvc-react-redux&quot;&gt;on GitHub&lt;/a&gt;. I’ve decided to implement the ubiquitous &lt;a href=&quot;http://todomvc.com/&quot;&gt;TodoMVC app&lt;/a&gt;, which is often used to help decide on client-side MVC frameworks. You can argue that React/Redux isn’t really “MVC”-ish, but eh, whatever.&lt;/p&gt;
 
-&lt;p&gt;The only problem with TodoMVC is that it doesn’t have examples of asynchronous backend communication, which can make or break a framework decision. In keeping with the spirit of TodoMVC, my React/Redux implementation will also not have asynchronous communication; if I remember, I’ll write a separate blog post describing how to do that after this series wraps up.&lt;/p&gt;
+&lt;p&gt;One problem with TodoMVC is that it doesn’t have examples of asynchronous backend communication, which can make or break a framework decision. In keeping with the spirit of TodoMVC, my React/Redux implementation will also not have asynchronous communication; if I remember, I’ll write a separate blog post describing how to do that after this series wraps up.&lt;/p&gt;
 
 &lt;p&gt;So, let’s get started!&lt;/p&gt;
 
@@ -39,13 +136,9 @@
 
 &lt;p&gt;Groundbreaking, eh? Don’t worry, this is just getting started! :)&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/todomvc-react-redux/tree/9b881b0bea8070f850c8c78a6fcf4701287101ae&quot;&gt;Source code at this revision&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/todomvc-react-redux/tree/9b881b0bea8070f850c8c78a6fcf4701287101ae&quot;&gt;Source code at this revision&lt;/a&gt; - &lt;a href=&quot;http://htmlpreview.github.io/?https://github.com/StephenCleary/todomvc-react-redux/blob/9b881b0bea8070f850c8c78a6fcf4701287101ae/index.html&quot;&gt;Live site at this revision&lt;/a&gt; (ignore the “startup flicker”; that’s just due to the way it’s hosted)&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&quot;http://htmlpreview.github.io/?https://github.com/StephenCleary/todomvc-react-redux/blob/9b881b0bea8070f850c8c78a6fcf4701287101ae/index.html&quot;&gt;Live site at this revision&lt;/a&gt; (ignore the “startup flicker”; that’s just due to the way it’s hosted)&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/todomvc-react-redux&quot;&gt;Most current source code&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;http://stephencleary.github.io/todomvc-react-redux/&quot;&gt;Most current live site&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/todomvc-react-redux&quot;&gt;Most current source code&lt;/a&gt; - &lt;a href=&quot;http://stephencleary.github.io/todomvc-react-redux/&quot;&gt;Most current live site&lt;/a&gt;&lt;/p&gt;
 </description>
         <pubDate>Wed, 10 Feb 2016 00:00:00 -0500</pubDate>
         <link>http://blog.stephencleary.com/2016/02/react-redux-todomvc.html</link>
@@ -845,65 +938,6 @@ Background work on thread 9
         <pubDate>Tue, 03 Mar 2015 00:00:00 -0500</pubDate>
         <link>http://blog.stephencleary.com/2015/03/a-tour-of-task-part-9-delegate-tasks.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2015/03/a-tour-of-task-part-9-delegate-tasks.html</guid>
-      </item>
-    
-      <item>
-        <title>A Tour of Task, Part 8: Starting</title>
-        <description>&lt;p&gt;When a task is &lt;a href=&quot;/2014/05/a-tour-of-task-part-1-constructors.html&quot;&gt;created using its constructor&lt;/a&gt;, it is &lt;a href=&quot;/2014/06/a-tour-of-task-part-3-status.html&quot;&gt;initially in a &lt;code&gt;Created&lt;/code&gt; state&lt;/a&gt;. This is a kind of “holding” state, where the task won’t do anything until it is started. Today’s post considers ways to start tasks that have already been created.&lt;/p&gt;
-
-&lt;div class=&quot;alert alert-danger&quot;&gt;
-  &lt;p&gt;&lt;i class=&quot;fa fa-exclamation-triangle fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
-
-  &lt;p&gt;There is &lt;em&gt;absolutely nothing&lt;/em&gt; in this blog post that is recommended for modern code. If you’re looking for &lt;em&gt;best&lt;/em&gt; practices, move along; there’s nothing to see here.&lt;/p&gt;
-&lt;/div&gt;
-
-&lt;h2 id=&quot;start&quot;&gt;Start&lt;/h2&gt;
-
-&lt;p&gt;The most basic way to start a task is to just call its &lt;code&gt;Start&lt;/code&gt; method. Sounds simple, right?&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Start&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Start&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TaskScheduler&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;As you may guess by now, the default &lt;code&gt;TaskScheduler&lt;/code&gt; is not &lt;code&gt;TaskScheduler.Default&lt;/code&gt;. It is &lt;code&gt;TaskScheduler.Current&lt;/code&gt;. And, once again, this brings up &lt;a href=&quot;/2013/08/startnew-is-dangerous.html&quot;&gt;all the same problems that &lt;code&gt;Task.Factory.StartNew&lt;/code&gt; has with its similar treatment of &lt;code&gt;TaskScheduler&lt;/code&gt;&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;Originally, &lt;code&gt;Start&lt;/code&gt; (and the task constructors) were intended so that developers could define tasks to be executed kind of like a fancy delegate. Then, other code could execute those tasks in whatever way it felt appropriate (e.g., on the UI thread, or on a background thread). But in the real world, this is almost never useful, because &lt;em&gt;what the delegate does&lt;/em&gt; usually determines its required &lt;em&gt;context&lt;/em&gt; (e.g., a delegate accessing UI elements &lt;em&gt;must&lt;/em&gt; be run on the UI thread). So this separation doesn’t make sense for most code, and even when it does, developers just use delegates directly instead of tasks.&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;Start&lt;/code&gt; can only be called on a task that is created with the task constructor; that is, it only works on Delegate Tasks that are in the &lt;code&gt;Created&lt;/code&gt; state. Once &lt;code&gt;Start&lt;/code&gt; is called, the task moves to the &lt;code&gt;WaitingToRun&lt;/code&gt; state (and never returns to the &lt;code&gt;Created&lt;/code&gt; state), so &lt;code&gt;Start&lt;/code&gt; cannot be called on a task more than once. &lt;code&gt;Start&lt;/code&gt; cannot be called on Promise Tasks at all, since they are never in the &lt;code&gt;Created&lt;/code&gt; state.&lt;/p&gt;
-
-&lt;div class=&quot;alert alert-info&quot;&gt;
-  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
-
-  &lt;p&gt;For more information on the task states, Delegate Tasks, and Promise Tasks, see &lt;a href=&quot;/2014/06/a-tour-of-task-part-3-status.html&quot; class=&quot;alert-link&quot;&gt;Part 3 (Status) of this series&lt;/a&gt;.&lt;/p&gt;
-&lt;/div&gt;
-
-&lt;p&gt;In modern code - even dynamic task parallel code - &lt;code&gt;Start&lt;/code&gt; just doesn’t have a place anymore. Instead of the task constructor and &lt;code&gt;Start&lt;/code&gt;, use &lt;code&gt;Task.Run&lt;/code&gt;, which creates &lt;em&gt;and&lt;/em&gt; schedules a task.&lt;/p&gt;
-
-&lt;h2 id=&quot;runsynchronously&quot;&gt;RunSynchronously&lt;/h2&gt;
-
-&lt;p&gt;&lt;code&gt;RunSynchronously&lt;/code&gt; is very similar to &lt;code&gt;Start&lt;/code&gt;, and has the same overloads:&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;RunSynchronously&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;RunSynchronously&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TaskScheduler&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;&lt;code&gt;RunSynchronously&lt;/code&gt; will attempt to start the task immediately and execute it &lt;em&gt;on the current thread&lt;/em&gt;. This does not always happen, however; the final decision is up to the task scheduler that is passed to &lt;code&gt;RunSynchronously&lt;/code&gt;. For example, a task scheduler for the UI thread will not permit a task to run on a thread pool thread. If the task scheduler refuses to execute the task synchronously, then &lt;code&gt;RunSynchronously&lt;/code&gt; behaves just like &lt;code&gt;Start&lt;/code&gt;; that is, the task is queued to the task scheduler for future execution. Also just like &lt;code&gt;Start&lt;/code&gt;, &lt;code&gt;RunSynchronously&lt;/code&gt; can only be called on a task that is in the &lt;code&gt;Created&lt;/code&gt; state, and can only be called on a task once.&lt;/p&gt;
-
-&lt;p&gt;Once again, the default &lt;code&gt;TaskSchedler&lt;/code&gt; is &lt;code&gt;TaskScheduler.Current&lt;/code&gt;. However, this time this behavior does make sense: since &lt;code&gt;RunSynchronously&lt;/code&gt; will attempt to execute the task’s delegate on the current thread, it is reasonable to assume the current task scheduler is the correct one to use.&lt;/p&gt;
-
-&lt;p&gt;Similarly to &lt;code&gt;Start&lt;/code&gt;, &lt;code&gt;RunSynchronously&lt;/code&gt; doesn’t have any place in modern code.&lt;/p&gt;
-
-&lt;h2 id=&quot;iasyncresultcompletedsynchronously&quot;&gt;IAsyncResult.CompletedSynchronously&lt;/h2&gt;
-
-&lt;p&gt;&lt;code&gt;Task&lt;/code&gt; has an explicit interface implementation of a member called &lt;code&gt;CompletedSynchronously&lt;/code&gt;:&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IAsyncResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CompletedSynchronously&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;If you believe the MSDN documentation, this member should return &lt;code&gt;true&lt;/code&gt; if the task was completed synchronously. Unfortunately, this member actually always returns &lt;code&gt;false&lt;/code&gt;, even for synchronously-completed Promise Tasks such as those returned from &lt;code&gt;Task.FromResult&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;IAsyncResult.CompletedSynchronously&lt;/code&gt; is used by some legacy &lt;code&gt;IAsyncResult&lt;/code&gt;-based code. But generally speaking, this member shouldn’t be used in modern code. In particular, you can’t depend on it being anything other than &lt;code&gt;false&lt;/code&gt; for tasks.&lt;/p&gt;
-</description>
-        <pubDate>Thu, 05 Feb 2015 00:00:00 -0500</pubDate>
-        <link>http://blog.stephencleary.com/2015/02/a-tour-of-task-part-8-starting.html</link>
-        <guid isPermaLink="true">http://blog.stephencleary.com/2015/02/a-tour-of-task-part-8-starting.html</guid>
       </item>
     
   </channel>
