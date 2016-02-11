@@ -20,7 +20,7 @@ Disclaimer Part 2: In fact, the whole React community is still new to React. Bes
 
 I'll be developing this project in the open [on GitHub](https://github.com/StephenCleary/todomvc-react-redux). I've decided to implement the ubiquitous [TodoMVC app](http://todomvc.com/), which is often used to help decide on client-side MVC frameworks. You can argue that React/Redux isn't really "MVC"-ish, but eh, whatever.
 
-The only problem with TodoMVC is that it doesn't have examples of asynchronous backend communication, which can make or break a framework decision. In keeping with the spirit of TodoMVC, my React/Redux implementation will also not have asynchronous communication; if I remember, I'll write a separate blog post describing how to do that after this series wraps up.
+One problem with TodoMVC is that it doesn't have examples of asynchronous backend communication, which can make or break a framework decision. In keeping with the spirit of TodoMVC, my React/Redux implementation will also not have asynchronous communication; if I remember, I'll write a separate blog post describing how to do that after this series wraps up.
 
 So, let's get started!
 
@@ -34,10 +34,6 @@ Here's what I've done so far, just some housekeeping work at the start:
 
 Groundbreaking, eh? Don't worry, this is just getting started! :)
 
-[Source code at this revision](https://github.com/StephenCleary/todomvc-react-redux/tree/9b881b0bea8070f850c8c78a6fcf4701287101ae)
+[Source code at this revision](https://github.com/StephenCleary/todomvc-react-redux/tree/9b881b0bea8070f850c8c78a6fcf4701287101ae) - [Live site at this revision](http://htmlpreview.github.io/?https://github.com/StephenCleary/todomvc-react-redux/blob/9b881b0bea8070f850c8c78a6fcf4701287101ae/index.html) (ignore the "startup flicker"; that's just due to the way it's hosted)
 
-[Live site at this revision](http://htmlpreview.github.io/?https://github.com/StephenCleary/todomvc-react-redux/blob/9b881b0bea8070f850c8c78a6fcf4701287101ae/index.html) (ignore the "startup flicker"; that's just due to the way it's hosted)
-
-[Most current source code](https://github.com/StephenCleary/todomvc-react-redux)
-
-[Most current live site](http://stephencleary.github.io/todomvc-react-redux/)
+[Most current source code](https://github.com/StephenCleary/todomvc-react-redux) - [Most current live site](http://stephencleary.github.io/todomvc-react-redux/)
