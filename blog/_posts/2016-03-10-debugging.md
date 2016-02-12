@@ -65,10 +65,35 @@ Finally, we need to hook up the dev tools to our store, in `store.jsx`:
 
 And that's it! We now have a powerful Redux debugging environment built right in to our application!
 
+## State Immutability
 
+One of the important rules of Redux is that Redux is in charge of the application state. Our code should never, ever change it.
 
-[Source code at this revision](https://github.com/StephenCleary/todomvc-react-redux/tree/) - [Live site at this revision](http://htmlpreview.github.io/?https://github.com/StephenCleary/todomvc-react-redux/blob//index.html) (ignore the "startup flicker"; that's just due to the way it's hosted)
+Some people like to use ImmutableJS (or something similar) to enforce the immutability of their application state. I prefer to use plain JS objects, but I do put in a "safeguard" that monitors the application state in development builds, and will spit errors out to the console if I ever do change the state.
+
+This is called the [Redux immutable state invariant](https://github.com/leoasis/redux-immutable-state-invariant), and is a form of [Redux middleware](http://redux.js.org/docs/advanced/Middleware.html). Middleware is a powerful concept: it's a way of hooking into actions before they actually are processed by the reducers.
+
+The Redux immutable state invariant can be installed as such (in `store.jsx`):
+
+    import { applyMiddleware, compose, createStore } from 'redux';
+    import immutableState from 'redux-immutable-state-invariant';
+
+    const middleware = applyMiddleware(immutableState());
+
+    const storeFactory = compose(middleware, DevTools.instrument())(createStore);
+
+    export default storeFactory(reducers);
+
+So, first we create our middleware, which in our simple app only consists of the immutable state invariant. In most real-world apps, there are usually other middlewares, such as the popular [`redux-thunk`](https://github.com/gaearon/redux-thunk).
+
+Then, we take the middleware (which is one kind of store enhancer), and combine it with our DevTools instrumentation (which is another store enhancer), and apply them to the core `createStore` method to create our store factory.
+
+Finally, we invoke the store factory on our reducers, which results in our singleton store.
+
+This is the most complex part of Redux; it can be a lot to wrap your head around at once. But you're past the worst part now! As you develop your own application, just add helpers like this individually as you need them, and pay attention to the terminology.
+
+Oh, and I do expect that JavaScript decorators will clean up this syntax a bit, if they ever get standardized...
+
+[Source code at this revision](https://github.com/StephenCleary/todomvc-react-redux/tree/408ecf2c2d5f82b04a284dfaaaa6396f14f0bd42) - [Live site at this revision](http://htmlpreview.github.io/?https://github.com/StephenCleary/todomvc-react-redux/blob/408ecf2c2d5f82b04a284dfaaaa6396f14f0bd42/index.html) (ignore the "startup flicker"; that's just due to the way it's hosted)
 
 [Most current source code](https://github.com/StephenCleary/todomvc-react-redux) - [Most current live site](http://stephencleary.github.io/todomvc-react-redux/)
-
-FUTURE: singleton immutable state (as opposed to a messaging bus) means applications grow in complexity linearly instead of geometrically
