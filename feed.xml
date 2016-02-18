@@ -8,6 +8,194 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="http://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>React/Redux TodoMVC, Part 1: Language and Tooling</title>
+        <description>&lt;p&gt;Modern JavaScript development is lightyears ahead of where it used to be. Last summer, ES2015 (ES6) was officially standardized, and even though browsers are taking their time adopting it, transpilers have existed for some time.&lt;/p&gt;
+
+&lt;h2 id=&quot;babel&quot;&gt;Babel&lt;/h2&gt;
+
+&lt;p&gt;After trying out a few options for DotNetApis, I settled on Babel. Babel allows you to specify exactly what language you want to support, and I have mine set up as ES2015, plus JSX, plus object spread/rest properties.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://babeljs.io/docs/learn-es2015/&quot;&gt;ES2015&lt;/a&gt; is the most basic standard for JavaScript development these days. If you’re not on ES2015, then you’re developing in the dark ages. Seriously. It will change your life.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://facebook.github.io/jsx/&quot;&gt;JSX&lt;/a&gt; is the syntactic extension that React uses for putting HTML in the JavaScript. Technically, React can work completely without JSX, but it’s harder to write and read. And it’s verbosely ugly, too.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://github.com/sebmarkbage/ecmascript-rest-spread&quot;&gt;Object rest/spread properties&lt;/a&gt; are a &lt;a href=&quot;http://www.2ality.com/2015/11/tc39-process.html&quot;&gt;Stage 2 proposal&lt;/a&gt; that will likely be in a future version of JavaScript. I include them in this project for reasons that will become clear when we develop our React reducers.&lt;/p&gt;
+
+&lt;p&gt;My &lt;code&gt;.babelrc&lt;/code&gt; file just enables these three presets:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;{
+  &quot;presets&quot;: [&quot;es2015&quot;, &quot;react&quot;, &quot;stage-2&quot;]
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&quot;no-typings---steve-sad&quot;&gt;No Typings - Steve Sad&lt;/h2&gt;
+
+&lt;p&gt;Unfortunately, there are no static typings with this setup. I tried really, &lt;em&gt;really&lt;/em&gt; hard to get them working, because at my core I’m a static typing kind of guy. I like my code completion, and I like my compiler checking!&lt;/p&gt;
+
+&lt;p&gt;You &lt;em&gt;can&lt;/em&gt; get (modern versions of) &lt;a href=&quot;http://www.typescriptlang.org/&quot;&gt;TypeScript&lt;/a&gt; to work with React. However, there are a few problems that I ran into.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;TypeScript is (much) slower than Babel at picking up new language features. TypeScript does support JSX now, but there’s no support for object rest/spread properties, which are very convenient.&lt;/li&gt;
+  &lt;li&gt;The existing typings repository is quite incomplete.&lt;/li&gt;
+  &lt;li&gt;The value of a more strict object-oriented system bolted onto JavaScript is dubious at best. I prefer libraries and patterns that take advantage of JavaScript’s inherently functional (or multi-paradign) nature.&lt;/li&gt;
+  &lt;li&gt;TSLint is way less mature and flexible than ESLint.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;That said, I do really like the benefits of static typing, and I tried quite hard to get TypeScript working with DotNetApis. However, all the little frustrations with TypeScript added up, and that initiative didn’t make it.&lt;/p&gt;
+
+&lt;p&gt;My problem &lt;em&gt;actually&lt;/em&gt; was that I didn’t really want to change languages to TypeScript. All I wanted was to use TypeScript as a static type checker for &lt;em&gt;modern&lt;/em&gt; JavaScript, and it’s this goal that I couldn’t get working. TypeScript is a fine language, but I wanted to use JavaScript.&lt;/p&gt;
+
+&lt;p&gt;There’s another, lesser known (for now) static typing system on the block: &lt;a href=&quot;https://code.facebook.com/posts/1505962329687926/flow-a-new-static-type-checker-for-javascript/&quot;&gt;Flow&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Flow looks exactly like what I need: static typing for JavaScript. Babel even has support for Flow ready to go!&lt;/p&gt;
+
+&lt;p&gt;Unfortunately, I just couldn’t get the (unofficial) Windows port to behave reliably. Flow works great for other platforms, but they need to fully support Windows if they’re going to edge out TypeScript.&lt;/p&gt;
+
+&lt;p&gt;Hopefully in the future, either TypeScript or Flow will meet my needs. For now, neither one does. :(&lt;/p&gt;
+
+&lt;h2 id=&quot;supporting-tools-eslint&quot;&gt;Supporting Tools: ESLint&lt;/h2&gt;
+
+&lt;p&gt;When it comes to linting modern JavaScript, &lt;a href=&quot;http://eslint.org/&quot;&gt;ESLint&lt;/a&gt; is the most flexible option. There’s an &lt;a href=&quot;https://github.com/yannickcr/eslint-plugin-react&quot;&gt;ESLint plugin for React&lt;/a&gt; that adds a lot of React-specific linting rules.&lt;/p&gt;
+
+&lt;p&gt;For now, I’m just going to turn on every rule. I’ll relax some of these as I go along, but for now ESLint will be very strict. My current &lt;code&gt;.eslintrc&lt;/code&gt; starts by setting up the language (ES2015 + JSX + object rest/spread) and environment (Browser, ES2015/ES6):&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;&quot;extends&quot;: &quot;eslint:recommended&quot;,
+&quot;plugins&quot;: [
+  &quot;react&quot;
+],
+&quot;ecmaFeatures&quot;: {
+  &quot;modules&quot;: true,
+  &quot;jsx&quot;: true,
+  &quot;experimentalObjectRestSpread&quot;: true
+},
+&quot;env&quot;: {
+  &quot;browser&quot;: true,
+  &quot;es6&quot;: true
+},
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;After this, I have a long section enabling all of the React/JSX rules, that I just copied and pasted from the &lt;a href=&quot;https://github.com/yannickcr/eslint-plugin-react/tree/8fe83a0e716ca2db225e98b37b4efa5e2f277848&quot;&gt;ESLint React plugin homepage&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;supporting-tools-webpack&quot;&gt;Supporting Tools: Webpack&lt;/h2&gt;
+
+&lt;p&gt;We’re also going to need a “bundler”. DotNetApis uses Webpack, so I’ll use it, too. I don’t have any experience with other bundlers; my initial research indicated that Webpack was popular, and I haven’t run into any problems with it, so that’s what I ended up with.&lt;/p&gt;
+
+&lt;p&gt;The TodoMVC framework expects a single &lt;code&gt;./js/app.js&lt;/code&gt; file to be our application, with other supporting source files also under &lt;code&gt;./js&lt;/code&gt;. So I’ll use &lt;code&gt;.jsx&lt;/code&gt; for our source files, and specify &lt;code&gt;./js/main.jsx&lt;/code&gt; as the “main entry point”.&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;webpack.config.js&lt;/code&gt; will start with that &lt;code&gt;main.jsx&lt;/code&gt;, load all &lt;code&gt;.jsx&lt;/code&gt; files via Babel, and output &lt;code&gt;app.js&lt;/code&gt;. Also, I’m going to include &lt;a href=&quot;https://webpack.github.io/docs/configuration.html#devtool&quot;&gt;webpack source maps&lt;/a&gt;. The webpack config file now looks like this:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;module.exports = {
+    entry: &#39;./js/main.jsx&#39;,
+    output: {
+        filename: &#39;./js/app.js&#39;
+    },
+    module: {
+        loaders: [
+            {
+                test: /\.jsx$/,
+                loader: &#39;babel-loader&#39;
+            }
+        ]
+    },
+    devtool: &#39;inline-source-map&#39;
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;With just a bit of tweaking, we can use &lt;a href=&quot;https://github.com/MoOx/eslint-loader&quot;&gt;&lt;code&gt;eslint-loader&lt;/code&gt;&lt;/a&gt; to lint while we build:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;module: {
+    loaders: [
+        {
+            test: /\.jsx$/,
+            loader: &#39;babel-loader&#39;
+        }
+    ],
+    preLoaders: [
+        {
+            test: /\.jsx$/,
+            loader: &#39;eslint-loader&#39;,
+            exclude: /node_modules/
+        }
+    ]
+},
+devtool: &#39;inline-source-map&#39;,
+eslint: {
+    configFile: &#39;./.eslintrc&#39;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&quot;supporting-tools-npm-scripts&quot;&gt;Supporting Tools: npm scripts&lt;/h2&gt;
+
+&lt;p&gt;Finally, we’re ready to bring it all together! All we have to do is add a &lt;code&gt;build&lt;/code&gt; script to our &lt;code&gt;package.json&lt;/code&gt; that runs &lt;code&gt;webpack&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;&quot;scripts&quot;: {
+  &quot;build&quot;: &quot;node_modules/.bin/webpack&quot;
+},
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;And now we can build our app!&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;npm run build
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&quot;watching&quot;&gt;Watching&lt;/h2&gt;
+
+&lt;p&gt;Watching is a piece of cake (in &lt;code&gt;package.json&lt;/code&gt;):&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;&quot;scripts&quot;: {
+  &quot;build&quot;: &quot;node_modules/.bin/webpack&quot;,
+  &quot;watch&quot;: &quot;node_modules/.bin/webpack --watch&quot;
+},
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Then we can have one command prompt open all the time, just for rebuilding our code files as they change:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;npm run watch
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&quot;supporting-tools-babel-runtime&quot;&gt;Supporting Tools: Babel Runtime&lt;/h2&gt;
+
+&lt;p&gt;Babel is an excellent transpiler, but it does require a &lt;a href=&quot;https://babeljs.io/docs/usage/polyfill/&quot;&gt;runtime polyfill&lt;/a&gt; for some language features. I’ll just include that for now in my &lt;code&gt;main.jsx&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;import &#39;babel-polyfill&#39;;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&quot;extra-credit-local-dev-server&quot;&gt;Extra Credit: Local Dev Server&lt;/h2&gt;
+
+&lt;p&gt;DotNetApis uses a real ASP.NET backend, so when I debug locally, I’m actually running the dev ASP.NET server. That won’t work in this scenario, so I checked out dev servers for npm. Of course, webpack has one, but it prevents webpack from writing its results to disk, which works great for some scenarios but is not what I’m wanting.&lt;/p&gt;
+
+&lt;p&gt;So I looked around and found a promising one called &lt;a href=&quot;https://www.npmjs.com/package/http-server&quot;&gt;&lt;code&gt;http-server&lt;/code&gt;&lt;/a&gt; (where “promising” means “used by a lot of other people so if I have problems they’re easy to solve”).&lt;/p&gt;
+
+&lt;p&gt;Install it, add a &lt;code&gt;serve&lt;/code&gt; script, and we’re all set! (in &lt;code&gt;package.json&lt;/code&gt;):&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;&quot;scripts&quot;: {
+  &quot;build&quot;: &quot;node_modules/.bin/webpack&quot;,
+  &quot;watch&quot;: &quot;node_modules/.bin/webpack --watch&quot;,
+  &quot;serve&quot;: &quot;node_modules/.bin/http-server -o&quot;
+},
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;I can now open a second command prompt for my HTTP server:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;npm run serve
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&quot;current-state&quot;&gt;Current State&lt;/h2&gt;
+
+&lt;p&gt;At this point, we’ve got automatic recompiling anytime our source files change, a local dev server to see the results, and the beginnings of a good development experience. Pop open your browser dev tools (F12), and you should see original source files - even though they’re not actually sent to the browser:&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;img src=&quot;/assets/SourceMaps.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/todomvc-react-redux/tree/41de4bc84d575443fcaa42e48eec7812e0e5b4c3&quot;&gt;Source code at this revision&lt;/a&gt; - &lt;a href=&quot;http://htmlpreview.github.io/?https://github.com/StephenCleary/todomvc-react-redux/blob/41de4bc84d575443fcaa42e48eec7812e0e5b4c3/index.html&quot;&gt;Live site at this revision&lt;/a&gt; (ignore the “startup flicker”; that’s just due to the way it’s hosted)&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/todomvc-react-redux&quot;&gt;Most current source code&lt;/a&gt; - &lt;a href=&quot;http://stephencleary.github.io/todomvc-react-redux/&quot;&gt;Most current live site&lt;/a&gt;&lt;/p&gt;
+</description>
+        <pubDate>Wed, 17 Feb 2016 00:00:00 -0500</pubDate>
+        <link>http://blog.stephencleary.com/2016/02/language-and-tooling.html</link>
+        <guid isPermaLink="true">http://blog.stephencleary.com/2016/02/language-and-tooling.html</guid>
+      </item>
+    
+      <item>
         <title>React/Redux TodoMVC, Part 0B: Why React? Why Redux?</title>
         <description>&lt;p&gt;I was a casualty of the Version 4 Browser Wars.&lt;/p&gt;
 
@@ -771,173 +959,6 @@ Active Version     Runtime Architecture Location                     Alias
         <pubDate>Thu, 05 Mar 2015 00:00:00 -0500</pubDate>
         <link>http://blog.stephencleary.com/2015/03/async-console-apps-on-net-coreclr.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2015/03/async-console-apps-on-net-coreclr.html</guid>
-      </item>
-    
-      <item>
-        <title>A Tour of Task, Part 9: Delegate Tasks</title>
-        <description>&lt;p&gt;Last time, we looked at &lt;a href=&quot;/2015/02/a-tour-of-task-part-8-starting.html&quot;&gt;some archaic ways to start Delegate Tasks&lt;/a&gt;. Today we’ll look at a few members for creating Delegate Tasks in more modern code. Unlike the task constructor, these methods return a Delegate Task that is &lt;em&gt;already running&lt;/em&gt; (or at least &lt;em&gt;already scheduled to run&lt;/em&gt;).&lt;/p&gt;
-
-&lt;h2 id=&quot;taskfactorystartnew&quot;&gt;TaskFactory.StartNew&lt;/h2&gt;
-
-&lt;p&gt;First up is the oft-overused &lt;code&gt;TaskFactory.StartNew&lt;/code&gt; method. There are a few overloads available:&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;StartNew&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;StartNew&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;StartNew&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskCreationOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;StartNew&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskCreationOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskScheduler&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-
-&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;StartNew&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;StartNew&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;StartNew&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskCreationOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;StartNew&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskCreationOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskScheduler&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-
-&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;StartNew&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;);&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;StartNew&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;StartNew&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskCreationOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;StartNew&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskCreationOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskScheduler&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-
-&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;StartNew&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;StartNew&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;StartNew&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskCreationOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;StartNew&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskCreationOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskScheduler&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;The overloads containing an &lt;code&gt;object&lt;/code&gt; parameter simply pass that value through to the continuation delegate; this is just an optimization to avoid an extra allocation in some cases, so we can ignore those overloads for now. That leaves two sets of overloads, which act like default parameters for the two core methods:&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;StartNew&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskCreationOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskScheduler&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;StartNew&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskCreationOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskScheduler&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;&lt;code&gt;StartNew&lt;/code&gt; can take a delegate without a return value (&lt;code&gt;Action&lt;/code&gt;) or with a return value (&lt;code&gt;Func&amp;lt;TResult&amp;gt;&lt;/code&gt;), and returns an appropriate task type based on whether the delegate returns a value. Note that neither of these delegate types are &lt;a href=&quot;/2014/02/synchronous-and-asynchronous-delegate.html&quot;&gt;&lt;code&gt;async&lt;/code&gt;-aware delegates&lt;/a&gt;; this causes complications when developers try to use &lt;code&gt;StartNew&lt;/code&gt; to start an asynchronous task.&lt;/p&gt;
-
-&lt;div class=&quot;alert alert-danger&quot;&gt;
-  &lt;p&gt;&lt;i class=&quot;fa fa-exclamation-triangle fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
-
-  &lt;p&gt;&lt;code&gt;TaskFactory.StartNew&lt;/code&gt; doesn’t support &lt;code&gt;async&lt;/code&gt;-aware delegates. &lt;code&gt;Task.Run&lt;/code&gt; does.&lt;/p&gt;
-&lt;/div&gt;
-
-&lt;p&gt;The “default values” for the &lt;code&gt;StartNew&lt;/code&gt; overloads come from their &lt;code&gt;TaskFactory&lt;/code&gt; instance. The &lt;code&gt;CancellationToken&lt;/code&gt; parameter defaults to &lt;code&gt;TaskFactory.CancellationToken&lt;/code&gt;. The &lt;code&gt;TaskCreationOptions&lt;/code&gt; parameter defaults to &lt;code&gt;TaskFactory.CreationOptions&lt;/code&gt;. The &lt;code&gt;TaskScheduler&lt;/code&gt; parameter defaults to &lt;code&gt;TaskFactory.Scheduler&lt;/code&gt;. Let’s consider each of these parameters in turn.&lt;/p&gt;
-
-&lt;h3 id=&quot;cancellationtoken&quot;&gt;CancellationToken&lt;/h3&gt;
-
-&lt;p&gt;First, the &lt;code&gt;CancellationToken&lt;/code&gt;. This paramter is often misunderstood. I’ve seen many (smart) developers pass a &lt;code&gt;CancellationToken&lt;/code&gt; to &lt;code&gt;StartNew&lt;/code&gt; believing that the token can be used to cancel the delegate at any time during its execution. However, this is not what happens. The &lt;code&gt;CancellationToken&lt;/code&gt; passed to &lt;code&gt;StartNew&lt;/code&gt; is only effective &lt;em&gt;before&lt;/em&gt; the delegate starts executing. In other words, it cancels the &lt;em&gt;starting&lt;/em&gt; of the delegate, not the delegate itself. Once that delegate starts executing, the &lt;code&gt;CancellationToken&lt;/code&gt; argument cannot be used to cancel that delegate. The delegate itself must observe the &lt;code&gt;CancellationToken&lt;/code&gt; (e.g., with &lt;code&gt;CancellationToken.ThrowIfCancellationRequested&lt;/code&gt;) in order to support cancellation after it starts executing.&lt;/p&gt;
-
-&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/i-do-not-think-it-means.jpg&quot;&gt;&lt;img src=&quot;/assets/i-do-not-think-it-means.jpg&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;However, there is a minor difference in behavior if you do also pass a &lt;code&gt;CancellationToken&lt;/code&gt; to &lt;code&gt;StartNew&lt;/code&gt;. If the delegate itself observes the &lt;code&gt;CancellationToken&lt;/code&gt;, then it will raise an &lt;code&gt;OperationCanceledException&lt;/code&gt;. If the &lt;code&gt;StartNew&lt;/code&gt; call does not include that &lt;code&gt;CancellationToken&lt;/code&gt;, then the returned task is faulted with that exception. However, if the delegate raises an &lt;code&gt;OperationCanceledException&lt;/code&gt; from the same &lt;code&gt;CancellationToken&lt;/code&gt; passed to &lt;code&gt;StartNew&lt;/code&gt;, then the returned task is &lt;em&gt;canceled&lt;/em&gt; instead of faulted, and the &lt;code&gt;OperationCanceledException&lt;/code&gt; is replaced with a &lt;code&gt;TaskCanceledException&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;OK, that was a bit much to describe in words. If you want to see the same details expressed in code, see the unit tests in &lt;a href=&quot;https://gist.github.com/StephenCleary/37d95619f7803f444d3d&quot;&gt;this gist&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;However, this difference in behavior does not impact your code as long as you use one of the the common patterns for detecting cancellation. For asynchronous code, you’d &lt;code&gt;await&lt;/code&gt; the task and catch an &lt;code&gt;OperationCanceledException&lt;/code&gt; (for more complete examples, see the unit tests in &lt;a href=&quot;https://gist.github.com/StephenCleary/dfd2a8b0a50ea3040695&quot;&gt;this gist&lt;/a&gt;):&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;c1&quot;&gt;// &amp;quot;task&amp;quot; was started by StartNew, and either StartNew or&lt;/span&gt;
-  &lt;span class=&quot;c1&quot;&gt;// the task delegate observes a cancellation token.&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;OperationCanceledException&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;c1&quot;&gt;// ex.CancellationToken contains the cancellation token,&lt;/span&gt;
-  &lt;span class=&quot;c1&quot;&gt;// if you need it.&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;For synchronous code, you’d call &lt;code&gt;Wait&lt;/code&gt; (or &lt;code&gt;Result&lt;/code&gt;) on the task and expect an &lt;code&gt;AggregateException&lt;/code&gt; whose &lt;code&gt;InnerException&lt;/code&gt; is an &lt;code&gt;OperationCanceledException&lt;/code&gt; (for more complete examples, see the unit tests in &lt;a href=&quot;https://gist.github.com/StephenCleary/6674ae30974f478a4b7f&quot;&gt;this gist&lt;/a&gt;):&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;c1&quot;&gt;// &amp;quot;task&amp;quot; was started by StartNew, and either StartNew or&lt;/span&gt;
-  &lt;span class=&quot;c1&quot;&gt;// the task delegate observes a cancellation token.&lt;/span&gt;
-  &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Wait&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AggregateException&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;exception&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;exception&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;InnerException&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;OperationCanceledException&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;c1&quot;&gt;// ex.CancellationToken contains the cancellation token,&lt;/span&gt;
-    &lt;span class=&quot;c1&quot;&gt;// if you need it.&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;In conclusion, the &lt;code&gt;CancellationToken&lt;/code&gt; parameter of &lt;code&gt;StarNew&lt;/code&gt; is nearly useless. It introduces some subtle changes in behavior, and is confusing to many developers. I never use it, myself.&lt;/p&gt;
-
-&lt;h3 id=&quot;taskcreationoptions&quot;&gt;TaskCreationOptions&lt;/h3&gt;
-
-&lt;p&gt;There are a couple of “scheduling options” that are just passed to the &lt;code&gt;TaskScheduler&lt;/code&gt; that schedules the task. &lt;code&gt;PreferFairness&lt;/code&gt; is a hint asking for FIFO behavior. &lt;code&gt;LongRunning&lt;/code&gt; is a hint that the task will execute for a long time. As of this writing, the &lt;code&gt;TaskScheduler.Default&lt;/code&gt; task scheduler will create a separate thread (outside the thread pool) for tasks with the &lt;code&gt;LongRunning&lt;/code&gt; flag; however, this behavior is not guaranteed. Note that both of these options are just hints; it is entirely appropriate for the &lt;code&gt;TaskScheduler&lt;/code&gt; to ignore them both.&lt;/p&gt;
-
-&lt;p&gt;There are a few more “scheduling options” that are not passed to the &lt;code&gt;TaskScheduler&lt;/code&gt;. The &lt;code&gt;HideScheduler&lt;/code&gt; option (introduced in .NET 4.5) will use the given task scheulder to schedule the task, but then will pretend that there is no current task scheduler while the task is executing; this can be used as a workaround for the unexpected default task scheduler (described below). The &lt;code&gt;RunContinuationsAsynchronously&lt;/code&gt; option (introduced in .NET 4.6) will force any continuations of this task to execute asynchronously.&lt;/p&gt;
-
-&lt;p&gt;The “parenting options” control how the task is attached to the currently-executing task. &lt;a href=&quot;https://msdn.microsoft.com/en-us/library/vstudio/dd997417(v=vs.110).aspx&quot;&gt;Attached child tasks&lt;/a&gt; change the &lt;a href=&quot;/2014/06/a-tour-of-task-part-3-status.html&quot;&gt;behavior of their parent task&lt;/a&gt; in ways that are convenient in some &lt;a href=&quot;https://msdn.microsoft.com/en-us/library/ff963551.aspx&quot;&gt;dynamic task parallelism&lt;/a&gt; scenarios, but are unexpected and awkward anywhere outside that (extremely small) use case. &lt;code&gt;AttachedToParent&lt;/code&gt; will attach the task as a child task of the currently-executing task. In modern code, you almost never want this option; more importantly, you almost never want &lt;em&gt;other&lt;/em&gt; code to attach child tasks to your tasks. For this reason, the &lt;code&gt;DenyChildAttach&lt;/code&gt; option was introduced in .NET 4.5, which prevents any other tasks from using &lt;code&gt;AttachedToParent&lt;/code&gt; to attach to this task.&lt;/p&gt;
-
-&lt;div class=&quot;alert alert-danger&quot;&gt;
-  &lt;p&gt;&lt;i class=&quot;fa fa-exclamation-triangle fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
-
-  &lt;p&gt;&lt;code&gt;Task.Factory.StartNew&lt;/code&gt; has a non-optimal default option setting of &lt;code&gt;TaskCreationOptions.None&lt;/code&gt;. &lt;code&gt;Task.Run&lt;/code&gt; uses the more appropriate default of &lt;code&gt;TaskCreationOptions.DenyChildAttach&lt;/code&gt;.&lt;/p&gt;
-&lt;/div&gt;
-
-&lt;h3 id=&quot;taskscheduler&quot;&gt;TaskScheduler&lt;/h3&gt;
-
-&lt;p&gt;The &lt;code&gt;TaskScheduler&lt;/code&gt; is used to schedule the continuation. A &lt;code&gt;TaskFactory&lt;/code&gt; may define its own &lt;code&gt;TaskScheduler&lt;/code&gt; which it uses by default. Note that the default &lt;code&gt;TaskScheduler&lt;/code&gt; of the static &lt;code&gt;Task.Factory&lt;/code&gt; instance is &lt;em&gt;not&lt;/em&gt; &lt;code&gt;TaskScheduler.Default&lt;/code&gt;, but rather &lt;code&gt;TaskScheduler.Current&lt;/code&gt;. This fact has caused quite a bit of confusion over the years, because the vast majority of the time, developers expect (and desire) &lt;code&gt;TaskScheduler.Default&lt;/code&gt;. I’ve &lt;a href=&quot;/2013/08/startnew-is-dangerous.html&quot;&gt;described this problem in detail before&lt;/a&gt;, but a little review never hurts.&lt;/p&gt;
-
-&lt;p&gt;The following code first creates a UI task factory to schedule work to the UI thread. Then, as a part of that work, it starts some work to run in the background.&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Button_Click&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;object&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sender&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;RoutedEventArgs&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;e&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ui&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskFactory&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TaskScheduler&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FromCurrentSynchronizationContext&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;());&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;ui&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;StartNew&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;n&quot;&gt;Debug&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;WriteLine&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;UI on thread &amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CurrentManagedThreadId&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-        &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Factory&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;StartNew&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-            &lt;span class=&quot;n&quot;&gt;Debug&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;WriteLine&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;Background work on thread &amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CurrentManagedThreadId&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;});&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;});&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;The output on my system is:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;UI on thread 9
-Background work on thread 9
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;The problem is that while the outer &lt;code&gt;StartNew&lt;/code&gt; is running, &lt;code&gt;TaskScheduler.Current&lt;/code&gt; is the UI task scheduler. This is picked up as the default value for the &lt;code&gt;TaskScheduler&lt;/code&gt; parameter by the inner &lt;code&gt;StartNew&lt;/code&gt;, which causes the background work to be scheduled to the UI thread rather than a thread pool thread. This scenario can be avoided by passing &lt;code&gt;HideScheduler&lt;/code&gt; to the outer &lt;code&gt;StartNew&lt;/code&gt; task, or by passing an explicit &lt;code&gt;TaskScheduler.Default&lt;/code&gt; to the inner &lt;code&gt;StartNew&lt;/code&gt;.&lt;/p&gt;
-
-&lt;div class=&quot;alert alert-danger&quot;&gt;
-  &lt;p&gt;&lt;i class=&quot;fa fa-exclamation-triangle fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
-
-  &lt;p&gt;&lt;code&gt;Task.Factory.StartNew&lt;/code&gt; has a confusing default scheduler &lt;code&gt;TaskScheduler.Current&lt;/code&gt;. &lt;code&gt;Task.Run&lt;/code&gt; always uses the appropriate default of &lt;code&gt;TaskScheduler.Default&lt;/code&gt;.&lt;/p&gt;
-&lt;/div&gt;
-
-&lt;p&gt;&lt;strong&gt;In conclusion&lt;/strong&gt;, I do not recommend using &lt;code&gt;Task.Factory.StartNew&lt;/code&gt; at all, unless you are doing &lt;a href=&quot;https://msdn.microsoft.com/en-us/library/ff963551.aspx&quot;&gt;dynamic task parallelism&lt;/a&gt; (which is extremely rare). In modern code, you should almost always use &lt;code&gt;Task.Run&lt;/code&gt; instead. If you do have a custom &lt;code&gt;TaskScheduler&lt;/code&gt; (e.g., one of the schedulers in &lt;code&gt;ConcurrentExclusiveSchedulerPair&lt;/code&gt;), then it is appropriate to create your own &lt;code&gt;TaskFactory&lt;/code&gt; instance and use &lt;code&gt;StartNew&lt;/code&gt; on that; however, &lt;code&gt;Task.Factory.StartNew&lt;/code&gt; should be avoided.&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;Update, 2015-03-04 &lt;a href=&quot;https://twitter.com/i3arnon/status/573169519482540033&quot;&gt;(suggested by Bar Arnon)&lt;/a&gt;:&lt;/strong&gt; If you do choose to use &lt;code&gt;StartNew&lt;/code&gt; (i.e., if you need to use a custom &lt;code&gt;TaskScheduler&lt;/code&gt;), bear in mind that &lt;code&gt;StartNew&lt;/code&gt; does not automatically handle asynchronous delegates. To run asynchronous code on a custom task scheduler, you’ll need to use &lt;code&gt;Unwrap&lt;/code&gt;.&lt;/p&gt;
-
-&lt;h2 id=&quot;taskrun&quot;&gt;Task.Run&lt;/h2&gt;
-
-&lt;p&gt;&lt;code&gt;Task.Run&lt;/code&gt; is the modern, preferred method for queueing work to the thread pool. It does not work with custom schedulers, but provides a simpler API than &lt;code&gt;Task.Factory.StartNew&lt;/code&gt;, and is &lt;code&gt;async&lt;/code&gt;-aware to boot:&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Run&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Run&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-
-&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Run&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;);&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Run&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-
-&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Run&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;);&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Run&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-
-&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Run&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&amp;gt;);&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Run&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&amp;gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;There are three axis of overloading going on here: whether or not there is a &lt;code&gt;CancellationToken&lt;/code&gt;, whether the delegate returns a &lt;code&gt;TResult&lt;/code&gt; value, and whether the delegate is synchronous (&lt;code&gt;Action&lt;/code&gt;/&lt;code&gt;Func&amp;lt;TResult&amp;gt;&lt;/code&gt;) or asynchronous (&lt;code&gt;Func&amp;lt;Task&amp;gt;&lt;/code&gt;/&lt;code&gt;Func&amp;lt;Task&amp;lt;TResult&amp;gt;&amp;gt;&lt;/code&gt;). Technically, &lt;code&gt;Task.Run&lt;/code&gt; does not always create a Delegate Task; when it is given an asynchronous delegate, it actually returns a Promise Task. But conceptually, &lt;code&gt;Task.Run&lt;/code&gt; is specifically for executing delegates on the thread pool, so I’m covering this set of overloads along with &lt;code&gt;StartNew&lt;/code&gt; (which always does create Delegate Tasks).&lt;/p&gt;
-
-&lt;p&gt;The &lt;code&gt;CancellationToken&lt;/code&gt; parameter sadly has the same problems described above for &lt;code&gt;StartNew&lt;/code&gt;. That is, it really only cancels the &lt;em&gt;scheduling&lt;/em&gt; of the delegate, which happens almost immediately. The presence of the &lt;code&gt;CancellationToken&lt;/code&gt; argument does change the semantics slightly, similarly to &lt;code&gt;StartNew&lt;/code&gt;. The full unit tests are &lt;a href=&quot;https://gist.github.com/StephenCleary/37d95619f7803f444d3d&quot;&gt;in this gist&lt;/a&gt;, which has only one result that may be surprising: if an asynchronous delegate explicitly observes a &lt;code&gt;CancellationToken&lt;/code&gt;, the returned task will be &lt;em&gt;canceled&lt;/em&gt; instead of &lt;em&gt;faulted&lt;/em&gt;. Just like &lt;code&gt;TaskFactory.StartNew&lt;/code&gt;, these minor differences in semantics don’t matter if the consuming code uses the standard pattern for detecting cancellation.&lt;/p&gt;
-
-&lt;p&gt;So, I conclude that the &lt;code&gt;CancellationToken&lt;/code&gt; parameter of &lt;code&gt;Task.Run&lt;/code&gt; is pretty much useless.&lt;/p&gt;
-
-&lt;p&gt;However, the other overloads are quite useful, and &lt;code&gt;Task.Run&lt;/code&gt; is the best modern way for most code to queue work to the thread pool.&lt;/p&gt;
-</description>
-        <pubDate>Tue, 03 Mar 2015 00:00:00 -0500</pubDate>
-        <link>http://blog.stephencleary.com/2015/03/a-tour-of-task-part-9-delegate-tasks.html</link>
-        <guid isPermaLink="true">http://blog.stephencleary.com/2015/03/a-tour-of-task-part-9-delegate-tasks.html</guid>
       </item>
     
   </channel>
