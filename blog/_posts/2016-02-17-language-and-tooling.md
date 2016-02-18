@@ -31,14 +31,13 @@ Unfortunately, there are no static typings with this setup. I tried really, *rea
 You *can* get (modern versions of) [TypeScript](http://www.typescriptlang.org/) to work with React. However, there are a few problems that I ran into.
 
 - TypeScript is (much) slower than Babel at picking up new language features. TypeScript does support JSX now, but there's no support for object rest/spread properties, which are very convenient.
-- It seems that Anders' team is more interested in getting it working for Visual Studio [Code] than in developing a true cross-platform language. When you see what issues the team prioritizes, you just get that feeling.
 - The existing typings repository is quite incomplete.
 - The value of a more strict object-oriented system bolted onto JavaScript is dubious at best. I prefer libraries and patterns that take advantage of JavaScript's inherently functional (or multi-paradign) nature.
 - TSLint is way less mature and flexible than ESLint.
 
 That said, I do really like the benefits of static typing, and I tried quite hard to get TypeScript working with DotNetApis. However, all the little frustrations with TypeScript added up, and that initiative didn't make it.
 
-My problem is that I didn't really want to change languages to TypeScript. All I wanted was to use TypeScript as a static type checker for *modern* JavaScript, and it's this goal that I couldn't get working. TypeScript is a fine language, but I wanted to use JavaScript.
+My problem *actually* was that I didn't really want to change languages to TypeScript. All I wanted was to use TypeScript as a static type checker for *modern* JavaScript, and it's this goal that I couldn't get working. TypeScript is a fine language, but I wanted to use JavaScript.
 
 There's another, lesser known (for now) static typing system on the block: [Flow](https://code.facebook.com/posts/1505962329687926/flow-a-new-static-type-checker-for-javascript/).
 
@@ -151,7 +150,7 @@ Babel is an excellent transpiler, but it does require a [runtime polyfill](https
 
 DotNetApis uses a real ASP.NET backend, so when I debug locally, I'm actually running the dev ASP.NET server. That won't work in this scenario, so I checked out dev servers for npm. Of course, webpack has one, but it prevents webpack from writing its results to disk, which works great for some scenarios but is not what I'm wanting.
 
-So I looked around and found a promising looking one called [`http-server`](https://www.npmjs.com/package/http-server) (where "promising" means "used by a lot of other people so if I have problems they're easy to solve").
+So I looked around and found a promising one called [`http-server`](https://www.npmjs.com/package/http-server) (where "promising" means "used by a lot of other people so if I have problems they're easy to solve").
 
 Install it, add a `serve` script, and we're all set! (in `package.json`):
 
@@ -167,7 +166,7 @@ I can now open a second command prompt for my HTTP server:
 
 ## Current State
 
-At this point, we've got automatic recompiling anytime our source files change, a local dev server to see the results, and the beginnings of a great development experience. Pop open your browser dev tools (F12), and you should see original source files - even though they're not actually sent to the browser:
+At this point, we've got automatic recompiling anytime our source files change, a local dev server to see the results, and the beginnings of a good development experience. Pop open your browser dev tools (F12), and you should see original source files - even though they're not actually sent to the browser:
 
 {:.center}
 ![]({{ site_url }}/assets/SourceMaps.png)

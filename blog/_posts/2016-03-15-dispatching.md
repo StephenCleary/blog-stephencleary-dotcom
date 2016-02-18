@@ -17,15 +17,15 @@ Let's do it!
 Redux provides a way to get a `dispatch` method passed to our view components. Currently, our `Main` view component looks like this:
 
     function Main() {
-		...
-	}
+        ...
+    }
 
 With Redux, we can use [the `connect` method](https://github.com/rackt/react-redux/blob/master/docs/api.md#connectmapstatetoprops-mapdispatchtoprops-mergeprops-options) to notify the `Provider` that we will need the `dispatch` method. `Main` now looks like this (in `main.jsx`):
 
     function MainImpl({dispatch}) {
-		...
-	}
-	const Main = connect()(MainImpl);
+        ...
+    }
+    const Main = connect()(MainImpl);
 
 This code would be a bit cleaner if we were defining `Main` in its own file. And we will, shortly. :)
 

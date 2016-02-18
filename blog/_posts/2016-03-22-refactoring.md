@@ -11,16 +11,16 @@ Today we're going to start breaking up that huge `Main` component. Yes, I said "
 There's three big parts to the `Main` component: a header, a main part, and a footer:
 
     <section className="todoapp">
-	    <header className="header">
-		    ...
-		</header>
-		<section className="main">
-		    ...
-		</section>
-		<footer className="footer">
-		    ...
-		</footer>
-	</section>
+        <header className="header">
+            ...
+        </header>
+        <section className="main">
+            ...
+        </section>
+        <footer className="footer">
+            ...
+        </footer>
+    </section>
 
 Since I already have a `Main` component (oops), at the end of this point I'm going to rename my `Main` component to be `TodoApp` instead. My goal here is consistency: I'm going to break up `TodoApp` into `Header`, `Main`, and `Footer`, in a way that the `class` of each HTML element will match the name of its React component. This just results in more maintainable code.
 
@@ -46,7 +46,7 @@ I'm going to (temporarily) call that middle child `Todos` instead of `Main` (I'l
         // This section should be hidden by default and shown when there are todos
         return (
             <section className="main">
-			  (copied from main.jsx)
+              (copied from main.jsx)
             </section>
         );
     }
