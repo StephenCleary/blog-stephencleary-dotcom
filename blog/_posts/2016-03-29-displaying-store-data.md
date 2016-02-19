@@ -90,7 +90,7 @@ OK, so we'll have `TodoItem` receive its data (the todo item) from its parent co
 The structure of your application state is defined (implicitly) by your reducers.
 </div>
 
-So, the shape of our todo item is `{ completed: boolean, text: string }`. We'll just have our `TodoItem` component take an `item` that matches that same pattern, and use its properties to generate the HTML:
+So, the shape of our todo item is `{ completed: boolean, text: string }`. We'll just have our `TodoItem` component take an `item` that matches that same pattern, and use its properties to generate the HTML (in `components/todoItem.jsx`):
 
     function TodoItem({item}) {
         // List items should get the class `editing` when editing and `completed` when marked as completed.
@@ -121,7 +121,7 @@ Also of note is that `{item.text}` is an actual *expression*. In fact, *any* kin
 
 Before moving on, one last React best practice: let's have our component tell React what types of `props` it's expecting. Eventually, I hope this kind of information will be used by IDEs to drive JSX autocompletion (and conformance warnings), but even today PropTypes are useful since they are checked at runtime if you run the non-minimized version of React (which we are).
 
-Defining the `propTypes` is straightforward:
+Defining the `propTypes` is straightforward (in `components/todoItem.jsx`):
 
     TodoItem.propTypes = {
         item: React.PropTypes.shape({
@@ -140,7 +140,7 @@ I hope that in the future, `propTypes` could be implied by flow annotations, so 
 
 Now let's move to the `TodoList` component. We want this component to get the collection of todo items from the store, and then pass each one down to a `TodoItem` instance.
 
-Let's connect it to the store first, using [Redux's `connect`](https://github.com/reactjs/react-redux/blob/master/docs/api.md#connectmapstatetoprops-mapdispatchtoprops-mergeprops-options):
+Let's connect it to the store first, using [Redux's `connect`](https://github.com/reactjs/react-redux/blob/master/docs/api.md#connectmapstatetoprops-mapdispatchtoprops-mergeprops-options) (in `components/todoList.jsx`):
 
 	import React from 'react';
 	import { connect } from 'react-redux';
@@ -180,7 +180,7 @@ There's a straightforward way to map a source array (of todo items) to a result 
 Tip: It's much more natural to approach React/Redux using functional programming rather than imperative. In this example, `map` (functional) is a better fit than `for of` (imperative). Both solutions are possible, but the functional approach is less awkward.
 </div>
 
-Using `map`, our `TodoList` can look like this:
+Using `map`, our `TodoList` can look like this (in `component/todoList.jsx`):
 
 	function TodoList({todos}) {
 		return (
@@ -227,7 +227,19 @@ By specifying the `key` explicitly, I'm just telling React that I know this isn'
 
 ## What We've Done So Far
 
+At this point, we have:
 
+- Our application data locked inside a Redux store.
+- An action `ADD_TODO` that allows adding a todo item.
+- A reducer that handles `ADD_TODO` by appending a todo item to the existing list of todo items.
+- An input box that triggers the `ADD_TODO` item.
+- Our own `TodoList` and `TodoItem` components which show the todo items.
+
+This completes the first "loop". We now have the capability to dynamically add todo items via the input box, and our todo list will update itself by creating a new todo item component.
+
+Note that all the data flows in one direction, through one central store. In particular, the input box does *not* tell the `TodoList` component that there's a new todo. Instead, all updates are dispatched to the store, and the store notifies all components.
+
+This establishes the store as the single source of truth in our application. It seems like a lot of overhead for a simple application, but in more complex applications, having a single source of truth is incredibly empowering.
 
 [Source code at this revision](https://github.com/StephenCleary/todomvc-react-redux/tree/) - [Live site at this revision](http://htmlpreview.github.io/?https://github.com/StephenCleary/todomvc-react-redux/blob//index.html) (ignore the "startup flicker"; that's just due to the way it's hosted)
 
