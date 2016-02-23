@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>React/Redux TodoMVC, Part 1: Language and Tooling</title>
+    <title>React/Redux TodoMVC, Part 2: Getting Started</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Setting up Babel, ESLint, and Webpack for ES2015+/JSX." />
-    <link rel="canonical" href="http://blog.stephencleary.com/2016/02/language-and-tooling.html" />
+    <meta name="description" content="Converting the TodoMVC to JSX." />
+    <link rel="canonical" href="http://blog.stephencleary.com/2016/02/getting-started.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -219,190 +219,77 @@ code {
 
   <header>
       <div class="page-header">
-          <h1>React/Redux TodoMVC, Part 1: Language and Tooling</h1>
-          <small><time datetime="2016-02-17">Feb 17, 2016</time> &bull; <a data-disqus-identifier="/2016/02/language-and-tooling" href="#disqus_thread">Comments</a></small>
+          <h1>React/Redux TodoMVC, Part 2: Getting Started</h1>
+          <small><time datetime="2016-02-23">Feb 23, 2016</time> &bull; <a data-disqus-identifier="/2016/02/getting-started" href="#disqus_thread">Comments</a></small>
       </div>
   </header>
 
   <article>
-  <p>Modern JavaScript development is lightyears ahead of where it used to be. Last summer, ES2015 (ES6) was officially standardized, and even though browsers are taking their time adopting it, transpilers have existed for some time.</p>
+  <p>Let’s introduce some React! The <code>react</code> package contains almost everything, and the <code>react-dom</code> package is the piece that injects our React application into the browser DOM.</p>
 
-<h2 id="babel">Babel</h2>
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
 
-<p>After trying out a few options for DotNetApis, I settled on Babel. Babel allows you to specify exactly what language you want to support, and I have mine set up as ES2015, plus JSX, plus object spread/rest properties.</p>
+  <p>Most modern JavaScript libraries do not assume they’re running in a browser. This is to enable server-side rendering. It’s not as crazy as it sounds! Check out <a href="https://channel9.msdn.com/Events/ASPNET-Events/ASPNET-Fall-Sessions/ASPNET--Spa">this video</a> of <a href="https://github.com/aspnet/NodeServices">work being done on ASP.NET Core <em>right now</em></a> where ASP.NET hosts Node, runs the web app on the server, and then sends the results to the client.</p>
+</div>
 
-<p><a href="https://babeljs.io/docs/learn-es2015/">ES2015</a> is the most basic standard for JavaScript development these days. If you’re not on ES2015, then you’re developing in the dark ages. Seriously. It will change your life.</p>
+<h2 id="our-first-react-component">Our First React Component</h2>
 
-<p><a href="https://facebook.github.io/jsx/">JSX</a> is the syntactic extension that React uses for putting HTML in the JavaScript. Technically, React can work completely without JSX, but it’s harder to write and read. And it’s verbosely ugly, too.</p>
+<p>For now, I just want to move the boilerplate HTML code into my JSX file. We’ll tear it apart more properly later. So, I imported React and wrote a <code>Main</code> method (in <code>main.jsx</code>):</p>
 
-<p><a href="https://github.com/sebmarkbage/ecmascript-rest-spread">Object rest/spread properties</a> are a <a href="http://www.2ality.com/2015/11/tc39-process.html">Stage 2 proposal</a> that will likely be in a future version of JavaScript. I include them in this project for reasons that will become clear when we develop our React reducers.</p>
+<pre><code>import React from 'react';
+function Main() {
+    return (
 
-<p>My <code>.babelrc</code> file just enables these three presets:</p>
-
-<pre><code>{
-  "presets": ["es2015", "react", "stage-2"]
+    );
 }
 </code></pre>
 
-<h2 id="no-typings---steve-sad">No Typings - Steve Sad</h2>
+<p>and pasted all the <code>&lt;section class="todoapp"&gt;</code> HTML in there.</p>
 
-<p>Unfortunately, there are no static typings with this setup. I tried really, <em>really</em> hard to get them working, because at my core I’m a static typing kind of guy. I like my code completion, and I like my compiler checking!</p>
-
-<p>You <em>can</em> get (modern versions of) <a href="http://www.typescriptlang.org/">TypeScript</a> to work with React. However, there are a few problems that I ran into.</p>
+<p>JSX isn’t <em>quite</em> HTML; it’s just pretty close. Here’s a list of tidying up I had to do (note that ESLint will catch all of these):</p>
 
 <ul>
-  <li>TypeScript is (much) slower than Babel at picking up new language features. TypeScript does support JSX now, but there’s no support for object rest/spread properties, which are very convenient.</li>
-  <li>The existing typings repository is quite incomplete.</li>
-  <li>The value of a more strict object-oriented system bolted onto JavaScript is dubious at best. I prefer libraries and patterns that take advantage of JavaScript’s inherently functional (or multi-paradign) nature.</li>
-  <li>TSLint is way less mature and flexible than ESLint.</li>
+  <li>Unclosed elements are not allowed. In particular, <code>&lt;input&gt;</code> tags must become <code>&lt;input/&gt;</code> tags. This is totally understandable.</li>
+  <li>JSX has no notion of comments. You can work around this by embedding JavaScript comments. So all <code>&lt;!--</code> must be replaced by <code>{/*</code>, and all <code>--&gt;</code> by <code>*/}</code>. This is <em>not</em> understandable; it’s annoying.</li>
+  <li>JSX is case-sensitive, and prefers camelCasing. E.g., <code>autofocus</code> needs to be <code>autoFocus</code>.</li>
+  <li>There’s a few reserved words in JavaScript that JSX has to work around. In particular, the common <code>class</code> HTML attribute has to be <code>className</code> in JSX.</li>
 </ul>
 
-<p>That said, I do really like the benefits of static typing, and I tried quite hard to get TypeScript working with DotNetApis. However, all the little frustrations with TypeScript added up, and that initiative didn’t make it.</p>
+<p>It’s also time to turn off some ESLint warnings that are just too pedantic. <a href="https://github.com/yannickcr/eslint-plugin-react/blob/master/docs/rules/jsx-no-literals.md">jsx-no-literals</a> and <a href="https://github.com/yannickcr/eslint-plugin-react/blob/master/docs/rules/jsx-max-props-per-line.md">jsx-max-props-per-line</a> are history.</p>
 
-<p>My problem <em>actually</em> was that I didn’t really want to change languages to TypeScript. All I wanted was to use TypeScript as a static type checker for <em>modern</em> JavaScript, and it’s this goal that I couldn’t get working. TypeScript is a fine language, but I wanted to use JavaScript.</p>
+<p>This gets us down to a more reasonable number of warnings:</p>
 
-<p>There’s another, lesser known (for now) static typing system on the block: <a href="https://code.facebook.com/posts/1505962329687926/flow-a-new-static-type-checker-for-javascript/">Flow</a>.</p>
+<p class="center"><img src="/assets/ESLintWarnings.png" alt="" /></p>
 
-<p>Flow looks exactly like what I need: static typing for JavaScript. Babel even has support for Flow ready to go!</p>
+<p>Of these, I’m going to fix <code>autoFocus</code> in the source, and turn off <a href="https://github.com/yannickcr/eslint-plugin-react/blob/master/docs/rules/jsx-sort-props.md">jsx-sort-props</a>, which leaves us with the display name.</p>
 
-<p>Unfortunately, I just couldn’t get the (unofficial) Windows port to behave reliably. Flow works great for other platforms, but they need to fully support Windows if they’re going to edge out TypeScript.</p>
+<p>The <a href="https://github.com/yannickcr/eslint-plugin-react/blob/master/docs/rules/display-name.md">display name</a> warning triggers when you don’t explicitly give React a name for your component that it can use in error messages. In this case, though, Babel will do it automatically for us, so we just need to let ESLint know that it’s OK (in <code>.eslintrc</code>):</p>
 
-<p>Hopefully in the future, either TypeScript or Flow will meet my needs. For now, neither one does. :(</p>
-
-<h2 id="supporting-tools-eslint">Supporting Tools: ESLint</h2>
-
-<p>When it comes to linting modern JavaScript, <a href="http://eslint.org/">ESLint</a> is the most flexible option. There’s an <a href="https://github.com/yannickcr/eslint-plugin-react">ESLint plugin for React</a> that adds a lot of React-specific linting rules.</p>
-
-<p>For now, I’m just going to turn on every rule. I’ll relax some of these as I go along, but for now ESLint will be very strict. My current <code>.eslintrc</code> starts by setting up the language (ES2015 + JSX + object rest/spread) and environment (Browser, ES2015/ES6):</p>
-
-<pre><code>"extends": "eslint:recommended",
-"plugins": [
-  "react"
-],
-"ecmaFeatures": {
-  "modules": true,
-  "jsx": true,
-  "experimentalObjectRestSpread": true
-},
-"env": {
-  "browser": true,
-  "es6": true
-},
+<pre><code>"react/display-name": [1, { "acceptTranspilerName": true }],
 </code></pre>
 
-<p>After this, I have a long section enabling all of the React/JSX rules, that I just copied and pasted from the <a href="https://github.com/yannickcr/eslint-plugin-react/tree/8fe83a0e716ca2db225e98b37b4efa5e2f277848">ESLint React plugin homepage</a>.</p>
+<h2 id="sticking-it-in-the-dom">Sticking It in the DOM</h2>
 
-<h2 id="supporting-tools-webpack">Supporting Tools: Webpack</h2>
+<p>First, let’s define a placeholder for our app in th HTML; I added this line where I removed the <code>&lt;section class="todoapp"&gt;</code> (in <code>index.html</code>):</p>
 
-<p>We’re also going to need a “bundler”. DotNetApis uses Webpack, so I’ll use it, too. I don’t have any experience with other bundlers; my initial research indicated that Webpack was popular, and I haven’t run into any problems with it, so that’s what I ended up with.</p>
-
-<p>The TodoMVC framework expects a single <code>./js/app.js</code> file to be our application, with other supporting source files also under <code>./js</code>. So I’ll use <code>.jsx</code> for our source files, and specify <code>./js/main.jsx</code> as the “main entry point”.</p>
-
-<p>The <code>webpack.config.js</code> will start with that <code>main.jsx</code>, load all <code>.jsx</code> files via Babel, and output <code>app.js</code>. Also, I’m going to include <a href="https://webpack.github.io/docs/configuration.html#devtool">webpack source maps</a>. The webpack config file now looks like this:</p>
-
-<pre><code>module.exports = {
-    entry: './js/main.jsx',
-    output: {
-        filename: './js/app.js'
-    },
-    module: {
-        loaders: [
-            {
-                test: /\.jsx$/,
-                loader: 'babel-loader'
-            }
-        ]
-    },
-    devtool: 'inline-source-map'
-};
+<pre><code>&lt;div id="app"&gt;&lt;/div&gt;
 </code></pre>
 
-<p>With just a bit of tweaking, we can use <a href="https://github.com/MoOx/eslint-loader"><code>eslint-loader</code></a> to lint while we build:</p>
+<p>This will create an extra <code>&lt;div&gt;</code> wrapper in the output, but that’s usually not anything to worry about.</p>
 
-<pre><code>module: {
-    loaders: [
-        {
-            test: /\.jsx$/,
-            loader: 'babel-loader'
-        }
-    ],
-    preLoaders: [
-        {
-            test: /\.jsx$/,
-            loader: 'eslint-loader',
-            exclude: /node_modules/
-        }
-    ]
-},
-devtool: 'inline-source-map',
-eslint: {
-    configFile: './.eslintrc'
-}
+<p>Next, we import <code>render</code> from <code>react-dom</code> and then load our app after the DOM is loaded (in <code>main.jsx</code>):</p>
+
+<pre><code>import { render } from 'react-dom';
+
+// Definition of Main
+
+window.onload = () =&gt; render(Main(), document.getElementById('app'));
 </code></pre>
 
-<h2 id="supporting-tools-npm-scripts">Supporting Tools: npm scripts</h2>
+<p>Now we can build and run our app. It still doesn’t do anything, but now it’s a <em>React</em> component that doesn’t do anything. :)</p>
 
-<p>Finally, we’re ready to bring it all together! All we have to do is add a <code>build</code> script to our <code>package.json</code> that runs <code>webpack</code>:</p>
-
-<pre><code>"scripts": {
-  "build": "node_modules/.bin/webpack"
-},
-</code></pre>
-
-<p>And now we can build our app!</p>
-
-<pre><code>npm run build
-</code></pre>
-
-<h2 id="watching">Watching</h2>
-
-<p>Watching is a piece of cake (in <code>package.json</code>):</p>
-
-<pre><code>"scripts": {
-  "build": "node_modules/.bin/webpack",
-  "watch": "node_modules/.bin/webpack --watch"
-},
-</code></pre>
-
-<p>Then we can have one command prompt open all the time, just for rebuilding our code files as they change:</p>
-
-<pre><code>npm run watch
-</code></pre>
-
-<h2 id="supporting-tools-babel-runtime">Supporting Tools: Babel Runtime</h2>
-
-<p>Babel is an excellent transpiler, but it does require a <a href="https://babeljs.io/docs/usage/polyfill/">runtime polyfill</a> for some language features. I’ll just include that for now in my <code>main.jsx</code>:</p>
-
-<pre><code>import 'babel-polyfill';
-</code></pre>
-
-<h2 id="extra-credit-local-dev-server">Extra Credit: Local Dev Server</h2>
-
-<p>DotNetApis uses a real ASP.NET backend, so when I debug locally, I’m actually running the dev ASP.NET server. That won’t work in this scenario, so I checked out dev servers for npm. Of course, webpack has one, but it prevents webpack from writing its results to disk, which works great for some scenarios but is not what I’m wanting.</p>
-
-<p>So I looked around and found a promising one called <a href="https://www.npmjs.com/package/http-server"><code>http-server</code></a> (where “promising” means “used by a lot of other people so if I have problems they’re easy to solve”).</p>
-
-<p>Install it, add a <code>serve</code> script, and we’re all set! (in <code>package.json</code>):</p>
-
-<pre><code>"scripts": {
-  "build": "node_modules/.bin/webpack",
-  "watch": "node_modules/.bin/webpack --watch",
-  "serve": "node_modules/.bin/http-server -o"
-},
-</code></pre>
-
-<p>I can now open a second command prompt for my HTTP server:</p>
-
-<pre><code>npm run serve
-</code></pre>
-
-<h2 id="current-state">Current State</h2>
-
-<p>At this point, we’ve got automatic recompiling anytime our source files change, a local dev server to see the results, and the beginnings of a good development experience. Pop open your browser dev tools (F12), and you should see original source files - even though they’re not actually sent to the browser:</p>
-
-<p class="center"><img src="/assets/SourceMaps.png" alt="" /></p>
-
-<p><a href="https://github.com/StephenCleary/todomvc-react-redux/tree/41de4bc84d575443fcaa42e48eec7812e0e5b4c3">Source code at this revision</a> - <a href="http://htmlpreview.github.io/?https://github.com/StephenCleary/todomvc-react-redux/blob/41de4bc84d575443fcaa42e48eec7812e0e5b4c3/index.html">Live site at this revision</a> (ignore the “startup flicker”; that’s just due to the way it’s hosted)</p>
+<p><a href="https://github.com/StephenCleary/todomvc-react-redux/tree/f54223a8647b43b99d62a547505c4b5908459bb6">Source code at this revision</a> - <a href="http://htmlpreview.github.io/?https://github.com/StephenCleary/todomvc-react-redux/blob/f54223a8647b43b99d62a547505c4b5908459bb6/index.html">Live site at this revision</a> (ignore the “startup flicker”; that’s just due to the way it’s hosted)</p>
 
 <p><a href="https://github.com/StephenCleary/todomvc-react-redux">Most current source code</a> - <a href="http://stephencleary.github.io/todomvc-react-redux/">Most current live site</a></p>
 
@@ -411,14 +298,13 @@ eslint: {
     <footer>
         
             <ul class="pager">
-                <li class="previous"><a href="/2016/02/why-react-why-redux.html" title="React/Redux TodoMVC, Part 0B: Why React? Why Redux?">&larr; Previous in React/Redux TodoMVC</a></li>
-                <li class="next"><a href="/2016/02/getting-started.html" title="React/Redux TodoMVC, Part 2: Getting Started">Next in React/Redux TodoMVC &rarr;</a></li>
+                <li class="previous"><a href="/2016/02/language-and-tooling.html" title="React/Redux TodoMVC, Part 1: Language and Tooling">&larr; Previous in React/Redux TodoMVC</a></li>
             </ul>
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2016/02/why-react-why-redux.html" title="React/Redux TodoMVC, Part 0B: Why React? Why Redux?">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2016/02/getting-started.html" title="React/Redux TodoMVC, Part 2: Getting Started">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2016/02/language-and-tooling.html" title="React/Redux TodoMVC, Part 1: Language and Tooling">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="disqus_thread"></div>
@@ -435,8 +321,8 @@ eslint: {
                         <ul class="nav nav-pills nav-stacked">
                                             <li class="sidenavitem"><a href="/2016/02/react-redux-todomvc.html">Introduction</a></li>
                                             <li class="sidenavitem"><a href="/2016/02/why-react-why-redux.html">Why React? Why Redux?</a></li>
-                                            <li class="active sidenavitem"><a href="/2016/02/language-and-tooling.html">Language and Tooling</a></li>
-                                            <li class="sidenavitem"><a href="/2016/02/getting-started.html">Getting Started</a></li>
+                                            <li class="sidenavitem"><a href="/2016/02/language-and-tooling.html">Language and Tooling</a></li>
+                                            <li class="active sidenavitem"><a href="/2016/02/getting-started.html">Getting Started</a></li>
                         </ul>
                     </div>
                 </div>
@@ -579,9 +465,9 @@ eslint: {
 <!-- Disqus variables -->
 <script type="text/javascript">
     var disqus_shortname = 'stephencleary';
-    var disqus_identifier = "/2016/02/language-and-tooling";
-    var disqus_title = "React/Redux TodoMVC, Part 1: Language and Tooling";
-    var disqus_url = "http://blog.stephencleary.com/2016/02/language-and-tooling.html";
+    var disqus_identifier = "/2016/02/getting-started";
+    var disqus_title = "React/Redux TodoMVC, Part 2: Getting Started";
+    var disqus_url = "http://blog.stephencleary.com/2016/02/getting-started.html";
 </script>
 
 <!-- Disqus comment counter -->
