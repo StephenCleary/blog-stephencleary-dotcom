@@ -241,23 +241,6 @@ Note that all the data flows in one direction, through one central store. In par
 
 This establishes the store as the single source of truth in our application. It seems like a lot of overhead for a simple application, but in more complex applications, having a single source of truth is incredibly empowering.
 
-[Source code at this revision](https://github.com/StephenCleary/todomvc-react-redux/tree/) - [Live site at this revision](http://htmlpreview.github.io/?https://github.com/StephenCleary/todomvc-react-redux/blob//index.html) (ignore the "startup flicker"; that's just due to the way it's hosted)
+[Source code at this revision](https://github.com/StephenCleary/todomvc-react-redux/tree/c12e47b7e5a4abd74e79d14f047a9d29831c343e) - [Live site at this revision](http://htmlpreview.github.io/?https://github.com/StephenCleary/todomvc-react-redux/blob/c12e47b7e5a4abd74e79d14f047a9d29831c343e/index.html) (ignore the "startup flicker"; that's just due to the way it's hosted)
 
 [Most current source code](https://github.com/StephenCleary/todomvc-react-redux) - [Most current live site](http://stephencleary.github.io/todomvc-react-redux/)
-
-
-
-FUTURE:
-
-The problem with data-binding frameworks (MVC / MVVM)
-singleton immutable state (as opposed to a messaging bus) means applications grow in complexity linearly instead of geometrically
-
-Reducer composition
-
-Inline CSS
-
-React/Redux vs jQuery (why the fight: it's actually a fight over where state is stored)
-
-React + whatever; Redux + whatever
-
-React Native

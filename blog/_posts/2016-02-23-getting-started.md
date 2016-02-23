@@ -30,7 +30,7 @@ and pasted all the `<section class="todoapp">` HTML in there.
 JSX isn't *quite* HTML; it's just pretty close. Here's a list of tidying up I had to do (note that ESLint will catch all of these):
 
 - Unclosed elements are not allowed. In particular, `<input>` tags must become `<input/>` tags. This is totally understandable.
-- JSX has no notion of comments. You can work around this by embedding JavaScript comments. So all `<!--` must be replaced by `{/*`, and all `-->` by `*/}`. This is not understandable; it's annoying.
+- JSX has no notion of comments. You can work around this by embedding JavaScript comments. So all `<!--` must be replaced by `{/*`, and all `-->` by `*/}`. This is *not* understandable; it's annoying.
 - JSX is case-sensitive, and prefers camelCasing. E.g., `autofocus` needs to be `autoFocus`.
 - There's a few reserved words in JavaScript that JSX has to work around. In particular, the common `class` HTML attribute has to be `className` in JSX.
 
