@@ -8,6 +8,160 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="http://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>React/Redux TodoMVC, Part 3: State</title>
+        <description>&lt;p&gt;Last time we introduced React; this time we’ll introduce Redux!&lt;/p&gt;
+
+&lt;p&gt;It’s time to add application state. How about the TODO items? Seems like a decent place to start.&lt;/p&gt;
+
+&lt;p&gt;Before we can add our first piece of application state, though, there’s some boilerplate we need to write. It’s time to introduce a lot of new concepts, including Redux.&lt;/p&gt;
+
+&lt;div class=&quot;alert alert-info&quot;&gt;
+  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
+
+  &lt;p&gt;Please be patient with this step. It seems like a lot to get started, but trust me, once it’s all in place, adding to it is &lt;em&gt;really&lt;/em&gt; simple and easy!&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;actions-and-state&quot;&gt;Actions and State&lt;/h2&gt;
+
+&lt;p&gt;Actions and state are kind of related. Once you have both actions and state, then you can add actions or state individually. But when you’re first starting out, you really have to define actions &lt;em&gt;and&lt;/em&gt; state.&lt;/p&gt;
+
+&lt;p&gt;So, in order to define our list of TODO items (as &lt;em&gt;state&lt;/em&gt;), we also have to define an action to go along with it. An “Add TODO” action sounds like it would be a great fit!&lt;/p&gt;
+
+&lt;h2 id=&quot;actions&quot;&gt;Actions&lt;/h2&gt;
+
+&lt;p&gt;Actions are just plain old objects. Our actions are going to follow the &lt;a href=&quot;https://github.com/acdlite/flux-standard-action&quot;&gt;Flux Standard Action&lt;/a&gt; model, which means they’ll have a &lt;code&gt;type&lt;/code&gt; property (generally a string, since that makes debugging and serialization easier) and (for non-error actions) a &lt;code&gt;payload&lt;/code&gt; property. There are a couple other properties, but those are for more advanced scenarios; this simple app will only need &lt;code&gt;type&lt;/code&gt; and &lt;code&gt;payload&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Let’s define our “Add TODO” action! Well, it’ll need a &lt;code&gt;type&lt;/code&gt; first off. In real-world projects, it’s useful to define &lt;em&gt;all&lt;/em&gt; the action types in a single file. So, that’s what I’ll do here (in &lt;code&gt;actionTypes.jsx&lt;/code&gt;):&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;export default {
+    ADD_TODO: &#39;ADD_TODO&#39;
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Next, the &lt;code&gt;payload&lt;/code&gt;. The data that travels as arguments of the &lt;code&gt;ADD_TODO&lt;/code&gt; action is the TODO item itself (a string). So the &lt;code&gt;payload&lt;/code&gt; can simply be a string in this case.&lt;/p&gt;
+
+&lt;h2 id=&quot;action-creators&quot;&gt;Action Creators&lt;/h2&gt;
+
+&lt;p&gt;Now that we have a good understanding of the structure of our action, we can implement the action creator. There’s a helper library called &lt;code&gt;redux-actions&lt;/code&gt; that minimizes the repetitive code. With that, we can define our &lt;code&gt;ADD_TODO&lt;/code&gt; action (in &lt;code&gt;actions/todoActions.jsx&lt;/code&gt;):&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;import ActionTypes from &#39;../actionTypes&#39;;
+import { createAction } from &#39;redux-actions&#39;;
+
+export default {
+    add: createAction(ActionTypes.ADD_TODO)
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This is a bit dense… To clarify, we’re creating an object &lt;code&gt;TodoActions&lt;/code&gt; that has a method &lt;code&gt;add&lt;/code&gt; on it. This method takes a single parameter, which is the value of the action’s &lt;code&gt;payload&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;So, the line:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;    add: createAction(ActionTypes.ADD_TODO)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;is really the same as this:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;    add: createAction(ActionTypes.ADD_TODO, todoItem =&amp;gt; todoItem)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;which is the same as this:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;    add: todoItem =&amp;gt; ({ type: ActionTypes.ADD_TODO, payload: todoItem })
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;In Redux, an Action Creator is just a function that creates an action.&lt;/p&gt;
+
+&lt;h2 id=&quot;state&quot;&gt;State&lt;/h2&gt;
+
+&lt;p&gt;The next step is to define some application state (our collection of todos), and define how the &lt;code&gt;ADD_TODO&lt;/code&gt; action affects that state. Presumably, it should just add the new item to our collection. The TODOs in our collection will need a couple properties: the actual TODO text (which I’ll call &lt;code&gt;text&lt;/code&gt;), and a flag indicating whether the TODO is completed (which I’ll call &lt;code&gt;completed&lt;/code&gt;).&lt;/p&gt;
+
+&lt;p&gt;This is where it gets a bit wild.&lt;/p&gt;
+
+&lt;p&gt;Let’s define the &lt;a href=&quot;https://rackt.org/redux/docs/basics/Reducers.html&quot;&gt;reducer&lt;/a&gt; first, using the &lt;code&gt;react-actions&lt;/code&gt; helper method &lt;code&gt;handleActions&lt;/code&gt; (in &lt;code&gt;reducer.jsx&lt;/code&gt;):&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;import { handleActions } from &#39;redux-actions&#39;;
+import ActionTypes from &#39;./actionTypes&#39;;
+
+export default handleActions({
+    [ActionTypes.ADD_TODO]: (state, action) =&amp;gt; [...state, { completed: false, text: action.payload }]
+}, []);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;OK, so let’s break this down. I’m calling &lt;code&gt;handleActions&lt;/code&gt; with two parameters: an object containing the actual reducer method, and an empty array &lt;code&gt;[]&lt;/code&gt;. That second parameter is just the &lt;em&gt;initial state&lt;/em&gt; of our todo collection - it’s easier to have it be an empty collection rather than &lt;code&gt;undefined&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Now, let’s look at the object. I’m using the &lt;a href=&quot;http://exploringjs.com/es6/ch_oop-besides-classes.html#_computed-property-keys-1&quot;&gt;ES2015 computed property key syntax&lt;/a&gt; to define a function named &lt;code&gt;ADD_TODO&lt;/code&gt;, which is our actual reducer.&lt;/p&gt;
+
+&lt;p&gt;Our reducer takes two parameters: the existing state and the incoming action, and returns the new state (that is, what the state becomes after applying the action).&lt;/p&gt;
+
+&lt;div class=&quot;alert alert-info&quot;&gt;
+  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
+
+  &lt;p&gt;Important note: A reducer should &lt;strong&gt;never do anything else!&lt;/strong&gt; It’s a mistake to have a reducer do any I/O, or modify the existing state in-place. It should &lt;em&gt;only&lt;/em&gt; return the new state.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;p&gt;For the &lt;code&gt;ADD_TODO&lt;/code&gt; action, we just need to add a new TODO to our collection, setting &lt;code&gt;completed&lt;/code&gt; to &lt;code&gt;false&lt;/code&gt; and &lt;code&gt;text&lt;/code&gt; to the TODO text (which, for the &lt;code&gt;ADD_TODO&lt;/code&gt; action, is the action’s &lt;code&gt;payload&lt;/code&gt;):&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;(state, action) =&amp;gt; [...state, { completed: false, text: action.payload }]
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;I’m using the &lt;a href=&quot;http://exploringjs.com/es6/ch_parameter-handling.html#_spreading-into-arrays&quot;&gt;ES2015 array spread operator&lt;/a&gt; to easily create a &lt;em&gt;new&lt;/em&gt; array of TODOs that contains all the elements of the old array of TODOs, plus the new TODO that I create from the action.&lt;/p&gt;
+
+&lt;div class=&quot;alert alert-info&quot;&gt;
+  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
+
+  &lt;p&gt;There are a few competing patterns for writing reducers. &lt;a href=&quot;http://facebook.github.io/immutable-js/&quot;&gt;ImmutableJS&lt;/a&gt; is one popular option for representing state, in spite of its serialization difficulties. However, in my projects so far, I just use regular JS objects, along with a helper plugin that double-checks my immutability in dev builds. I find this approach is sufficient for me.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;the-store&quot;&gt;The Store&lt;/h2&gt;
+
+&lt;p&gt;So, we’ve got some basic application state, and we’ve got an action, and we’ve got a reducer that applies that action to our state. Good so far, but there’s a couple more pieces to hook up still.&lt;/p&gt;
+
+&lt;p&gt;First off, we need to tell Redux to actually create our store. Recall from my drawing of how Redux works, that it will create the store using our reducer (the shaded parts are mostly done &lt;em&gt;for&lt;/em&gt; us):&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;img src=&quot;/assets/ReduxInReality.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;In Redux, our store is a singleton, so I’m going to just expose it as a global object from &lt;code&gt;store.jsx&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;import { createStore } from &#39;redux&#39;;
+import reducers from &#39;./reducers&#39;;
+
+export default createStore(reducers);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Quite literally, I’m taking our reducer from &lt;code&gt;reducers.jsx&lt;/code&gt; and passing it to Redux’s &lt;code&gt;createStore&lt;/code&gt; method. Very straightforward.&lt;/p&gt;
+
+&lt;p&gt;You might wonder why I bothered putting this in its own file. That will become clear in the next post, when I add debugging helpers in here.&lt;/p&gt;
+
+&lt;h2 id=&quot;the-views&quot;&gt;The Views&lt;/h2&gt;
+
+&lt;p&gt;The final piece to hook up is to provide our store to our view components. Right now, our view components don’t actually &lt;em&gt;use&lt;/em&gt; the application state (that is, they’re still just displaying the boilerplate HTML, not our actual collection of TODO items). However, they will start displaying the application state soon enough!&lt;/p&gt;
+
+&lt;p&gt;We provide the store to our views using Redux’s &lt;code&gt;Provider&lt;/code&gt;. It looks like this (in &lt;code&gt;main.jsx&lt;/code&gt;):&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;import { Provider } from &#39;react-redux&#39;;
+import store from &#39;./store&#39;;
+
+.. // function Main() hasn&#39;t changed
+
+window.onload = () =&amp;gt; render(&amp;lt;Provider store={store}&amp;gt;&amp;lt;Main/&amp;gt;&amp;lt;/Provider&amp;gt;, document.getElementById(&#39;app&#39;));
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;That’s it for now! We give the &lt;code&gt;Provider&lt;/code&gt; element our store, and it provides a way for our view components to get at it.&lt;/p&gt;
+
+&lt;p&gt;Now we have an action (with a type and a creator), a reducer to apply that action to our state, a singleton store containing the application state, and the provider that allows our views to read the application state.&lt;/p&gt;
+
+&lt;p&gt;The main thing missing, of course, is something to actually trigger the action. We’ll add that in soon, though!&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/todomvc-react-redux/tree/58b3a25c0166b7cc2d1909933744e6e290da82df&quot;&gt;Source code at this revision&lt;/a&gt; - &lt;a href=&quot;http://htmlpreview.github.io/?https://github.com/StephenCleary/todomvc-react-redux/blob/58b3a25c0166b7cc2d1909933744e6e290da82df/index.html&quot;&gt;Live site at this revision&lt;/a&gt; (ignore the “startup flicker”; that’s just due to the way it’s hosted)&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/todomvc-react-redux&quot;&gt;Most current source code&lt;/a&gt; - &lt;a href=&quot;http://stephencleary.github.io/todomvc-react-redux/&quot;&gt;Most current live site&lt;/a&gt;&lt;/p&gt;
+</description>
+        <pubDate>Tue, 01 Mar 2016 00:00:00 -0500</pubDate>
+        <link>http://blog.stephencleary.com/2016/03/state.html</link>
+        <guid isPermaLink="true">http://blog.stephencleary.com/2016/03/state.html</guid>
+      </item>
+    
+      <item>
         <title>React/Redux TodoMVC, Part 2: Getting Started</title>
         <description>&lt;p&gt;Let’s introduce some React! The &lt;code&gt;react&lt;/code&gt; package contains almost everything, and the &lt;code&gt;react-dom&lt;/code&gt; package is the piece that injects our React application into the browser DOM.&lt;/p&gt;
 
@@ -795,21 +949,6 @@ Alternative Visited Methods 64 of 83 (77.11)
         <pubDate>Sat, 28 Mar 2015 00:00:00 -0400</pubDate>
         <link>http://blog.stephencleary.com/2015/03/continuous-integration-code-coverage-open-source-net-coreclr-projects.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2015/03/continuous-integration-code-coverage-open-source-net-coreclr-projects.html</guid>
-      </item>
-    
-      <item>
-        <title>GRDevDay 2015</title>
-        <description>&lt;p&gt;Once again I had the privilege of speaking at &lt;a href=&quot;http://grdevday.org/&quot;&gt;Grand Rapids DevDay 2015&lt;/a&gt;, my “most local” conference. Someday I’ll write up a bit more about GRDevDay, but for now I’ll just say it’s a conference I always enjoy. :)&lt;/p&gt;
-
-&lt;p&gt;My morning talk was &lt;strong&gt;Introduction to Async and Await&lt;/strong&gt;. Believe it or not, this was my first time presenting just an async intro talk at a conference. It went pretty well once I got the projector working. :)&lt;/p&gt;
-
-&lt;p&gt;Slides and demo code are &lt;a href=&quot;https://github.com/StephenCleary/Presentations/tree/57ff9987955ae098ddfd4b4c46201e0eeeeae49f/Intro%20to%20Async&quot;&gt;available on GitHub&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;My afternoon talk is on &lt;strong&gt;Async Unit Testing&lt;/strong&gt;. Full slides and demo are also &lt;a href=&quot;https://github.com/StephenCleary/Presentations/tree/9173ae58793ae0dd10ab0af0840656121e0cb8b9/Async%20Unit%20Testing&quot;&gt;available on GitHub&lt;/a&gt;.&lt;/p&gt;
-</description>
-        <pubDate>Sat, 21 Mar 2015 00:00:00 -0400</pubDate>
-        <link>http://blog.stephencleary.com/2015/03/grdevday-2015.html</link>
-        <guid isPermaLink="true">http://blog.stephencleary.com/2015/03/grdevday-2015.html</guid>
       </item>
     
   </channel>
