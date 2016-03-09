@@ -8,6 +8,107 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="http://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>React/Redux TodoMVC, Part 4: Debugging</title>
+        <description>&lt;p&gt;The debugging support available for React and Redux is amazing! When you do make mistakes in your app, React will give you helpful console error messages.&lt;/p&gt;
+
+&lt;p&gt;In fact, when we converted the HTML to JSX, React started giving us errors in the console:&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;img src=&quot;/assets/ReactWarnings.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Take a moment and actually read those error messages! Those are nice and detailed, telling you exactly what you did wrong, what the effect will be, how to fix it, and where to fix it! We’ll fix those errors when we make those controls into actual React components; until then, they’ll just be read-only, as the warning states.&lt;/p&gt;
+
+&lt;p&gt;Redux goes even further with its own kind of debugging view, which we’ll add today. This thing looks simple but is just mindblowing in its power (and I was &lt;em&gt;so&lt;/em&gt; late in adding this to DotNetApis!). We’ll be adding this dark box on the right:&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;img src=&quot;/assets/ReduxDevTools.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;It’s called &lt;a href=&quot;https://github.com/gaearon/redux-devtools&quot;&gt;Redux DevTools&lt;/a&gt;, and not only does it display a history of all your actions and application state, but it also lets you rewind history and pretend actions never happened!&lt;/p&gt;
+
+&lt;h2 id=&quot;creating-devtools&quot;&gt;Creating DevTools&lt;/h2&gt;
+
+&lt;p&gt;Interestingly enough, the first step in incorporating Redux DevTools is to create the monitors that we want to use to display them.&lt;/p&gt;
+
+&lt;p&gt;For our system, we’ll use the semi-standard &lt;code&gt;LogMonitor&lt;/code&gt;-within-&lt;code&gt;DockMonitor&lt;/code&gt; approach, in a new &lt;code&gt;devTools.jsx&lt;/code&gt; file:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;import React from &#39;react&#39;;
+import { createDevTools } from &#39;redux-devtools&#39;;
+import LogMonitor from &#39;redux-devtools-log-monitor&#39;;
+import DockMonitor from &#39;redux-devtools-dock-monitor&#39;;
+
+export default createDevTools(
+    &amp;lt;DockMonitor toggleVisibilityKey=&quot;ctrl-h&quot; changePositionKey=&quot;ctrl-j&quot; defaultSize={0.2}&amp;gt;
+        &amp;lt;LogMonitor theme=&quot;bright&quot; /&amp;gt;
+    &amp;lt;/DockMonitor&amp;gt;
+);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Pretty straightforward: we take a &lt;code&gt;LogMonitor&lt;/code&gt;, wrapped in a &lt;code&gt;DockMonitor&lt;/code&gt;, and pass that to the &lt;code&gt;createDevTools&lt;/code&gt; method from &lt;code&gt;redux-devtools&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;using-devtools&quot;&gt;Using DevTools&lt;/h2&gt;
+
+&lt;p&gt;We also have to include this new &lt;code&gt;DevTools&lt;/code&gt; component in our application, which we can do right in &lt;code&gt;main.jsx&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;window.onload = () =&amp;gt; {
+    const root = (
+        &amp;lt;Provider store={store}&amp;gt;
+            &amp;lt;div&amp;gt;
+                &amp;lt;Main/&amp;gt;
+                &amp;lt;DevTools/&amp;gt;
+            &amp;lt;/div&amp;gt;
+        &amp;lt;/Provider&amp;gt;
+    );
+    render(root, document.getElementById(&#39;app&#39;));
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Note that we had to put an extra &lt;code&gt;&amp;lt;div&amp;gt;&lt;/code&gt; wrapper around our &lt;code&gt;Main&lt;/code&gt; and &lt;code&gt;DevTools&lt;/code&gt; components. This is because &lt;code&gt;Provider&lt;/code&gt; can only have one child component. I find that my React applications do end up with some extra &lt;code&gt;&amp;lt;div&amp;gt;&lt;/code&gt; wrappers scattered throughout, just due to React limitations. It’s not a big deal, though.&lt;/p&gt;
+
+&lt;p&gt;Finally, we need to hook up the dev tools to our store, in &lt;code&gt;store.jsx&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;export default createStore(reducers, DevTools.instrument());
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;And that’s it! We now have a powerful Redux debugging environment built right in to our application!&lt;/p&gt;
+
+&lt;h2 id=&quot;state-immutability&quot;&gt;State Immutability&lt;/h2&gt;
+
+&lt;p&gt;One of the important rules of Redux is that Redux is in charge of the application state. Our code should never, ever change it.&lt;/p&gt;
+
+&lt;p&gt;Some people like to use ImmutableJS (or something similar) to enforce the immutability of their application state. I prefer to use plain JS objects, but I do put in a “safeguard” that monitors the application state in development builds, and will spit errors out to the console if I ever do change the state.&lt;/p&gt;
+
+&lt;p&gt;This is called the &lt;a href=&quot;https://github.com/leoasis/redux-immutable-state-invariant&quot;&gt;Redux immutable state invariant&lt;/a&gt;, and is a form of &lt;a href=&quot;http://redux.js.org/docs/advanced/Middleware.html&quot;&gt;Redux middleware&lt;/a&gt;. Middleware is a powerful concept: it’s a way of hooking into actions before they actually are processed by the reducers.&lt;/p&gt;
+
+&lt;p&gt;The Redux immutable state invariant can be installed as such (in &lt;code&gt;store.jsx&lt;/code&gt;):&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;import { applyMiddleware, compose, createStore } from &#39;redux&#39;;
+import immutableState from &#39;redux-immutable-state-invariant&#39;;
+
+const middleware = applyMiddleware(immutableState());
+
+const storeFactory = compose(middleware, DevTools.instrument())(createStore);
+
+export default storeFactory(reducers);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;So, first we create our middleware, which in our simple app only consists of the immutable state invariant. In most real-world apps, there are usually other middlewares, such as the popular &lt;a href=&quot;https://github.com/gaearon/redux-thunk&quot;&gt;&lt;code&gt;redux-thunk&lt;/code&gt;&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Then, we take the middleware (which is one kind of store enhancer), and combine it with our DevTools instrumentation (which is another store enhancer), and apply them to the core &lt;code&gt;createStore&lt;/code&gt; method to create our store factory.&lt;/p&gt;
+
+&lt;p&gt;Finally, we invoke the store factory on our reducers, which results in our singleton store.&lt;/p&gt;
+
+&lt;p&gt;This is the most complex part of Redux; it can be a lot to wrap your head around at once. But you’re past the worst part now! As you develop your own application, just add helpers like this individually as you need them, and pay attention to the terminology.&lt;/p&gt;
+
+&lt;p&gt;Oh, and I do expect that JavaScript decorators will clean up this syntax a bit, if they ever get standardized…&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/todomvc-react-redux/tree/408ecf2c2d5f82b04a284dfaaaa6396f14f0bd42&quot;&gt;Source code at this revision&lt;/a&gt; - &lt;a href=&quot;http://htmlpreview.github.io/?https://github.com/StephenCleary/todomvc-react-redux/blob/408ecf2c2d5f82b04a284dfaaaa6396f14f0bd42/index.html&quot;&gt;Live site at this revision&lt;/a&gt; (ignore the “startup flicker”; that’s just due to the way it’s hosted)&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/todomvc-react-redux&quot;&gt;Most current source code&lt;/a&gt; - &lt;a href=&quot;http://stephencleary.github.io/todomvc-react-redux/&quot;&gt;Most current live site&lt;/a&gt;&lt;/p&gt;
+</description>
+        <pubDate>Tue, 08 Mar 2016 00:00:00 -0500</pubDate>
+        <link>http://blog.stephencleary.com/2016/03/debugging.html</link>
+        <guid isPermaLink="true">http://blog.stephencleary.com/2016/03/debugging.html</guid>
+      </item>
+    
+      <item>
         <title>React/Redux TodoMVC, Part 3: State</title>
         <description>&lt;p&gt;Last time we introduced React; this time we’ll introduce Redux!&lt;/p&gt;
 
@@ -754,201 +855,6 @@ eslint: {
         <pubDate>Thu, 30 Apr 2015 00:00:00 -0400</pubDate>
         <link>http://blog.stephencleary.com/2015/04/a-tour-of-task-part-10-promise-tasks.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2015/04/a-tour-of-task-part-10-promise-tasks.html</guid>
-      </item>
-    
-      <item>
-        <title>Continuous Integration and Code Coverage for Open Source .NET CoreCLR Projects</title>
-        <description>&lt;p&gt;So, I’ve been doing some more CoreCLR work, gradually porting over all my OSS projects. I just recently learned about some great tools during this process, so this post is for any other devs out there who want to start porting to CoreCLR.&lt;/p&gt;
-
-&lt;p&gt;Here’s a screenshot of the first project that I converted to CoreCLR; it is hosted on GitHub, and is tied to a continuous integration system that kicks off on every checkin (the “build” and “coverage” badges show live data). The best part? All of this infrastructure support is free! :)&lt;/p&gt;
-
-&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/OssBadges.png&quot;&gt;&lt;img src=&quot;/assets/OssBadges.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&quot;unit-tests-xunit&quot;&gt;Unit Tests: xUnit&lt;/h2&gt;
-
-&lt;p&gt;It seems like CoreCLR development is centering around xUnit, who were the first to push into this new platform. The actual Microsoft CoreCLR projects use &lt;a href=&quot;https://github.com/dotnet/buildtools&quot;&gt;a special runner for xUnit called &lt;code&gt;xunit.console.netcore&lt;/code&gt;&lt;/a&gt;; unfortunately, that &lt;a href=&quot;http://nuget.org/packages/Microsoft.DotNet.BuildTools&quot;&gt;NuGet package&lt;/a&gt; has been unlisted, so it’s difficult to use for our own projects.&lt;/p&gt;
-
-&lt;p&gt;So, I took the approach of using a &lt;a href=&quot;http://xunit.github.io/docs/getting-started-aspnet.html&quot;&gt;standard xUnit runner for ASP.NET projects; their web page has pretty good instructions&lt;/a&gt;. Just bear in mind that you must be in the same directory as the &lt;code&gt;project.json&lt;/code&gt; for your unit test project before you can run &lt;code&gt;k test&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;Once you have unit tests running from the command line with a simple &lt;code&gt;k test&lt;/code&gt;, then it’s time to move on to continuous integration.&lt;/p&gt;
-
-&lt;h2 id=&quot;continuous-integration-appveyor&quot;&gt;Continuous Integration: AppVeyor&lt;/h2&gt;
-
-&lt;p&gt;AppVeyor is one of several CI solutions who provide free builds for OSS. In addition, AppVeyor is one of the few who support VS2015 preview builds. As they describe &lt;a href=&quot;http://www.appveyor.com/blog/2015/01/20/visual-studio-2015-ctp-image&quot;&gt;on their blog&lt;/a&gt;, there’s two initial steps to enable VS2015 support: use a VS2015 CTP image, and modify your &lt;code&gt;PATH&lt;/code&gt; so it picks up the correct &lt;code&gt;msbuild&lt;/code&gt; version.&lt;/p&gt;
-
-&lt;p&gt;Once you’ve linked your GitHub project to AppVeyor, selecting the image is straightforward; I’m using VS2015 CTP 6 (the most recent as of this writing):&lt;/p&gt;
-
-&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/AppVeyor.Image.png&quot;&gt;&lt;img src=&quot;/assets/AppVeyor.Image.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;However, actually getting it to build is a bit more challenging. I currently have the following set up as a PowerShell “Install Script” for my AppVeyor build:&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-powershell&quot; data-lang=&quot;powershell&quot;&gt;&lt;span class=&quot;n&quot;&gt;iex&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;new-object&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;net&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;webclient&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;DownloadString&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;&amp;#39;https://raw.githubusercontent.com/aspnet/Home/master/kvminstall.ps1&amp;#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
-
-&lt;span class=&quot;nv&quot;&gt;$env:Path&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;C:\Program Files (x86)\MSBuild\14.0\Bin;&amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;[Environment]&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;GetEnvironmentVariables&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;Machine&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)[&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;Path&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;;&amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;[Environment]&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;GetEnvironmentVariables&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;User&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)[&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;Path&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
-
-&lt;span class=&quot;n&quot;&gt;kvm&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;upgrade&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;The first line downloads and installs KVM, just like the &lt;a href=&quot;https://github.com/aspnet/home&quot;&gt;instructions on the ASP.NET 5 repository home page say to do&lt;/a&gt;. As part of that install, it modifies the &lt;code&gt;PATH&lt;/code&gt;, so the next line refreshes that script’s path and also modifies it to pick up the correct &lt;code&gt;msbuild&lt;/code&gt; version. Finally, &lt;code&gt;kvm upgrade&lt;/code&gt; downloads and installs the most recent K runtimes.&lt;/p&gt;
-
-&lt;p&gt;There’s just one more step: we need to restore packages before building. I have the following set up as a PowerShell “Before Build Script”:&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-powershell&quot; data-lang=&quot;powershell&quot;&gt;&lt;span class=&quot;n&quot;&gt;kpm&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;restore&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;You should now be able to kick off a build without errors.&lt;/p&gt;
-
-&lt;p&gt;Before moving on, let’s add in just a bit to get unit tests working. AppVeyor tries to do as much as possible for you using reasonable defaults, but it’s not (yet) capable of auto-detecting the xUnit .NET Core unit test project. You should be able to get unit tests running in your build by changing the test settings from &lt;code&gt;Auto&lt;/code&gt; to &lt;code&gt;Script&lt;/code&gt; and specifying this PowerShell script to run:&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-powershell&quot; data-lang=&quot;powershell&quot;&gt;&lt;span class=&quot;n&quot;&gt;cd&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;UnitTests&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;k&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;The first line changes to the directory where my unit test &lt;code&gt;project.json&lt;/code&gt; file is (you may need to change this if your unit test project is named differently). The second line simply executes the tests.&lt;/p&gt;
-
-&lt;h2 id=&quot;code-coverage-opencover--coveralls&quot;&gt;Code Coverage: OpenCover + Coveralls&lt;/h2&gt;
-
-&lt;p&gt;OK, so on to code coverage! I’m using the &lt;a href=&quot;https://github.com/dotnet/buildtools/blob/25decb2fe02edd3b7ab32a325e2281c2a2df9ea9/src/Microsoft.DotNet.Build.Tasks/Targets/CodeCoverage.targets&quot;&gt;same basic approach as the .NET Core team&lt;/a&gt; - that is to say, &lt;a href=&quot;https://github.com/OpenCover/opencover&quot;&gt;OpenCover&lt;/a&gt; for generating code coverage, &lt;a href=&quot;https://coveralls.io/&quot;&gt;Coveralls&lt;/a&gt; for publishing the code coverage publicly, and &lt;a href=&quot;https://github.com/danielpalme/ReportGenerator&quot;&gt;ReportGenerator&lt;/a&gt; for generating local code coverage reports. But my solution uses PowerShell scripts instead of MSBuild tasks.&lt;/p&gt;
-
-&lt;p&gt;First, you need to declare dependencies on the &lt;code&gt;OpenCover&lt;/code&gt;, &lt;code&gt;coveralls.io&lt;/code&gt;, and &lt;code&gt;ReportGenerator&lt;/code&gt; packages in your unit test project. This way they’ll be picked up by &lt;code&gt;kpm restore&lt;/code&gt; and installed on the AppVeyor build server. The &lt;a href=&quot;https://github.com/StephenCleary/Deque/blob/cf0b28933befe5303c037739c94f16267de8b71e/test/UnitTests/project.json&quot;&gt;&lt;code&gt;project.json&lt;/code&gt; for my unit test project&lt;/a&gt; has these dependencies:&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;dependencies&amp;quot;&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;nt&quot;&gt;&amp;quot;Nito.Collections.Deque&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-    &lt;span class=&quot;nt&quot;&gt;&amp;quot;xunit&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;2.0.0.0-rc3-build2880&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-    &lt;span class=&quot;nt&quot;&gt;&amp;quot;xunit.runner.aspnet&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;2.0.0.0-rc3-build52&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-    &lt;span class=&quot;nt&quot;&gt;&amp;quot;OpenCover&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;4.5.3809-rc94&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-    &lt;span class=&quot;nt&quot;&gt;&amp;quot;coveralls.io&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;1.3.2.0&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-    &lt;span class=&quot;nt&quot;&gt;&amp;quot;ReportGenerator&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;2.1.4.0&amp;quot;&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;,&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;These dependencies should all be straightforward: &lt;code&gt;Nito.Collections.Deque&lt;/code&gt; is the library these tests are testing, &lt;code&gt;xunit&lt;/code&gt; and &lt;code&gt;xunit.runner.aspnet&lt;/code&gt; are the standard packages for running xUnit on .NET Core projects, and &lt;code&gt;OpenCover&lt;/code&gt;, &lt;code&gt;coveralls.io&lt;/code&gt;, and &lt;code&gt;ReportGenerator&lt;/code&gt; are for code coverage.&lt;/p&gt;
-
-&lt;p&gt;I recommend getting this working locally first, and then it’ll be clearer to understand why my AppVeyor test script does what it does.&lt;/p&gt;
-
-&lt;p&gt;First, you have to be sure to be building in the &lt;code&gt;Debug&lt;/code&gt; configuration. I’ve had problems with OpenCover not showing coverage for optimized builds.&lt;/p&gt;
-
-&lt;p&gt;Second, you need to enable outputs (as in, physical disk files) for the &lt;code&gt;Debug&lt;/code&gt; build of the library you’re testing. This checkbox is under your project settings, under the &lt;code&gt;Build&lt;/code&gt; tab.&lt;/p&gt;
-
-&lt;p&gt;Third, you have to really pay attention to your directories, because OpenCover has a hard time finding PDBs for .NET Core assemblies. I &lt;em&gt;believe&lt;/em&gt; that the K runtime is using a different form of assembly loading than the traditional .NET platform, and OpenCover doesn’t (yet) support finding PDBs in a K-runtime-compatible way. So we have to help it out a bit with PDB location.&lt;/p&gt;
-
-&lt;p&gt;With all that said, you should be able to execute something like the following to generate a code coverage report:&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-powershell&quot; data-lang=&quot;powershell&quot;&gt;&lt;span class=&quot;n&quot;&gt;cd&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;artifacts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;bin&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Nito&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Collections&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Deque&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Debug&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;net45&lt;/span&gt;
-
-&lt;span class=&quot;nv&quot;&gt;$env:KRE_APPBASE&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;../../../../../test/UnitTests&amp;quot;&lt;/span&gt;
-
-&lt;span class=&quot;n&quot;&gt;C&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;users&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stephen&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;\.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;k&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;packages&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;OpenCover&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;3809-rc94&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;OpenCover&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;exe&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;-register&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;-target&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;k.cmd&amp;quot;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;-targetargs&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;test&amp;quot;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;-output&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;coverage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;xml&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;-skipautoprops&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;-returntargetcode&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;-filter&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;+[Nito*]*&amp;quot;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;First, I’m changing to the directory where my PDB files are for the project I’m &lt;em&gt;testing&lt;/em&gt; (you’ll have to change to your own debug output directory, of course). Then, I’m setting the &lt;code&gt;KRE_APPBASE&lt;/code&gt; environment variable so that the K runtime can find the &lt;code&gt;project.json&lt;/code&gt; for my &lt;em&gt;unit test&lt;/em&gt; project (if yours is named differently, you’ll need to change this, too).&lt;/p&gt;
-
-&lt;p&gt;Finally, I’m executing OpenCover with a few &lt;a href=&quot;https://github.com/opencover/opencover/wiki/Usage&quot;&gt;command line options&lt;/a&gt;. You’ll probably have to change the &lt;code&gt;filter&lt;/code&gt; argument for your library; my filter is requesting coverage data only for types in namespaces that start with &lt;code&gt;Nito&lt;/code&gt;. The &lt;code&gt;target&lt;/code&gt; and &lt;code&gt;targetargs&lt;/code&gt; options are telling OpenCover to execute the command &lt;code&gt;k.cmd test&lt;/code&gt; (I found I did have to specify &lt;code&gt;k.cmd&lt;/code&gt; and not just &lt;code&gt;k&lt;/code&gt; for OpenCover to find the command script).&lt;/p&gt;
-
-&lt;p&gt;If you have all the paths (and filters) set correctly, you should see some output that looks like this:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;Executing: C:\Users\stephen\.k\runtimes\kre-clr-win-x86.1.0.0-beta3\bin\k.cmd
-xUnit.net ASP.NET test runner (32-bit Asp.Net 5.0)
-Copyright (C) 2015 Outercurve Foundation.
-
-Discovering: UnitTests
-Discovered:  UnitTests
-Starting:    UnitTests
-Finished:    UnitTests
-
-=== TEST EXECUTION SUMMARY ===
-   UnitTests  Total: 88, Errors: 0, Failed: 0, Skipped: 0, Time: 2.310s
-Committing...
-Visited Classes 3 of 7 (42.86)
-Visited Methods 59 of 70 (84.29)
-Visited Points 390 of 442 (88.24)
-Visited Branches 167 of 196 (85.20)
-
-==== Alternative Results (includes all methods including those without corresponding source) ====
-Alternative Visited Classes 3 of 7 (42.86)
-Alternative Visited Methods 64 of 83 (77.11)
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;The detailed code coverage data is also written out to a local file, in this case, &lt;code&gt;artifacts\bin\Nito.Collections.Deque\Debug\net45\coverage.xml&lt;/code&gt;. To upload this coverage data to Coveralls, first link the GitHub project to Coveralls using their dashboard. Then, copy your &lt;strong&gt;Repo Token&lt;/strong&gt; and set it as an environment variable &lt;code&gt;COVERALLS_REPO_TOKEN&lt;/code&gt;:&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-powershell&quot; data-lang=&quot;powershell&quot;&gt;&lt;span class=&quot;nv&quot;&gt;$env:COVERALLS_REPO_TOKEN&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;Repo Token&amp;quot;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;You can now use &lt;code&gt;coveralls.io&lt;/code&gt; to upload the code coverage data to Coveralls. The only gotcha I ran into here is that the &lt;code&gt;coverall.io&lt;/code&gt; package runs into errors if it tries to use a hash of the source files (instead of the source files themselves), so I just pass &lt;code&gt;--full-sources&lt;/code&gt; to force it to load the full source files:&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-powershell&quot; data-lang=&quot;powershell&quot;&gt;&lt;span class=&quot;n&quot;&gt;C&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Users&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stephen&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;\.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;k&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;packages&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;coveralls&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;io&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;tools&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;coveralls&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;net&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;exe&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;-opencover&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;coverage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;xml&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;-full-sources&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;It can take a few minutes for Coveralls.io to actually process and dispaly the coverage data, but after a few browser refreshes you should see the coverage data on their website!&lt;/p&gt;
-
-&lt;p&gt;Note that if you select a specific source file, Coveralls will need a bit of help to find the matching source in the repo; you should be able to specify a value of &lt;code&gt;../../../../../&lt;/code&gt; as your “Git repo root directory”:&lt;/p&gt;
-
-&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/CoverallsSourceLocation.png&quot;&gt;&lt;img src=&quot;/assets/CoverallsSourceLocation.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;Then it should refresh with the complete source file from GitHub, highlighted with statement coverage data:&lt;/p&gt;
-
-&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/CoverallsSourceDisplay.png&quot;&gt;&lt;img src=&quot;/assets/CoverallsSourceDisplay.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&quot;continuous-integration-code-coverage&quot;&gt;Continuous Integration Code Coverage&lt;/h2&gt;
-
-&lt;p&gt;OK, so let’s move all of this into AppVeyor!&lt;/p&gt;
-
-&lt;p&gt;First, under your &lt;code&gt;Environment&lt;/code&gt; settings, create an environment variable called &lt;code&gt;COVERALLS_REPO_TOKEN&lt;/code&gt; with your &lt;strong&gt;Repo Token&lt;/strong&gt; from the Coveralls page for this project. Be sure to turn on encryption (the little shield icon).&lt;/p&gt;
-
-&lt;p&gt;Next, we can replace our existing test script with something a bit more fancy:&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-powershell&quot; data-lang=&quot;powershell&quot;&gt;&lt;span class=&quot;n&quot;&gt;cd&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;artifacts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;bin&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Nito&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Collections&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Deque&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Debug&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;net45&lt;/span&gt;
-
-&lt;span class=&quot;nv&quot;&gt;$env:KRE_APPBASE&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;../../../../../test/UnitTests&amp;quot;&lt;/span&gt;
-
-&lt;span class=&quot;n&quot;&gt;iex&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;Get-ChildItem&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$env:USERPROFILE&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&amp;#39;\.k\packages\OpenCover&amp;#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;].&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FullName&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&amp;#39;\OpenCover.Console.exe&amp;#39;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&amp;#39; -register:user -target:&amp;quot;k.cmd&amp;quot; -targetargs:&amp;quot;test&amp;quot; -output:coverage.xml -skipautoprops -returntargetcode -filter:&amp;quot;+[Nito*]*&amp;quot;&amp;#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-
-&lt;span class=&quot;n&quot;&gt;iex&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;Get-ChildItem&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$env:USERPROFILE&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&amp;#39;\.k\packages\coveralls.io&amp;#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;].&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FullName&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&amp;#39;\tools\coveralls.net.exe&amp;#39;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&amp;#39; --opencover coverage.xml --full-sources&amp;#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;This is doing the same thing that we did “by hand”, but the invocations of OpenCover and Coveralls are a bit different. The only thing I’m doing here is running “whatever package is installed” instead of depending on a specific user profile location and package version. My original command line &lt;code&gt;C:\users\stephen\.k\packages\OpenCover\4.5.3809-rc94\OpenCover.Console.exe&lt;/code&gt; would of course only work for users named &lt;code&gt;stephen&lt;/code&gt; using version &lt;code&gt;4.5.3809-rc94&lt;/code&gt; of OpenCover. The fancier &lt;code&gt;(Get-ChildItem ($env:USERPROFILE + &#39;\.k\packages\OpenCover&#39;))[0].FullName + &#39;\OpenCover.Console.exe&#39;&lt;/code&gt; works for whoever the current user is (&lt;code&gt;USERPROFILE&lt;/code&gt;) and whatever version of OpenCover is installed (it does, however, assume there is only one version installed - it just grabs the first one it finds).&lt;/p&gt;
-
-&lt;p&gt;Now you should be able to kick off a new AppVeyor build, and within a few minutes, see the code coverage results automatically in Coveralls.io!&lt;/p&gt;
-
-&lt;h2 id=&quot;badger-badger-badger-badger&quot;&gt;Badger, Badger, Badger, Badger&lt;/h2&gt;
-
-&lt;p&gt;This is a good point to add some fancy badges to our GitHub readme. The OSS community has more-or-less standardized on &lt;a href=&quot;http://shields.io/&quot;&gt;shields.io&lt;/a&gt; for consistent, scalable, nice-looking badges. Shields.io supports a number of “badge providers”, including AppVeyor and Coveralls.&lt;/p&gt;
-
-&lt;p&gt;Their webpage is not the most intuitive, IMO, but it wasn’t &lt;em&gt;too&lt;/em&gt; hard to get working. The URL for my AppVeyor build is &lt;code&gt;https://img.shields.io/appveyor/ci/StephenCleary/Deque.svg&lt;/code&gt; - that is, telling the shields.io service to use the AppVeyor CI badge provider for my (GitHub) username and project. The URL for Coveralls is similar: &lt;code&gt;https://img.shields.io/coveralls/StephenCleary/Deque.svg&lt;/code&gt; - in this case, telling the shields.io service to use the Coveralls provider for my (GitHub) username and project.&lt;/p&gt;
-
-&lt;p&gt;I did notice several problems with the badges when I was first getting this working. For example, if there’s an AppVeyor build &lt;em&gt;in progress&lt;/em&gt; (i.e., if you just modified your &lt;code&gt;Readme.md&lt;/code&gt;), then the badges tend to time out. Just be patient and wait a bit, and then see if they start working again.&lt;/p&gt;
-
-&lt;h2 id=&quot;better-code-coverage-reports&quot;&gt;Better Code Coverage Reports&lt;/h2&gt;
-
-&lt;p&gt;There’s one big problem with Coveralls that not a lot of people have brought to the front: it &lt;em&gt;only supports line coverage&lt;/em&gt;, which is the weakest (and most misleading) form of code coverage. As of this writing, this is basically a &lt;a href=&quot;https://github.com/lemurheavy/coveralls-public/issues/31&quot;&gt;limitation of the Coveralls.io service itself&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;In particular, OpenCover is generating branch coverage as well as statement coverage, but all that branch coverage data (and part of that statement coverage data) is thrown away when the data is uploaded to Coveralls. I was unable to find a Coveralls alternative that supports .NET, understands branch coverage, &lt;em&gt;and&lt;/em&gt; is free for OSS. Maybe someday…&lt;/p&gt;
-
-&lt;p&gt;In the meantime, you really do want better coverage information than you can get from Coveralls. Don’t get me wrong - Coveralls is great for integrating with your build process and updating badges, but it’s &lt;em&gt;not&lt;/em&gt; actually a good measurement of test coverage.&lt;/p&gt;
-
-&lt;p&gt;Enter &lt;code&gt;ReportGenerator&lt;/code&gt;. You may have noticed earlier on that we installed that NuGet package, but never actually used it. Well, now we’re going to use it. :)&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;ReportGenerator&lt;/code&gt; takes the output from OpenCover (that same &lt;code&gt;coverage.xml&lt;/code&gt; file) and generates reports with the full code coverage information. I added a &lt;a href=&quot;https://github.com/StephenCleary/Deque/blob/cf0b28933befe5303c037739c94f16267de8b71e/Coverage.ps1&quot;&gt;&lt;code&gt;Coverage.ps1&lt;/code&gt; script to my solution&lt;/a&gt; that does &lt;em&gt;almost&lt;/em&gt; the same thing as the AppVeyor test script, except it generates a local report instead of uploading to Coveralls:&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-powershell&quot; data-lang=&quot;powershell&quot;&gt;&lt;span class=&quot;n&quot;&gt;pushd&lt;/span&gt;
-
-&lt;span class=&quot;n&quot;&gt;cd&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;artifacts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;bin&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Nito&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Collections&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Deque&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Debug&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;net45&lt;/span&gt;
-
-&lt;span class=&quot;nv&quot;&gt;$env:KRE_APPBASE&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;../../../../../test/UnitTests&amp;quot;&lt;/span&gt;
-
-&lt;span class=&quot;n&quot;&gt;iex&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;Get-ChildItem&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$env:USERPROFILE&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&amp;#39;\.k\packages\OpenCover&amp;#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;].&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FullName&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&amp;#39;\OpenCover.Console.exe&amp;#39;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&amp;#39; -register:user -target:&amp;quot;k.cmd&amp;quot; -targetargs:&amp;quot;test&amp;quot; -output:coverage.xml -skipautoprops -returntargetcode -filter:&amp;quot;+[Nito*]*&amp;quot;&amp;#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-
-&lt;span class=&quot;n&quot;&gt;iex&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;Get-ChildItem&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$env:USERPROFILE&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&amp;#39;\.k\packages\ReportGenerator&amp;#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;].&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FullName&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&amp;#39;\ReportGenerator.exe -reports:coverage.xml -targetdir:.&amp;#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-
-&lt;span class=&quot;p&quot;&gt;./&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;index&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;htm&lt;/span&gt;
-
-&lt;span class=&quot;n&quot;&gt;popd&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;It should be pretty straightforward by this point, with the added twist that I push the current directory at the beginning and pop it at the end. I change into the directory where the PDBs are, set &lt;code&gt;KRE_APPBASE&lt;/code&gt; so the K runtime can find my &lt;code&gt;project.json&lt;/code&gt;, run the tests with code coverage, generate HTML reports using &lt;code&gt;ReportGenerator&lt;/code&gt;, and open up the resulting reports. This script was designed to be run from the Package Manager Console within Visual Studio, so it’s easy to use.&lt;/p&gt;
-
-&lt;p&gt;There is just one gotcha with this script as-is: it just grabs the first version of OpenCover and ReportGenerator that it finds. So, when these packages release newer versions, you’ll want to delete the old versions from your development machine.&lt;/p&gt;
-
-&lt;h2 id=&quot;final-notes&quot;&gt;Final Notes&lt;/h2&gt;
-
-&lt;p&gt;I don’t actually do continuous &lt;em&gt;deployment&lt;/em&gt; with AppVeyor. If you want to, I’m sure it would not be too difficult to get working. Right now, though, nothing supports reading/writing versions in &lt;code&gt;project.json&lt;/code&gt;, so keeping the versioning correct would be a bit awkward. Even more scripting, and (for me) it’s not worth it.&lt;/p&gt;
-
-&lt;p&gt;My current workflow is to use AppVeyor for continuous builds and tests, and for publishing unit test coverage data (such as it is). I still build locally (actually on an Azure VM) when I want to deploy or have a better picture of my &lt;em&gt;actual&lt;/em&gt; unit test coverage data with a local coverage report.&lt;/p&gt;
-</description>
-        <pubDate>Sat, 28 Mar 2015 00:00:00 -0400</pubDate>
-        <link>http://blog.stephencleary.com/2015/03/continuous-integration-code-coverage-open-source-net-coreclr-projects.html</link>
-        <guid isPermaLink="true">http://blog.stephencleary.com/2015/03/continuous-integration-code-coverage-open-source-net-coreclr-projects.html</guid>
       </item>
     
   </channel>
