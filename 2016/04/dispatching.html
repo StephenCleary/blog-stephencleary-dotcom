@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Fire and Forget on ASP.NET</title>
+    <title>React/Redux TodoMVC, Part 5: Dispatching</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="A summary of the various ways to schedule background or fire-and-forget tasks on ASP.NET." />
-    <link rel="canonical" href="http://blog.stephencleary.com/2014/06/fire-and-forget-on-asp-net.html" />
+    <meta name="description" content="Dispatching actions with Redux." />
+    <link rel="canonical" href="http://blog.stephencleary.com/2016/04/dispatching.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -219,88 +219,89 @@ code {
 
   <header>
       <div class="page-header">
-          <h1>Fire and Forget on ASP.NET</h1>
-          <small><time datetime="2014-06-07">Jun 7, 2014</time> &bull; <a data-disqus-identifier="/2014/06/fire-and-forget-on-asp-net" href="#disqus_thread">Comments</a></small>
+          <h1>React/Redux TodoMVC, Part 5: Dispatching</h1>
+          <small><time datetime="2016-04-12">Apr 12, 2016</time> &bull; <a data-disqus-identifier="/2016/04/dispatching" href="#disqus_thread">Comments</a></small>
       </div>
   </header>
 
   <article>
-  <p>.NET 4.5.2 added a built-in way to queue background (a.k.a. “fire and forget”) work in ASP.NET. This post is a summary of the different techniques available today.</p>
+  <p>Well, I think it’s about time our app did something!</p>
 
-<h2 id="threadpool">ThreadPool</h2>
+<p>The official <a href="https://github.com/tastejs/todomvc/blob/master/app-spec.md">TodoMVC application specification</a> says we’re supposed to create a TODO item if the user types in the input box at the top and then tabs out of it.</p>
 
-<p>The easiest method is to just throw work onto a background thread, e.g., <code>Task.Run</code>, <code>Task.Factory.StartNew</code>, <code>Delegate.BeginInvoke</code>, <code>ThreadPool.QueueUserWorkItem</code>, etc. However, this is a <strong>really bad idea</strong>!</p>
+<p>Let’s do it!</p>
 
-<p>The reason is that the ASP.NET runtime has no idea that you’ve queued this work, so it’s not aware that the background work even <em>exists</em>. For a variety of reasons, IIS/ASP.NET has to occasionally recycle your application. If you have background work running when this recycling takes place, that work will mysteriously disappear.</p>
+<h2 id="getting-the-dispatcher">Getting the Dispatcher</h2>
 
-<h2 id="hostingenvironmentqueuebackgroundworkitem">HostingEnvironment.QueueBackgroundWorkItem</h2>
+<p>Redux provides a way to get a <code>dispatch</code> method passed to our view components. Currently, our <code>Main</code> view component looks like this:</p>
 
-<p><code>QueueBackgroundWorkItem</code> (QBWI) was added in .NET 4.5.2 to help mitigate loss of background work. <a href="http://blogs.msdn.com/b/webdev/archive/2014/06/04/queuebackgroundworkitem-to-reliably-schedule-and-run-long-background-process-in-asp-net.aspx">QBWI will register its background work with the ASP.NET runtime</a>. </p>
+<pre><code>function Main() {
+    ...
+}
+</code></pre>
 
-<p>Since the ASP.NET runtime is aware of the background work, it will not immediately yank your AppDomain when it’s time to recycle. However, this does not mean that the background work can just do whatever it wants!</p>
+<p>With Redux, we can use <a href="https://github.com/rackt/react-redux/blob/master/docs/api.md#connectmapstatetoprops-mapdispatchtoprops-mergeprops-options">the <code>connect</code> method</a> to notify the <code>Provider</code> that we will need the <code>dispatch</code> method. <code>Main</code> now looks like this (in <code>main.jsx</code>):</p>
 
-<p>QBWI will register the work with ASP.NET. When ASP.NET has to recycle, it will notify the background work (by setting a <code>CancellationToken</code>) and will then wait up to 30 seconds for the work to complete. If the background work doesn’t complete in that time frame, the work will mysteriously disappear.</p>
+<pre><code>function MainImpl({dispatch}) {
+    ...
+}
+const Main = connect()(MainImpl);
+</code></pre>
 
-<p>So, QBWI is a step in the right direction. I would say it’s the “minimum viable” alternative.</p>
+<p>This code would be a bit cleaner if we were defining <code>Main</code> in its own file. And we will, shortly. :)</p>
 
-<h2 id="iregisteredobject">IRegisteredObject</h2>
+<h2 id="using-the-dispatcher">Using the Dispatcher</h2>
 
-<p>The standard way to register with ASP.NET is via <code>IRegisteredObject</code>. The semantics aren’t officially documented, but they’re described in <a href="http://blogs.msdn.com/b/tmarq/archive/2010/04/14/performing-asynchronous-work-or-tasks-in-asp-net-applications.aspx">this blog post under the third answer of question 5</a>:</p>
+<p>Now, when the user tabs off that input field, we want to:</p>
 
-<blockquote>
-  <p>You can create an object that implements the <code>IRegisteredObject</code> interface and call <code>HostingEnvironment.RegisterObject</code> to “register” it with ASP.NET.  When the AppDomain is about to be unloaded, we will call your implementation of <code>IRegisteredObject.Stop(bool immediate)</code>.  The <code>Stop</code> method is called twice by ASP.NET, once with the <code>immediate</code> parameter set to <code>false</code> and once again with that argument set to <code>true</code>.  You are supposed to call <code>HostingEnvironment.UnregisterObject</code> as soon as your registered object has stopped, so ASP.NET knows it doesn’t need to call your <code>Stop</code> method.  You can call it at anytime, but you definitely should call it before returning from <code>Stop</code> when it is called with <code>immediate</code> set to <code>true</code>, because that’s your final chance and if you’re still running after that you will be rudely aborted…  If you need to, you can hold up the unload as long as you like, because we won’t unload until your <code>Stop</code> method returns the second time.</p>
-</blockquote>
+<ul>
+  <li>Read the text of that field.</li>
+  <li>Pass that text to our <code>ADD_TODO</code> action creator, which returns us an <code>ADD_TODO</code> action.</li>
+  <li>Pass that <code>ADD_TODO</code> action to <code>dispatch</code>.</li>
+</ul>
 
-<p>This blog post clarifies the semantics. Essentially, they boil down to this:</p>
+<p>I’m going to just do this all inline for now. The old JSX element:</p>
 
-<ol>
-  <li>When ASP.NET wants to unload your application, it will call <code>IRegisteredObject.Stop(false)</code> on all objects registered with the ASP.NET runtime.</li>
-  <li>This is a friendly notification that the AppDomain is going away. Registered objects should start cleaning up and call <code>UnregisterObject</code> when their cleanup is complete.</li>
-  <li>If there are still registered objects running after 30 seconds, ASP.NET will call <code>IRegisteredObject.Stop(true)</code> on them.</li>
-  <li>ASP.NET will unload the AppDomain after all those second notifications have returned.</li>
-</ol>
+<pre><code>&lt;input className="new-todo" placeholder="What needs to be done?" autoFocus/&gt;
+</code></pre>
 
-<p>I use <code>IRegisteredObject</code> in my <a href="https://github.com/StephenCleary/AspNetBackgroundTasks">ASP.NET Background Tasks library</a>, and (as of this writing) the built-in <code>QueueBackgroundWorkItem</code> <em>also</em> uses <code>IRegisteredObject</code>. These approaches are slightly different, though. <code>QueueBackgroundWorkItem</code> ignores the second call to <code>Stop</code> and returns immediately, so any background work that takes longer than 30 seconds will be terminated. My AspNetBackgroundTasks library will wait for the background work to complete, and will delay the AppDomain shutdown indefinitely.</p>
+<p>and the new JSX element:</p>
 
-<p>Also, QBWI will log any exceptions from the background work, while AspNetBackgroundTasks will not.</p>
+<pre><code>&lt;input className="new-todo" placeholder="What needs to be done?" autoFocus onBlur={e =&gt; dispatch(TodoActions.add(e.target.value))}/&gt;
+</code></pre>
 
-<p>Neither one of those choices is better; they’re just different. <code>QueueBackgroundWorkItem</code> chose to keep the system as a whole more reliable by sacrificing long-running background work items. AspNetBackgroundTasks chose not to terminate background tasks, which could impact the regular application recycling if one of those tasks is misbehaved.</p>
+<p>And now, our application can actually create a todo!</p>
 
-<p>Neither of these solutions is ideal. They have to make tradeoffs, and of course neither of them can recover from situations like power losses and server failures. So, I characterize these registration-based solutions as “more reliable” than just queueing work to the thread pool (which is totally unreliable), but even registering with ASP.NET is not totally reliable.</p>
+<h2 id="seeing-it-in-action">Seeing It in Action</h2>
 
-<h2 id="hangfire">HangFire</h2>
+<p>Our application doesn’t actually <em>display</em> the todo items yet, but we can see the results in our Redux DevTools:</p>
 
-<p>One interesting low-entry reliable solution is <a href="http://hangfire.io/">HangFire</a>. This library is pretty easy to use but does make some assumptions.</p>
+<p class="center"><img src="/assets/ReduxResult1.png" alt="" /></p>
 
-<p>The first and most obvious assumption is that it relies on some kind of reliable storage already in your architecture: specifically, SQL Server, Redis, or Microsoft Message Queues (MSMQ). This is a good start, but I’d like to see support for Azure tables and queues as well.</p>
+<p>There you can see the <code>ADD_TODO</code> action that we created, and the result that it had on the application state (namely, adding a todo). We can expand that state:</p>
 
-<p>The second assumption is that the code will not significantly change. The way that HangFire serializes the background work makes assumptions around the delegates that are queued. If the code changes significantly and ASP.NET restarts with the new code, I’m not sure how the system will respond when it attempts to run the old background work.</p>
+<p class="center"><img src="/assets/ReduxResult2.png" alt="" /></p>
 
-<p>So, I’d need to research this library more to feel comfortable using it (and extend it to support Azure queues), but it does look like a very interesting library with a low bar to entry.</p>
+<p>and see that the new todo item was added with the text I typed in, and with a <code>completed</code> value of <code>false</code>.</p>
 
-<h2 id="distributed-architecture">Distributed Architecture</h2>
+<p>It’s working! :)</p>
 
-<p>The proper solution is to use a basic distributed architecture.</p>
+<p><a href="https://github.com/StephenCleary/todomvc-react-redux/tree/3f564477ba32604024f4fa3406f8edf9272ba798">Source code at this revision</a> - <a href="http://htmlpreview.github.io/?https://github.com/StephenCleary/todomvc-react-redux/blob/3f564477ba32604024f4fa3406f8edf9272ba798/index.html">Live site at this revision</a> (ignore the “startup flicker”; that’s just due to the way it’s hosted)</p>
 
-<p>The first thing you need is a reliable storage medium. I prefer queues (e.g., Azure queues, WebSphere message queues, Microsoft message queueing, etc), but any kind of reliable storage would work (as previously mentioned, HangFire prefers databases).</p>
-
-<p>Then you’ll need a way to store the background work in that storage. HangFire uses an interesting method of serializing the delegate, which I am a little leery of. I’d prefer a solution that stored the background work <em>semantically</em>. This also means that the schema for the background work should be versioned.</p>
-
-<p>The next thing is a host to perform the background work. These days I’d prefer an Azure WebJob, but you could also use a separate thread in an ASP.NET app. The host must be reliable in the sense that it should either complete the work or leave the work in storage to try again (or both), but it cannot remove the work from storage and then fail to complete it. Usually, the easiest way to satisfy this is to make all the work items idempoent and use a “lease” when reading from storage. Most reliable queues have built-in support for leases, but it’s up to you to make the background work idempotent.</p>
-
-<p>The last thing in this kind of architecture is some kind of “poison message” recovery. That is, if there is some background work that gets into the system, and that work cannot complete successfully for whatever reason, there has to be some procedure for removing that piece of background work and setting it aside so that the system as a whole can continue processing.</p>
-
-<p>Distributed architecture is complex, but it’s The Right Way™. It is the most reliable and resilient option available.</p>
+<p><a href="https://github.com/StephenCleary/todomvc-react-redux">Most current source code</a> - <a href="http://stephencleary.github.io/todomvc-react-redux/">Most current live site</a></p>
 
   </article>
     
     <footer>
         
+            <ul class="pager">
+                <li class="previous"><a href="/2016/03/debugging.html" title="React/Redux TodoMVC, Part 4: Debugging">&larr; Previous in React/Redux TodoMVC</a></li>
+            </ul>
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2014/06/a-tour-of-task-part-3-status.html" title="A Tour of Task, Part 3: Status">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2014/06/a-tour-of-task-part-4-id.html" title="A Tour of Task, Part 4: Id">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2016/03/debugging.html" title="React/Redux TodoMVC, Part 4: Debugging">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="disqus_thread"></div>
@@ -311,6 +312,20 @@ code {
         </div>
         <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
             
+                <div class="panel panel-primary">
+                    <div class="panel-heading">React/Redux TodoMVC</div>
+                    <div class="panel-body sidenav">
+                        <ul class="nav nav-pills nav-stacked">
+                                            <li class="sidenavitem"><a href="/2016/02/react-redux-todomvc.html">Introduction</a></li>
+                                            <li class="sidenavitem"><a href="/2016/02/why-react-why-redux.html">Why React? Why Redux?</a></li>
+                                            <li class="sidenavitem"><a href="/2016/02/language-and-tooling.html">Language and Tooling</a></li>
+                                            <li class="sidenavitem"><a href="/2016/02/getting-started.html">Getting Started</a></li>
+                                            <li class="sidenavitem"><a href="/2016/03/state.html">State</a></li>
+                                            <li class="sidenavitem"><a href="/2016/03/debugging.html">Debugging</a></li>
+                                            <li class="active sidenavitem"><a href="/2016/04/dispatching.html">Dispatching</a></li>
+                        </ul>
+                    </div>
+                </div>
             
         </div>
         <div class="col-sm-2 sidebar">
@@ -402,6 +417,17 @@ code {
 
 <!-- Scroll the sidebar into view (if necessary) -->
 
+<script src="/lib/jquery.scrollTo.min.js"></script>
+<script type="text/javascript">
+    (function ($) {
+        $(function () {
+            var container = $('.affix').filter(function() { return $(this).css('position') == 'fixed'; });
+            var target = container.find('.active');
+            container.scrollTo(target, { offset: - (container.height() / 2 - target.height() / 2) });
+        });
+    })(window.jQuery);
+</script>
+
 
 <!-- Google analytics -->
 <script type="text/javascript">
@@ -439,9 +465,9 @@ code {
 <!-- Disqus variables -->
 <script type="text/javascript">
     var disqus_shortname = 'stephencleary';
-    var disqus_identifier = "/2014/06/fire-and-forget-on-asp-net";
-    var disqus_title = "Fire and Forget on ASP.NET";
-    var disqus_url = "http://blog.stephencleary.com/2014/06/fire-and-forget-on-asp-net.html";
+    var disqus_identifier = "/2016/04/dispatching";
+    var disqus_title = "React/Redux TodoMVC, Part 5: Dispatching";
+    var disqus_url = "http://blog.stephencleary.com/2016/04/dispatching.html";
 </script>
 
 <!-- Disqus comment counter -->

@@ -8,6 +8,78 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="http://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>React/Redux TodoMVC, Part 5: Dispatching</title>
+        <description>&lt;p&gt;Well, I think it’s about time our app did something!&lt;/p&gt;
+
+&lt;p&gt;The official &lt;a href=&quot;https://github.com/tastejs/todomvc/blob/master/app-spec.md&quot;&gt;TodoMVC application specification&lt;/a&gt; says we’re supposed to create a TODO item if the user types in the input box at the top and then tabs out of it.&lt;/p&gt;
+
+&lt;p&gt;Let’s do it!&lt;/p&gt;
+
+&lt;h2 id=&quot;getting-the-dispatcher&quot;&gt;Getting the Dispatcher&lt;/h2&gt;
+
+&lt;p&gt;Redux provides a way to get a &lt;code&gt;dispatch&lt;/code&gt; method passed to our view components. Currently, our &lt;code&gt;Main&lt;/code&gt; view component looks like this:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;function Main() {
+    ...
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;With Redux, we can use &lt;a href=&quot;https://github.com/rackt/react-redux/blob/master/docs/api.md#connectmapstatetoprops-mapdispatchtoprops-mergeprops-options&quot;&gt;the &lt;code&gt;connect&lt;/code&gt; method&lt;/a&gt; to notify the &lt;code&gt;Provider&lt;/code&gt; that we will need the &lt;code&gt;dispatch&lt;/code&gt; method. &lt;code&gt;Main&lt;/code&gt; now looks like this (in &lt;code&gt;main.jsx&lt;/code&gt;):&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;function MainImpl({dispatch}) {
+    ...
+}
+const Main = connect()(MainImpl);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This code would be a bit cleaner if we were defining &lt;code&gt;Main&lt;/code&gt; in its own file. And we will, shortly. :)&lt;/p&gt;
+
+&lt;h2 id=&quot;using-the-dispatcher&quot;&gt;Using the Dispatcher&lt;/h2&gt;
+
+&lt;p&gt;Now, when the user tabs off that input field, we want to:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Read the text of that field.&lt;/li&gt;
+  &lt;li&gt;Pass that text to our &lt;code&gt;ADD_TODO&lt;/code&gt; action creator, which returns us an &lt;code&gt;ADD_TODO&lt;/code&gt; action.&lt;/li&gt;
+  &lt;li&gt;Pass that &lt;code&gt;ADD_TODO&lt;/code&gt; action to &lt;code&gt;dispatch&lt;/code&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;I’m going to just do this all inline for now. The old JSX element:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;&amp;lt;input className=&quot;new-todo&quot; placeholder=&quot;What needs to be done?&quot; autoFocus/&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;and the new JSX element:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;&amp;lt;input className=&quot;new-todo&quot; placeholder=&quot;What needs to be done?&quot; autoFocus onBlur={e =&amp;gt; dispatch(TodoActions.add(e.target.value))}/&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;And now, our application can actually create a todo!&lt;/p&gt;
+
+&lt;h2 id=&quot;seeing-it-in-action&quot;&gt;Seeing It in Action&lt;/h2&gt;
+
+&lt;p&gt;Our application doesn’t actually &lt;em&gt;display&lt;/em&gt; the todo items yet, but we can see the results in our Redux DevTools:&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;img src=&quot;/assets/ReduxResult1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;There you can see the &lt;code&gt;ADD_TODO&lt;/code&gt; action that we created, and the result that it had on the application state (namely, adding a todo). We can expand that state:&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;img src=&quot;/assets/ReduxResult2.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;and see that the new todo item was added with the text I typed in, and with a &lt;code&gt;completed&lt;/code&gt; value of &lt;code&gt;false&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;It’s working! :)&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/todomvc-react-redux/tree/3f564477ba32604024f4fa3406f8edf9272ba798&quot;&gt;Source code at this revision&lt;/a&gt; - &lt;a href=&quot;http://htmlpreview.github.io/?https://github.com/StephenCleary/todomvc-react-redux/blob/3f564477ba32604024f4fa3406f8edf9272ba798/index.html&quot;&gt;Live site at this revision&lt;/a&gt; (ignore the “startup flicker”; that’s just due to the way it’s hosted)&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/todomvc-react-redux&quot;&gt;Most current source code&lt;/a&gt; - &lt;a href=&quot;http://stephencleary.github.io/todomvc-react-redux/&quot;&gt;Most current live site&lt;/a&gt;&lt;/p&gt;
+</description>
+        <pubDate>Tue, 12 Apr 2016 00:00:00 -0400</pubDate>
+        <link>http://blog.stephencleary.com/2016/04/dispatching.html</link>
+        <guid isPermaLink="true">http://blog.stephencleary.com/2016/04/dispatching.html</guid>
+      </item>
+    
+      <item>
         <title>React/Redux TodoMVC, Part 4: Debugging</title>
         <description>&lt;p&gt;The debugging support available for React and Redux is amazing! When you do make mistakes in your app, React will give you helpful console error messages.&lt;/p&gt;
 
@@ -708,153 +780,6 @@ eslint: {
         <pubDate>Fri, 01 May 2015 00:00:00 -0400</pubDate>
         <link>http://blog.stephencleary.com/2015/05/mvp-virtual-conference.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2015/05/mvp-virtual-conference.html</guid>
-      </item>
-    
-      <item>
-        <title>A Tour of Task, Part 10: Promise Tasks</title>
-        <description>&lt;p&gt;Last time, we looked at &lt;a href=&quot;/2015/03/a-tour-of-task-part-9-delegate-tasks.html&quot;&gt;ways to start Delegate Tasks&lt;/a&gt;. Today we’ll look at the most common ways to create Promise Tasks. As a reminder, Promise Tasks are tasks that represent a kind of “event” within a system; they don’t have any user-defined code to execute.&lt;/p&gt;
-
-&lt;h2 id=&quot;taskdelay&quot;&gt;Task.Delay&lt;/h2&gt;
-
-&lt;p&gt;&lt;code&gt;Task.Delay&lt;/code&gt; is the asynchronous equivalent of &lt;code&gt;Thread.Sleep&lt;/code&gt;.&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Delay&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Delay&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TimeSpan&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-
-&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Delay&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Delay&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TimeSpan&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;The &lt;code&gt;int&lt;/code&gt; argument is treated as a number of milliseconds; I usually prefer the &lt;code&gt;TimeSpan&lt;/code&gt; versions since they are more explicit. Using &lt;code&gt;int&lt;/code&gt; millisecond values for timeouts is a holdover from an older API design; many Win32-level APIs only take timeout values as integer milliseconds. So, it makes sense to expose an &lt;code&gt;int&lt;/code&gt; parameter for lower-level waits like &lt;code&gt;WaitHandle.WaitOne&lt;/code&gt; or even &lt;code&gt;Task.Wait&lt;/code&gt;. However, &lt;code&gt;Task.Delay&lt;/code&gt; isn’t a thin wrapper over any Win32 API; the &lt;code&gt;int&lt;/code&gt; parameter in this case is just provided for tradition.&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;Delay&lt;/code&gt; may also take a &lt;code&gt;CancellationToken&lt;/code&gt;, which allows the delay to be cancelled.&lt;/p&gt;
-
-&lt;p&gt;Under the hood, &lt;code&gt;Delay&lt;/code&gt; starts a timer and completes its returned task when that timer fires. Or, if the &lt;code&gt;CancellationToken&lt;/code&gt; is signaled first, then &lt;code&gt;Delay&lt;/code&gt; cancels its returned task.&lt;/p&gt;
-
-&lt;p&gt;In real-world code, &lt;code&gt;Delay&lt;/code&gt; is almost never used. Its primary use case is as a retry timeout, i.e., if an asynchronous operation failed, the code will (asynchronously) wait a period of time before trying again. Generally, retry logic is wrapped into a separate library (such as &lt;a href=&quot;https://msdn.microsoft.com/en-us/library/hh675232.aspx&quot;&gt;Transient Fault Handling&lt;/a&gt; or &lt;a href=&quot;https://github.com/michael-wolfenden/Polly&quot;&gt;Polly&lt;/a&gt;), and &lt;code&gt;Delay&lt;/code&gt; is only used internally by those libraries, not directly by application code.&lt;/p&gt;
-
-&lt;h2 id=&quot;taskyield&quot;&gt;Task.Yield&lt;/h2&gt;
-
-&lt;p&gt;&lt;code&gt;Task.Yield&lt;/code&gt; has several interesting aspects. To begin with, it doesn’t actually return a &lt;code&gt;Task&lt;/code&gt;, so it’s not really a Promise Task kind of method:&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;YieldAwaitable&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Yield&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;But it does kind of &lt;em&gt;act&lt;/em&gt; kind of like a Promise Task. The &lt;code&gt;YieldAwaitable&lt;/code&gt; type interacts with the &lt;code&gt;async&lt;/code&gt; compiler transformation to &lt;em&gt;force&lt;/em&gt; an asynchronous point within a method. By default, if &lt;code&gt;await&lt;/code&gt; is used on an operation that has already completed, then the execution of the &lt;code&gt;async&lt;/code&gt; method continues synchronously. &lt;code&gt;YieldAwaitable&lt;/code&gt; throws a wrench into this by always claiming it is &lt;em&gt;not&lt;/em&gt; completed, and then scheduling its continuations immediately. This causes &lt;code&gt;await&lt;/code&gt; to schedule the rest of the &lt;code&gt;async&lt;/code&gt; method for immediate execution and return.&lt;/p&gt;
-
-&lt;p&gt;I’ve used &lt;code&gt;Task.Yield&lt;/code&gt; only occasionally during unit testing, when I needed to ensure that a particular method would in fact work if its asynchronous operation did not complete synchronously. I’ve found &lt;code&gt;Yield&lt;/code&gt; most useful when the asynchronous operation in question normally &lt;em&gt;does&lt;/em&gt; complete synchronously, and I need to force asynchrony to ensure the method behavior is correct.&lt;/p&gt;
-
-&lt;p&gt;However, I’ve never needed &lt;code&gt;Yield&lt;/code&gt; in production code. There is one use case where developers sometimes (incorrectly) attempt to use &lt;code&gt;Yield&lt;/code&gt;: to try to “refresh” the UI.&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;c1&quot;&gt;// Bad code, do not use!!&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;LongRunningCpuBoundWorkAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;c1&quot;&gt;// This method is called directly from the UI, and&lt;/span&gt;
-  &lt;span class=&quot;c1&quot;&gt;//  does lots of CPU-bound work.&lt;/span&gt;
-  &lt;span class=&quot;c1&quot;&gt;// Since this blocks the UI, this method is given&lt;/span&gt;
-  &lt;span class=&quot;c1&quot;&gt;//  an async signature and periodically &amp;quot;yields&amp;quot;.&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;1000000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;++&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// CPU-bound work.&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Yield&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;However, this approach will not work. The reason is that UI message loops are &lt;em&gt;priority&lt;/em&gt; queues, and any scheduled continuations have a much higher priority than “repaint the window”. So, the &lt;code&gt;Yield&lt;/code&gt; schedules the continuation and returns to the message loop, and the message loop immediately executes that continuation without processing any of its &lt;code&gt;WM_PAINT&lt;/code&gt; messages.&lt;/p&gt;
-
-&lt;p&gt;Some developers have discovered that using &lt;code&gt;Task.Delay&lt;/code&gt; instead of &lt;code&gt;Task.Yield&lt;/code&gt; will allow message processing (messages are processed until the timer fires). However, a far cleaner solution is to do the CPU-bound work on a background thread:&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;LongRunningCpuBoundWork&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;1000000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;++&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// CPU-bound work.&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-
-&lt;span class=&quot;c1&quot;&gt;// Called as:&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Run&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;LongRunningCpuBoundWork&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;());&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;In conclusion, &lt;code&gt;Task.Yield&lt;/code&gt; is occasionally useful when unit testing, but much less so for production code.&lt;/p&gt;
-
-&lt;h2 id=&quot;taskfromresult&quot;&gt;Task.FromResult&lt;/h2&gt;
-
-&lt;p&gt;&lt;code&gt;Task.FromResult&lt;/code&gt; will create a &lt;em&gt;completed&lt;/em&gt; task with the specified value:&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FromResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;It might seem silly at first to return a task that is already completed, but this is actually useful in several scenarios.&lt;/p&gt;
-
-&lt;p&gt;For instance, an interface method may have an asynchronous (task-returning) signature, and if an implementation is synchronous, then it can use &lt;code&gt;Task.FromResult&lt;/code&gt; to wrap up its (synchronous) result within a task. This is particularly useful when creating stubs for unit testing, but is also occasionally useful in production code:&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;interface&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IMyInterface&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;c1&quot;&gt;// Implementations *might* need to be asynchronous,&lt;/span&gt;
-  &lt;span class=&quot;c1&quot;&gt;//  so we define an asynchronous API.&lt;/span&gt;
-  &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-
-&lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;MyClass&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IMyInterface&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;c1&quot;&gt;// This particular implementation is not asynchronous.&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;42&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Do synchronous work.&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FromResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;Be careful, though, that your synchronous implementation is not &lt;em&gt;blocking&lt;/em&gt;. Implementing an asynchronous API with a blocking method is surprising behavior.&lt;/p&gt;
-
-&lt;p&gt;Another use case of &lt;code&gt;Task.FromResult&lt;/code&gt; is when doing some form of caching. In this case, you have some data that is synchronously retrieved (from the cache), and need to return it directly. In the case of a cache miss, then a true asynchronous operation is performed:&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;GetValueAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cache&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TryGetValue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;out&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FromResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoGetValueAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-
-&lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;DoGetValueAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;...;&lt;/span&gt;
-  &lt;span class=&quot;n&quot;&gt;cache&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TrySetValue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;div class=&quot;alert alert-info&quot;&gt;
-  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
-
-  &lt;p&gt;Tip: If you can, cache the task objects themselves instead of their resulting values; maintain a cache of &lt;em&gt;operations&lt;/em&gt; rather than &lt;em&gt;results&lt;/em&gt;.&lt;/p&gt;
-&lt;/div&gt;
-
-&lt;p&gt;As of this writing, one final common use of &lt;code&gt;Task.FromResult&lt;/code&gt; is just as a completed task. For this, the expressions &lt;code&gt;Task.FromResult(0)&lt;/code&gt; or &lt;code&gt;Task.FromResult&amp;lt;object&amp;gt;(null)&lt;/code&gt; are commonly used. This use case is similar to the synchronous implementation of an asynchronous API:&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;interface&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IPlugin&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;c1&quot;&gt;// Permit each plugin to initialize asynchronously.&lt;/span&gt;
-  &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;InitializeAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-
-&lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;MyPlugin&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IPlugin&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;InitializeAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;c1&quot;&gt;// The async equivalent of a noop.&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FromResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;div class=&quot;alert alert-info&quot;&gt;
-  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
-
-  &lt;p&gt;In the preview builds of .NET 4.6, there is a static &lt;code&gt;Task.CompletedTask&lt;/code&gt; that should be used instead of &lt;code&gt;Task.FromResult(0)&lt;/code&gt; or &lt;code&gt;Task.FromResult&amp;lt;object&amp;gt;(null)&lt;/code&gt;.&lt;/p&gt;
-&lt;/div&gt;
-
-&lt;p&gt;You might be wondering if there’s a way to return already-completed tasks in other states - particularly, canceled or faulted tasks. As of now, you have to write this yourself (using &lt;code&gt;TaskCompletionSource&lt;/code&gt;), but .NET 4.6 will introduce the &lt;code&gt;Task.FromCanceled&lt;/code&gt; and &lt;code&gt;Task.FromException&lt;/code&gt; methods to return synchronously canceled or faulted tasks.&lt;/p&gt;
-</description>
-        <pubDate>Thu, 30 Apr 2015 00:00:00 -0400</pubDate>
-        <link>http://blog.stephencleary.com/2015/04/a-tour-of-task-part-10-promise-tasks.html</link>
-        <guid isPermaLink="true">http://blog.stephencleary.com/2015/04/a-tour-of-task-part-10-promise-tasks.html</guid>
       </item>
     
   </channel>
