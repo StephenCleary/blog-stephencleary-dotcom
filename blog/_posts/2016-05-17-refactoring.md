@@ -22,7 +22,7 @@ There's three big parts to the `Main` component: a header, a main part, and a fo
         </footer>
     </section>
 
-Since I already have a `Main` component (oops), at the end of this point I'm going to rename my `Main` component to be `TodoApp` instead. My goal here is consistency: I'm going to break up `TodoApp` into `Header`, `Main`, and `Footer`, in a way that the `class` of each HTML element will match the name of its React component. This just results in more maintainable code.
+Since I already have a `Main` component (oops), at the end of this post I'm going to rename my `Main` component to be `TodoApp` instead. My goal here is consistency: I'm going to break up `TodoApp` into `Header`, `Main`, and `Footer`, in a way that the `class` of each HTML element will match the name of its React component. This just results in more maintainable code.
 
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
