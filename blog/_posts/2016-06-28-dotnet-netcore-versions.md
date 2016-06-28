@@ -46,7 +46,7 @@ The *tooling* version is what should be referenced in your `global.json`. So a `
 {
     "projects": [ "src", "test" ],
     "sdk": {
-		"version": "1.0.0-preview2-003121"
+        "version": "1.0.0-preview2-003121"
     }
 }
 {% endhighlight %}
