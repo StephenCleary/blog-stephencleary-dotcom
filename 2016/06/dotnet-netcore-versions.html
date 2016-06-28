@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>React/Redux TodoMVC, Part 6: Refactoring</title>
+    <title>DotNet / NetCore Versions</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="React prefers smaller components." />
-    <link rel="canonical" href="http://blog.stephencleary.com/2016/05/refactoring.html" />
+    <meta name="description" content="An attempt to keep developer sanity when upgrading dotnet / netcore projects." />
+    <link rel="canonical" href="http://blog.stephencleary.com/2016/06/dotnet-netcore-versions.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -219,128 +219,137 @@ code {
 
   <header>
       <div class="page-header">
-          <h1>React/Redux TodoMVC, Part 6: Refactoring</h1>
-          <small><time datetime="2016-05-17">May 17, 2016</time> &bull; <a data-disqus-identifier="/2016/05/refactoring" href="#disqus_thread">Comments</a></small>
+          <h1>DotNet / NetCore Versions</h1>
+          <small><time datetime="2016-06-28">Jun 28, 2016</time> &bull; <a data-disqus-identifier="/2016/06/dotnet-netcore-versions" href="#disqus_thread">Comments</a></small>
       </div>
   </header>
 
   <article>
-  <p>Today we’re going to start breaking up that huge <code>Main</code> component. Yes, I said “huge” - in the React world, smaller components are more normal. React encourages the creation of small, reusable components, which are then composed together.</p>
+  <p>Well, the .NET Core 1.0 RTM release went out yesterday, and everything went just fine!</p>
 
-<p>There’s three big parts to the <code>Main</code> component: a header, a main part, and a footer:</p>
+<p>No, just kidding. When does the first major release of a new platform ever go just fine? :)</p>
 
-<pre><code>&lt;section className="todoapp"&gt;
-    &lt;header className="header"&gt;
-        ...
-    &lt;/header&gt;
-    &lt;section className="main"&gt;
-        ...
-    &lt;/section&gt;
-    &lt;footer className="footer"&gt;
-        ...
-    &lt;/footer&gt;
-&lt;/section&gt;
-</code></pre>
+<p>Currently, there’s a bit of confusion out there because the <em>runtime</em> (netcore) RTM’d, but the <em>tooling</em> (dotnet) is still in preview. I’m writing down how all the pieces fit together (along with recent history) so I can keep it all straight in my head.</p>
 
-<p>Since I already have a <code>Main</code> component (oops), at the end of this post I’m going to rename my <code>Main</code> component to be <code>TodoApp</code> instead. My goal here is consistency: I’m going to break up <code>TodoApp</code> into <code>Header</code>, <code>Main</code>, and <code>Footer</code>, in a way that the <code>class</code> of each HTML element will match the name of its React component. This just results in more maintainable code.</p>
+<p>So, this is my short reference blog post pointing out which versions of which go with what. And stuff.</p>
+
+<h2 id="the-right-bits">The Right Bits</h2>
+
+<p>There have been several reports of odd Visual Studio behavior due to conflicting installs.</p>
+
+<p>So, the <strong>first</strong> thing to do is to uninstall all old DNX or dotnet tooling, and any pre-release netcore runtimes.</p>
+
+<p>Then, install the <a href="https://www.microsoft.com/net/core">proper bits</a>.</p>
+
+<p>For a Windows machine running Visual Studio, the proper bits are Visual Studio 2015 Update 3 followed by the .NET Core for Visual Studio Official MSI Installer (which includes some RTM pieces <em>and</em> some preview pieces).</p>
+
+<p>For a command-line setup, the proper bits are the .NET Core Runtime followed by the .NET Core SDK (which is in preview).</p>
+
+<h2 id="dotnet-and-netcore">DotNet and NetCore</h2>
+
+<p>As previously noted, .NET Core did RTM yesterday, but the DotNet tooling is still in preview. Here’s a rundown of the recent releases and how they match:</p>
+
+<table class="table">
+<thead>
+<tr><th>.NET Core (runtime) Version</th><th>DotNet (tooling) Version</th></tr>
+</thead>
+<tbody>
+<tr><td>RC1</td><td><span><code>1.0.0-rc1-update2</code> (RC1)</span></td></tr>
+<tr><td>RC2</td><td><span><code>1.0.0-preview1-002702</code> (Preview 1)</span></td></tr>
+<tr><td></td><td><span><code>1.0.0-beta-002071</code></span></td></tr>
+<tr><td>1.0.0 (RTM)</td><td><span><code>1.0.0-preview2-003121</code> (Preview 2)</span></td></tr>
+</tbody>
+</table>
+
+<p>The <em>tooling</em> version is what should be referenced in your <code>global.json</code>. So a <code>global.json</code> targeting the current tooling release would look like:</p>
+
+<div class="highlight"><pre><code class="language-json" data-lang="json"><span class="p">{</span>
+    <span class="nt">&quot;projects&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="s2">&quot;src&quot;</span><span class="p">,</span> <span class="s2">&quot;test&quot;</span> <span class="p">],</span>
+    <span class="nt">&quot;sdk&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;1.0.0-preview2-003121&quot;</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
 
 <div class="alert alert-info">
   <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
 
-  <p>If I had more control over the HTML output, I could choose to change the <code>class</code> for the main section from <code>main</code> to something like <code>todos</code>, and keep my old <code>Main</code> component as it is.</p>
+  <p>The naming definitely got messed up for the tooling.</p>
 
-  <p>However, in this case, the TodoMVC app should have fairly specific HTML output, to enable things like <a href="https://github.com/tastejs/todomvc/tree/master/tests">automated acceptance testing</a>.</p>
+  <p>It looks like it was originally tracking with the runtime release names (the “RC1” release names match), but then broke off on its own as “Preview 1” when the runtime went to “RC2”.</p>
+
+  <p>Then there was an intermediate release between the two preview releases, to fix the tooling for F# projects. It was called “beta” for some reason.</p>
+
+  <p>So the tooling has gone from RC to Preview 1 to Beta to Preview 2. However, those were not “real” Beta/RC releases - they were really just incremental previews. Future versions will doubtless have “real” Beta/RC names.</p>
 </div>
 
-<p>So, I have to rename my old <code>Main</code> component because I didn’t think far enough ahead. Sorry about that. I <em>am</em> totally making this up as I go along…</p>
+<h2 id="installing-tooling-on-ci-machines">Installing Tooling on CI Machines</h2>
 
-<h2 id="breaking-up-is-easy-to-do">Breaking Up is Easy to Do</h2>
+<p>Continuous Integration build servers also need to have the appropriate tooling installed. For a variety of reasons, I prefer to have my .NET Core projects locally install the exact version of tooling that they need.</p>
 
-<p>Let’s break out the child components first. In React, a common pattern is to use a <code>components</code> subdirectory to hold all the components. In larger apps, there can be further subdirectories underneath this, but this app is small enough that all the components should fit. I think. :)</p>
+<p>The DotNet tooling has supported “scripted installs” via PowerShell / Bash scripts for a long time. It’s not too hard to install the tooling as part of your build script, if you know where the files are.</p>
 
-<p>I’m going to (temporarily) call that middle child <code>Todos</code> instead of <code>Main</code> (I’ll fix this in the next step). The <code>Todos</code> ends up looking like this (in <code>components/todos.jsx</code>):</p>
+<p>The basic idea is that you first download an “install” script and then invoke it with the desired “channel” and “version” to get the actual tooling.</p>
 
-<pre><code>import React from 'react';
+<table class="table">
+<thead>
+<tr><th>DotNet (tooling) Version</th><th>Install Script Location</th><th>Install Script Invocation</th></tr>
+</thead>
+<tbody>
+<tr><td><span><code>1.0.0-rc1-update2</code></span></td><td><span><a href="https://raw.githubusercontent.com/aspnet/Home/dev/dnvminstall.ps1">https://raw.githubusercontent.com/​aspnet/​Home/​dev/​dnvminstall.ps1</a></span></td><td><span><code>dnvm install 1.0.0-rc1-update2</code></span></td></tr>
+<tr><td><span><code>1.0.0-preview1-002702</code></span></td><td><span><a href="https://raw.githubusercontent.com/dotnet/cli/rel/1.0.0-preview1/scripts/obtain/dotnet-install.ps1">https://raw.githubusercontent.com/​dotnet/​cli/​rel/​1.0.0-preview1/​scripts/​obtain/​dotnet-install.ps1</a></span></td><td><span><code>dotnet-install.ps1 -Channel "preview" -Version "1.0.0-preview1-002702"</code></span></td></tr>
+<tr><td><span><code>1.0.0-beta-002071</code></span></td><td><span><a href="https://raw.githubusercontent.com/dotnet/cli/rel/1.0.0-preview1/scripts/obtain/dotnet-install.ps1">https://raw.githubusercontent.com/​dotnet/​cli/​rel/​1.0.0-preview1/​scripts/​obtain/​dotnet-install.ps1</a></span></td><td><span><code>dotnet-install.ps1 -Channel "preview" -Version "1.0.0-beta-002071"</code></span></td></tr>
+<tr><td><span><code>1.0.0-preview2-003121</code></span></td><td><span><a href="https://raw.githubusercontent.com/dotnet/cli/rel/1.0.0-preview2/scripts/obtain/dotnet-install.ps1">https://raw.githubusercontent.com/​dotnet/​cli/​rel/​1.0.0-preview2/​scripts/​obtain/​dotnet-install.ps1</a></span></td><td><span><code>dotnet-install.ps1 -Channel "preview" -Version "1.0.0-preview2-003121"</code></span></td></tr>
+</tbody>
+</table>
 
-export default function Todos() {
-    // This section should be hidden by default and shown when there are todos
-    return (
-        &lt;section className="main"&gt;
-          (copied from main.jsx)
-        &lt;/section&gt;
-    );
-}
-</code></pre>
+<p>The Bash install scripts are located in the same place, just with a <code>.sh</code> extension.</p>
 
-<p>Well, that was pretty easy… The <code>Footer</code> follows the exact same pattern (exposing a <code>Footer</code> component from <code>components/footer.jsx</code>).</p>
+<p>A full “install local” PowerShell script for the current tooling version would look something like this:</p>
 
-<p>The header is a bit more difficult, because we have the <code>dispatch</code> method coming in and used in the header. There are three common ways to approach this.</p>
+<div class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span class="c"># Download the &quot;dotnet-install.ps1&quot; script.</span>
+<span class="nb">Invoke-WebRequest</span> <span class="s2">&quot;https://raw.githubusercontent.com/dotnet/cli/rel/1.0.0-preview2/scripts/obtain/dotnet-install.ps1&quot;</span> <span class="n">-OutFile</span> <span class="s2">&quot;.\dotnet-install.ps1&quot;</span>
 
-<ol>
-  <li>For those who like their dumb components to be <em>really</em> dumb, then the <code>dispatch</code> method is only connected to the smart component parent (in this case, <code>Main</code>). <code>Main</code> will then bind <code>dispatch</code> to the action creator (<code>TodoActions.add</code>), resulting in a new function. That function is then passed down to the dumb component, which uses it to respond to the user action.</li>
-  <li>For those who like their dumb components to be <em>somewhat</em> dumb, then the <code>dispatch</code> method is only connected to the smart component parent (<code>Main</code>). <code>Main</code> will then pass <code>dispatch</code> down to the dumb component, and the dumb component calls the action creator (<code>TodoActions.add</code>) and passes the resulting action to the <code>dispatch</code> it got from its parent.</li>
-  <li>For those who like their dumb components to be <em>only a little</em> dumb, then the <code>dispatch</code> method is connected to the dumb component directly. The dumb component calls the action creator (<code>TodoActions.add</code>) and passes the resulting action to its own <code>dispatch</code>.</li>
-</ol>
+<span class="c"># Decide to install into a &quot;.dotnetcli&quot; local directory.</span>
+<span class="nv">$env:DOTNET_INSTALL_DIR</span> <span class="p">=</span> <span class="s2">&quot;$pwd\.dotnetcli&quot;</span>
 
-<p>You could argue that the first option is the “most pure”, and the last one is “least pure”. While there are advantages to purity (namely, reusability), in my (limited) experience I feel that the repetitive boilerplate required by the purer approaches outweighs their advantages. For this reason, I take the third approach and just connect the dumb component so it gets its own <code>dispatch</code> directly.</p>
+<span class="c"># Do the actual install.</span>
+<span class="p">&amp;</span> <span class="p">.\</span><span class="n">dotnet-install</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-Channel</span> <span class="s2">&quot;preview&quot;</span> <span class="n">-Version</span> <span class="s2">&quot;1.0.0-preview2-003121&quot;</span> <span class="n">-InstallDir</span> <span class="s2">&quot;$env:DOTNET_INSTALL_DIR&quot;</span></code></pre></div>
 
-<p>Applying this to the <code>Header</code> yields this (in <code>components/header.jsx</code>):</p>
+<h2 id="helpful-links">Helpful Links</h2>
 
-<pre><code>import React from 'react';
-import { connect } from 'react-redux';
-import TodoActions from '../actions/todoActions';
+<p>Good luck!</p>
 
-function Header({dispatch}) {
-    return (
-        &lt;header className="header"&gt;
-            &lt;h1&gt;todos&lt;/h1&gt;
-            &lt;input className="new-todo" placeholder="What needs to be done?" autoFocus onBlur={e =&gt; dispatch(TodoActions.add(e.target.value))}/&gt;
-        &lt;/header&gt;
-    );
-}
+<h3 id="conceptual">Conceptual</h3>
 
-export default connect()(Header);
-</code></pre>
+<p><a href="https://github.com/dotnet/corefx/blob/master/Documentation/architecture/net-platform-standard.md">All about netstandard</a></p>
 
-<p>As you can see, I’m connecting the <code>Header</code> component, so that it gets <code>dispatch</code>, which it then uses directly to dispatch the <code>ADD_TODO</code> action at the appropriate time.</p>
+<p><a href="https://docs.microsoft.com/en-us/dotnet/articles/core/packages">Packages, Metapackages, and Frameworks</a></p>
 
-<p>Now that all the components are broken out, <code>Main</code> is quite simple (in <code>main.jsx</code>):</p>
+<p><a href="https://docs.microsoft.com/en-us/dotnet/articles/core/deploying/reducing-dependencies">Dependency Trimming</a></p>
 
-<pre><code>function Main() {
-    return (
-        &lt;section className="todoapp"&gt;
-            &lt;Header/&gt;
-            &lt;Todos/&gt;
-            &lt;Footer/&gt;
-        &lt;/section&gt;
-    );
-}
-</code></pre>
+<h3 id="upgrading">Upgrading</h3>
 
-<h2 id="renaming">Renaming</h2>
+<p><a href="https://weblog.west-wind.com/posts/2016/Jun/27/Upgrading-to-ASPNET-Core-RTM-from-RC2">Upgrading to ASP.NET Core RTM from RC2 (Rick Strahl)</a></p>
 
-<p>Finally, I have to do a bit of cleanup, because I chose a poor name (<code>Main</code>) without thinking of my HTML structure first.</p>
+<p><a href="https://xunit.github.io/docs/getting-started-dotnet-core.html">xUnit on .NET Core</a></p>
 
-<p>So, I’m going to rename the old <code>Main</code> to <code>TodoApp</code> instead (and also change the file name from <code>main.jsx</code> to <code>todoApp.jsx</code>), and then rename <code>Todos</code> to <code>Main</code> (and change the file name from <code>components/todos.jsx</code> to <code>components/main.jsx</code>).</p>
+<p><a href="https://github.com/dotnet/corefx/issues/8880">OpenCover requires the -oldStyle flag to work on the .NET Core 1.0.0/RTM runtime</a></p>
 
-<p>Now the component naming scheme is more maintainable: each part’s <code>class</code> attribute matches the component name and the file name in which that component lives.</p>
+<p><a href="https://aspnet-aspnet.readthedocs-hosted.com/en/latest/migration/rc2-to-rtm.html">[ASP.NET] Migrating from ASP.NET Core RC2 to ASP.NET Core 1.0</a></p>
 
-<p><a href="https://github.com/StephenCleary/todomvc-react-redux/tree/9c9959be0a85965098c40db1878f5a84420ae015">Source code at this revision</a> - <a href="http://htmlpreview.github.io/?https://github.com/StephenCleary/todomvc-react-redux/blob/9c9959be0a85965098c40db1878f5a84420ae015/index.html">Live site at this revision</a> (ignore the “startup flicker”; that’s just due to the way it’s hosted)</p>
+<p><a href="https://aspnet-aspnet.readthedocs-hosted.com/en/latest/migration/rc1-to-rtm.html">[ASP.NET] Migrating from ASP.NET 5 RC1 to ASP.NET Core 1.0</a></p>
 
-<p><a href="https://github.com/StephenCleary/todomvc-react-redux">Most current source code</a> - <a href="http://stephencleary.github.io/todomvc-react-redux/">Most current live site</a></p>
+<p><a href="https://docs.microsoft.com/en-us/dotnet/articles/core/migrating-from-dnx">Migrating from DNX</a></p>
 
   </article>
     
     <footer>
         
-            <ul class="pager">
-                <li class="previous"><a href="/2016/04/dispatching.html" title="React/Redux TodoMVC, Part 5: Dispatching">&larr; Previous in React/Redux TodoMVC</a></li>
-            </ul>
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2016/04/dispatching.html" title="React/Redux TodoMVC, Part 5: Dispatching">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2016/06/dotnet-netcore-versions.html" title="DotNet / NetCore Versions">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2016/05/refactoring.html" title="React/Redux TodoMVC, Part 6: Refactoring">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="disqus_thread"></div>
@@ -351,21 +360,6 @@ export default connect()(Header);
         </div>
         <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
             
-                <div class="panel panel-primary">
-                    <div class="panel-heading">React/Redux TodoMVC</div>
-                    <div class="panel-body sidenav">
-                        <ul class="nav nav-pills nav-stacked">
-                                            <li class="sidenavitem"><a href="/2016/02/react-redux-todomvc.html">Introduction</a></li>
-                                            <li class="sidenavitem"><a href="/2016/02/why-react-why-redux.html">Why React? Why Redux?</a></li>
-                                            <li class="sidenavitem"><a href="/2016/02/language-and-tooling.html">Language and Tooling</a></li>
-                                            <li class="sidenavitem"><a href="/2016/02/getting-started.html">Getting Started</a></li>
-                                            <li class="sidenavitem"><a href="/2016/03/state.html">State</a></li>
-                                            <li class="sidenavitem"><a href="/2016/03/debugging.html">Debugging</a></li>
-                                            <li class="sidenavitem"><a href="/2016/04/dispatching.html">Dispatching</a></li>
-                                            <li class="active sidenavitem"><a href="/2016/05/refactoring.html">Refactoring</a></li>
-                        </ul>
-                    </div>
-                </div>
             
         </div>
         <div class="col-sm-2 sidebar">
@@ -457,17 +451,6 @@ export default connect()(Header);
 
 <!-- Scroll the sidebar into view (if necessary) -->
 
-<script src="/lib/jquery.scrollTo.min.js"></script>
-<script type="text/javascript">
-    (function ($) {
-        $(function () {
-            var container = $('.affix').filter(function() { return $(this).css('position') == 'fixed'; });
-            var target = container.find('.active');
-            container.scrollTo(target, { offset: - (container.height() / 2 - target.height() / 2) });
-        });
-    })(window.jQuery);
-</script>
-
 
 <!-- Google analytics -->
 <script type="text/javascript">
@@ -505,9 +488,9 @@ export default connect()(Header);
 <!-- Disqus variables -->
 <script type="text/javascript">
     var disqus_shortname = 'stephencleary';
-    var disqus_identifier = "/2016/05/refactoring";
-    var disqus_title = "React/Redux TodoMVC, Part 6: Refactoring";
-    var disqus_url = "http://blog.stephencleary.com/2016/05/refactoring.html";
+    var disqus_identifier = "/2016/06/dotnet-netcore-versions";
+    var disqus_title = "DotNet / NetCore Versions";
+    var disqus_url = "http://blog.stephencleary.com/2016/06/dotnet-netcore-versions.html";
 </script>
 
 <!-- Disqus comment counter -->
