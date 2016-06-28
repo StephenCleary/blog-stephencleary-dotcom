@@ -98,6 +98,10 @@ $env:DOTNET_INSTALL_DIR = "$pwd\.dotnetcli"
 & .\dotnet-install.ps1 -Channel "preview" -Version "1.0.0-preview2-003121" -InstallDir "$env:DOTNET_INSTALL_DIR"
 {% endhighlight %}
 
+## Misc Tips
+
+As a general rule, you want use the *highest* available release of the `NETStandard.Library` dependency (if you're using it), but the *lowest* possible `netstandard` target (to reach the largest number of platforms). For more details, see the conceptual links below.
+
 ## Helpful Links
 
 Good luck!
@@ -117,6 +121,8 @@ Good luck!
 [xUnit on .NET Core](https://xunit.github.io/docs/getting-started-dotnet-core.html)
 
 [OpenCover requires the -oldStyle flag to work on the .NET Core 1.0.0/RTM runtime](https://github.com/dotnet/corefx/issues/8880)
+
+[Moq 4.6.25-alpha is missing a dependency, so you need to declare it manually](http://stackoverflow.com/questions/37288385/moq-netcore-failing-for-net-core-rc2)
 
 [[ASP.NET] Migrating from ASP.NET Core RC2 to ASP.NET Core 1.0](https://aspnet-aspnet.readthedocs-hosted.com/en/latest/migration/rc2-to-rtm.html)
 
