@@ -315,6 +315,10 @@ code {
 <span class="c"># Do the actual install.</span>
 <span class="p">&amp;</span> <span class="p">.\</span><span class="n">dotnet-install</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-Channel</span> <span class="s2">&quot;preview&quot;</span> <span class="n">-Version</span> <span class="s2">&quot;1.0.0-preview2-003121&quot;</span> <span class="n">-InstallDir</span> <span class="s2">&quot;$env:DOTNET_INSTALL_DIR&quot;</span></code></pre></div>
 
+<h2 id="misc-tips">Misc Tips</h2>
+
+<p>As a general rule, you want use the <em>highest</em> available release of the <code>NETStandard.Library</code> dependency (if you’re using it), but the <em>lowest</em> possible <code>netstandard</code> target (to reach the largest number of platforms). For more details, see the conceptual links below.</p>
+
 <h2 id="helpful-links">Helpful Links</h2>
 
 <p>Good luck!</p>
@@ -334,6 +338,8 @@ code {
 <p><a href="https://xunit.github.io/docs/getting-started-dotnet-core.html">xUnit on .NET Core</a></p>
 
 <p><a href="https://github.com/dotnet/corefx/issues/8880">OpenCover requires the -oldStyle flag to work on the .NET Core 1.0.0/RTM runtime</a></p>
+
+<p><a href="http://stackoverflow.com/questions/37288385/moq-netcore-failing-for-net-core-rc2">Moq 4.6.25-alpha is missing a dependency, so you need to declare it manually</a></p>
 
 <p><a href="https://aspnet-aspnet.readthedocs-hosted.com/en/latest/migration/rc2-to-rtm.html">[ASP.NET] Migrating from ASP.NET Core RC2 to ASP.NET Core 1.0</a></p>
 
