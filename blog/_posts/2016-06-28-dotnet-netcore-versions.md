@@ -16,13 +16,7 @@ So, this is my short reference blog post pointing out which versions of which go
 
 There have been several reports of odd Visual Studio behavior due to conflicting installs.
 
-So, the **first** thing to do is to uninstall all old DNX or dotnet tooling, and any pre-release netcore runtimes.
-
-<div class="alert alert-info" markdown="1">
-<i class="fa fa-hand-o-right fa-2x pull-left"></i>
-
-If you require the Visual Studio .NET Core RC2 (Preview 1 tooling) MSI to uninstall it, you can get it from [here](https://download.microsoft.com/download/4/6/1/46116DFF-29F9-4FF8-94BF-F9BE05BE263B/DotNetCore.1.0.0.RC2-VS2015Tools.Preview1.exe){:.alert-link}.
-</div>
+So, the **first** thing to do is to uninstall all old DNX or dotnet tooling, and any pre-release netcore runtimes. See the end of this post for uninstall helps.
 
 Then, install the [proper bits](https://www.microsoft.com/net/core).
 
@@ -52,10 +46,15 @@ The *tooling* version is what should be referenced in your `global.json`. So a `
 {
     "projects": [ "src", "test" ],
     "sdk": {
-    "version": "1.0.0-preview2-003121"
+		"version": "1.0.0-preview2-003121"
     }
 }
 {% endhighlight %}
+
+The tooling version is also what gets reported from `dotnet --version`:
+
+    > dotnet --version
+	1.0.0-preview2-003121
 
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
@@ -135,3 +134,9 @@ Good luck!
 [[ASP.NET] Migrating from ASP.NET 5 RC1 to ASP.NET Core 1.0](https://aspnet-aspnet.readthedocs-hosted.com/en/latest/migration/rc1-to-rtm.html)
 
 [Migrating from DNX](https://docs.microsoft.com/en-us/dotnet/articles/core/migrating-from-dnx)
+
+## Uninstalling Old versions
+
+Some developers have reported that Visual Studio .NET Core RC2 will not uninstall without the MSI. If you need the MSI, you can get it from [here](https://download.microsoft.com/download/4/6/1/46116DFF-29F9-4FF8-94BF-F9BE05BE263B/DotNetCore.1.0.0.RC2-VS2015Tools.Preview1.exe).
+
+Some developers have had problems with old uninstallers not cleaning up older versions of the tooling, and the problems with naming (where "RC1" and "RC2" tooling versions are *older* than "Preview 2") cause the wrong version of tooling to be found. The solution is to manually delete [the old versions](https://files.gitter.im/aspnet/Home/ufDJ/2016-06-28-20_04_03-sdk.png) from `%PROGRAMFILES%\dotnet\sdk`.
