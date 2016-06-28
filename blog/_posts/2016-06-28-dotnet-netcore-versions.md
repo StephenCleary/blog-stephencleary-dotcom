@@ -18,6 +18,12 @@ There have been several reports of odd Visual Studio behavior due to conflicting
 
 So, the **first** thing to do is to uninstall all old DNX or dotnet tooling, and any pre-release netcore runtimes.
 
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+If you require the Visual Studio .NET Core RC2 (Preview 1 tooling) MSI to uninstall it, you can get it from [here](https://download.microsoft.com/download/4/6/1/46116DFF-29F9-4FF8-94BF-F9BE05BE263B/DotNetCore.1.0.0.RC2-VS2015Tools.Preview1.exe){:.alert-link}.
+</div>
+
 Then, install the [proper bits](https://www.microsoft.com/net/core).
 
 For a Windows machine running Visual Studio, the proper bits are Visual Studio 2015 Update 3 followed by the .NET Core for Visual Studio Official MSI Installer (which includes some RTM pieces *and* some preview pieces).
