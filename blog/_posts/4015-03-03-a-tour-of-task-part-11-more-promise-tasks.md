@@ -6,16 +6,16 @@ seriesTitle: "More Promise Tasks"
 description: "An analysis of TaskCompletionSource, TaskExtensions.Unwrap, and Task.Factory.FromAsync; and discussion of whether they should be used for asynchronous and/or parallel code."
 ---
 
-Last time we started the dicussion of Promise Tasks by covering some simple creation methods. Today we'll cover some more complex ways to create Promise Tasks.
+Last time we [started the dicussion of Promise Tasks by covering some simple creation methods]({% post_url 2015-04-30-a-tour-of-task-part-10-promise-tasks %}). Today we'll cover some more complex ways to create Promise Tasks.
 
 ## TaskCompletionSource
 
-`TaskCompletionSource<T>` gives you manual control over a `Task<T>`; you use a `TaskCompletionSource<T>` to complete a given `Task<T>`. `TaskCompletionSource<T>` is the most general-purpose way to create a Promise Task. If you find yourself needing to ""
+`TaskCompletionSource<T>` gives you manual control over a `Task<T>`; you use a `TaskCompletionSource<T>` to complete the `Task<T>` owned by that `TaskCompletionSource<T>`. `TaskCompletionSource<T>` is the most general-purpose way to create a Promise Task. You should consider `TaskCompletionSource<T>` if you find yourself needing to manually "signal" asynchronous code, or if you need to "await anything".
 
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
-Asynchronous terminology is still in a bit of flux at this point. In the Scala/Akka world, `Task<T>` would be a "future", and `TaskCompletionSource<T>` would be a "promise". In the Javascript world, `Task<T>` would be a "promise", and `TaskCompletionSource<T>` would be a "deferred".
+Asynchronous terminology is still in a bit of flux at this point. In the Scala/Akka world, `Task<T>` would be a "future", and `TaskCompletionSource<T>` would be a "promise". In the Javascript world, `Task<T>` would be a "promise", and `TaskCompletionSource<T>` would not have a name (jQuery would call this a "deferred").
 </div>
 
 {% highlight csharp %}
@@ -32,6 +32,8 @@ bool TrySetCanceled();
 
 
 ## TaskExtensions.Unwrap
+
+
 
 ## Task.Factory.FromAsync
 
