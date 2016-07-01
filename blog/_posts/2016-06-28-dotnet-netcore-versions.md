@@ -24,6 +24,8 @@ For a Windows machine running Visual Studio, the proper bits are Visual Studio 2
 
 For a command-line setup, the proper bits are the .NET Core Runtime followed by the .NET Core SDK (which is in preview).
 
+If you use ReSharper, be sure to upgrade to [2016.2 EAP 6](https://confluence.jetbrains.com/display/ReSharper/ReSharper+2016.2+EAP).
+
 ## DotNet and NetCore
 
 As previously noted, .NET Core did RTM yesterday, but the DotNet tooling is still in preview. Here's a rundown of the recent releases and how they match:
