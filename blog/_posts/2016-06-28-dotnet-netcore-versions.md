@@ -111,6 +111,8 @@ As a general rule, you want use the *highest* available release of the `NETStand
 
 ## Helpful Links
 
+If you have an upgrade problem that you just can't figure out, join the [(unofficial) .NET Core Slack channel](http://tattoocoder.com/aspnet-slack-sign-up/) or the [(official) .NET Core Gitter room](https://gitter.im/dotnet/coreclr) and ask on there.
+
 Good luck!
 
 ### Conceptual
