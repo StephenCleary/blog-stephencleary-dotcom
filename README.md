@@ -1,4 +1,4 @@
-To use:
+# To build:
 
 - Install PortableJekyll from http://www.madhur.co.in/blog/2013/07/20/buildportablejekyll.html
 - Copy "Python\App\python.exe" to "Python\App\python2.exe"
@@ -14,3 +14,8 @@ To serve locally (with future posts):
 To build:
 > D:\Programs\PortableJekyll\setpath.ps1
 > .\build.ps1
+
+# Patterns:
+
+Link to other posts: `[text to be highlighted]({% post_url 2016-01-01-post-file-name %})`
+
