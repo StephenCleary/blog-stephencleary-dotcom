@@ -604,9 +604,14 @@ code {
 <script type="text/javascript">window.moment || document.write('<script src="/lib/moment.min.js"><\/script>')</script>
 <script type="text/javascript">
     (function($) {
-        $(function() {
+        $(function () {
             $('time').each(function (_, e) {
-                var text = moment($(e).attr('datetime'), 'YYYY-MM-DD').fromNow();
+                var startOfToday = moment().startOf('day');
+                var publicationDate = moment($(e).attr('datetime'), 'YYYY-MM-DD');
+                var difference = startOfToday.diff(publicationDate, 'days');
+                var text = difference === 0 ? 'Today' :
+                    difference === 1 ? 'Yesterday' :
+                    publicationDate.from(startOfToday);
                 $(e).text(function(_, oldText) { return text + ' (' + oldText + ')'; });
             });
         });
