@@ -8,6 +8,17 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="http://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>Announcement: Speaking at Milwaukee .NET</title>
+        <description>&lt;p&gt;I’ll be speaking at the MKE DOT NET conference in Milwaukee, WI on October 29th!&lt;/p&gt;
+
+&lt;p&gt;My topic is “Asynchronous? Parallel? Reactive? HELP!”, which is a gentle introduction to various forms of concurrency, with guidance on how to choose between them.&lt;/p&gt;
+</description>
+        <pubDate>Thu, 13 Oct 2016 00:00:00 -0400</pubDate>
+        <link>http://blog.stephencleary.com/2016/10/announcement-speaking-at-mkedotnet.html</link>
+        <guid isPermaLink="true">http://blog.stephencleary.com/2016/10/announcement-speaking-at-mkedotnet.html</guid>
+      </item>
+    
+      <item>
         <title>Brazilian Portuguese translation of Async/Await</title>
         <description>&lt;p&gt;This is just a quick note to let you know that my &lt;a href=&quot;/2012/02/async-and-await.html&quot;&gt;async intro blog post&lt;/a&gt; has been &lt;a href=&quot;http://www.estacouveflor.com/async-e-await/&quot;&gt;translated into Brazilian Portuguese&lt;/a&gt;!&lt;/p&gt;
 
@@ -959,47 +970,6 @@ eslint: {
         <pubDate>Thu, 11 Feb 2016 00:00:00 -0500</pubDate>
         <link>http://blog.stephencleary.com/2016/02/why-react-why-redux.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2016/02/why-react-why-redux.html</guid>
-      </item>
-    
-      <item>
-        <title>React/Redux TodoMVC, Part 0: Introduction</title>
-        <description>&lt;p&gt;As of this writing, the front end of &lt;a href=&quot;http://dotnetapis.com&quot;&gt;DotNetApis&lt;/a&gt; is entirely written in &lt;a href=&quot;https://facebook.github.io/react/&quot;&gt;React&lt;/a&gt;. This was my first React project, and there were a &lt;em&gt;lot&lt;/em&gt; of things that I learned along the way. My app certainly had “growing pains,” and a lot of React best practices were added rather late in that project.&lt;/p&gt;
-
-&lt;p&gt;So, I thought it would be beneficial to do a series of posts on how to do a new React project, with the benefit of hindsight that I did not have when writing the first version of DotNetApis.&lt;/p&gt;
-
-&lt;div class=&quot;alert alert-info&quot;&gt;
-  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
-
-  &lt;p&gt;Disclaimer: I am still very new to React. It’s &lt;s&gt;possible&lt;/s&gt; likely that I am entirely missing some really helpful best practices. If you know of any, please let me know in the comments!&lt;/p&gt;
-
-  &lt;p&gt;Disclaimer Part 2: In fact, the whole React community is still new to React. Best practices are still “in flux” (heh), and may not be the same years from now.&lt;/p&gt;
-&lt;/div&gt;
-
-&lt;p&gt;I’ll be developing this project in the open &lt;a href=&quot;https://github.com/StephenCleary/todomvc-react-redux&quot;&gt;on GitHub&lt;/a&gt;. I’ve decided to implement the ubiquitous &lt;a href=&quot;http://todomvc.com/&quot;&gt;TodoMVC app&lt;/a&gt;, which is often used to help decide on client-side MVC frameworks. You can argue that React/Redux isn’t really “MVC”-ish, but eh, whatever.&lt;/p&gt;
-
-&lt;p&gt;One problem with TodoMVC is that it doesn’t have examples of asynchronous backend communication, which can make or break a framework decision. In keeping with the spirit of TodoMVC, my React/Redux implementation will also not have asynchronous communication; if I remember, I’ll write a separate blog post describing how to do that after this series wraps up.&lt;/p&gt;
-
-&lt;p&gt;So, let’s get started!&lt;/p&gt;
-
-&lt;p&gt;Here’s what I’ve done so far, just some housekeeping work at the start:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Forked the &lt;a href=&quot;https://github.com/tastejs/todomvc-app-template&quot;&gt;TodoMVC app template&lt;/a&gt;.&lt;/li&gt;
-  &lt;li&gt;Moved everything to the &lt;a href=&quot;https://pages.github.com/&quot;&gt;&lt;code&gt;gh-pages&lt;/code&gt; branch&lt;/a&gt;, where I’ll do all the development &lt;em&gt;and&lt;/em&gt; deployment simultaneously.&lt;/li&gt;
-  &lt;li&gt;Removed the (empty) &lt;code&gt;app.css&lt;/code&gt; from the app template, since I’m quite sure I won’t be needing it.&lt;/li&gt;
-  &lt;li&gt;Filled out some of the placeholders in the HTML.&lt;/li&gt;
-  &lt;li&gt;Tweaked the &lt;code&gt;.gitignore&lt;/code&gt; to include the “boilerplate” css that comes as dependencies of the app template.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Groundbreaking, eh? Don’t worry, this is just getting started! :)&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/todomvc-react-redux/tree/9b881b0bea8070f850c8c78a6fcf4701287101ae&quot;&gt;Source code at this revision&lt;/a&gt; - &lt;a href=&quot;http://htmlpreview.github.io/?https://github.com/StephenCleary/todomvc-react-redux/blob/9b881b0bea8070f850c8c78a6fcf4701287101ae/index.html&quot;&gt;Live site at this revision&lt;/a&gt; (ignore the “startup flicker”; that’s just due to the way it’s hosted)&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/todomvc-react-redux&quot;&gt;Most current source code&lt;/a&gt; - &lt;a href=&quot;http://stephencleary.github.io/todomvc-react-redux/&quot;&gt;Most current live site&lt;/a&gt;&lt;/p&gt;
-</description>
-        <pubDate>Wed, 10 Feb 2016 00:00:00 -0500</pubDate>
-        <link>http://blog.stephencleary.com/2016/02/react-redux-todomvc.html</link>
-        <guid isPermaLink="true">http://blog.stephencleary.com/2016/02/react-redux-todomvc.html</guid>
       </item>
     
   </channel>
