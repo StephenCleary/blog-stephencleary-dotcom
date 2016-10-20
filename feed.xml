@@ -8,6 +8,157 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="http://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>Asynchronous PushStreamContent</title>
+        <description>&lt;p&gt;I ran into this problem the other day, and thought it would serve as a good use case study.&lt;/p&gt;
+
+&lt;p&gt;Put simply, I want to write an ASP.NET WebAPI action that will download a bunch of URLs and generate a zip on the fly, without storing any files in memory, &lt;em&gt;and&lt;/em&gt; without blocking any threads on I/O.&lt;/p&gt;
+
+&lt;p&gt;Fun, fun!&lt;/p&gt;
+
+&lt;h2 id=&quot;downloading-a-simple-stream&quot;&gt;Downloading a Simple Stream&lt;/h2&gt;
+
+&lt;p&gt;It’s pretty straightforward to download a simple stream in WebAPI; there’s built-in support for that:&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;HttpClient&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Client&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;HttpClient&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;HttpResponseMessage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;stream&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Client&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;GetStreamAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;https://raw.githubusercontent.com/StephenClearyExamples/AsyncDynamicZip/master/README.md&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;HttpResponseMessage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;HttpStatusCode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;OK&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;Content&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;StreamContent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Content&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Headers&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ContentType&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MediaTypeHeaderValue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;text/plain&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Content&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Headers&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ContentDisposition&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ContentDispositionHeaderValue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;attachment&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FileName&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;README.md&amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;First, we (asynchronously) send the HTTP request and get the stream back (at this point, the file is not in memory). Next, we create an &lt;code&gt;HttpResponseMessage&lt;/code&gt; that will use that stream as its content (&lt;code&gt;StreamContent&lt;/code&gt;). Finally, we set a few headers so that this file downloads nicely if a browser makes the request. If you hit this API in a browser, it will download the &lt;code&gt;README.md&lt;/code&gt; file indirectly through the WebAPI.&lt;/p&gt;
+
+&lt;h2 id=&quot;constructing-a-zip-file-on-the-fly-using-memorystream&quot;&gt;Constructing a Zip File on the Fly Using MemoryStream&lt;/h2&gt;
+
+&lt;p&gt;Let’s extend this example to have our WebAPI download &lt;em&gt;multiple&lt;/em&gt; files, and combine them into a single zip file which is then downloaded by the user.&lt;/p&gt;
+
+&lt;p&gt;We can do this as such (using the excellent &lt;a href=&quot;https://www.nuget.org/packages/DotNetZip/&quot;&gt;&lt;code&gt;DotNetZip&lt;/code&gt; library&lt;/a&gt;):&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;HttpClient&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Client&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;HttpClient&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;HttpResponseMessage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;filenamesAndUrls&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Dictionary&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;README.md&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;https://raw.githubusercontent.com/StephenClearyExamples/AsyncDynamicZip/master/README.md&amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;.gitignore&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;https://raw.githubusercontent.com/StephenClearyExamples/AsyncDynamicZip/master/.gitignore&amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+
+    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;archive&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MemoryStream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;zipStream&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ZipOutputStream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;archive&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;leaveOpen&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;foreach&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;kvp&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;filenamesAndUrls&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;zipStream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PutNextEntry&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;kvp&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;stream&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Client&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;GetStreamAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;kvp&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Value&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+                &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;stream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CopyToAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;zipStream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+    &lt;span class=&quot;n&quot;&gt;archive&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Position&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;HttpResponseMessage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;HttpStatusCode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;OK&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;Content&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;StreamContent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;archive&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Content&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Headers&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ContentType&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MediaTypeHeaderValue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;application/octet-stream&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Content&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Headers&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ContentDisposition&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ContentDispositionHeaderValue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;attachment&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FileName&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;MyZipfile.zip&amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Here we’re downloading &lt;em&gt;two&lt;/em&gt; files and combining them on-the-fly into a single zip which is downloaded by the user. First, we create the &lt;code&gt;MemoryStream&lt;/code&gt; that the zip library will write to. Then, we download all the files asynchronously, and add them to the zip archive. Finally, we rewind the &lt;code&gt;MemoryStream&lt;/code&gt; containing the zip file and send it to the browser using good ‘ol &lt;code&gt;StreamContent&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;The problem with this approach is the &lt;code&gt;MemoryStream&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Storing the zip archive in the &lt;code&gt;MemoryStream&lt;/code&gt; (as you may infer from the name) means that we’re building up the entire zip file in memory. The code is asynchronously downloading (using &lt;code&gt;HttpClient&lt;/code&gt;), and WebAPI will asynchronously send it to the browser (using &lt;code&gt;StreamContent&lt;/code&gt;), but we are holding the entire zip in memory in the meantime.&lt;/p&gt;
+
+&lt;p&gt;There &lt;em&gt;is&lt;/em&gt; a way to build the zip file &lt;em&gt;while it is being streamed to the client&lt;/em&gt;. This is possible because the zip file format lists its contents at the &lt;em&gt;end&lt;/em&gt; of the file.&lt;/p&gt;
+
+&lt;p&gt;To use this kind of dynamic streaming, we can’t use &lt;code&gt;MemoryStream&lt;/code&gt; or &lt;code&gt;StreamContent&lt;/code&gt;. What we &lt;em&gt;really&lt;/em&gt; want is to write to the output stream directly. With ASP.NET MVC, we could use &lt;code&gt;HttpResponse.OutputStream&lt;/code&gt; to grab the output stream directly and write to it (not ideal from a design standpoint, but it would work). This is not an option in ASP.NET WebAPI.&lt;/p&gt;
+
+&lt;p&gt;However, ASP.NET WebAPI does have a response type that acts as a “callback” that allows us to write directly to the output stream &lt;em&gt;after&lt;/em&gt; we return from the controller action method. Its name is &lt;code&gt;PushStreamContent&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;constructing-a-zip-file-on-the-fly-using-pushstreamcontent&quot;&gt;Constructing a Zip File on the Fly Using PushStreamContent&lt;/h2&gt;
+
+&lt;p&gt;I think of &lt;code&gt;PushStreamContent&lt;/code&gt; as just a “callback”. When ASP.NET has sent the headers and is ready to send the actual content, it just invokes the callback that we give to &lt;code&gt;PushStreamContent&lt;/code&gt;. Using this technique, our code looks like this:&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;HttpClient&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Client&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;HttpClient&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;HttpResponseMessage&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;filenamesAndUrls&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Dictionary&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;README.md&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;https://raw.githubusercontent.com/StephenClearyExamples/AsyncDynamicZip/master/README.md&amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;.gitignore&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;https://raw.githubusercontent.com/StephenClearyExamples/AsyncDynamicZip/master/.gitignore&amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+
+    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;HttpResponseMessage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;HttpStatusCode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;OK&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;Content&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PushStreamContent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;outputStream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;httpContext&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;transportContext&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;zipStream&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ZipOutputStream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;outputStream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;k&quot;&gt;foreach&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;kvp&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;filenamesAndUrls&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+                &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+                    &lt;span class=&quot;n&quot;&gt;zipStream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PutNextEntry&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;kvp&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+                    &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;stream&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Client&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;GetStreamAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;kvp&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Value&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+                        &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;stream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CopyToAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;zipStream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+                &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}),&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Content&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Headers&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ContentType&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MediaTypeHeaderValue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;application/octet-stream&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Content&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Headers&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ContentDisposition&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ContentDispositionHeaderValue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;attachment&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FileName&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;MyZipfile.zip&amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;With the callback approach, we can write the zip archive directly to the output stream.&lt;/p&gt;
+
+&lt;p&gt;The actual sequence of operations is this:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;ASP.NET calls our controller action.&lt;/li&gt;
+  &lt;li&gt;We build the list of filenames to download, and return an &lt;code&gt;HttpResponseMessage&lt;/code&gt; with a status code, a callback, and some HTTP headers.&lt;/li&gt;
+  &lt;li&gt;ASP.NET starts sending the response to the client; it sends the status code and HTTP headers first.&lt;/li&gt;
+  &lt;li&gt;Then, when ASP.NET sends the response body to the client, it invokes our callback method.&lt;/li&gt;
+  &lt;li&gt;Our &lt;code&gt;PushStreamContent&lt;/code&gt; callback starts writing a zip file (directly to the response body), downloading the files asynchronously one at a time and adding them to the zipped content.&lt;/li&gt;
+  &lt;li&gt;When our callback returns, ASP.NET completes the response.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;This approach has some really nice advantages:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;All I/O is asynchronous. At no time are any threads blocked waiting to read the source files from their URLs, nor are any threads blocked waiting to write to the output response stream.&lt;/li&gt;
+  &lt;li&gt;The zip file is not held in memory. It is streamed directly to the client, compressing on-the-fly.&lt;/li&gt;
+  &lt;li&gt;In fact, for large files, not even a single file is read entirely into memory. Each file is individually compressed on-the-fly.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;It’s interesting to think about how this API will start a download of the zip file, and the zip is already streaming when it may not even have started downloading the other source files!&lt;/p&gt;
+
+&lt;h2 id=&quot;drawbacks-to-pushstreamcontent&quot;&gt;Drawbacks to PushStreamContent&lt;/h2&gt;
+
+&lt;p&gt;Well, it’s not all rainbows and unicorns, of course.&lt;/p&gt;
+
+&lt;p&gt;The primary drawback to &lt;code&gt;PushStreamContent&lt;/code&gt; is error handling. Since an HTTP response always &lt;em&gt;starts&lt;/em&gt; with sending the status code (like &lt;code&gt;200 OK&lt;/code&gt;) and the headers, by the time our &lt;code&gt;PushStreamContent&lt;/code&gt; callback is invoked, it’s too late to notify the client of an error. So, what happens if our callback throws an exception?&lt;/p&gt;
+
+&lt;p&gt;Based on my testing, it appears that ASP.NET will abort the connection. With all the browsers I tested, they correctly interpreted it as a generic “network error”.&lt;/p&gt;
+
+&lt;p&gt;The problem is, ASP.NET can’t go back in time and change the status code or response headers. So it’s not possible to get any kind of detailed error information to the client if there’s a problem in the &lt;code&gt;PushStreamContent&lt;/code&gt; callback. The best you can do is just log the error on the server side. This is something to keep in mind when using &lt;code&gt;PushStreamContent&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;code&quot;&gt;Code&lt;/h2&gt;
+
+&lt;p&gt;A fully-working solution for ASP.NET 4.6 is &lt;a href=&quot;https://github.com/StephenClearyExamples/AsyncDynamicZip/tree/full-dotnetzip&quot;&gt;available on GitHub&lt;/a&gt;.&lt;/p&gt;
+</description>
+        <pubDate>Thu, 20 Oct 2016 00:00:00 -0400</pubDate>
+        <link>http://blog.stephencleary.com/2016/10/async-pushstreamcontent.html</link>
+        <guid isPermaLink="true">http://blog.stephencleary.com/2016/10/async-pushstreamcontent.html</guid>
+      </item>
+    
+      <item>
         <title>Announcement: Speaking at Milwaukee .NET</title>
         <description>&lt;p&gt;I’ll be speaking at the &lt;a href=&quot;http://www.mkedotnet.com/&quot;&gt;MKE DOT NET conference&lt;/a&gt; in Milwaukee, WI on October 29th!&lt;/p&gt;
 
@@ -873,103 +1024,6 @@ eslint: {
         <pubDate>Wed, 17 Feb 2016 00:00:00 -0500</pubDate>
         <link>http://blog.stephencleary.com/2016/02/language-and-tooling.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2016/02/language-and-tooling.html</guid>
-      </item>
-    
-      <item>
-        <title>React/Redux TodoMVC, Part 0B: Why React? Why Redux?</title>
-        <description>&lt;p&gt;I was a casualty of the Version 4 Browser Wars.&lt;/p&gt;
-
-&lt;p&gt;Those of you who are old enough to remember know exactly what I’m talking about. For those who weren’t there, maybe I’ll write a post about it someday. But anyway, I became a desktop developer for many years as a direct result of that horrible early web experience. It is only recently (the last few years) that I’ve cautiously stepped out into frontend development again.&lt;/p&gt;
-
-&lt;p&gt;I say this to emphasize that I’m not an expert frontend developer (yet). I’ve dabbled in Knockout, Angular, Durandal, and Aurelia. I’m much more familiar with common libraries like lodash and jQuery. But when it came to choose a framework for &lt;a href=&quot;http://dotnetapis.com&quot;&gt;DotNetApis&lt;/a&gt;, I chose something I had never used before: React.&lt;/p&gt;
-
-&lt;h2 id=&quot;why-react&quot;&gt;Why React?&lt;/h2&gt;
-
-&lt;p&gt;Well, in short, because &lt;a href=&quot;http://www.bitnative.com/&quot;&gt;Cory House&lt;/a&gt; convinced me. I was able to attend his excellent talk at ThatConference 2015 &lt;a href=&quot;https://www.thatconference.com/sessions/session/9108&quot;&gt;Angular, Backbone, and Knockout are great, so why choose React?&lt;/a&gt;, and followed that up with &lt;a href=&quot;https://www.pluralsight.com/courses/react-flux-building-applications&quot;&gt;his Pluralsight course on React and Flux&lt;/a&gt;. Cory House is convincing. :)&lt;/p&gt;
-
-&lt;p&gt;It all boils down to this simple fact: React represents component boundaries as files. In other words, a single component belongs in a single file.&lt;/p&gt;
-
-&lt;p&gt;In a modern MVVM-style data-binding system, you usually end up with &lt;em&gt;pairs&lt;/em&gt; of files. You have the view and the view model:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;app/
-  components/
-    todo/
-      todoViewModel.js
-      todoView.html
-    footer/
-      footerViewModel.js
-      footerView.html
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;I’ve written a few components like this, enough to know something’s wrong. In particular, when you have this kind of structure in your app and you need to modify a component, which file do you end up modifying? Usually both of them. New functionality generally requires &lt;em&gt;both&lt;/em&gt; the view and view model to change. This is an indication that the view and view model are really dealing with the same underlying concern.&lt;/p&gt;
-
-&lt;p&gt;According to Wikipedia, the Single Responsibility Principle is “every module or class should have responsibility over a single part of the functionality provided by the software, and that responsibility should be entirely encapsulated by the class.” Take special note of the second half of that definition: “that responsibility should be entirely encapsulated”. That’s why it’s harder to have multiple files making up a single component. There’s a lack of cohesion.&lt;/p&gt;
-
-&lt;p&gt;Another hurdle with modern MVVM-style data-binding systems is that they use templating. This means that you have &lt;em&gt;three&lt;/em&gt; languages to deal with: JavaScript (or some variant) for the view model, HTML for most of the view, and whatever HTML extensions exist as part of the templating solution. That’s a fair amount of context switching.&lt;/p&gt;
-
-&lt;p&gt;None of these hurdles are insurmountable, of course. Large systems have been written with these techniques, and they work well. But we can do better.&lt;/p&gt;
-
-&lt;p&gt;React addresses these problems by restructuring a “component”. Instead of having two files, with one of them containing a programming (templating) language within HTML, React just reverses that and puts HTML in the JavaScript.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;app/
-  components/
-    todo.jsx
-    footer.jsx
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;This seems like a small thing, but it really does make a difference in day-to-day work. One component is in one file, which contains both the HTML and logic. When a component changes, only one file changes. And there’s only two languages: JavaScript (or some variant) and HTML. There’s no separate templating language; if you need a &lt;code&gt;for&lt;/code&gt; loop around some content, you just write it in JavaScript.&lt;/p&gt;
-
-&lt;p&gt;React &lt;em&gt;simplifies&lt;/em&gt; component work. Then it gets out of your way.&lt;/p&gt;
-
-&lt;h2 id=&quot;my-first-attempt-flux-not-redux&quot;&gt;My First Attempt (Flux, not Redux)&lt;/h2&gt;
-
-&lt;p&gt;React only addresses the “view” part of the frontend. It doesn’t have any opinions about how you store your data. There’s a pretty common pattern of data management called &lt;a href=&quot;https://facebook.github.io/flux/&quot;&gt;Flux&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;When I started using React, I decided to go with “vanilla Flux”; that is, to have a singleton dispatcher implementation. Flux works like this:&lt;/p&gt;
-
-&lt;p class=&quot;center&quot;&gt;&lt;img src=&quot;/assets/FluxAsPromised.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;You have “action creators”, which are just functions that return actions. Those actions are data (objects) that represent some action, such as a user clicking a button or typing into a textbox. The actions are sent to the dispatcher, which is a singleton. The dispatcher then sends out the action to each store that has registered with it (this is just a simple pub/sub pattern).&lt;/p&gt;
-
-&lt;p&gt;The stores are where the application state lives. Each store updates itself by responding to actions coming from the dispatcher. Each time it updates, it notifies &lt;em&gt;its&lt;/em&gt; subscribers, which are the views (the actual JSX components). Those views in turn will respond to user interaction by calling the action creators and dispatching those actions.&lt;/p&gt;
-
-&lt;p&gt;This diagram is a bit simplified; the “Views” here are really made up of two different kind of views: &lt;a href=&quot;https://medium.com/@dan_abramov/smart-and-dumb-components-7ca2f9a7c7d0#.o5lr2g6lz&quot;&gt;“smart” or “page” or “container” or “route”&lt;/a&gt; views, which sit at the top level and subscribe to store updates, and “dumb” views, which only receive data from their parent views.&lt;/p&gt;
-
-&lt;p&gt;This is all well and good, but as DotNetApis grew more complex, I started running into problems.&lt;/p&gt;
-
-&lt;p&gt;In particular, I had several different “stores”, each one containing part of the application state, divided up logically. Also, I had several different “smart” views, some of which were children of other “smart” views, and each of which had to manage subscriptions to one or more stores. What I ended up with looked more like this diagram:&lt;/p&gt;
-
-&lt;p class=&quot;center&quot;&gt;&lt;img src=&quot;/assets/FluxInReality.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;It was just getting too complex. I reached out for help on The Twitter, and &lt;a href=&quot;https://twitter.com/housecor&quot;&gt;Cory House&lt;/a&gt; and &lt;a href=&quot;https://twitter.com/ryanlanciaux&quot;&gt;Ryan Lanciaux&lt;/a&gt; were kind enough to point me to Redux.&lt;/p&gt;
-
-&lt;h2 id=&quot;why-redux&quot;&gt;Why Redux?&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://rackt.org/redux/&quot;&gt;Redux&lt;/a&gt; is a further simplification of React. Redux declares that you should only have one store, and all of the application state lives in that single store.&lt;/p&gt;
-
-&lt;p&gt;Hmmm, simpler:&lt;/p&gt;
-
-&lt;p class=&quot;center&quot;&gt;&lt;img src=&quot;/assets/ReduxToTheRescue.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;Now, Redux &lt;em&gt;does&lt;/em&gt; introduce some new concepts. In short, it implements your store &lt;em&gt;for&lt;/em&gt; you, so you need to fill in a few missing pieces.&lt;/p&gt;
-
-&lt;p&gt;In particular, you need to define how actions will change your application state. In Redux, these are called &lt;a href=&quot;https://rackt.org/redux/docs/basics/Reducers.html&quot;&gt;reducers&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;A real-world Redux application ends up looking more like this (note that the shaded parts are mostly or entirely implemented by libraries, not by the application author):&lt;/p&gt;
-
-&lt;p class=&quot;center&quot;&gt;&lt;img src=&quot;/assets/ReduxInReality.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;Once I started using Redux, I’ve never looked back. Everything is simpler!&lt;/p&gt;
-
-&lt;p&gt;The source hasn’t changed since last time, but if you missed it:&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/todomvc-react-redux/tree/9b881b0bea8070f850c8c78a6fcf4701287101ae&quot;&gt;Source code at this revision&lt;/a&gt; - &lt;a href=&quot;http://htmlpreview.github.io/?https://github.com/StephenCleary/todomvc-react-redux/blob/9b881b0bea8070f850c8c78a6fcf4701287101ae/index.html&quot;&gt;Live site at this revision&lt;/a&gt; (ignore the “startup flicker”; that’s just due to the way it’s hosted)&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/todomvc-react-redux&quot;&gt;Most current source code&lt;/a&gt; - &lt;a href=&quot;http://stephencleary.github.io/todomvc-react-redux/&quot;&gt;Most current live site&lt;/a&gt;&lt;/p&gt;
-</description>
-        <pubDate>Thu, 11 Feb 2016 00:00:00 -0500</pubDate>
-        <link>http://blog.stephencleary.com/2016/02/why-react-why-redux.html</link>
-        <guid isPermaLink="true">http://blog.stephencleary.com/2016/02/why-react-why-redux.html</guid>
       </item>
     
   </channel>

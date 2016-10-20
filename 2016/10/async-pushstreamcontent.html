@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html>
+﻿<head>
+    <meta charset="utf-8"/>
+    
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Asynchronous PushStreamContent</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Using asynchronous PushStreamContent to zip on the fly with minimal threading and memory overhead." />
+    <link rel="canonical" href="http://blog.stephencleary.com/2016/10/async-pushstreamcontent.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
+    
+    <link type="text/css" rel="stylesheet" href="//netdna.bootstrapcdn.com/bootswatch/3.2.0/spacelab/bootstrap.min.css" />
+    <link type="text/css" rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" />
+    <style type="text/css">/* Layout Styles */
+/* ----------------------------------------------------------*/
+
+body {
+    padding-top: 50px;
+}
+
+.affix {
+    top: 70px;
+    bottom: 0;
+    overflow-y: auto;
+}
+
+.navbar-brand {
+    font-weight: bold;
+}
+
+.navbar-brand-container.active>a, .navbar-brand-container.active>a:hover, .navbar-brand-container.active>a:focus {
+    color: #3399f3;
+    background-color: transparent;
+}
+
+.sidebar {
+    margin-top: 20px;
+}
+
+.sidenavitem {
+    height: auto;
+}
+
+.sidebar img {
+    /* Responsive images */
+    display: inline-block;
+    height: auto;
+    max-width: 100%;
+}
+
+@media(max-width:767px) {
+    .affix {
+        position: static;
+    }
+}
+
+div .vertical-margins {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.page-header {
+    margin-top: 20px;
+}
+
+.center {
+    text-align: center;
+}
+
+.project-icon {
+    height: 128px;
+    width: 128px;
+}
+
+.list-group-item h2 {
+    margin-top: 10px;
+}
+
+/* Fixes for Google Custom Search in a Bootstrap page */
+/* ----------------------------------------------------------*/
+.google, .google *, .google *:before, .google *:after {
+    -webkit-box-sizing: content-box;
+    -moz-box-sizing: content-box;
+    box-sizing: content-box;
+}
+
+.google table {
+    border-collapse: separate;
+}
+
+.gsc-input-box {
+    height: auto !important;
+}
+
+/* Fixes for Amazon widget in Bootstrap page */
+.amzn_wdgt * {
+    -webkit-box-sizing: content-box;
+    -moz-box-sizing: content-box;
+    box-sizing: content-box;
+}
+
+/* Post styles */
+/* ----------------------------------------------------------*/
+
+code {
+    background-color: #F2F3F9;
+    color: inherit;
+}
+
+.post img {
+    /* Responsive images */
+    display: inline-block;
+    height: auto;
+    max-width: 100%;
+}
+
+.post .table {
+    table-layout: fixed;
+}
+
+.post .table code {
+    white-space: normal;
+}
+
+.post .yes {
+    color: #008000;
+}
+
+.post .no {
+    color: #FF0000;
+}
+
+/* Syntax highlighting styles */
+/* ----------------------------------------------------------*/
+
+.highlight  { background: #ffffff; }
+.highlight .c { color: #008000 } /* Comment */
+.highlight .k { color: #0000ff } /* Keyword */
+.highlight .cm { color: #008000 } /* Comment.Multiline */
+.highlight .cp { color: #0000ff } /* Comment.Preproc */
+.highlight .c1 { color: #008000 } /* Comment.Single */
+.highlight .cs { color: #008000 } /* Comment.Special */
+.highlight .ge { font-style: italic } /* Generic.Emph */
+.highlight .gh { font-weight: bold } /* Generic.Heading */
+.highlight .gp { font-weight: bold } /* Generic.Prompt */
+.highlight .gs { font-weight: bold } /* Generic.Strong */
+.highlight .gu { font-weight: bold } /* Generic.Subheading */
+.highlight .kc { color: #0000ff } /* Keyword.Constant */
+.highlight .kd { color: #0000ff } /* Keyword.Declaration */
+.highlight .kn { color: #0000ff } /* Keyword.Namespace */
+.highlight .kp { color: #0000ff } /* Keyword.Pseudo */
+.highlight .kr { color: #0000ff } /* Keyword.Reserved */
+.highlight .kt { color: #2b91af } /* Keyword.Type */
+.highlight .s { color: #a31515 } /* Literal.String */
+.highlight .nc { color: #2b91af } /* Name.Class */
+.highlight .ow { color: #0000ff } /* Operator.Word */
+.highlight .sb { color: #a31515 } /* Literal.String.Backtick */
+.highlight .sc { color: #a31515 } /* Literal.String.Char */
+.highlight .sd { color: #a31515 } /* Literal.String.Doc */
+.highlight .s2 { color: #a31515 } /* Literal.String.Double */
+.highlight .se { color: #a31515 } /* Literal.String.Escape */
+.highlight .sh { color: #a31515 } /* Literal.String.Heredoc */
+.highlight .si { color: #a31515 } /* Literal.String.Interpol */
+.highlight .sx { color: #a31515 } /* Literal.String.Other */
+.highlight .sr { color: #a31515 } /* Literal.String.Regex */
+.highlight .s1 { color: #a31515 } /* Literal.String.Single */
+.highlight .ss { color: #a31515 } /* Literal.String.Symbol */
+</style>
+    
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="search" type="application/opensearchdescription+xml" href="http://stephencleary.com/opensearch.xml" title="Cleary Search">
+    <link rel="apple-touch-icon" sizes="57x57" href="http://stephencleary.com/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://stephencleary.com/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://stephencleary.com/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://stephencleary.com/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://stephencleary.com/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://stephencleary.com/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://stephencleary.com/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://stephencleary.com/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://stephencleary.com/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://stephencleary.com/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-32x32.png" sizes="32x32">
+    
+</head>
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <div class="navbar-brand-container"><a class="navbar-brand" href="http://stephencleary.com">Stephen Cleary</a></div>
+    </div>
+
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+        <ul class="nav navbar-nav">
+            <li  class="active"  ><a href="http://blog.stephencleary.com">Blog</a></li>
+            <li  ><a href="http://stephencleary.com/projects/">Projects</a></li>
+            <li  ><a href="http://stephencleary.com/publications/">Publications</a></li>
+            <li  ><a href="http://stephencleary.com/book/">Book</a></li>
+            <li  ><a href="http://stephencleary.com/contact/">Contact</a></li>
+            <li><a href="http://feeds.feedburner.com/NitoPrograms"><i class="fa fa-rss-square fa-lg"></i></a></li>
+            <li  ><a href="http://stephencleary.com/search/"><i class="fa fa-search"></i></a></li>
+        </ul>
+    </div>
+</nav>
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Asynchronous PushStreamContent</h1>
+          <small><time datetime="2016-10-20">Oct 20, 2016</time> &bull; <a data-disqus-identifier="/2016/10/async-pushstreamcontent" href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>I ran into this problem the other day, and thought it would serve as a good use case study.</p>
+
+<p>Put simply, I want to write an ASP.NET WebAPI action that will download a bunch of URLs and generate a zip on the fly, without storing any files in memory, <em>and</em> without blocking any threads on I/O.</p>
+
+<p>Fun, fun!</p>
+
+<h2 id="downloading-a-simple-stream">Downloading a Simple Stream</h2>
+
+<p>It’s pretty straightforward to download a simple stream in WebAPI; there’s built-in support for that:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">static</span> <span class="n">HttpClient</span> <span class="n">Client</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
+<span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">HttpResponseMessage</span><span class="p">&gt;</span> <span class="n">Get</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="kt">var</span> <span class="n">stream</span> <span class="p">=</span> <span class="k">await</span> <span class="n">Client</span><span class="p">.</span><span class="n">GetStreamAsync</span><span class="p">(</span><span class="s">&quot;https://raw.githubusercontent.com/StephenClearyExamples/AsyncDynamicZip/master/README.md&quot;</span><span class="p">);</span>
+
+    <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpResponseMessage</span><span class="p">(</span><span class="n">HttpStatusCode</span><span class="p">.</span><span class="n">OK</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">Content</span> <span class="p">=</span> <span class="k">new</span> <span class="n">StreamContent</span><span class="p">(</span><span class="n">stream</span><span class="p">),</span>
+    <span class="p">};</span>
+    <span class="n">result</span><span class="p">.</span><span class="n">Content</span><span class="p">.</span><span class="n">Headers</span><span class="p">.</span><span class="n">ContentType</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MediaTypeHeaderValue</span><span class="p">(</span><span class="s">&quot;text/plain&quot;</span><span class="p">);</span>
+    <span class="n">result</span><span class="p">.</span><span class="n">Content</span><span class="p">.</span><span class="n">Headers</span><span class="p">.</span><span class="n">ContentDisposition</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ContentDispositionHeaderValue</span><span class="p">(</span><span class="s">&quot;attachment&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="n">FileName</span> <span class="p">=</span> <span class="s">&quot;README.md&quot;</span> <span class="p">};</span>
+    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+<span class="p">}</span></code></pre></div>
+
+<p>First, we (asynchronously) send the HTTP request and get the stream back (at this point, the file is not in memory). Next, we create an <code>HttpResponseMessage</code> that will use that stream as its content (<code>StreamContent</code>). Finally, we set a few headers so that this file downloads nicely if a browser makes the request. If you hit this API in a browser, it will download the <code>README.md</code> file indirectly through the WebAPI.</p>
+
+<h2 id="constructing-a-zip-file-on-the-fly-using-memorystream">Constructing a Zip File on the Fly Using MemoryStream</h2>
+
+<p>Let’s extend this example to have our WebAPI download <em>multiple</em> files, and combine them into a single zip file which is then downloaded by the user.</p>
+
+<p>We can do this as such (using the excellent <a href="https://www.nuget.org/packages/DotNetZip/"><code>DotNetZip</code> library</a>):</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">static</span> <span class="n">HttpClient</span> <span class="n">Client</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
+<span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">HttpResponseMessage</span><span class="p">&gt;</span> <span class="n">Get</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="kt">var</span> <span class="n">filenamesAndUrls</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="kt">string</span><span class="p">&gt;</span>
+    <span class="p">{</span>
+        <span class="p">{</span> <span class="s">&quot;README.md&quot;</span><span class="p">,</span> <span class="s">&quot;https://raw.githubusercontent.com/StephenClearyExamples/AsyncDynamicZip/master/README.md&quot;</span> <span class="p">},</span>
+        <span class="p">{</span> <span class="s">&quot;.gitignore&quot;</span><span class="p">,</span> <span class="s">&quot;https://raw.githubusercontent.com/StephenClearyExamples/AsyncDynamicZip/master/.gitignore&quot;</span> <span class="p">},</span>
+    <span class="p">};</span>
+
+    <span class="kt">var</span> <span class="n">archive</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MemoryStream</span><span class="p">();</span>
+    <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">zipStream</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ZipOutputStream</span><span class="p">(</span><span class="n">archive</span><span class="p">,</span> <span class="n">leaveOpen</span><span class="p">:</span> <span class="k">true</span><span class="p">))</span>
+    <span class="p">{</span>
+        <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">kvp</span> <span class="k">in</span> <span class="n">filenamesAndUrls</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">zipStream</span><span class="p">.</span><span class="n">PutNextEntry</span><span class="p">(</span><span class="n">kvp</span><span class="p">.</span><span class="n">Key</span><span class="p">);</span>
+            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">stream</span> <span class="p">=</span> <span class="k">await</span> <span class="n">Client</span><span class="p">.</span><span class="n">GetStreamAsync</span><span class="p">(</span><span class="n">kvp</span><span class="p">.</span><span class="n">Value</span><span class="p">))</span>
+                <span class="k">await</span> <span class="n">stream</span><span class="p">.</span><span class="n">CopyToAsync</span><span class="p">(</span><span class="n">zipStream</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="n">archive</span><span class="p">.</span><span class="n">Position</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
+    <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpResponseMessage</span><span class="p">(</span><span class="n">HttpStatusCode</span><span class="p">.</span><span class="n">OK</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">Content</span> <span class="p">=</span> <span class="k">new</span> <span class="n">StreamContent</span><span class="p">(</span><span class="n">archive</span><span class="p">)</span>
+    <span class="p">};</span>
+    <span class="n">result</span><span class="p">.</span><span class="n">Content</span><span class="p">.</span><span class="n">Headers</span><span class="p">.</span><span class="n">ContentType</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MediaTypeHeaderValue</span><span class="p">(</span><span class="s">&quot;application/octet-stream&quot;</span><span class="p">);</span>
+    <span class="n">result</span><span class="p">.</span><span class="n">Content</span><span class="p">.</span><span class="n">Headers</span><span class="p">.</span><span class="n">ContentDisposition</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ContentDispositionHeaderValue</span><span class="p">(</span><span class="s">&quot;attachment&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="n">FileName</span> <span class="p">=</span> <span class="s">&quot;MyZipfile.zip&quot;</span> <span class="p">};</span>
+    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+<span class="p">}</span></code></pre></div>
+
+<p>Here we’re downloading <em>two</em> files and combining them on-the-fly into a single zip which is downloaded by the user. First, we create the <code>MemoryStream</code> that the zip library will write to. Then, we download all the files asynchronously, and add them to the zip archive. Finally, we rewind the <code>MemoryStream</code> containing the zip file and send it to the browser using good ‘ol <code>StreamContent</code>.</p>
+
+<p>The problem with this approach is the <code>MemoryStream</code>.</p>
+
+<p>Storing the zip archive in the <code>MemoryStream</code> (as you may infer from the name) means that we’re building up the entire zip file in memory. The code is asynchronously downloading (using <code>HttpClient</code>), and WebAPI will asynchronously send it to the browser (using <code>StreamContent</code>), but we are holding the entire zip in memory in the meantime.</p>
+
+<p>There <em>is</em> a way to build the zip file <em>while it is being streamed to the client</em>. This is possible because the zip file format lists its contents at the <em>end</em> of the file.</p>
+
+<p>To use this kind of dynamic streaming, we can’t use <code>MemoryStream</code> or <code>StreamContent</code>. What we <em>really</em> want is to write to the output stream directly. With ASP.NET MVC, we could use <code>HttpResponse.OutputStream</code> to grab the output stream directly and write to it (not ideal from a design standpoint, but it would work). This is not an option in ASP.NET WebAPI.</p>
+
+<p>However, ASP.NET WebAPI does have a response type that acts as a “callback” that allows us to write directly to the output stream <em>after</em> we return from the controller action method. Its name is <code>PushStreamContent</code>.</p>
+
+<h2 id="constructing-a-zip-file-on-the-fly-using-pushstreamcontent">Constructing a Zip File on the Fly Using PushStreamContent</h2>
+
+<p>I think of <code>PushStreamContent</code> as just a “callback”. When ASP.NET has sent the headers and is ready to send the actual content, it just invokes the callback that we give to <code>PushStreamContent</code>. Using this technique, our code looks like this:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">static</span> <span class="n">HttpClient</span> <span class="n">Client</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
+<span class="k">public</span> <span class="n">HttpResponseMessage</span> <span class="nf">Get</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="kt">var</span> <span class="n">filenamesAndUrls</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="kt">string</span><span class="p">&gt;</span>
+    <span class="p">{</span>
+        <span class="p">{</span> <span class="s">&quot;README.md&quot;</span><span class="p">,</span> <span class="s">&quot;https://raw.githubusercontent.com/StephenClearyExamples/AsyncDynamicZip/master/README.md&quot;</span> <span class="p">},</span>
+        <span class="p">{</span> <span class="s">&quot;.gitignore&quot;</span><span class="p">,</span> <span class="s">&quot;https://raw.githubusercontent.com/StephenClearyExamples/AsyncDynamicZip/master/.gitignore&quot;</span> <span class="p">},</span>
+    <span class="p">};</span>
+
+    <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpResponseMessage</span><span class="p">(</span><span class="n">HttpStatusCode</span><span class="p">.</span><span class="n">OK</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">Content</span> <span class="p">=</span> <span class="k">new</span> <span class="n">PushStreamContent</span><span class="p">(</span><span class="k">async</span> <span class="p">(</span><span class="n">outputStream</span><span class="p">,</span> <span class="n">httpContext</span><span class="p">,</span> <span class="n">transportContext</span><span class="p">)</span> <span class="p">=&gt;</span>
+        <span class="p">{</span>
+            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">zipStream</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ZipOutputStream</span><span class="p">(</span><span class="n">outputStream</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">kvp</span> <span class="k">in</span> <span class="n">filenamesAndUrls</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">zipStream</span><span class="p">.</span><span class="n">PutNextEntry</span><span class="p">(</span><span class="n">kvp</span><span class="p">.</span><span class="n">Key</span><span class="p">);</span>
+                    <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">stream</span> <span class="p">=</span> <span class="k">await</span> <span class="n">Client</span><span class="p">.</span><span class="n">GetStreamAsync</span><span class="p">(</span><span class="n">kvp</span><span class="p">.</span><span class="n">Value</span><span class="p">))</span>
+                        <span class="k">await</span> <span class="n">stream</span><span class="p">.</span><span class="n">CopyToAsync</span><span class="p">(</span><span class="n">zipStream</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}),</span>
+    <span class="p">};</span>
+    <span class="n">result</span><span class="p">.</span><span class="n">Content</span><span class="p">.</span><span class="n">Headers</span><span class="p">.</span><span class="n">ContentType</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MediaTypeHeaderValue</span><span class="p">(</span><span class="s">&quot;application/octet-stream&quot;</span><span class="p">);</span>
+    <span class="n">result</span><span class="p">.</span><span class="n">Content</span><span class="p">.</span><span class="n">Headers</span><span class="p">.</span><span class="n">ContentDisposition</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ContentDispositionHeaderValue</span><span class="p">(</span><span class="s">&quot;attachment&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="n">FileName</span> <span class="p">=</span> <span class="s">&quot;MyZipfile.zip&quot;</span> <span class="p">};</span>
+    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+<span class="p">}</span></code></pre></div>
+
+<p>With the callback approach, we can write the zip archive directly to the output stream.</p>
+
+<p>The actual sequence of operations is this:</p>
+
+<ul>
+  <li>ASP.NET calls our controller action.</li>
+  <li>We build the list of filenames to download, and return an <code>HttpResponseMessage</code> with a status code, a callback, and some HTTP headers.</li>
+  <li>ASP.NET starts sending the response to the client; it sends the status code and HTTP headers first.</li>
+  <li>Then, when ASP.NET sends the response body to the client, it invokes our callback method.</li>
+  <li>Our <code>PushStreamContent</code> callback starts writing a zip file (directly to the response body), downloading the files asynchronously one at a time and adding them to the zipped content.</li>
+  <li>When our callback returns, ASP.NET completes the response.</li>
+</ul>
+
+<p>This approach has some really nice advantages:</p>
+
+<ul>
+  <li>All I/O is asynchronous. At no time are any threads blocked waiting to read the source files from their URLs, nor are any threads blocked waiting to write to the output response stream.</li>
+  <li>The zip file is not held in memory. It is streamed directly to the client, compressing on-the-fly.</li>
+  <li>In fact, for large files, not even a single file is read entirely into memory. Each file is individually compressed on-the-fly.</li>
+</ul>
+
+<p>It’s interesting to think about how this API will start a download of the zip file, and the zip is already streaming when it may not even have started downloading the other source files!</p>
+
+<h2 id="drawbacks-to-pushstreamcontent">Drawbacks to PushStreamContent</h2>
+
+<p>Well, it’s not all rainbows and unicorns, of course.</p>
+
+<p>The primary drawback to <code>PushStreamContent</code> is error handling. Since an HTTP response always <em>starts</em> with sending the status code (like <code>200 OK</code>) and the headers, by the time our <code>PushStreamContent</code> callback is invoked, it’s too late to notify the client of an error. So, what happens if our callback throws an exception?</p>
+
+<p>Based on my testing, it appears that ASP.NET will abort the connection. With all the browsers I tested, they correctly interpreted it as a generic “network error”.</p>
+
+<p>The problem is, ASP.NET can’t go back in time and change the status code or response headers. So it’s not possible to get any kind of detailed error information to the client if there’s a problem in the <code>PushStreamContent</code> callback. The best you can do is just log the error on the server side. This is something to keep in mind when using <code>PushStreamContent</code>.</p>
+
+<h2 id="code">Code</h2>
+
+<p>A fully-working solution for ASP.NET 4.6 is <a href="https://github.com/StephenClearyExamples/AsyncDynamicZip/tree/full-dotnetzip">available on GitHub</a>.</p>
+
+  </article>
+    
+    <footer>
+        
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2016/10/announcement-speaking-at-mkedotnet.html" title="Announcement: Speaking at Milwaukee .NET">&larr; Previous Post</a></li>
+            
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+            
+        </div>
+        <div class="col-sm-2 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://stephencleary.com/www.assets/Me-large.jpg"/></div>
+                    <div class="center vertical-margins">Stephen Cleary is a <a href="http://stephencleary.com/god/">Christian</a>, husband, father, and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://stephencleary.com/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://stephencleary.com/book/"><img src="http://stephencleary.com/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                    <div data-hide-after="2015-09-18 05-0700" class="hidden"><b><a href="http://tinyurl.com/ConcurrencyCookbook">Ebook is 50% off right now at O'Reilly</a> - use discount code <i>B2S5</i></b></div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2016/02/react-redux-todomvc.html">React/Redux TodoMVC</a></li>
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+    (function($) {
+        $(function() {
+            if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+                $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+            }
+        });
+    })(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+    (function($) {
+        $(function() {
+            if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+                $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+            }
+        });
+    })(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-8910661-5', 'stephencleary.com');
+    ga('send', 'pageview');
+</script>
+
+<!-- Show appropriate elements based on time -->
+<script type="text/javascript">
+    (function ($) {
+        $(function () {
+            var targets = $('[data-hide-after]');
+            targets.each(function () {
+                var $item = $(this);
+                if (moment() < moment($item.attr('data-hide-after'))) {
+                    $item.removeClass('hidden');
+                }
+            });
+        });
+    })(window.jQuery);
+</script>
+
+
+
+
+
+
+
+
+<!-- Disqus variables -->
+<script type="text/javascript">
+    var disqus_shortname = 'stephencleary';
+    var disqus_identifier = "/2016/10/async-pushstreamcontent";
+    var disqus_title = "Asynchronous PushStreamContent";
+    var disqus_url = "http://blog.stephencleary.com/2016/10/async-pushstreamcontent.html";
+</script>
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(s);
+    }());
+</script>
+
+<!-- Disqus comment section -->
+<script type="text/javascript">
+    (function() {
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<!-- Moment -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.6.0/moment.min.js"></script>
+<script type="text/javascript">window.moment || document.write('<script src="/lib/moment.min.js"><\/script>')</script>
+<script type="text/javascript">
+    (function($) {
+        $(function () {
+            $('time').each(function (_, e) {
+                var startOfToday = moment().startOf('day');
+                var publicationDate = moment($(e).attr('datetime'), 'YYYY-MM-DD');
+                var difference = startOfToday.diff(publicationDate, 'days');
+                var text = difference === 0 ? 'Today' :
+                    difference === 1 ? 'Yesterday' :
+                    publicationDate.from(startOfToday);
+                $(e).text(function(_, oldText) { return text + ' (' + oldText + ')'; });
+            });
+        });
+    })(window.jQuery);
+</script>
+
+
+
+
+</body>
+</html>
