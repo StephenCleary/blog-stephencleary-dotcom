@@ -19,3 +19,18 @@ To build:
 
 Link to other posts: `[text to be highlighted]({% post_url 2016-01-01-post-file-name %})`
 
+Highlight code block:
+
+````
+{% highlight csharp %}
+code here
+{% endhighlight %}
+````
+
+Info block:
+
+````
+<div class="alert alert-info" markdown="1">
+Blah blah [with links](http://example.com){:.alert-link}), and blah blah.
+</div>
+````
