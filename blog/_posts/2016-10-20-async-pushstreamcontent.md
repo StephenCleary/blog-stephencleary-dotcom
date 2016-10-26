@@ -146,6 +146,8 @@ Based on my testing, it appears that ASP.NET will abort the connection. With all
 
 The problem is, ASP.NET can't go back in time and change the status code or response headers. So it's not possible to get any kind of detailed error information to the client if there's a problem in the `PushStreamContent` callback. The best you can do is just log the error on the server side. This is something to keep in mind when using `PushStreamContent`.
 
+Update from the comments: as Paleta points out, you also must close the output stream when using `PushStreamContent`. In our sample code, `ZipOutputStream` closes the output stream for us, but if you forget to close the ouput stream, ASP.NET will *not* do it for you!
+
 ## Code
 
 A fully-working solution for ASP.NET 4.6 is [available on GitHub](https://github.com/StephenClearyExamples/AsyncDynamicZip/tree/full-dotnetzip).

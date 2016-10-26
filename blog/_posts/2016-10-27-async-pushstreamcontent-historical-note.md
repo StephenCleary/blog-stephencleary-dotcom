@@ -21,5 +21,3 @@ This unusual design implies an unwritten rule: after closing the output stream, 
 Fortunately, [`PushStreamContent` has been changed to support asynchronous delegates](https://github.com/ASP-NET-MVC/aspnetwebstack/commit/262ec8b273e2c8b7a4ae4cc7d43ad8e3f9c36c64#diff-778a5a33d4cdc98ca84864b003b2c36c) as first-class citizens (as of [`Microsoft.AspNet.WebApi.Client` version 5.0.0](https://www.nuget.org/packages/Microsoft.AspNet.WebApi.Client/5.0.0)). Now it works just like any other asynchronous code, rather than having the odd "`async void` that completes when the stream is closed" behavior.
 
 There's nothing really important in this blog post for modern code (the newer `PushStreamContent` went live 3 years ago this month) - just an interesting historical note.
-
-I still have a habit of always closing the output stream, though. :)

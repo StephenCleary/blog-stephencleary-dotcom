@@ -34,3 +34,10 @@ Info block:
 Blah blah [with links](http://example.com){:.alert-link}), and blah blah.
 </div>
 ````
+
+Centered, linked image:
+
+````
+{:.center}
+[![]({{ site_url }}/assets/image-file-name.jpg)]({{ site_url }}/assets/image-file-name.jpg)
+````
