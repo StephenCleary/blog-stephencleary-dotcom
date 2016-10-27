@@ -365,6 +365,8 @@ code {
 
 <p>The problem is, ASP.NET can’t go back in time and change the status code or response headers. So it’s not possible to get any kind of detailed error information to the client if there’s a problem in the <code>PushStreamContent</code> callback. The best you can do is just log the error on the server side. This is something to keep in mind when using <code>PushStreamContent</code>.</p>
 
+<p>Update from the comments: as Paleta points out, you also must close the output stream when using <code>PushStreamContent</code>. In our sample code, <code>ZipOutputStream</code> closes the output stream for us, but if you forget to close the ouput stream, ASP.NET will <em>not</em> do it for you!</p>
+
 <h2 id="code">Code</h2>
 
 <p>A fully-working solution for ASP.NET 4.6 is <a href="https://github.com/StephenClearyExamples/AsyncDynamicZip/tree/full-dotnetzip">available on GitHub</a>.</p>
@@ -377,7 +379,7 @@ code {
         
         <ul class="pager">
             <li class="previous"><a href="/2016/10/announcement-speaking-at-mkedotnet.html" title="Announcement: Speaking at Milwaukee .NET">&larr; Previous Post</a></li>
-            
+            <li class="next"><a href="/2016/10/async-pushstreamcontent-historical-note.html" title="Historical Asynchronous PushStreamContent">Next Post &rarr;</a></li>
         </ul>
 
         <div id="disqus_thread"></div>

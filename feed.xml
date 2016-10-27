@@ -8,6 +8,31 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="http://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>Historical Asynchronous PushStreamContent</title>
+        <description>&lt;p&gt;Last time, &lt;a href=&quot;/2016/10/async-pushstreamcontent.html&quot;&gt;we looked at using &lt;code&gt;PushStreamContent&lt;/code&gt; with an asynchronous delegate to zip up files on-demand with a fully-asynchronous system&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;I didn’t want to complicate that post by mentioning the odd history of asynchronous &lt;code&gt;PushStreamContent&lt;/code&gt; use, but I personally find it - er, “interesting.” :)&lt;/p&gt;
+
+&lt;p&gt;Today, &lt;code&gt;PushStreamContent&lt;/code&gt; takes an &lt;a href=&quot;/2014/02/synchronous-and-asynchronous-delegate.html&quot;&gt;asynchronous delegate&lt;/a&gt; (&lt;code&gt;Func&amp;lt;Stream, HttpContent, TransportContext, Task&amp;gt;&lt;/code&gt;), and it finishes sending the response when that asynchronous delegate completes. This is the natural way of supporting asynchronous stream writes.&lt;/p&gt;
+
+&lt;p&gt;Historically, &lt;code&gt;PushStreamContent&lt;/code&gt; was a lot weirder. It always supported asynchronous writing of the response stream, but the way it used to do so was odd, to say the least.&lt;/p&gt;
+
+&lt;p&gt;When &lt;code&gt;PushStreamContent&lt;/code&gt; was first introduced, it only allowed &lt;em&gt;synchronous&lt;/em&gt; delegates (&lt;code&gt;Action&amp;lt;Stream, HttpContent, TransportContext&amp;gt;&lt;/code&gt;). It wasn’t really obvious, but it &lt;em&gt;did&lt;/em&gt; actually support asynchronous usage. What you had to do was pass an asynchronous lambda expression, which would actually get converted to an &lt;code&gt;async void&lt;/code&gt; method. One of the main &lt;a href=&quot;https://msdn.microsoft.com/en-us/magazine/jj991977.aspx&quot;&gt;problems with &lt;code&gt;async void&lt;/code&gt; methods&lt;/a&gt; is that it’s very difficult for the caller to know when the &lt;code&gt;async void&lt;/code&gt; method has completed.&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;PushStreamContent&lt;/code&gt; used to solve this in an unusual way: &lt;a href=&quot;http://stackoverflow.com/questions/15060214/web-api-httpclient-an-asynchronous-module-or-handler-completed-while-an-async&quot;&gt;&lt;code&gt;PushStreamContent&lt;/code&gt; would consider its callback “complete” when it closed the output stream&lt;/a&gt;. “Interesting,” indeed.&lt;/p&gt;
+
+&lt;p&gt;This unusual design implies an unwritten rule: after closing the output stream, the callback really shouldn’t do anything else.&lt;/p&gt;
+
+&lt;p&gt;Fortunately, &lt;a href=&quot;https://github.com/ASP-NET-MVC/aspnetwebstack/commit/262ec8b273e2c8b7a4ae4cc7d43ad8e3f9c36c64#diff-778a5a33d4cdc98ca84864b003b2c36c&quot;&gt;&lt;code&gt;PushStreamContent&lt;/code&gt; has been changed to support asynchronous delegates&lt;/a&gt; as first-class citizens (as of &lt;a href=&quot;https://www.nuget.org/packages/Microsoft.AspNet.WebApi.Client/5.0.0&quot;&gt;&lt;code&gt;Microsoft.AspNet.WebApi.Client&lt;/code&gt; version 5.0.0&lt;/a&gt;). Now it works just like any other asynchronous code, rather than having the odd “&lt;code&gt;async void&lt;/code&gt; that completes when the stream is closed” behavior.&lt;/p&gt;
+
+&lt;p&gt;There’s nothing really important in this blog post for modern code (the newer &lt;code&gt;PushStreamContent&lt;/code&gt; went live 3 years ago this month) - just an interesting historical note.&lt;/p&gt;
+</description>
+        <pubDate>Thu, 27 Oct 2016 00:00:00 -0400</pubDate>
+        <link>http://blog.stephencleary.com/2016/10/async-pushstreamcontent-historical-note.html</link>
+        <guid isPermaLink="true">http://blog.stephencleary.com/2016/10/async-pushstreamcontent-historical-note.html</guid>
+      </item>
+    
+      <item>
         <title>Asynchronous PushStreamContent</title>
         <description>&lt;p&gt;I ran into this problem the other day, and thought it would serve as a good use case study.&lt;/p&gt;
 
@@ -148,6 +173,8 @@
 &lt;p&gt;Based on my testing, it appears that ASP.NET will abort the connection. With all the browsers I tested, they correctly interpreted it as a generic “network error”.&lt;/p&gt;
 
 &lt;p&gt;The problem is, ASP.NET can’t go back in time and change the status code or response headers. So it’s not possible to get any kind of detailed error information to the client if there’s a problem in the &lt;code&gt;PushStreamContent&lt;/code&gt; callback. The best you can do is just log the error on the server side. This is something to keep in mind when using &lt;code&gt;PushStreamContent&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Update from the comments: as Paleta points out, you also must close the output stream when using &lt;code&gt;PushStreamContent&lt;/code&gt;. In our sample code, &lt;code&gt;ZipOutputStream&lt;/code&gt; closes the output stream for us, but if you forget to close the ouput stream, ASP.NET will &lt;em&gt;not&lt;/em&gt; do it for you!&lt;/p&gt;
 
 &lt;h2 id=&quot;code&quot;&gt;Code&lt;/h2&gt;
 
@@ -836,194 +863,6 @@ window.onload = () =&amp;gt; render(Main(), document.getElementById(&#39;app&#39
         <pubDate>Tue, 23 Feb 2016 00:00:00 -0500</pubDate>
         <link>http://blog.stephencleary.com/2016/02/getting-started.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2016/02/getting-started.html</guid>
-      </item>
-    
-      <item>
-        <title>React/Redux TodoMVC, Part 1: Language and Tooling</title>
-        <description>&lt;p&gt;Modern JavaScript development is lightyears ahead of where it used to be. Last summer, ES2015 (ES6) was officially standardized, and even though browsers are taking their time adopting it, transpilers have existed for some time.&lt;/p&gt;
-
-&lt;h2 id=&quot;babel&quot;&gt;Babel&lt;/h2&gt;
-
-&lt;p&gt;After trying out a few options for DotNetApis, I settled on Babel. Babel allows you to specify exactly what language you want to support, and I have mine set up as ES2015, plus JSX, plus object spread/rest properties.&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://babeljs.io/docs/learn-es2015/&quot;&gt;ES2015&lt;/a&gt; is the most basic standard for JavaScript development these days. If you’re not on ES2015, then you’re developing in the dark ages. Seriously. It will change your life.&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://facebook.github.io/jsx/&quot;&gt;JSX&lt;/a&gt; is the syntactic extension that React uses for putting HTML in the JavaScript. Technically, React can work completely without JSX, but it’s harder to write and read. And it’s verbosely ugly, too.&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://github.com/sebmarkbage/ecmascript-rest-spread&quot;&gt;Object rest/spread properties&lt;/a&gt; are a &lt;a href=&quot;http://www.2ality.com/2015/11/tc39-process.html&quot;&gt;Stage 2 proposal&lt;/a&gt; that will likely be in a future version of JavaScript. I include them in this project for reasons that will become clear when we develop our React reducers.&lt;/p&gt;
-
-&lt;p&gt;My &lt;code&gt;.babelrc&lt;/code&gt; file just enables these three presets:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;{
-  &quot;presets&quot;: [&quot;es2015&quot;, &quot;react&quot;, &quot;stage-2&quot;]
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h2 id=&quot;no-typings---steve-sad&quot;&gt;No Typings - Steve Sad&lt;/h2&gt;
-
-&lt;p&gt;Unfortunately, there are no static typings with this setup. I tried really, &lt;em&gt;really&lt;/em&gt; hard to get them working, because at my core I’m a static typing kind of guy. I like my code completion, and I like my compiler checking!&lt;/p&gt;
-
-&lt;p&gt;You &lt;em&gt;can&lt;/em&gt; get (modern versions of) &lt;a href=&quot;http://www.typescriptlang.org/&quot;&gt;TypeScript&lt;/a&gt; to work with React. However, there are a few problems that I ran into.&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;TypeScript is (much) slower than Babel at picking up new language features. TypeScript does support JSX now, but there’s no support for object rest/spread properties, which are very convenient.&lt;/li&gt;
-  &lt;li&gt;The existing typings repository is quite incomplete.&lt;/li&gt;
-  &lt;li&gt;The value of a more strict object-oriented system bolted onto JavaScript is dubious at best. I prefer libraries and patterns that take advantage of JavaScript’s inherently functional (or multi-paradign) nature.&lt;/li&gt;
-  &lt;li&gt;TSLint is way less mature and flexible than ESLint.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;That said, I do really like the benefits of static typing, and I tried quite hard to get TypeScript working with DotNetApis. However, all the little frustrations with TypeScript added up, and that initiative didn’t make it.&lt;/p&gt;
-
-&lt;p&gt;My problem &lt;em&gt;actually&lt;/em&gt; was that I didn’t really want to change languages to TypeScript. All I wanted was to use TypeScript as a static type checker for &lt;em&gt;modern&lt;/em&gt; JavaScript, and it’s this goal that I couldn’t get working. TypeScript is a fine language, but I wanted to use JavaScript.&lt;/p&gt;
-
-&lt;p&gt;There’s another, lesser known (for now) static typing system on the block: &lt;a href=&quot;https://code.facebook.com/posts/1505962329687926/flow-a-new-static-type-checker-for-javascript/&quot;&gt;Flow&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;Flow looks exactly like what I need: static typing for JavaScript. Babel even has support for Flow ready to go!&lt;/p&gt;
-
-&lt;p&gt;Unfortunately, I just couldn’t get the (unofficial) Windows port to behave reliably. Flow works great for other platforms, but they need to fully support Windows if they’re going to edge out TypeScript.&lt;/p&gt;
-
-&lt;p&gt;Hopefully in the future, either TypeScript or Flow will meet my needs. For now, neither one does. :(&lt;/p&gt;
-
-&lt;h2 id=&quot;supporting-tools-eslint&quot;&gt;Supporting Tools: ESLint&lt;/h2&gt;
-
-&lt;p&gt;When it comes to linting modern JavaScript, &lt;a href=&quot;http://eslint.org/&quot;&gt;ESLint&lt;/a&gt; is the most flexible option. There’s an &lt;a href=&quot;https://github.com/yannickcr/eslint-plugin-react&quot;&gt;ESLint plugin for React&lt;/a&gt; that adds a lot of React-specific linting rules.&lt;/p&gt;
-
-&lt;p&gt;For now, I’m just going to turn on every rule. I’ll relax some of these as I go along, but for now ESLint will be very strict. My current &lt;code&gt;.eslintrc&lt;/code&gt; starts by setting up the language (ES2015 + JSX + object rest/spread) and environment (Browser, ES2015/ES6):&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;&quot;extends&quot;: &quot;eslint:recommended&quot;,
-&quot;plugins&quot;: [
-  &quot;react&quot;
-],
-&quot;ecmaFeatures&quot;: {
-  &quot;modules&quot;: true,
-  &quot;jsx&quot;: true,
-  &quot;experimentalObjectRestSpread&quot;: true
-},
-&quot;env&quot;: {
-  &quot;browser&quot;: true,
-  &quot;es6&quot;: true
-},
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;After this, I have a long section enabling all of the React/JSX rules, that I just copied and pasted from the &lt;a href=&quot;https://github.com/yannickcr/eslint-plugin-react/tree/8fe83a0e716ca2db225e98b37b4efa5e2f277848&quot;&gt;ESLint React plugin homepage&lt;/a&gt;.&lt;/p&gt;
-
-&lt;h2 id=&quot;supporting-tools-webpack&quot;&gt;Supporting Tools: Webpack&lt;/h2&gt;
-
-&lt;p&gt;We’re also going to need a “bundler”. DotNetApis uses Webpack, so I’ll use it, too. I don’t have any experience with other bundlers; my initial research indicated that Webpack was popular, and I haven’t run into any problems with it, so that’s what I ended up with.&lt;/p&gt;
-
-&lt;p&gt;The TodoMVC framework expects a single &lt;code&gt;./js/app.js&lt;/code&gt; file to be our application, with other supporting source files also under &lt;code&gt;./js&lt;/code&gt;. So I’ll use &lt;code&gt;.jsx&lt;/code&gt; for our source files, and specify &lt;code&gt;./js/main.jsx&lt;/code&gt; as the “main entry point”.&lt;/p&gt;
-
-&lt;p&gt;The &lt;code&gt;webpack.config.js&lt;/code&gt; will start with that &lt;code&gt;main.jsx&lt;/code&gt;, load all &lt;code&gt;.jsx&lt;/code&gt; files via Babel, and output &lt;code&gt;app.js&lt;/code&gt;. Also, I’m going to include &lt;a href=&quot;https://webpack.github.io/docs/configuration.html#devtool&quot;&gt;webpack source maps&lt;/a&gt;. The webpack config file now looks like this:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;module.exports = {
-    entry: &#39;./js/main.jsx&#39;,
-    output: {
-        filename: &#39;./js/app.js&#39;
-    },
-    module: {
-        loaders: [
-            {
-                test: /\.jsx$/,
-                loader: &#39;babel-loader&#39;
-            }
-        ]
-    },
-    devtool: &#39;inline-source-map&#39;
-};
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;With just a bit of tweaking, we can use &lt;a href=&quot;https://github.com/MoOx/eslint-loader&quot;&gt;&lt;code&gt;eslint-loader&lt;/code&gt;&lt;/a&gt; to lint while we build:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;module: {
-    loaders: [
-        {
-            test: /\.jsx$/,
-            loader: &#39;babel-loader&#39;
-        }
-    ],
-    preLoaders: [
-        {
-            test: /\.jsx$/,
-            loader: &#39;eslint-loader&#39;,
-            exclude: /node_modules/
-        }
-    ]
-},
-devtool: &#39;inline-source-map&#39;,
-eslint: {
-    configFile: &#39;./.eslintrc&#39;
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h2 id=&quot;supporting-tools-npm-scripts&quot;&gt;Supporting Tools: npm scripts&lt;/h2&gt;
-
-&lt;p&gt;Finally, we’re ready to bring it all together! All we have to do is add a &lt;code&gt;build&lt;/code&gt; script to our &lt;code&gt;package.json&lt;/code&gt; that runs &lt;code&gt;webpack&lt;/code&gt;:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;&quot;scripts&quot;: {
-  &quot;build&quot;: &quot;node_modules/.bin/webpack&quot;
-},
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;And now we can build our app!&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;npm run build
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h2 id=&quot;watching&quot;&gt;Watching&lt;/h2&gt;
-
-&lt;p&gt;Watching is a piece of cake (in &lt;code&gt;package.json&lt;/code&gt;):&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;&quot;scripts&quot;: {
-  &quot;build&quot;: &quot;node_modules/.bin/webpack&quot;,
-  &quot;watch&quot;: &quot;node_modules/.bin/webpack --watch&quot;
-},
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Then we can have one command prompt open all the time, just for rebuilding our code files as they change:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;npm run watch
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h2 id=&quot;supporting-tools-babel-runtime&quot;&gt;Supporting Tools: Babel Runtime&lt;/h2&gt;
-
-&lt;p&gt;Babel is an excellent transpiler, but it does require a &lt;a href=&quot;https://babeljs.io/docs/usage/polyfill/&quot;&gt;runtime polyfill&lt;/a&gt; for some language features. I’ll just include that for now in my &lt;code&gt;main.jsx&lt;/code&gt;:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;import &#39;babel-polyfill&#39;;
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h2 id=&quot;extra-credit-local-dev-server&quot;&gt;Extra Credit: Local Dev Server&lt;/h2&gt;
-
-&lt;p&gt;DotNetApis uses a real ASP.NET backend, so when I debug locally, I’m actually running the dev ASP.NET server. That won’t work in this scenario, so I checked out dev servers for npm. Of course, webpack has one, but it prevents webpack from writing its results to disk, which works great for some scenarios but is not what I’m wanting.&lt;/p&gt;
-
-&lt;p&gt;So I looked around and found a promising one called &lt;a href=&quot;https://www.npmjs.com/package/http-server&quot;&gt;&lt;code&gt;http-server&lt;/code&gt;&lt;/a&gt; (where “promising” means “used by a lot of other people so if I have problems they’re easy to solve”).&lt;/p&gt;
-
-&lt;p&gt;Install it, add a &lt;code&gt;serve&lt;/code&gt; script, and we’re all set! (in &lt;code&gt;package.json&lt;/code&gt;):&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;&quot;scripts&quot;: {
-  &quot;build&quot;: &quot;node_modules/.bin/webpack&quot;,
-  &quot;watch&quot;: &quot;node_modules/.bin/webpack --watch&quot;,
-  &quot;serve&quot;: &quot;node_modules/.bin/http-server -o&quot;
-},
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;I can now open a second command prompt for my HTTP server:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;npm run serve
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h2 id=&quot;current-state&quot;&gt;Current State&lt;/h2&gt;
-
-&lt;p&gt;At this point, we’ve got automatic recompiling anytime our source files change, a local dev server to see the results, and the beginnings of a good development experience. Pop open your browser dev tools (F12), and you should see original source files - even though they’re not actually sent to the browser:&lt;/p&gt;
-
-&lt;p class=&quot;center&quot;&gt;&lt;img src=&quot;/assets/SourceMaps.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/todomvc-react-redux/tree/41de4bc84d575443fcaa42e48eec7812e0e5b4c3&quot;&gt;Source code at this revision&lt;/a&gt; - &lt;a href=&quot;http://htmlpreview.github.io/?https://github.com/StephenCleary/todomvc-react-redux/blob/41de4bc84d575443fcaa42e48eec7812e0e5b4c3/index.html&quot;&gt;Live site at this revision&lt;/a&gt; (ignore the “startup flicker”; that’s just due to the way it’s hosted)&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/todomvc-react-redux&quot;&gt;Most current source code&lt;/a&gt; - &lt;a href=&quot;http://stephencleary.github.io/todomvc-react-redux/&quot;&gt;Most current live site&lt;/a&gt;&lt;/p&gt;
-</description>
-        <pubDate>Wed, 17 Feb 2016 00:00:00 -0500</pubDate>
-        <link>http://blog.stephencleary.com/2016/02/language-and-tooling.html</link>
-        <guid isPermaLink="true">http://blog.stephencleary.com/2016/02/language-and-tooling.html</guid>
       </item>
     
   </channel>
