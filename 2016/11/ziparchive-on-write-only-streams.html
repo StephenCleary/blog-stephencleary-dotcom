@@ -263,7 +263,7 @@ code {
     <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
 <span class="p">}</span></code></pre></div>
 
-<p>This code <em>should</em> work, but it will actually fail (os of .NET 4.6.2). It will throw a <code>NotSupportedException</code> from within the <code>PushStreamContent</code> callback, so it’s annoying to find and debug.</p>
+<p>This code <em>should</em> work, but it will actually fail (as of .NET 4.6.2). It will throw a <code>NotSupportedException</code> from within the <code>PushStreamContent</code> callback, so it’s annoying to find and debug.</p>
 
 <p>Here’s the problem:</p>
 
@@ -336,7 +336,7 @@ code {
     <span class="p">{</span>
         <span class="n">Content</span> <span class="p">=</span> <span class="k">new</span> <span class="n">PushStreamContent</span><span class="p">(</span><span class="k">async</span> <span class="p">(</span><span class="n">outputStream</span><span class="p">,</span> <span class="n">httpContext</span><span class="p">,</span> <span class="n">transportContext</span><span class="p">)</span> <span class="p">=&gt;</span>
         <span class="p">{</span>
-		    <span class="c1">// The only change is in this line:</span>
+            <span class="c1">// The only change is in this line:</span>
             <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">zipArchive</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ZipArchive</span><span class="p">(</span><span class="k">new</span> <span class="n">WriteOnlyStreamWrapper</span><span class="p">(</span><span class="n">outputStream</span><span class="p">),</span> <span class="n">ZipArchiveMode</span><span class="p">.</span><span class="n">Create</span><span class="p">))</span>
             <span class="p">{</span>
                 <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">kvp</span> <span class="k">in</span> <span class="n">filenamesAndUrls</span><span class="p">)</span>
