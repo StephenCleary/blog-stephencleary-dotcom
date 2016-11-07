@@ -44,7 +44,7 @@ public HttpResponseMessage Get()
 }
 {% endhighlight %}
 
-This code *should* work, but it will actually fail (os of .NET 4.6.2). It will throw a `NotSupportedException` from within the `PushStreamContent` callback, so it's annoying to find and debug.
+This code *should* work, but it will actually fail (as of .NET 4.6.2). It will throw a `NotSupportedException` from within the `PushStreamContent` callback, so it's annoying to find and debug.
 
 Here's the problem:
 
@@ -118,7 +118,7 @@ public HttpResponseMessage Get()
     {
         Content = new PushStreamContent(async (outputStream, httpContext, transportContext) =>
         {
-		    // The only change is in this line:
+            // The only change is in this line:
             using (var zipArchive = new ZipArchive(new WriteOnlyStreamWrapper(outputStream), ZipArchiveMode.Create))
             {
                 foreach (var kvp in filenamesAndUrls)
