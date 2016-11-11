@@ -8,6 +8,165 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="http://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>Streaming Zip on ASP.NET Core</title>
+        <description>&lt;p&gt;A few weeks ago, I wrote about &lt;a href=&quot;/2016/10/async-pushstreamcontent.html&quot;&gt;using &lt;code&gt;PushStreamContent&lt;/code&gt; on ASP.NET&lt;/a&gt; to build a zip file on-demand that was totally asynchronous and did not have to buffer any intermeditate files in memory.&lt;/p&gt;
+
+&lt;p&gt;Today, let’s take a look at doing the same thing on ASP.NET Core!&lt;/p&gt;
+
+&lt;h2 id=&quot;downloading-a-simple-stream&quot;&gt;Downloading a Simple Stream&lt;/h2&gt;
+
+&lt;p&gt;First, let’s look at how we can download a single file stream. On ASP.NET Core, we would use &lt;code&gt;FileStreamResult&lt;/code&gt; to download a file to the browser:&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;HttpClient&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Client&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;HttpClient&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;[HttpGet]&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FileStreamResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;stream&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Client&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;GetStreamAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;https://raw.githubusercontent.com/StephenClearyExamples/AsyncDynamicZip/master/README.md&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;FileStreamResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MediaTypeHeaderValue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;text/plain&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;FileDownloadName&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;README.md&amp;quot;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;There’s a couple of interesting notes here: we pass the &lt;code&gt;MediaTypeHeaderValue&lt;/code&gt; directly to the constructor of the &lt;code&gt;FileStreamResult&lt;/code&gt;, which takes care of setting the &lt;code&gt;Content-Type&lt;/code&gt; header on the response. Also, we set the &lt;code&gt;FileDownloadName&lt;/code&gt; property, which sets the &lt;code&gt;Content-Disposition&lt;/code&gt; header on the response. The “ASP.NET Core way” is more about expressing intent rather than modifying the response directly.&lt;/p&gt;
+
+&lt;p&gt;This is a nice approach, because there’s some pretty fancy encoding that needs to take place if these parameters are unusual. For example, if the &lt;code&gt;FileDownloadName&lt;/code&gt; uses non-ASCII characters, then the ASP.NET types will automatically encode it using RFC5987 (specifying &lt;code&gt;filename*&lt;/code&gt; instead of &lt;code&gt;filename&lt;/code&gt;).&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;FileStreamResult&lt;/code&gt; is one of the “file download” results available in ASP.NET Core. There are also some others, which form a hierarchy of result types:&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/FileResultHierarchy.png&quot;&gt;&lt;img src=&quot;/assets/FileResultHierarchy.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;FileResult&lt;/code&gt; base type has several derived types, each with a different purpose:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;code&gt;PhysicalFileResult&lt;/code&gt; sends an on-disk file identified by a physical path.&lt;/li&gt;
+  &lt;li&gt;&lt;code&gt;VirtualFileResult&lt;/code&gt; sends a file identified by a virtual path.&lt;/li&gt;
+  &lt;li&gt;&lt;code&gt;FileContentResult&lt;/code&gt; sends the file content as an in-memory byte array.&lt;/li&gt;
+  &lt;li&gt;&lt;code&gt;FileStreamResult&lt;/code&gt; sends the file content as a stream.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;constructing-a-zip-file-on-the-fly&quot;&gt;Constructing a Zip File on the Fly&lt;/h2&gt;
+
+&lt;p&gt;Now, let’s extend this example to have the WebAPI download a single zip file which is constructed on-demand.&lt;/p&gt;
+
+&lt;p&gt;None of the available &lt;code&gt;FileResult&lt;/code&gt; types will do just what we want; &lt;code&gt;FileStreamResult&lt;/code&gt; comes closest, but it doesn’t allow us to write part of the stream and then do other work before finishing the stream. What we really need is a “callback” kind of result, just like what &lt;code&gt;PushStreamContent&lt;/code&gt; did.&lt;/p&gt;
+
+&lt;p&gt;So, let’s introduce our own &lt;code&gt;FileResult&lt;/code&gt; type, called &lt;code&gt;FileCallbackResult&lt;/code&gt;:&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/FileCallbackResultHierarchy.png&quot;&gt;&lt;img src=&quot;/assets/FileCallbackResultHierarchy.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;My original intention of inheriting from &lt;code&gt;FileResult&lt;/code&gt; is that we could take advantage of existing conventions and code. For example, I want to pass the &lt;code&gt;media-type&lt;/code&gt; into the constructor and set &lt;code&gt;FileDownloadName&lt;/code&gt; as a property, just like the other &lt;code&gt;FileResult&lt;/code&gt; types.&lt;/p&gt;
+
+&lt;p&gt;However, it turns out that using the same &lt;em&gt;code&lt;/em&gt; is a bit more difficult. It turns out that the action result types in ASP.NET Core do not process their results directly; rather, they use “executors”, which form their own similar hierarchy:&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/FileResultExecutorHierarchy.png&quot;&gt;&lt;img src=&quot;/assets/FileResultExecutorHierarchy.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Since I want to re-use the &lt;em&gt;implementation&lt;/em&gt; of file results as much as possible, I tie into this hierarchy as well with my own &lt;code&gt;FileCallbackResultExecutor&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;The action results in ASP.NET Core will forward their implementation to their respective “executor” types by using dependency injection. For my simple case, I hard-code the executor:&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;FileCallbackResult&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FileResult&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Stream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ActionContext&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_callback&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;FileCallbackResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;MediaTypeHeaderValue&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;contentType&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Stream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ActionContext&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;callback&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;base&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;contentType&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;?.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ToString&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;())&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;callback&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;throw&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ArgumentNullException&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;nameof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;callback&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;_callback&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;callback&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ExecuteResultAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ActionContext&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;context&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;throw&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ArgumentNullException&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;nameof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+        &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;executor&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FileCallbackResultExecutor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;HttpContext&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;RequestServices&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;GetRequiredService&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ILoggerFactory&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;());&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;executor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExecuteAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;sealed&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;FileCallbackResultExecutor&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FileResultExecutorBase&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;FileCallbackResultExecutor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ILoggerFactory&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;loggerFactory&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;base&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CreateLogger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FileCallbackResultExecutor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;loggerFactory&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+        &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ExecuteAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ActionContext&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FileCallbackResult&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;SetHeadersAndLog&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_callback&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;HttpContext&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Response&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Body&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;The &lt;code&gt;FileCallbackResult&lt;/code&gt; collects and verifies all the result options, and the &lt;code&gt;FileCallbackResultExecutor&lt;/code&gt; takes care of actually executing the result. This follows the same pattern as the built-in &lt;code&gt;FileResult&lt;/code&gt; types. If I was to make this into a NuGet package, I’d probably resolve &lt;code&gt;FileCallbackResultExecutor&lt;/code&gt; using dependency injection; but other than that, this is a very reusable solution.&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;FileCallbackResultExecutor&lt;/code&gt; is quite simple: it ties into &lt;code&gt;FileResultExecutorBase&lt;/code&gt;, calling &lt;code&gt;SetHeadersAndLog&lt;/code&gt; to set up all the response headers exactly the same way all the other file results do, and then just invokes its callback to write to the output stream.&lt;/p&gt;
+
+&lt;p&gt;With our new &lt;code&gt;FileCallbackResult&lt;/code&gt; type, we can (finally) download multiple files and combine them into a single zip file on the fly:&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;HttpClient&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Client&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;HttpClient&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;[HttpGet]&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IActionResult&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;filenamesAndUrls&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Dictionary&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;README.md&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;https://raw.githubusercontent.com/StephenClearyExamples/AsyncDynamicZip/master/README.md&amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;.gitignore&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;https://raw.githubusercontent.com/StephenClearyExamples/AsyncDynamicZip/master/.gitignore&amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;FileCallbackResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MediaTypeHeaderValue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;application/octet-stream&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;outputStream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;zipArchive&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ZipArchive&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;WriteOnlyStreamWrapper&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;outputStream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ZipArchiveMode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Create&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;foreach&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;kvp&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;filenamesAndUrls&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;zipEntry&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;zipArchive&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CreateEntry&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;kvp&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+                &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;zipStream&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;zipEntry&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Open&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;())&lt;/span&gt;
+                &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;stream&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Client&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;GetStreamAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;kvp&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Value&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+                    &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;stream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CopyToAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;zipStream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;})&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;FileDownloadName&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;MyZipfile.zip&amp;quot;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Note that since we want our .NET Core app to run &lt;em&gt;anywhere&lt;/em&gt;, we don’t take a dependency on &lt;code&gt;DotNetZip&lt;/code&gt; (which as of this writing requires the full .NET framework); rather, we use the built-in &lt;code&gt;ZipArchive&lt;/code&gt;. Since the &lt;a href=&quot;https://github.com/dotnet/corefx/issues/11497&quot;&gt;.NET Core version has the same bug&lt;/a&gt; regarding output streams, we have to use a &lt;a href=&quot;/2016/11/ziparchive-on-write-only-streams.html&quot;&gt;stream wrapper just like we did last week&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Our action now returns a &lt;code&gt;FileCallbackResult&lt;/code&gt;, which will be evaluated by ASP.NET Core after our action returns. When it’s evaluated, it forwards to a &lt;code&gt;FileCallbackResultExecutor&lt;/code&gt;, which then invokes the callback given to it by our action.&lt;/p&gt;
+
+&lt;p&gt;This solution has all the same advantages of our previous non-Core solution:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;All I/O is asynchronous. At no time are any threads blocked on I/O.&lt;/li&gt;
+  &lt;li&gt;The zip file is not held in memory. It is streamed directly to the client, compressing on-the-fly.&lt;/li&gt;
+  &lt;li&gt;For large files, not even a single file is read entirely into memory. Each file is individually compressed on-the-fly.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;drawbacks-to-filecallbackresult&quot;&gt;Drawbacks to FileCallbackResult&lt;/h2&gt;
+
+&lt;p&gt;One of the major drawbacks to this approach is that I’m depending on some internals of ASP.NET Core. In particular, the whole “executor” thing (specifically, &lt;code&gt;FileResultExecutorBase&lt;/code&gt;) are in an &lt;code&gt;Internals&lt;/code&gt; namespace. This is an indicator that these types &lt;em&gt;would&lt;/em&gt; be &lt;code&gt;internal&lt;/code&gt;, but the ASP.NET team thought someone &lt;em&gt;might&lt;/em&gt; want to use them (and I’m glad they did!). So they’re technically &lt;code&gt;public&lt;/code&gt;, but with the caveat that they are considered implementation details and not part of a public contract. In other words, they can change without warning.&lt;/p&gt;
+
+&lt;p&gt;In my case, I think this is an acceptable tradeoff for &lt;code&gt;FileCallbackResult&lt;/code&gt;, since I want to tie into the existing file result code (&lt;code&gt;FileResultExecutorBase.SetHeadersAndLog&lt;/code&gt;). It would be easier for me to deal with breaking changes when updating rather than to duplicate all that logic and take over full maintenance/bug fixing responsibility for it.&lt;/p&gt;
+
+&lt;p&gt;The other major drawback is error handling. Any callback-based approach (such as &lt;code&gt;PushStreamContent&lt;/code&gt; or &lt;code&gt;FileCallbackResult&lt;/code&gt;) will have to deal with the fact that the HTTP response code has already been sent by the time the callback is invoked. So, any exceptions from the callback cannot send a detailed response to the client - they just get a generic “network error”.&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;PushStreamContent&lt;/code&gt; also had the caveat that the callback &lt;em&gt;must&lt;/em&gt; close the output stream. ASP.NET Core is not as picky about that; if you return from your callback without closing the output stream, ASP.NET Core will close it for you.&lt;/p&gt;
+
+&lt;h2 id=&quot;code&quot;&gt;Code&lt;/h2&gt;
+
+&lt;p&gt;A fully-working solution for ASP.NET Core 1.0 is &lt;a href=&quot;https://github.com/StephenClearyExamples/AsyncDynamicZip/tree/core-ziparchive&quot;&gt;available on GitHub&lt;/a&gt;.&lt;/p&gt;
+</description>
+        <pubDate>Fri, 11 Nov 2016 00:00:00 -0800</pubDate>
+        <link>http://blog.stephencleary.com/2016/11/streaming-zip-on-aspnet-core.html</link>
+        <guid isPermaLink="true">http://blog.stephencleary.com/2016/11/streaming-zip-on-aspnet-core.html</guid>
+      </item>
+    
+      <item>
         <title>ZipArchive on Write-Only Streams</title>
         <description>&lt;p&gt;A couple weeks ago, I described &lt;a href=&quot;/2016/10/async-pushstreamcontent.html&quot;&gt;how to build a zip file on-the-fly from ASP.NET WebAPI&lt;/a&gt; using the &lt;a href=&quot;https://www.nuget.org/packages/DotNetZip/&quot;&gt;&lt;code&gt;DotNetZip&lt;/code&gt; library&lt;/a&gt;.&lt;/p&gt;
 
@@ -144,7 +303,7 @@
 
 &lt;p&gt;A fully-working solution for ASP.NET 4.6 (using the built-in &lt;code&gt;ZipArchive&lt;/code&gt;) is &lt;a href=&quot;https://github.com/StephenClearyExamples/AsyncDynamicZip/tree/full-ziparchive&quot;&gt;available on GitHub&lt;/a&gt;.&lt;/p&gt;
 </description>
-        <pubDate>Thu, 03 Nov 2016 00:00:00 -0400</pubDate>
+        <pubDate>Thu, 03 Nov 2016 00:00:00 -0700</pubDate>
         <link>http://blog.stephencleary.com/2016/11/ziparchive-on-write-only-streams.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2016/11/ziparchive-on-write-only-streams.html</guid>
       </item>
@@ -169,7 +328,7 @@
 
 &lt;p&gt;There’s nothing really important in this blog post for modern code (the newer &lt;code&gt;PushStreamContent&lt;/code&gt; went live 3 years ago this month) - just an interesting historical note.&lt;/p&gt;
 </description>
-        <pubDate>Thu, 27 Oct 2016 00:00:00 -0400</pubDate>
+        <pubDate>Thu, 27 Oct 2016 00:00:00 -0700</pubDate>
         <link>http://blog.stephencleary.com/2016/10/async-pushstreamcontent-historical-note.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2016/10/async-pushstreamcontent-historical-note.html</guid>
       </item>
@@ -322,7 +481,7 @@
 
 &lt;p&gt;A fully-working solution for ASP.NET 4.6 is &lt;a href=&quot;https://github.com/StephenClearyExamples/AsyncDynamicZip/tree/full-dotnetzip&quot;&gt;available on GitHub&lt;/a&gt;.&lt;/p&gt;
 </description>
-        <pubDate>Thu, 20 Oct 2016 00:00:00 -0400</pubDate>
+        <pubDate>Thu, 20 Oct 2016 00:00:00 -0700</pubDate>
         <link>http://blog.stephencleary.com/2016/10/async-pushstreamcontent.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2016/10/async-pushstreamcontent.html</guid>
       </item>
@@ -333,7 +492,7 @@
 
 &lt;p&gt;My topic is &lt;a href=&quot;http://www.mkedotnet.com/sessions/asynchronous-parallel-reactive-help/&quot;&gt;Asynchronous? Parallel? Reactive? HELP!&lt;/a&gt;, which is a gentle introduction to various forms of concurrency, with guidance on how to choose between them.&lt;/p&gt;
 </description>
-        <pubDate>Thu, 13 Oct 2016 00:00:00 -0400</pubDate>
+        <pubDate>Thu, 13 Oct 2016 00:00:00 -0700</pubDate>
         <link>http://blog.stephencleary.com/2016/10/announcement-speaking-at-mkedotnet.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2016/10/announcement-speaking-at-mkedotnet.html</guid>
       </item>
@@ -344,7 +503,7 @@
 
 &lt;p&gt;Many thanks to Cleiton Gomes for doing it so beautifully!&lt;/p&gt;
 </description>
-        <pubDate>Thu, 06 Oct 2016 00:00:00 -0400</pubDate>
+        <pubDate>Thu, 06 Oct 2016 00:00:00 -0700</pubDate>
         <link>http://blog.stephencleary.com/2016/10/portuguese-translation-of-async.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2016/10/portuguese-translation-of-async.html</guid>
       </item>
@@ -489,7 +648,7 @@
 
 &lt;p&gt;Some developers have had problems with old uninstallers not cleaning up older versions of the tooling, and the problems with naming (where “RC1” and “RC2” tooling versions are &lt;em&gt;older&lt;/em&gt; than “Preview 2”) cause the wrong version of tooling to be found. The solution is to manually delete &lt;a href=&quot;https://files.gitter.im/aspnet/Home/ufDJ/2016-06-28-20_04_03-sdk.png&quot;&gt;the old versions&lt;/a&gt; from &lt;code&gt;%PROGRAMFILES%\dotnet\sdk&lt;/code&gt;.&lt;/p&gt;
 </description>
-        <pubDate>Tue, 28 Jun 2016 00:00:00 -0400</pubDate>
+        <pubDate>Tue, 28 Jun 2016 00:00:00 -0700</pubDate>
         <link>http://blog.stephencleary.com/2016/06/dotnet-netcore-versions.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2016/06/dotnet-netcore-versions.html</guid>
       </item>
@@ -600,7 +759,7 @@ export default connect()(Header);
 
 &lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/todomvc-react-redux&quot;&gt;Most current source code&lt;/a&gt; - &lt;a href=&quot;http://stephencleary.github.io/todomvc-react-redux/&quot;&gt;Most current live site&lt;/a&gt;&lt;/p&gt;
 </description>
-        <pubDate>Tue, 17 May 2016 00:00:00 -0400</pubDate>
+        <pubDate>Tue, 17 May 2016 00:00:00 -0700</pubDate>
         <link>http://blog.stephencleary.com/2016/05/refactoring.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2016/05/refactoring.html</guid>
       </item>
@@ -672,7 +831,7 @@ const Main = connect()(MainImpl);
 
 &lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/todomvc-react-redux&quot;&gt;Most current source code&lt;/a&gt; - &lt;a href=&quot;http://stephencleary.github.io/todomvc-react-redux/&quot;&gt;Most current live site&lt;/a&gt;&lt;/p&gt;
 </description>
-        <pubDate>Tue, 12 Apr 2016 00:00:00 -0400</pubDate>
+        <pubDate>Tue, 12 Apr 2016 00:00:00 -0700</pubDate>
         <link>http://blog.stephencleary.com/2016/04/dispatching.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2016/04/dispatching.html</guid>
       </item>
@@ -773,163 +932,9 @@ export default storeFactory(reducers);
 
 &lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/todomvc-react-redux&quot;&gt;Most current source code&lt;/a&gt; - &lt;a href=&quot;http://stephencleary.github.io/todomvc-react-redux/&quot;&gt;Most current live site&lt;/a&gt;&lt;/p&gt;
 </description>
-        <pubDate>Tue, 08 Mar 2016 00:00:00 -0500</pubDate>
+        <pubDate>Tue, 08 Mar 2016 00:00:00 -0800</pubDate>
         <link>http://blog.stephencleary.com/2016/03/debugging.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2016/03/debugging.html</guid>
-      </item>
-    
-      <item>
-        <title>React/Redux TodoMVC, Part 3: State</title>
-        <description>&lt;p&gt;Last time we introduced React; this time we’ll introduce Redux!&lt;/p&gt;
-
-&lt;p&gt;It’s time to add application state. How about the TODO items? Seems like a decent place to start.&lt;/p&gt;
-
-&lt;p&gt;Before we can add our first piece of application state, though, there’s some boilerplate we need to write. It’s time to introduce a lot of new concepts, including Redux.&lt;/p&gt;
-
-&lt;div class=&quot;alert alert-info&quot;&gt;
-  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
-
-  &lt;p&gt;Please be patient with this step. It seems like a lot to get started, but trust me, once it’s all in place, adding to it is &lt;em&gt;really&lt;/em&gt; simple and easy!&lt;/p&gt;
-&lt;/div&gt;
-
-&lt;h2 id=&quot;actions-and-state&quot;&gt;Actions and State&lt;/h2&gt;
-
-&lt;p&gt;Actions and state are kind of related. Once you have both actions and state, then you can add actions or state individually. But when you’re first starting out, you really have to define actions &lt;em&gt;and&lt;/em&gt; state.&lt;/p&gt;
-
-&lt;p&gt;So, in order to define our list of TODO items (as &lt;em&gt;state&lt;/em&gt;), we also have to define an action to go along with it. An “Add TODO” action sounds like it would be a great fit!&lt;/p&gt;
-
-&lt;h2 id=&quot;actions&quot;&gt;Actions&lt;/h2&gt;
-
-&lt;p&gt;Actions are just plain old objects. Our actions are going to follow the &lt;a href=&quot;https://github.com/acdlite/flux-standard-action&quot;&gt;Flux Standard Action&lt;/a&gt; model, which means they’ll have a &lt;code&gt;type&lt;/code&gt; property (generally a string, since that makes debugging and serialization easier) and (for non-error actions) a &lt;code&gt;payload&lt;/code&gt; property. There are a couple other properties, but those are for more advanced scenarios; this simple app will only need &lt;code&gt;type&lt;/code&gt; and &lt;code&gt;payload&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;Let’s define our “Add TODO” action! Well, it’ll need a &lt;code&gt;type&lt;/code&gt; first off. In real-world projects, it’s useful to define &lt;em&gt;all&lt;/em&gt; the action types in a single file. So, that’s what I’ll do here (in &lt;code&gt;actionTypes.jsx&lt;/code&gt;):&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;export default {
-    ADD_TODO: &#39;ADD_TODO&#39;
-};
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Next, the &lt;code&gt;payload&lt;/code&gt;. The data that travels as arguments of the &lt;code&gt;ADD_TODO&lt;/code&gt; action is the TODO item itself (a string). So the &lt;code&gt;payload&lt;/code&gt; can simply be a string in this case.&lt;/p&gt;
-
-&lt;h2 id=&quot;action-creators&quot;&gt;Action Creators&lt;/h2&gt;
-
-&lt;p&gt;Now that we have a good understanding of the structure of our action, we can implement the action creator. There’s a helper library called &lt;code&gt;redux-actions&lt;/code&gt; that minimizes the repetitive code. With that, we can define our &lt;code&gt;ADD_TODO&lt;/code&gt; action (in &lt;code&gt;actions/todoActions.jsx&lt;/code&gt;):&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;import ActionTypes from &#39;../actionTypes&#39;;
-import { createAction } from &#39;redux-actions&#39;;
-
-export default {
-    add: createAction(ActionTypes.ADD_TODO)
-};
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;This is a bit dense… To clarify, we’re creating an object &lt;code&gt;TodoActions&lt;/code&gt; that has a method &lt;code&gt;add&lt;/code&gt; on it. This method takes a single parameter, which is the value of the action’s &lt;code&gt;payload&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;So, the line:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;    add: createAction(ActionTypes.ADD_TODO)
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;is really the same as this:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;    add: createAction(ActionTypes.ADD_TODO, todoItem =&amp;gt; todoItem)
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;which is the same as this:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;    add: todoItem =&amp;gt; ({ type: ActionTypes.ADD_TODO, payload: todoItem })
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;In Redux, an Action Creator is just a function that creates an action.&lt;/p&gt;
-
-&lt;h2 id=&quot;state&quot;&gt;State&lt;/h2&gt;
-
-&lt;p&gt;The next step is to define some application state (our collection of todos), and define how the &lt;code&gt;ADD_TODO&lt;/code&gt; action affects that state. Presumably, it should just add the new item to our collection. The TODOs in our collection will need a couple properties: the actual TODO text (which I’ll call &lt;code&gt;text&lt;/code&gt;), and a flag indicating whether the TODO is completed (which I’ll call &lt;code&gt;completed&lt;/code&gt;).&lt;/p&gt;
-
-&lt;p&gt;This is where it gets a bit wild.&lt;/p&gt;
-
-&lt;p&gt;Let’s define the &lt;a href=&quot;https://rackt.org/redux/docs/basics/Reducers.html&quot;&gt;reducer&lt;/a&gt; first, using the &lt;code&gt;react-actions&lt;/code&gt; helper method &lt;code&gt;handleActions&lt;/code&gt; (in &lt;code&gt;reducer.jsx&lt;/code&gt;):&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;import { handleActions } from &#39;redux-actions&#39;;
-import ActionTypes from &#39;./actionTypes&#39;;
-
-export default handleActions({
-    [ActionTypes.ADD_TODO]: (state, action) =&amp;gt; [...state, { completed: false, text: action.payload }]
-}, []);
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;OK, so let’s break this down. I’m calling &lt;code&gt;handleActions&lt;/code&gt; with two parameters: an object containing the actual reducer method, and an empty array &lt;code&gt;[]&lt;/code&gt;. That second parameter is just the &lt;em&gt;initial state&lt;/em&gt; of our todo collection - it’s easier to have it be an empty collection rather than &lt;code&gt;undefined&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;Now, let’s look at the object. I’m using the &lt;a href=&quot;http://exploringjs.com/es6/ch_oop-besides-classes.html#_computed-property-keys-1&quot;&gt;ES2015 computed property key syntax&lt;/a&gt; to define a function named &lt;code&gt;ADD_TODO&lt;/code&gt;, which is our actual reducer.&lt;/p&gt;
-
-&lt;p&gt;Our reducer takes two parameters: the existing state and the incoming action, and returns the new state (that is, what the state becomes after applying the action).&lt;/p&gt;
-
-&lt;div class=&quot;alert alert-info&quot;&gt;
-  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
-
-  &lt;p&gt;Important note: A reducer should &lt;strong&gt;never do anything else!&lt;/strong&gt; It’s a mistake to have a reducer do any I/O, or modify the existing state in-place. It should &lt;em&gt;only&lt;/em&gt; return the new state.&lt;/p&gt;
-&lt;/div&gt;
-
-&lt;p&gt;For the &lt;code&gt;ADD_TODO&lt;/code&gt; action, we just need to add a new TODO to our collection, setting &lt;code&gt;completed&lt;/code&gt; to &lt;code&gt;false&lt;/code&gt; and &lt;code&gt;text&lt;/code&gt; to the TODO text (which, for the &lt;code&gt;ADD_TODO&lt;/code&gt; action, is the action’s &lt;code&gt;payload&lt;/code&gt;):&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;(state, action) =&amp;gt; [...state, { completed: false, text: action.payload }]
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;I’m using the &lt;a href=&quot;http://exploringjs.com/es6/ch_parameter-handling.html#_spreading-into-arrays&quot;&gt;ES2015 array spread operator&lt;/a&gt; to easily create a &lt;em&gt;new&lt;/em&gt; array of TODOs that contains all the elements of the old array of TODOs, plus the new TODO that I create from the action.&lt;/p&gt;
-
-&lt;div class=&quot;alert alert-info&quot;&gt;
-  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
-
-  &lt;p&gt;There are a few competing patterns for writing reducers. &lt;a href=&quot;http://facebook.github.io/immutable-js/&quot;&gt;ImmutableJS&lt;/a&gt; is one popular option for representing state, in spite of its serialization difficulties. However, in my projects so far, I just use regular JS objects, along with a helper plugin that double-checks my immutability in dev builds. I find this approach is sufficient for me.&lt;/p&gt;
-&lt;/div&gt;
-
-&lt;h2 id=&quot;the-store&quot;&gt;The Store&lt;/h2&gt;
-
-&lt;p&gt;So, we’ve got some basic application state, and we’ve got an action, and we’ve got a reducer that applies that action to our state. Good so far, but there’s a couple more pieces to hook up still.&lt;/p&gt;
-
-&lt;p&gt;First off, we need to tell Redux to actually create our store. Recall from my drawing of how Redux works, that it will create the store using our reducer (the shaded parts are mostly done &lt;em&gt;for&lt;/em&gt; us):&lt;/p&gt;
-
-&lt;p class=&quot;center&quot;&gt;&lt;img src=&quot;/assets/ReduxInReality.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;In Redux, our store is a singleton, so I’m going to just expose it as a global object from &lt;code&gt;store.jsx&lt;/code&gt;:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;import { createStore } from &#39;redux&#39;;
-import reducers from &#39;./reducers&#39;;
-
-export default createStore(reducers);
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Quite literally, I’m taking our reducer from &lt;code&gt;reducers.jsx&lt;/code&gt; and passing it to Redux’s &lt;code&gt;createStore&lt;/code&gt; method. Very straightforward.&lt;/p&gt;
-
-&lt;p&gt;You might wonder why I bothered putting this in its own file. That will become clear in the next post, when I add debugging helpers in here.&lt;/p&gt;
-
-&lt;h2 id=&quot;the-views&quot;&gt;The Views&lt;/h2&gt;
-
-&lt;p&gt;The final piece to hook up is to provide our store to our view components. Right now, our view components don’t actually &lt;em&gt;use&lt;/em&gt; the application state (that is, they’re still just displaying the boilerplate HTML, not our actual collection of TODO items). However, they will start displaying the application state soon enough!&lt;/p&gt;
-
-&lt;p&gt;We provide the store to our views using Redux’s &lt;code&gt;Provider&lt;/code&gt;. It looks like this (in &lt;code&gt;main.jsx&lt;/code&gt;):&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;import { Provider } from &#39;react-redux&#39;;
-import store from &#39;./store&#39;;
-
-.. // function Main() hasn&#39;t changed
-
-window.onload = () =&amp;gt; render(&amp;lt;Provider store={store}&amp;gt;&amp;lt;Main/&amp;gt;&amp;lt;/Provider&amp;gt;, document.getElementById(&#39;app&#39;));
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;That’s it for now! We give the &lt;code&gt;Provider&lt;/code&gt; element our store, and it provides a way for our view components to get at it.&lt;/p&gt;
-
-&lt;p&gt;Now we have an action (with a type and a creator), a reducer to apply that action to our state, a singleton store containing the application state, and the provider that allows our views to read the application state.&lt;/p&gt;
-
-&lt;p&gt;The main thing missing, of course, is something to actually trigger the action. We’ll add that in soon, though!&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/todomvc-react-redux/tree/58b3a25c0166b7cc2d1909933744e6e290da82df&quot;&gt;Source code at this revision&lt;/a&gt; - &lt;a href=&quot;http://htmlpreview.github.io/?https://github.com/StephenCleary/todomvc-react-redux/blob/58b3a25c0166b7cc2d1909933744e6e290da82df/index.html&quot;&gt;Live site at this revision&lt;/a&gt; (ignore the “startup flicker”; that’s just due to the way it’s hosted)&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/todomvc-react-redux&quot;&gt;Most current source code&lt;/a&gt; - &lt;a href=&quot;http://stephencleary.github.io/todomvc-react-redux/&quot;&gt;Most current live site&lt;/a&gt;&lt;/p&gt;
-</description>
-        <pubDate>Tue, 01 Mar 2016 00:00:00 -0500</pubDate>
-        <link>http://blog.stephencleary.com/2016/03/state.html</link>
-        <guid isPermaLink="true">http://blog.stephencleary.com/2016/03/state.html</guid>
       </item>
     
   </channel>

@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>ZipArchive on Write-Only Streams</title>
+    <title>Streaming Zip on ASP.NET Core</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="A necessary workaround for using ZipArchive with write-only streams." />
-    <link rel="canonical" href="http://blog.stephencleary.com/2016/11/ziparchive-on-write-only-streams.html" />
+    <meta name="description" content="Creating zip files on the fly for ASP.NET Core, with minimal threading and memory overhead." />
+    <link rel="canonical" href="http://blog.stephencleary.com/2016/11/streaming-zip-on-aspnet-core.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -219,112 +219,113 @@ code {
 
   <header>
       <div class="page-header">
-          <h1>ZipArchive on Write-Only Streams</h1>
-          <small><time datetime="2016-11-03">Nov 3, 2016</time> &bull; <a data-disqus-identifier="/2016/11/ziparchive-on-write-only-streams" href="#disqus_thread">Comments</a></small>
+          <h1>Streaming Zip on ASP.NET Core</h1>
+          <small><time datetime="2016-11-11">Nov 11, 2016</time> &bull; <a data-disqus-identifier="/2016/11/streaming-zip-on-aspnet-core" href="#disqus_thread">Comments</a></small>
       </div>
   </header>
 
   <article>
-  <p>A couple weeks ago, I described <a href="/2016/10/async-pushstreamcontent.html">how to build a zip file on-the-fly from ASP.NET WebAPI</a> using the <a href="https://www.nuget.org/packages/DotNetZip/"><code>DotNetZip</code> library</a>.</p>
+  <p>A few weeks ago, I wrote about <a href="/2016/10/async-pushstreamcontent.html">using <code>PushStreamContent</code> on ASP.NET</a> to build a zip file on-demand that was totally asynchronous and did not have to buffer any intermeditate files in memory.</p>
 
-<p>So, here’s a question: “Why use <code>DotNetZip</code> instead of the built-in <code>ZipArchive</code>?”</p>
+<p>Today, let’s take a look at doing the same thing on ASP.NET Core!</p>
 
-<p>The answer is: You <em>can</em> use <code>ZipArchive</code>, but you would need to work around a bug in the <code>ZipArchive</code> class.</p>
+<h2 id="downloading-a-simple-stream">Downloading a Simple Stream</h2>
 
-<p>The straightforward approach is to just use <code>ZipArchive</code> with <code>PushStreamContent</code>, very similar to <a href="/2016/10/async-pushstreamcontent.html">the previous example</a>:</p>
+<p>First, let’s look at how we can download a single file stream. On ASP.NET Core, we would use <code>FileStreamResult</code> to download a file to the browser:</p>
 
 <div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">static</span> <span class="n">HttpClient</span> <span class="n">Client</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
-<span class="k">public</span> <span class="n">HttpResponseMessage</span> <span class="nf">Get</span><span class="p">()</span>
+<span class="na">[HttpGet]</span>
+<span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">FileStreamResult</span><span class="p">&gt;</span> <span class="n">Get</span><span class="p">()</span>
 <span class="p">{</span>
-    <span class="kt">var</span> <span class="n">filenamesAndUrls</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="kt">string</span><span class="p">&gt;</span>
-    <span class="p">{</span>
-        <span class="p">{</span> <span class="s">&quot;README.md&quot;</span><span class="p">,</span> <span class="s">&quot;https://raw.githubusercontent.com/StephenClearyExamples/AsyncDynamicZip/master/README.md&quot;</span> <span class="p">},</span>
-        <span class="p">{</span> <span class="s">&quot;.gitignore&quot;</span><span class="p">,</span> <span class="s">&quot;https://raw.githubusercontent.com/StephenClearyExamples/AsyncDynamicZip/master/.gitignore&quot;</span> <span class="p">},</span>
-    <span class="p">};</span>
+    <span class="kt">var</span> <span class="n">stream</span> <span class="p">=</span> <span class="k">await</span> <span class="n">Client</span><span class="p">.</span><span class="n">GetStreamAsync</span><span class="p">(</span><span class="s">&quot;https://raw.githubusercontent.com/StephenClearyExamples/AsyncDynamicZip/master/README.md&quot;</span><span class="p">);</span>
 
-    <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpResponseMessage</span><span class="p">(</span><span class="n">HttpStatusCode</span><span class="p">.</span><span class="n">OK</span><span class="p">)</span>
+    <span class="k">return</span> <span class="k">new</span> <span class="nf">FileStreamResult</span><span class="p">(</span><span class="n">stream</span><span class="p">,</span> <span class="k">new</span> <span class="n">MediaTypeHeaderValue</span><span class="p">(</span><span class="s">&quot;text/plain&quot;</span><span class="p">))</span>
     <span class="p">{</span>
-        <span class="n">Content</span> <span class="p">=</span> <span class="k">new</span> <span class="n">PushStreamContent</span><span class="p">(</span><span class="k">async</span> <span class="p">(</span><span class="n">outputStream</span><span class="p">,</span> <span class="n">httpContext</span><span class="p">,</span> <span class="n">transportContext</span><span class="p">)</span> <span class="p">=&gt;</span>
-        <span class="p">{</span>
-            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">zipArchive</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ZipArchive</span><span class="p">(</span><span class="n">outputStream</span><span class="p">,</span> <span class="n">ZipArchiveMode</span><span class="p">.</span><span class="n">Create</span><span class="p">))</span>
-            <span class="p">{</span>
-                <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">kvp</span> <span class="k">in</span> <span class="n">filenamesAndUrls</span><span class="p">)</span>
-                <span class="p">{</span>
-                    <span class="kt">var</span> <span class="n">zipEntry</span> <span class="p">=</span> <span class="n">zipArchive</span><span class="p">.</span><span class="n">CreateEntry</span><span class="p">(</span><span class="n">kvp</span><span class="p">.</span><span class="n">Key</span><span class="p">);</span>
-                    <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">zipStream</span> <span class="p">=</span> <span class="n">zipEntry</span><span class="p">.</span><span class="n">Open</span><span class="p">())</span>
-                    <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">stream</span> <span class="p">=</span> <span class="k">await</span> <span class="n">Client</span><span class="p">.</span><span class="n">GetStreamAsync</span><span class="p">(</span><span class="n">kvp</span><span class="p">.</span><span class="n">Value</span><span class="p">))</span>
-                        <span class="k">await</span> <span class="n">stream</span><span class="p">.</span><span class="n">CopyToAsync</span><span class="p">(</span><span class="n">zipStream</span><span class="p">);</span>
-                <span class="p">}</span>
-            <span class="p">}</span>
-        <span class="p">}),</span>
+        <span class="n">FileDownloadName</span> <span class="p">=</span> <span class="s">&quot;README.md&quot;</span>
     <span class="p">};</span>
-    <span class="n">result</span><span class="p">.</span><span class="n">Content</span><span class="p">.</span><span class="n">Headers</span><span class="p">.</span><span class="n">ContentType</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MediaTypeHeaderValue</span><span class="p">(</span><span class="s">&quot;application/octet-stream&quot;</span><span class="p">);</span>
-    <span class="n">result</span><span class="p">.</span><span class="n">Content</span><span class="p">.</span><span class="n">Headers</span><span class="p">.</span><span class="n">ContentDisposition</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ContentDispositionHeaderValue</span><span class="p">(</span><span class="s">&quot;attachment&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="n">FileName</span> <span class="p">=</span> <span class="s">&quot;MyZipfile.zip&quot;</span> <span class="p">};</span>
-    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
 <span class="p">}</span></code></pre></div>
 
-<p>This code <em>should</em> work, but it will actually fail (as of .NET 4.6.2). It will throw a <code>NotSupportedException</code> from within the <code>PushStreamContent</code> callback, so it’s annoying to find and debug.</p>
+<p>There’s a couple of interesting notes here: we pass the <code>MediaTypeHeaderValue</code> directly to the constructor of the <code>FileStreamResult</code>, which takes care of setting the <code>Content-Type</code> header on the response. Also, we set the <code>FileDownloadName</code> property, which sets the <code>Content-Disposition</code> header on the response. The “ASP.NET Core way” is more about expressing intent rather than modifying the response directly.</p>
 
-<p>Here’s the problem:</p>
+<p>This is a nice approach, because there’s some pretty fancy encoding that needs to take place if these parameters are unusual. For example, if the <code>FileDownloadName</code> uses non-ASCII characters, then the ASP.NET types will automatically encode it using RFC5987 (specifying <code>filename*</code> instead of <code>filename</code>).</p>
+
+<p>The <code>FileStreamResult</code> is one of the “file download” results available in ASP.NET Core. There are also some others, which form a hierarchy of result types:</p>
+
+<p class="center"><a href="/assets/FileResultHierarchy.png"><img src="/assets/FileResultHierarchy.png" alt="" /></a></p>
+
+<p>The <code>FileResult</code> base type has several derived types, each with a different purpose:</p>
 
 <ul>
-  <li>Streams can be “seekable.” Seekable streams allow reading the <code>Position</code> property and updating it via the <code>Seek</code> method.</li>
-  <li>The ASP.NET response output stream is not seekable. This is a common aspect of all network streams.</li>
-  <li><code>ZipArchive</code> should work with write-only (non-seekable) streams. However (and this is the bug), it will actually <em>read</em> <code>Position</code> even for non-seekable streams in order to build up its list of zip entry offsets in the zip file.</li>
+  <li><code>PhysicalFileResult</code> sends an on-disk file identified by a physical path.</li>
+  <li><code>VirtualFileResult</code> sends a file identified by a virtual path.</li>
+  <li><code>FileContentResult</code> sends the file content as an in-memory byte array.</li>
+  <li><code>FileStreamResult</code> sends the file content as a stream.</li>
 </ul>
 
-<p>This bug <a href="https://connect.microsoft.com/VisualStudio/feedback/details/816411/ziparchive-shouldnt-read-the-position-of-non-seekable-streams">was reported several years ago</a> (<a href="http://www.webcitation.org/6lGHjvc3C">webcite</a>), and it has been closed as “Won’t Fix” for some reason. The ever-intelligent @svick has <a href="http://stackoverflow.com/questions/16585488/writing-to-ziparchive-using-the-httpcontext-outputstream/21513194#21513194">suggested a workaround</a> for this bug: writing a stream wrapper that keeps track of <code>Position</code> and allows it to be read.</p>
+<h2 id="constructing-a-zip-file-on-the-fly">Constructing a Zip File on the Fly</h2>
 
-<p>The important parts of this stream wrapper look like this (the other members of <a href="https://github.com/StephenClearyExamples/AsyncDynamicZip/blob/full-ziparchive/Example/WebApplication/WriteOnlyStreamWrapper.cs">this type</a> just forward to the underlying stream):</p>
+<p>Now, let’s extend this example to have the WebAPI download a single zip file which is constructed on-demand.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">WriteOnlyStreamWrapper</span> <span class="p">:</span> <span class="n">Stream</span>
+<p>None of the available <code>FileResult</code> types will do just what we want; <code>FileStreamResult</code> comes closest, but it doesn’t allow us to write part of the stream and then do other work before finishing the stream. What we really need is a “callback” kind of result, just like what <code>PushStreamContent</code> did.</p>
+
+<p>So, let’s introduce our own <code>FileResult</code> type, called <code>FileCallbackResult</code>:</p>
+
+<p class="center"><a href="/assets/FileCallbackResultHierarchy.png"><img src="/assets/FileCallbackResultHierarchy.png" alt="" /></a></p>
+
+<p>My original intention of inheriting from <code>FileResult</code> is that we could take advantage of existing conventions and code. For example, I want to pass the <code>media-type</code> into the constructor and set <code>FileDownloadName</code> as a property, just like the other <code>FileResult</code> types.</p>
+
+<p>However, it turns out that using the same <em>code</em> is a bit more difficult. It turns out that the action result types in ASP.NET Core do not process their results directly; rather, they use “executors”, which form their own similar hierarchy:</p>
+
+<p class="center"><a href="/assets/FileResultExecutorHierarchy.png"><img src="/assets/FileResultExecutorHierarchy.png" alt="" /></a></p>
+
+<p>Since I want to re-use the <em>implementation</em> of file results as much as possible, I tie into this hierarchy as well with my own <code>FileCallbackResultExecutor</code>.</p>
+
+<p>The action results in ASP.NET Core will forward their implementation to their respective “executor” types by using dependency injection. For my simple case, I hard-code the executor:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">FileCallbackResult</span> <span class="p">:</span> <span class="n">FileResult</span>
 <span class="p">{</span>
-    <span class="k">private</span> <span class="k">readonly</span> <span class="n">Stream</span> <span class="n">_stream</span><span class="p">;</span>
-    <span class="k">private</span> <span class="kt">long</span> <span class="n">_position</span><span class="p">;</span>
+    <span class="k">private</span> <span class="n">Func</span><span class="p">&lt;</span><span class="n">Stream</span><span class="p">,</span> <span class="n">ActionContext</span><span class="p">,</span> <span class="n">Task</span><span class="p">&gt;</span> <span class="n">_callback</span><span class="p">;</span>
 
-    <span class="k">public</span> <span class="nf">WriteOnlyStreamWrapper</span><span class="p">(</span><span class="n">Stream</span> <span class="n">stream</span><span class="p">)</span>
+    <span class="k">public</span> <span class="nf">FileCallbackResult</span><span class="p">(</span><span class="n">MediaTypeHeaderValue</span> <span class="n">contentType</span><span class="p">,</span> <span class="n">Func</span><span class="p">&lt;</span><span class="n">Stream</span><span class="p">,</span> <span class="n">ActionContext</span><span class="p">,</span> <span class="n">Task</span><span class="p">&gt;</span> <span class="n">callback</span><span class="p">)</span>
+        <span class="p">:</span> <span class="k">base</span><span class="p">(</span><span class="n">contentType</span><span class="p">?.</span><span class="n">ToString</span><span class="p">())</span>
     <span class="p">{</span>
-        <span class="n">_stream</span> <span class="p">=</span> <span class="n">stream</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">callback</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+            <span class="k">throw</span> <span class="k">new</span> <span class="nf">ArgumentNullException</span><span class="p">(</span><span class="n">nameof</span><span class="p">(</span><span class="n">callback</span><span class="p">));</span>
+        <span class="n">_callback</span> <span class="p">=</span> <span class="n">callback</span><span class="p">;</span>
     <span class="p">}</span>
 
-    <span class="k">public</span> <span class="k">override</span> <span class="kt">long</span> <span class="n">Position</span>
+    <span class="k">public</span> <span class="k">override</span> <span class="n">Task</span> <span class="nf">ExecuteResultAsync</span><span class="p">(</span><span class="n">ActionContext</span> <span class="n">context</span><span class="p">)</span>
     <span class="p">{</span>
-        <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="n">_position</span><span class="p">;</span> <span class="p">}</span>
-        <span class="k">set</span> <span class="p">{</span> <span class="k">throw</span> <span class="k">new</span> <span class="n">NotSupportedException</span><span class="p">();</span> <span class="p">}</span>
-    <span class="p">}</span>
-    <span class="k">public</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">Write</span><span class="p">(</span><span class="kt">byte</span><span class="p">[]</span> <span class="n">buffer</span><span class="p">,</span> <span class="kt">int</span> <span class="n">offset</span><span class="p">,</span> <span class="kt">int</span> <span class="n">count</span><span class="p">)</span>
-    <span class="p">{</span>
-        <span class="n">_position</span> <span class="p">+=</span> <span class="n">count</span><span class="p">;</span>
-        <span class="n">_stream</span><span class="p">.</span><span class="n">Write</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">count</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">context</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+            <span class="k">throw</span> <span class="k">new</span> <span class="nf">ArgumentNullException</span><span class="p">(</span><span class="n">nameof</span><span class="p">(</span><span class="n">context</span><span class="p">));</span>
+        <span class="kt">var</span> <span class="n">executor</span> <span class="p">=</span> <span class="k">new</span> <span class="n">FileCallbackResultExecutor</span><span class="p">(</span><span class="n">context</span><span class="p">.</span><span class="n">HttpContext</span><span class="p">.</span><span class="n">RequestServices</span><span class="p">.</span><span class="n">GetRequiredService</span><span class="p">&lt;</span><span class="n">ILoggerFactory</span><span class="p">&gt;());</span>
+        <span class="k">return</span> <span class="n">executor</span><span class="p">.</span><span class="n">ExecuteAsync</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="k">this</span><span class="p">);</span>
     <span class="p">}</span>
 
-    <span class="k">public</span> <span class="k">override</span> <span class="n">IAsyncResult</span> <span class="nf">BeginWrite</span><span class="p">(</span><span class="kt">byte</span><span class="p">[]</span> <span class="n">buffer</span><span class="p">,</span> <span class="kt">int</span> <span class="n">offset</span><span class="p">,</span> <span class="kt">int</span> <span class="n">count</span><span class="p">,</span> <span class="n">AsyncCallback</span> <span class="n">callback</span><span class="p">,</span> <span class="kt">object</span> <span class="n">state</span><span class="p">)</span>
+    <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">FileCallbackResultExecutor</span> <span class="p">:</span> <span class="n">FileResultExecutorBase</span>
     <span class="p">{</span>
-        <span class="n">_position</span> <span class="p">+=</span> <span class="n">count</span><span class="p">;</span>
-        <span class="k">return</span> <span class="n">_stream</span><span class="p">.</span><span class="n">BeginWrite</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">state</span><span class="p">);</span>
-    <span class="p">}</span>
+        <span class="k">public</span> <span class="nf">FileCallbackResultExecutor</span><span class="p">(</span><span class="n">ILoggerFactory</span> <span class="n">loggerFactory</span><span class="p">)</span>
+            <span class="p">:</span> <span class="k">base</span><span class="p">(</span><span class="n">CreateLogger</span><span class="p">&lt;</span><span class="n">FileCallbackResultExecutor</span><span class="p">&gt;(</span><span class="n">loggerFactory</span><span class="p">))</span>
+        <span class="p">{</span>
+        <span class="p">}</span>
 
-    <span class="k">public</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">EndWrite</span><span class="p">(</span><span class="n">IAsyncResult</span> <span class="n">asyncResult</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="n">_stream</span><span class="p">.</span><span class="n">EndWrite</span><span class="p">(</span><span class="n">asyncResult</span><span class="p">);</span>
-
-    <span class="k">public</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">WriteByte</span><span class="p">(</span><span class="kt">byte</span> <span class="k">value</span><span class="p">)</span>
-    <span class="p">{</span>
-        <span class="n">_position</span> <span class="p">+=</span> <span class="m">1</span><span class="p">;</span>
-        <span class="n">_stream</span><span class="p">.</span><span class="n">WriteByte</span><span class="p">(</span><span class="k">value</span><span class="p">);</span>
-    <span class="p">}</span>
-
-    <span class="k">public</span> <span class="k">override</span> <span class="n">Task</span> <span class="nf">WriteAsync</span><span class="p">(</span><span class="kt">byte</span><span class="p">[]</span> <span class="n">buffer</span><span class="p">,</span> <span class="kt">int</span> <span class="n">offset</span><span class="p">,</span> <span class="kt">int</span> <span class="n">count</span><span class="p">,</span> <span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
-    <span class="p">{</span>
-        <span class="n">_position</span> <span class="p">+=</span> <span class="n">count</span><span class="p">;</span>
-        <span class="k">return</span> <span class="n">_stream</span><span class="p">.</span><span class="n">WriteAsync</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">cancellationToken</span><span class="p">);</span>
+        <span class="k">public</span> <span class="n">Task</span> <span class="nf">ExecuteAsync</span><span class="p">(</span><span class="n">ActionContext</span> <span class="n">context</span><span class="p">,</span> <span class="n">FileCallbackResult</span> <span class="n">result</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">SetHeadersAndLog</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
+            <span class="k">return</span> <span class="n">result</span><span class="p">.</span><span class="n">_callback</span><span class="p">(</span><span class="n">context</span><span class="p">.</span><span class="n">HttpContext</span><span class="p">.</span><span class="n">Response</span><span class="p">.</span><span class="n">Body</span><span class="p">,</span> <span class="n">context</span><span class="p">);</span>
+        <span class="p">}</span>
     <span class="p">}</span>
 <span class="p">}</span></code></pre></div>
 
-<p>The only tricky part about this wrapper is that we want to be sure to override the asynchronous methods as well as the synchronous ones. This is because the <code>Stream</code> base class will provide a default implementation of these that just runs the synchronous APIs on a thread pool thread. In other words, it’s using fake asynchrony by default! So we need to override them to provide true asynchrony.</p>
+<p>The <code>FileCallbackResult</code> collects and verifies all the result options, and the <code>FileCallbackResultExecutor</code> takes care of actually executing the result. This follows the same pattern as the built-in <code>FileResult</code> types. If I was to make this into a NuGet package, I’d probably resolve <code>FileCallbackResultExecutor</code> using dependency injection; but other than that, this is a very reusable solution.</p>
 
-<p>With that wrapper in place, our action method can be updated:</p>
+<p>The <code>FileCallbackResultExecutor</code> is quite simple: it ties into <code>FileResultExecutorBase</code>, calling <code>SetHeadersAndLog</code> to set up all the response headers exactly the same way all the other file results do, and then just invokes its callback to write to the output stream.</p>
+
+<p>With our new <code>FileCallbackResult</code> type, we can (finally) download multiple files and combine them into a single zip file on the fly:</p>
 
 <div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">static</span> <span class="n">HttpClient</span> <span class="n">Client</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
-<span class="k">public</span> <span class="n">HttpResponseMessage</span> <span class="nf">Get</span><span class="p">()</span>
+<span class="na">[HttpGet]</span>
+<span class="k">public</span> <span class="n">IActionResult</span> <span class="nf">Get</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">filenamesAndUrls</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="kt">string</span><span class="p">&gt;</span>
     <span class="p">{</span>
@@ -332,33 +333,49 @@ code {
         <span class="p">{</span> <span class="s">&quot;.gitignore&quot;</span><span class="p">,</span> <span class="s">&quot;https://raw.githubusercontent.com/StephenClearyExamples/AsyncDynamicZip/master/.gitignore&quot;</span> <span class="p">},</span>
     <span class="p">};</span>
 
-    <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpResponseMessage</span><span class="p">(</span><span class="n">HttpStatusCode</span><span class="p">.</span><span class="n">OK</span><span class="p">)</span>
+    <span class="k">return</span> <span class="k">new</span> <span class="nf">FileCallbackResult</span><span class="p">(</span><span class="k">new</span> <span class="n">MediaTypeHeaderValue</span><span class="p">(</span><span class="s">&quot;application/octet-stream&quot;</span><span class="p">),</span> <span class="k">async</span> <span class="p">(</span><span class="n">outputStream</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="p">=&gt;</span>
     <span class="p">{</span>
-        <span class="n">Content</span> <span class="p">=</span> <span class="k">new</span> <span class="n">PushStreamContent</span><span class="p">(</span><span class="k">async</span> <span class="p">(</span><span class="n">outputStream</span><span class="p">,</span> <span class="n">httpContext</span><span class="p">,</span> <span class="n">transportContext</span><span class="p">)</span> <span class="p">=&gt;</span>
+        <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">zipArchive</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ZipArchive</span><span class="p">(</span><span class="k">new</span> <span class="n">WriteOnlyStreamWrapper</span><span class="p">(</span><span class="n">outputStream</span><span class="p">),</span> <span class="n">ZipArchiveMode</span><span class="p">.</span><span class="n">Create</span><span class="p">))</span>
         <span class="p">{</span>
-            <span class="c1">// The only change is in this line:</span>
-            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">zipArchive</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ZipArchive</span><span class="p">(</span><span class="k">new</span> <span class="n">WriteOnlyStreamWrapper</span><span class="p">(</span><span class="n">outputStream</span><span class="p">),</span> <span class="n">ZipArchiveMode</span><span class="p">.</span><span class="n">Create</span><span class="p">))</span>
+            <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">kvp</span> <span class="k">in</span> <span class="n">filenamesAndUrls</span><span class="p">)</span>
             <span class="p">{</span>
-                <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">kvp</span> <span class="k">in</span> <span class="n">filenamesAndUrls</span><span class="p">)</span>
-                <span class="p">{</span>
-                    <span class="kt">var</span> <span class="n">zipEntry</span> <span class="p">=</span> <span class="n">zipArchive</span><span class="p">.</span><span class="n">CreateEntry</span><span class="p">(</span><span class="n">kvp</span><span class="p">.</span><span class="n">Key</span><span class="p">);</span>
-                    <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">zipStream</span> <span class="p">=</span> <span class="n">zipEntry</span><span class="p">.</span><span class="n">Open</span><span class="p">())</span>
-                    <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">stream</span> <span class="p">=</span> <span class="k">await</span> <span class="n">Client</span><span class="p">.</span><span class="n">GetStreamAsync</span><span class="p">(</span><span class="n">kvp</span><span class="p">.</span><span class="n">Value</span><span class="p">))</span>
-                        <span class="k">await</span> <span class="n">stream</span><span class="p">.</span><span class="n">CopyToAsync</span><span class="p">(</span><span class="n">zipStream</span><span class="p">);</span>
-                <span class="p">}</span>
+                <span class="kt">var</span> <span class="n">zipEntry</span> <span class="p">=</span> <span class="n">zipArchive</span><span class="p">.</span><span class="n">CreateEntry</span><span class="p">(</span><span class="n">kvp</span><span class="p">.</span><span class="n">Key</span><span class="p">);</span>
+                <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">zipStream</span> <span class="p">=</span> <span class="n">zipEntry</span><span class="p">.</span><span class="n">Open</span><span class="p">())</span>
+                <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">stream</span> <span class="p">=</span> <span class="k">await</span> <span class="n">Client</span><span class="p">.</span><span class="n">GetStreamAsync</span><span class="p">(</span><span class="n">kvp</span><span class="p">.</span><span class="n">Value</span><span class="p">))</span>
+                    <span class="k">await</span> <span class="n">stream</span><span class="p">.</span><span class="n">CopyToAsync</span><span class="p">(</span><span class="n">zipStream</span><span class="p">);</span>
             <span class="p">}</span>
-        <span class="p">}),</span>
+        <span class="p">}</span>
+    <span class="p">})</span>
+    <span class="p">{</span>
+        <span class="n">FileDownloadName</span> <span class="p">=</span> <span class="s">&quot;MyZipfile.zip&quot;</span>
     <span class="p">};</span>
-    <span class="n">result</span><span class="p">.</span><span class="n">Content</span><span class="p">.</span><span class="n">Headers</span><span class="p">.</span><span class="n">ContentType</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MediaTypeHeaderValue</span><span class="p">(</span><span class="s">&quot;application/octet-stream&quot;</span><span class="p">);</span>
-    <span class="n">result</span><span class="p">.</span><span class="n">Content</span><span class="p">.</span><span class="n">Headers</span><span class="p">.</span><span class="n">ContentDisposition</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ContentDispositionHeaderValue</span><span class="p">(</span><span class="s">&quot;attachment&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="n">FileName</span> <span class="p">=</span> <span class="s">&quot;MyZipfile.zip&quot;</span> <span class="p">};</span>
-    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
 <span class="p">}</span></code></pre></div>
 
-<p>And <code>ZipArchive</code> is quite happy with the stream wrapper!</p>
+<p>Note that since we want our .NET Core app to run <em>anywhere</em>, we don’t take a dependency on <code>DotNetZip</code> (which as of this writing requires the full .NET framework); rather, we use the built-in <code>ZipArchive</code>. Since the <a href="https://github.com/dotnet/corefx/issues/11497">.NET Core version has the same bug</a> regarding output streams, we have to use a <a href="/2016/11/ziparchive-on-write-only-streams.html">stream wrapper just like we did last week</a>.</p>
+
+<p>Our action now returns a <code>FileCallbackResult</code>, which will be evaluated by ASP.NET Core after our action returns. When it’s evaluated, it forwards to a <code>FileCallbackResultExecutor</code>, which then invokes the callback given to it by our action.</p>
+
+<p>This solution has all the same advantages of our previous non-Core solution:</p>
+
+<ul>
+  <li>All I/O is asynchronous. At no time are any threads blocked on I/O.</li>
+  <li>The zip file is not held in memory. It is streamed directly to the client, compressing on-the-fly.</li>
+  <li>For large files, not even a single file is read entirely into memory. Each file is individually compressed on-the-fly.</li>
+</ul>
+
+<h2 id="drawbacks-to-filecallbackresult">Drawbacks to FileCallbackResult</h2>
+
+<p>One of the major drawbacks to this approach is that I’m depending on some internals of ASP.NET Core. In particular, the whole “executor” thing (specifically, <code>FileResultExecutorBase</code>) are in an <code>Internals</code> namespace. This is an indicator that these types <em>would</em> be <code>internal</code>, but the ASP.NET team thought someone <em>might</em> want to use them (and I’m glad they did!). So they’re technically <code>public</code>, but with the caveat that they are considered implementation details and not part of a public contract. In other words, they can change without warning.</p>
+
+<p>In my case, I think this is an acceptable tradeoff for <code>FileCallbackResult</code>, since I want to tie into the existing file result code (<code>FileResultExecutorBase.SetHeadersAndLog</code>). It would be easier for me to deal with breaking changes when updating rather than to duplicate all that logic and take over full maintenance/bug fixing responsibility for it.</p>
+
+<p>The other major drawback is error handling. Any callback-based approach (such as <code>PushStreamContent</code> or <code>FileCallbackResult</code>) will have to deal with the fact that the HTTP response code has already been sent by the time the callback is invoked. So, any exceptions from the callback cannot send a detailed response to the client - they just get a generic “network error”.</p>
+
+<p><code>PushStreamContent</code> also had the caveat that the callback <em>must</em> close the output stream. ASP.NET Core is not as picky about that; if you return from your callback without closing the output stream, ASP.NET Core will close it for you.</p>
 
 <h2 id="code">Code</h2>
 
-<p>A fully-working solution for ASP.NET 4.6 (using the built-in <code>ZipArchive</code>) is <a href="https://github.com/StephenClearyExamples/AsyncDynamicZip/tree/full-ziparchive">available on GitHub</a>.</p>
+<p>A fully-working solution for ASP.NET Core 1.0 is <a href="https://github.com/StephenClearyExamples/AsyncDynamicZip/tree/core-ziparchive">available on GitHub</a>.</p>
 
   </article>
     
@@ -367,8 +384,8 @@ code {
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2016/10/async-pushstreamcontent-historical-note.html" title="Historical Asynchronous PushStreamContent">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2016/11/streaming-zip-on-aspnet-core.html" title="Streaming Zip on ASP.NET Core">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2016/11/ziparchive-on-write-only-streams.html" title="ZipArchive on Write-Only Streams">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="disqus_thread"></div>
@@ -507,9 +524,9 @@ code {
 <!-- Disqus variables -->
 <script type="text/javascript">
     var disqus_shortname = 'stephencleary';
-    var disqus_identifier = "/2016/11/ziparchive-on-write-only-streams";
-    var disqus_title = "ZipArchive on Write-Only Streams";
-    var disqus_url = "http://blog.stephencleary.com/2016/11/ziparchive-on-write-only-streams.html";
+    var disqus_identifier = "/2016/11/streaming-zip-on-aspnet-core";
+    var disqus_title = "Streaming Zip on ASP.NET Core";
+    var disqus_url = "http://blog.stephencleary.com/2016/11/streaming-zip-on-aspnet-core.html";
 </script>
 
 <!-- Disqus comment counter -->
