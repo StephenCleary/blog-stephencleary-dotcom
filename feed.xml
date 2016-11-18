@@ -8,6 +8,67 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="http://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>Azure Functions</title>
+        <description>&lt;p&gt;This past week was &lt;a href=&quot;https://connectevent.microsoft.com/&quot;&gt;Microsoft’s Connect 2016 conference&lt;/a&gt;. There were a lot of announcements, but IMO the one that most stands out is that Azure Functions have been officially released.&lt;/p&gt;
+
+&lt;p&gt;I’ve been following the development of Azure Functions with quite a bit of interest recently. I think they’ll have a &lt;em&gt;huge&lt;/em&gt; long-term impact on the cloud ecosystem.&lt;/p&gt;
+
+&lt;p&gt;Azure Functions (on the surface) are roughly equivalent to Amazon’s Lambdas, or Google’s Cloud Functions, with the notable exception that only Azure Functions work with .NET natively. All three of these (in conjunction with other cloud services such as queues and distributed data stores) provide the backbone of what is commonly called “serverless computing”. “Serverless computing” is a bit of a misnomer, since there &lt;em&gt;are&lt;/em&gt; servers involved in running code (of course), but the idea is that those servers are only &lt;em&gt;borrowed&lt;/em&gt; at a very abstract level. The idea is that you only pay for when your code is actually &lt;em&gt;running&lt;/em&gt;.&lt;/p&gt;
+
+&lt;p&gt;Azure Functions have a ways to go before they’re fully ready for adoption by most organizations (more detail below), but with this week’s announcement, you can start using them today if you are determined enough. :)&lt;/p&gt;
+
+&lt;p&gt;In my opinion, Azure Functions will essentially replace WebJobs. Functions give you the most abstract (read: most productive and cheapest) option for writing backend code:&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/Abstractions.png&quot;&gt;&lt;img src=&quot;/assets/Abstractions.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;To summarize: Azure Functions are awesome!&lt;/p&gt;
+
+&lt;h2 id=&quot;my-own-adventure&quot;&gt;My Own Adventure&lt;/h2&gt;
+
+&lt;p&gt;I’ve been playing with Azure Functions for a while on an &lt;a href=&quot;https://github.com/StephenClearyApps/NetStandardTypes&quot;&gt;open-source project&lt;/a&gt; that will (eventually) provide a website for searching for netstandard-compatible .NET types across all of NuGet.&lt;/p&gt;
+
+&lt;p&gt;There are two Azure Functions in that system: one that periodically checks for new NuGet packages, and one that loads those packages into memory, extracts their types, and updates the search index.&lt;/p&gt;
+
+&lt;p&gt;This has been a fun and instructive project so far, because I’m using Azure Functions &lt;em&gt;and&lt;/em&gt; Azure Search for the first time.&lt;/p&gt;
+
+&lt;p&gt;Azure Functions today are geared more towards simple implementations. Image resizing is the standard demo. Azure Functions work great when all the logic can fit into a single file. In my application, though, I have more advanced needs. I depend heavily on various NuGet packages (about 80 total), and I split up my own logic into several dlls. This is far beyond a “Hello, World” demo.&lt;/p&gt;
+
+&lt;h2 id=&quot;rough-spots&quot;&gt;Rough Spots&lt;/h2&gt;
+
+&lt;p&gt;One of the main problems with .NET Azure Functions is the lack of tooling. .NET Azure Functions have a &lt;code&gt;csx&lt;/code&gt; file as an entry point; this is a &lt;a href=&quot;http://scriptcs.net/&quot;&gt;C# script file&lt;/a&gt;, which have been around for a while but haven’t received any official support from Visual Studio or Visual Studio Code. Supposedly, there’s some way to get IntelliSense working with VSCode, but I was unable to get it set up properly.&lt;/p&gt;
+
+&lt;p&gt;So, the &lt;code&gt;csx&lt;/code&gt; file ends up with a very limited IntelliSense. This isn’t the end of the world; the common workaround is to have all your actual logic in a separate dll, and your &lt;code&gt;csx&lt;/code&gt; file literally just forwards to an entry point in that dll. Within the normal C# dll, you get full tooling support.&lt;/p&gt;
+
+&lt;p&gt;I am confident that this will be addressed in the near future, and Visual Studio (or at least Code) will fully understand &lt;code&gt;csx&lt;/code&gt; files for Azure Functions.&lt;/p&gt;
+
+&lt;p&gt;The other main problem I’ve run into is deployment. Currently, Azure Functions has a very script-centered mentality, so their continuous deployment assumes that the source &lt;em&gt;is&lt;/em&gt; what is deployed. It &lt;em&gt;will&lt;/em&gt; build solutions/projects that it finds, but what ends up in your repository has to follow a very particular folder structure. I’ve created a &lt;a href=&quot;https://github.com/StephenClearyApps/NetStandardTypes/tree/functions&quot;&gt;separate branch&lt;/a&gt; in my repo that contains the build outputs, and this is what is actually hooked up to the Azure Functions continuous deployment system. Fow now, I’m just copying the outputs by hand into the separate branch (yeah, bad, I know…).&lt;/p&gt;
+
+&lt;p&gt;I am hopeful that this will be addressed in the near future, with some kind of output folder working for the continuous deployment process rather than assuming the code &lt;em&gt;is&lt;/em&gt; the deployment.&lt;/p&gt;
+
+&lt;p&gt;Finally, I wasn’t able to get references working to &lt;a href=&quot;https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-csharp#package-management&quot;&gt;NuGet packages installed by the Azure Functions continuous deployment system&lt;/a&gt;. As a workaround, I just copy all the dlls from my project’s output directory (except the &lt;a href=&quot;https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-csharp#referencing-external-assemblies&quot;&gt;ones already preloaded by the Azure Functions runtime&lt;/a&gt;) into the &lt;code&gt;bin&lt;/code&gt; folder of my function.&lt;/p&gt;
+
+&lt;h2 id=&quot;tips&quot;&gt;Tips&lt;/h2&gt;
+
+&lt;p&gt;There’s a few tips that I’ve picked up when getting started with Azure Functions.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Ensure your &lt;a href=&quot;https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference#folder-structure&quot;&gt;folder structure&lt;/a&gt; is correct, and don’t forget your hosts.json file.&lt;/li&gt;
+  &lt;li&gt;The Azure Functions portal has some awesome shortcuts (that really should be in other portals too, I’m looking at you, App Services!). The dev console and Kudu are particularly useful when setting up deployment.&lt;/li&gt;
+  &lt;li&gt;There are a few situations where restarting the Azure Functions host is necessary. For example, if you update a dll but do &lt;em&gt;not&lt;/em&gt; update its version, then your Function won’t “see” the updated dll. To force it to update, you can select “App Service Settings” from the Azure Functions portal and from there Restart your Azure Functions service.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;the-future&quot;&gt;The Future&lt;/h2&gt;
+
+&lt;p&gt;The future is bright for Azure Functions! This is one of the most important improvements to Azure, and really sets up Microsoft for domination in the cloud space. Once the tooling and deployment are ironed out a bit, Azure Functions will become the default go-to choice for backend work in the cloud.&lt;/p&gt;
+
+&lt;p&gt;I’m still learning Azure Functions myself, and you’re welcome to join me - or just watch me struggle - &lt;a href=&quot;https://github.com/StephenClearyApps/NetStandardTypes&quot;&gt;on GitHub&lt;/a&gt;.&lt;/p&gt;
+</description>
+        <pubDate>Fri, 18 Nov 2016 00:00:00 -0500</pubDate>
+        <link>http://blog.stephencleary.com/2016/11/azure-functions.html</link>
+        <guid isPermaLink="true">http://blog.stephencleary.com/2016/11/azure-functions.html</guid>
+      </item>
+    
+      <item>
         <title>Streaming Zip on ASP.NET Core</title>
         <description>&lt;p&gt;A few weeks ago, I wrote about &lt;a href=&quot;/2016/10/async-pushstreamcontent.html&quot;&gt;using &lt;code&gt;PushStreamContent&lt;/code&gt; on ASP.NET&lt;/a&gt; to build a zip file on-demand that was totally asynchronous and did not have to buffer any intermeditate files in memory.&lt;/p&gt;
 
@@ -161,7 +222,7 @@
 
 &lt;p&gt;A fully-working solution for ASP.NET Core 1.0 is &lt;a href=&quot;https://github.com/StephenClearyExamples/AsyncDynamicZip/tree/core-ziparchive&quot;&gt;available on GitHub&lt;/a&gt;.&lt;/p&gt;
 </description>
-        <pubDate>Fri, 11 Nov 2016 00:00:00 -0800</pubDate>
+        <pubDate>Fri, 11 Nov 2016 00:00:00 -0500</pubDate>
         <link>http://blog.stephencleary.com/2016/11/streaming-zip-on-aspnet-core.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2016/11/streaming-zip-on-aspnet-core.html</guid>
       </item>
@@ -303,7 +364,7 @@
 
 &lt;p&gt;A fully-working solution for ASP.NET 4.6 (using the built-in &lt;code&gt;ZipArchive&lt;/code&gt;) is &lt;a href=&quot;https://github.com/StephenClearyExamples/AsyncDynamicZip/tree/full-ziparchive&quot;&gt;available on GitHub&lt;/a&gt;.&lt;/p&gt;
 </description>
-        <pubDate>Thu, 03 Nov 2016 00:00:00 -0700</pubDate>
+        <pubDate>Thu, 03 Nov 2016 00:00:00 -0400</pubDate>
         <link>http://blog.stephencleary.com/2016/11/ziparchive-on-write-only-streams.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2016/11/ziparchive-on-write-only-streams.html</guid>
       </item>
@@ -328,7 +389,7 @@
 
 &lt;p&gt;There’s nothing really important in this blog post for modern code (the newer &lt;code&gt;PushStreamContent&lt;/code&gt; went live 3 years ago this month) - just an interesting historical note.&lt;/p&gt;
 </description>
-        <pubDate>Thu, 27 Oct 2016 00:00:00 -0700</pubDate>
+        <pubDate>Thu, 27 Oct 2016 00:00:00 -0400</pubDate>
         <link>http://blog.stephencleary.com/2016/10/async-pushstreamcontent-historical-note.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2016/10/async-pushstreamcontent-historical-note.html</guid>
       </item>
@@ -481,7 +542,7 @@
 
 &lt;p&gt;A fully-working solution for ASP.NET 4.6 is &lt;a href=&quot;https://github.com/StephenClearyExamples/AsyncDynamicZip/tree/full-dotnetzip&quot;&gt;available on GitHub&lt;/a&gt;.&lt;/p&gt;
 </description>
-        <pubDate>Thu, 20 Oct 2016 00:00:00 -0700</pubDate>
+        <pubDate>Thu, 20 Oct 2016 00:00:00 -0400</pubDate>
         <link>http://blog.stephencleary.com/2016/10/async-pushstreamcontent.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2016/10/async-pushstreamcontent.html</guid>
       </item>
@@ -492,7 +553,7 @@
 
 &lt;p&gt;My topic is &lt;a href=&quot;http://www.mkedotnet.com/sessions/asynchronous-parallel-reactive-help/&quot;&gt;Asynchronous? Parallel? Reactive? HELP!&lt;/a&gt;, which is a gentle introduction to various forms of concurrency, with guidance on how to choose between them.&lt;/p&gt;
 </description>
-        <pubDate>Thu, 13 Oct 2016 00:00:00 -0700</pubDate>
+        <pubDate>Thu, 13 Oct 2016 00:00:00 -0400</pubDate>
         <link>http://blog.stephencleary.com/2016/10/announcement-speaking-at-mkedotnet.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2016/10/announcement-speaking-at-mkedotnet.html</guid>
       </item>
@@ -503,7 +564,7 @@
 
 &lt;p&gt;Many thanks to Cleiton Gomes for doing it so beautifully!&lt;/p&gt;
 </description>
-        <pubDate>Thu, 06 Oct 2016 00:00:00 -0700</pubDate>
+        <pubDate>Thu, 06 Oct 2016 00:00:00 -0400</pubDate>
         <link>http://blog.stephencleary.com/2016/10/portuguese-translation-of-async.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2016/10/portuguese-translation-of-async.html</guid>
       </item>
@@ -648,7 +709,7 @@
 
 &lt;p&gt;Some developers have had problems with old uninstallers not cleaning up older versions of the tooling, and the problems with naming (where “RC1” and “RC2” tooling versions are &lt;em&gt;older&lt;/em&gt; than “Preview 2”) cause the wrong version of tooling to be found. The solution is to manually delete &lt;a href=&quot;https://files.gitter.im/aspnet/Home/ufDJ/2016-06-28-20_04_03-sdk.png&quot;&gt;the old versions&lt;/a&gt; from &lt;code&gt;%PROGRAMFILES%\dotnet\sdk&lt;/code&gt;.&lt;/p&gt;
 </description>
-        <pubDate>Tue, 28 Jun 2016 00:00:00 -0700</pubDate>
+        <pubDate>Tue, 28 Jun 2016 00:00:00 -0400</pubDate>
         <link>http://blog.stephencleary.com/2016/06/dotnet-netcore-versions.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2016/06/dotnet-netcore-versions.html</guid>
       </item>
@@ -759,7 +820,7 @@ export default connect()(Header);
 
 &lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/todomvc-react-redux&quot;&gt;Most current source code&lt;/a&gt; - &lt;a href=&quot;http://stephencleary.github.io/todomvc-react-redux/&quot;&gt;Most current live site&lt;/a&gt;&lt;/p&gt;
 </description>
-        <pubDate>Tue, 17 May 2016 00:00:00 -0700</pubDate>
+        <pubDate>Tue, 17 May 2016 00:00:00 -0400</pubDate>
         <link>http://blog.stephencleary.com/2016/05/refactoring.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2016/05/refactoring.html</guid>
       </item>
@@ -831,110 +892,9 @@ const Main = connect()(MainImpl);
 
 &lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/todomvc-react-redux&quot;&gt;Most current source code&lt;/a&gt; - &lt;a href=&quot;http://stephencleary.github.io/todomvc-react-redux/&quot;&gt;Most current live site&lt;/a&gt;&lt;/p&gt;
 </description>
-        <pubDate>Tue, 12 Apr 2016 00:00:00 -0700</pubDate>
+        <pubDate>Tue, 12 Apr 2016 00:00:00 -0400</pubDate>
         <link>http://blog.stephencleary.com/2016/04/dispatching.html</link>
         <guid isPermaLink="true">http://blog.stephencleary.com/2016/04/dispatching.html</guid>
-      </item>
-    
-      <item>
-        <title>React/Redux TodoMVC, Part 4: Debugging</title>
-        <description>&lt;p&gt;The debugging support available for React and Redux is amazing! When you do make mistakes in your app, React will give you helpful console error messages.&lt;/p&gt;
-
-&lt;p&gt;In fact, when we converted the HTML to JSX, React started giving us errors in the console:&lt;/p&gt;
-
-&lt;p class=&quot;center&quot;&gt;&lt;img src=&quot;/assets/ReactWarnings.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;Take a moment and actually read those error messages! Those are nice and detailed, telling you exactly what you did wrong, what the effect will be, how to fix it, and where to fix it! We’ll fix those errors when we make those controls into actual React components; until then, they’ll just be read-only, as the warning states.&lt;/p&gt;
-
-&lt;p&gt;Redux goes even further with its own kind of debugging view, which we’ll add today. This thing looks simple but is just mindblowing in its power (and I was &lt;em&gt;so&lt;/em&gt; late in adding this to DotNetApis!). We’ll be adding this dark box on the right:&lt;/p&gt;
-
-&lt;p class=&quot;center&quot;&gt;&lt;img src=&quot;/assets/ReduxDevTools.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;It’s called &lt;a href=&quot;https://github.com/gaearon/redux-devtools&quot;&gt;Redux DevTools&lt;/a&gt;, and not only does it display a history of all your actions and application state, but it also lets you rewind history and pretend actions never happened!&lt;/p&gt;
-
-&lt;h2 id=&quot;creating-devtools&quot;&gt;Creating DevTools&lt;/h2&gt;
-
-&lt;p&gt;Interestingly enough, the first step in incorporating Redux DevTools is to create the monitors that we want to use to display them.&lt;/p&gt;
-
-&lt;p&gt;For our system, we’ll use the semi-standard &lt;code&gt;LogMonitor&lt;/code&gt;-within-&lt;code&gt;DockMonitor&lt;/code&gt; approach, in a new &lt;code&gt;devTools.jsx&lt;/code&gt; file:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;import React from &#39;react&#39;;
-import { createDevTools } from &#39;redux-devtools&#39;;
-import LogMonitor from &#39;redux-devtools-log-monitor&#39;;
-import DockMonitor from &#39;redux-devtools-dock-monitor&#39;;
-
-export default createDevTools(
-    &amp;lt;DockMonitor toggleVisibilityKey=&quot;ctrl-h&quot; changePositionKey=&quot;ctrl-j&quot; defaultSize={0.2}&amp;gt;
-        &amp;lt;LogMonitor theme=&quot;bright&quot; /&amp;gt;
-    &amp;lt;/DockMonitor&amp;gt;
-);
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Pretty straightforward: we take a &lt;code&gt;LogMonitor&lt;/code&gt;, wrapped in a &lt;code&gt;DockMonitor&lt;/code&gt;, and pass that to the &lt;code&gt;createDevTools&lt;/code&gt; method from &lt;code&gt;redux-devtools&lt;/code&gt;.&lt;/p&gt;
-
-&lt;h2 id=&quot;using-devtools&quot;&gt;Using DevTools&lt;/h2&gt;
-
-&lt;p&gt;We also have to include this new &lt;code&gt;DevTools&lt;/code&gt; component in our application, which we can do right in &lt;code&gt;main.jsx&lt;/code&gt;:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;window.onload = () =&amp;gt; {
-    const root = (
-        &amp;lt;Provider store={store}&amp;gt;
-            &amp;lt;div&amp;gt;
-                &amp;lt;Main/&amp;gt;
-                &amp;lt;DevTools/&amp;gt;
-            &amp;lt;/div&amp;gt;
-        &amp;lt;/Provider&amp;gt;
-    );
-    render(root, document.getElementById(&#39;app&#39;));
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Note that we had to put an extra &lt;code&gt;&amp;lt;div&amp;gt;&lt;/code&gt; wrapper around our &lt;code&gt;Main&lt;/code&gt; and &lt;code&gt;DevTools&lt;/code&gt; components. This is because &lt;code&gt;Provider&lt;/code&gt; can only have one child component. I find that my React applications do end up with some extra &lt;code&gt;&amp;lt;div&amp;gt;&lt;/code&gt; wrappers scattered throughout, just due to React limitations. It’s not a big deal, though.&lt;/p&gt;
-
-&lt;p&gt;Finally, we need to hook up the dev tools to our store, in &lt;code&gt;store.jsx&lt;/code&gt;:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;export default createStore(reducers, DevTools.instrument());
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;And that’s it! We now have a powerful Redux debugging environment built right in to our application!&lt;/p&gt;
-
-&lt;h2 id=&quot;state-immutability&quot;&gt;State Immutability&lt;/h2&gt;
-
-&lt;p&gt;One of the important rules of Redux is that Redux is in charge of the application state. Our code should never, ever change it.&lt;/p&gt;
-
-&lt;p&gt;Some people like to use ImmutableJS (or something similar) to enforce the immutability of their application state. I prefer to use plain JS objects, but I do put in a “safeguard” that monitors the application state in development builds, and will spit errors out to the console if I ever do change the state.&lt;/p&gt;
-
-&lt;p&gt;This is called the &lt;a href=&quot;https://github.com/leoasis/redux-immutable-state-invariant&quot;&gt;Redux immutable state invariant&lt;/a&gt;, and is a form of &lt;a href=&quot;http://redux.js.org/docs/advanced/Middleware.html&quot;&gt;Redux middleware&lt;/a&gt;. Middleware is a powerful concept: it’s a way of hooking into actions before they actually are processed by the reducers.&lt;/p&gt;
-
-&lt;p&gt;The Redux immutable state invariant can be installed as such (in &lt;code&gt;store.jsx&lt;/code&gt;):&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;import { applyMiddleware, compose, createStore } from &#39;redux&#39;;
-import immutableState from &#39;redux-immutable-state-invariant&#39;;
-
-const middleware = applyMiddleware(immutableState());
-
-const storeFactory = compose(middleware, DevTools.instrument())(createStore);
-
-export default storeFactory(reducers);
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;So, first we create our middleware, which in our simple app only consists of the immutable state invariant. In most real-world apps, there are usually other middlewares, such as the popular &lt;a href=&quot;https://github.com/gaearon/redux-thunk&quot;&gt;&lt;code&gt;redux-thunk&lt;/code&gt;&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;Then, we take the middleware (which is one kind of store enhancer), and combine it with our DevTools instrumentation (which is another store enhancer), and apply them to the core &lt;code&gt;createStore&lt;/code&gt; method to create our store factory.&lt;/p&gt;
-
-&lt;p&gt;Finally, we invoke the store factory on our reducers, which results in our singleton store.&lt;/p&gt;
-
-&lt;p&gt;This is the most complex part of Redux; it can be a lot to wrap your head around at once. But you’re past the worst part now! As you develop your own application, just add helpers like this individually as you need them, and pay attention to the terminology.&lt;/p&gt;
-
-&lt;p&gt;Oh, and I do expect that JavaScript decorators will clean up this syntax a bit, if they ever get standardized…&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/todomvc-react-redux/tree/408ecf2c2d5f82b04a284dfaaaa6396f14f0bd42&quot;&gt;Source code at this revision&lt;/a&gt; - &lt;a href=&quot;http://htmlpreview.github.io/?https://github.com/StephenCleary/todomvc-react-redux/blob/408ecf2c2d5f82b04a284dfaaaa6396f14f0bd42/index.html&quot;&gt;Live site at this revision&lt;/a&gt; (ignore the “startup flicker”; that’s just due to the way it’s hosted)&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://github.com/StephenCleary/todomvc-react-redux&quot;&gt;Most current source code&lt;/a&gt; - &lt;a href=&quot;http://stephencleary.github.io/todomvc-react-redux/&quot;&gt;Most current live site&lt;/a&gt;&lt;/p&gt;
-</description>
-        <pubDate>Tue, 08 Mar 2016 00:00:00 -0800</pubDate>
-        <link>http://blog.stephencleary.com/2016/03/debugging.html</link>
-        <guid isPermaLink="true">http://blog.stephencleary.com/2016/03/debugging.html</guid>
       </item>
     
   </channel>
