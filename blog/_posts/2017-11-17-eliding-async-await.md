@@ -10,6 +10,10 @@ This is a surprisingly nuanced question, and in fact I now hold to a different a
 
 First, let's check out the argument in favor of eliding the keywords.
 
+## Efficiency
+
+It's more efficient to elide `async` and `await`. By not including these keywords, the compiler can skip generating the `async` state machine. This means that there are fewer compiler-generated types in your assembly, less pressure on the garbage collector, and .
+
 
 
 
