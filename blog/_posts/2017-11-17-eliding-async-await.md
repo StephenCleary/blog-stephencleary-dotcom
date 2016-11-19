@@ -66,6 +66,47 @@ Clearly, the `HttpClient` is disposed before the `GET` task completes, and this 
 
 ### Exceptions
 
+Another easily-overlooked pitfall is that of exceptions. The state machine for `async` methods will capture exceptions from your code and place them on the returned task. Without the `async` keyword, the exception is raised directly rather than going on the task:
+
+{% highlight csharp %}
+string CreateUrlForId(int id);
+Task<string> DownloadStringAsync(string url);
+
+public async Task<string> GetByIdWithKeywordsAsync(int id)
+{
+    string url = CreateUrlForId(id);
+    return await DownloadStringAsync(url);
+}
+
+public Task<string> GetByIdElidingKeywordsAsync(int id)
+{
+    string url = CreateUrlForId(id);
+    return DownloadStringAsync(url);
+}
+{% endhighlight %}
+
+Now, let's say that our implementation of `CreateUrlForId` looks like this:
+
+{% highlight csharp %}
+string CreateUrlForId(int id)
+{
+    return $"http://example.com/api/letters/{id}";
+}
+{% endhighlight %}
+
+That's good. Both `GetByIdWithKeywordsAsync` and `GetByIdElidingKeywordsAsync` are working just fine.
+
+Well, except for one thing. It's possible for invalid (negative) `id`s to reach this method, and we want to avoid a network call for obviously invalid `id`s. So, the developer responsible for implementing this decides it's logical to put the check into `CreateUrlForId`:
+
+{% highlight csharp %}
+string CreateUrlForId(int id)
+{
+    if (id < 0)
+        throw new Exception("Naughty id!");
+    return $"http://example.com/api/letters/{id}";
+}
+{% endhighlight %}
+
 
 
 ### AsyncLocal
