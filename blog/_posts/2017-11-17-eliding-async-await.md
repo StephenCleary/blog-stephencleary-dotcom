@@ -69,53 +69,105 @@ Clearly, the `HttpClient` is disposed before the `GET` task completes, and this 
 Another easily-overlooked pitfall is that of exceptions. The state machine for `async` methods will capture exceptions from your code and place them on the returned task. Without the `async` keyword, the exception is raised directly rather than going on the task:
 
 {% highlight csharp %}
-string CreateUrlForId(int id);
-Task<string> DownloadStringAsync(string url);
-
-public async Task<string> GetByIdWithKeywordsAsync(int id)
+public async Task<string> GetWithKeywordsAsync()
 {
-    string url = CreateUrlForId(id);
+    string url = /* Something that can throw an exception */;
     return await DownloadStringAsync(url);
 }
 
-public Task<string> GetByIdElidingKeywordsAsync(int id)
+public Task<string> GetElidingKeywordsAsync()
 {
-    string url = CreateUrlForId(id);
+    string url = /* Something that can throw an exception */;
     return DownloadStringAsync(url);
 }
 {% endhighlight %}
 
-Now, let's say that our implementation of `CreateUrlForId` looks like this:
+These methods work exactly the same as long as the calling method does something like this:
 
 {% highlight csharp %}
-string CreateUrlForId(int id)
-{
-    return $"http://example.com/api/letters/{id}";
-}
+var result = await GetWithKeywordsAsync(); // works fine
+
+var result = await GetElidingKeywordsAsync(); // works fine
 {% endhighlight %}
 
-That's good. Both `GetByIdWithKeywordsAsync` and `GetByIdElidingKeywordsAsync` are working just fine.
-
-Well, except for one thing. It's possible for invalid (negative) `id`s to reach this method, and we want to avoid a network call for obviously invalid `id`s. So, the developer responsible for implementing this decides it's logical to put the check into `CreateUrlForId`:
+However, if the *method call* is separated from the `await`, then the semantics are different:
 
 {% highlight csharp %}
-string CreateUrlForId(int id)
-{
-    if (id < 0)
-        throw new Exception("Naughty id!");
-    return $"http://example.com/api/letters/{id}";
-}
+var task = GetWithKeywordsAsync();
+var result = await task; // Exception thrown here
+
+var task = GetElidingKeywordsAsync(); // Exception thrown here
+var result = await task;
 {% endhighlight %}
 
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
+The invocation of the method can be separated from the `await` in a variety of cases. For example, the calling method may have other work to do concurrently with the asynchronous work done by our method. This is most common in code that uses `Task.WhenAll`.
+</div>
+
+The expected asynchronous semantics are that exceptions are placed on the returned task. Since the returned task represents the execution of the method, if that execution of that method is terminated by an exception, then the natural representation of that scenario is a faulted task.
+
+So, eliding the keywords in this case causes different (and unexpected) exception behavior.
+
+This pitfall is especially notable when writing synchronous implementations of asynchronous APIs; for proper exception handling, catch any exceptions from the synchronous implementation and return a faulted task:
+
+{% highlight csharp %}
+Task<string> INetwork.GetElidingKeywordsAsync()
+{
+    try
+    {
+        string result = /* Synchronous implementation */
+        return Task.FromResult(result);
+    }
+    catch (Exception ex)
+    {
+        return Task.FromException<string>(ex);
+    }
+}
+{% endhighlight %}
 
 ### AsyncLocal
 
+This pitfall is a bit harder to reason about.
+
+`AsyncLocal<T>` (and the lower-level `LogicalCallContext`) allow asynchronous code to use a kind of `async`-compatible almost-equivalent of thread local storage. 
+
+
+
+
 ## Recommended Guideline
 
-## Synchronous Implementations of Asynchronous APIs
+I suggest following these guidelines:
 
-  - exceptions
-  - https://github.com/dotnet/roslyn/issues/10449
-  - DO NOT elide by default.
-  - DO consider eliding when the mthod is just a passthrough or overload.
+1) Do **not** elide by default. Use the `async` and `await` for natural, easy-to-read code.
+2) Do *consider* eliding when the method is **just** a passthrough or overload.
+
+Examples:
+
+{% highlight csharp %}
+// Simple passthrough to next layer: elide.
+Task<string> PassthroughAsync(int x) => _service.PassthroughAsync(x);
+
+// Simple overloads for a method: elide.
+async Task<string> OverloadsAsync(CancellationToken cancellationToken)
+{
+    ... // Core implementation, using await.
+}
+Task<string> OverloadsAsync() => OverloadsAsync(CancellationToken.None);
+
+// Non-trivial passthrough: use keywords.
+async Task<string> PassthroughAsync(int x)
+{
+    // Reasoning: GetFirstArgument can throw.
+    //  Even if it doesn't throw today, some yahoo can change it tomorrow, and it's not possible for them to know to change *this* method, too.
+    return await _service.PassthroughAsync(GetFirstArgument(), x);
+}
+
+// Non-trivial overloads for a method: use keywords.
+async Task<string> OverloadsAsync()
+{
+    // Same reasoning as above; GetDefaultCancellationTokenForThisScope can throw.
+    return await OverloadsAsync(GetDefaultCancellationTokenForThisScope());
+}
+{% endhighlight %}
