@@ -16,9 +16,9 @@ It's more efficient to elide `async` and `await`. By not including these keyword
 
 However, it's important to point out that each of these gains are absolutely minimal. There's one fewer type, a handful of small objects saved from GC, and only a few CPU instructions skipped. The vast majority of the time, `async` is dealing with I/O, which completely dwarfs any performance gains. In almost every scenario, eliding `async` and `await` doesn't make any difference to the running time of your application.
 
-For a thorough overview with timed examples, see Stephen Toub's classic video [The Zen of Async](https://channel9.msdn.com/Events/Build/BUILD2011/TOOL-829T).
+For a thorough overview of the efficiency benefits of eliding `async` and `await`, see Stephen Toub's classic video [The Zen of Async](https://channel9.msdn.com/Events/Build/BUILD2011/TOOL-829T) or [his MSDN article on the subject](https://msdn.microsoft.com/en-us/magazine/hh456402.aspx).
 
-When I started writing about `async`, I would always recommend eliding `async` and `await`, but I've modified that stand in recent years. There are just too many pitfalls to recommend eliding as a default decision. These days I recommend keeping `async` and `await` around except for a few scenarios, because of the drawbacks described in this blog post.
+When I started writing about `async`, I would always recommend eliding `async` and `await`, but I've modified that stand in recent years. There are just too many pitfalls to recommend eliding as a default decision. These days I recommend keeping the `async` and `await` keywords around except for a few scenarios, because of the drawbacks described in the rest of this blog post.
 
 ## Pitfalls
 
@@ -48,19 +48,19 @@ It's easier to understand if you walk through how the code progresses (if you ne
 
 With `GetWithKeywordsAsync`, the code does this:
 
-1) Create the `HttpClient` object.
-2) Invoke `GetStringAsync`, which returns an incomplete task.
-3) Pauses the method until the task returned from `GetStringAsync` completes, returning an incomplete task.
-4) When the task returned from `GetStringAsync` completes, resumes executing the method.
-5) Disposes the `HttpClient` object.
-6) Completes the task previously returned from `GetWithKeywordsAsync`.
+1. Create the `HttpClient` object.
+2. Invoke `GetStringAsync`, which returns an incomplete task.
+3. Pauses the method until the task returned from `GetStringAsync` completes, returning an incomplete task.
+4. When the task returned from `GetStringAsync` completes, it resumes executing the method.
+5. Disposes the `HttpClient` object.
+6. Completes the task previously returned from `GetWithKeywordsAsync`.
 
 With `GetElidingKeywordsAsync`, the code does this:
 
-1) Create the `HttpClient` object.
-2) Invoke `GetStringAsync`, which returns an incomplete task.
-3) Disposes the `HttpClient` object.
-4) Returns the task that that was returned from `GetStringAsync`.
+1. Create the `HttpClient` object.
+2. Invoke `GetStringAsync`, which returns an incomplete task.
+3. Disposes the `HttpClient` object.
+4. Returns the task that that was returned from `GetStringAsync`.
 
 Clearly, the `HttpClient` is disposed before the `GET` task completes, and this causes that request to be cancelled. The appropriate fix is to (asynchronously) wait until the `GET` operation is complete, and only then dispose the `HttpClient`, which is exactly what happens if you use `async` and `await`.
 
@@ -110,6 +110,7 @@ The expected asynchronous semantics are that exceptions are placed on the return
 
 So, eliding the keywords in this case causes different (and unexpected) exception behavior.
 
+<!--
 This pitfall is especially notable when writing synchronous implementations of asynchronous APIs; for proper exception handling, catch any exceptions from the synchronous implementation and return a faulted task:
 
 {% highlight csharp %}
@@ -126,22 +127,101 @@ Task<string> INetwork.GetElidingKeywordsAsync()
     }
 }
 {% endhighlight %}
+-->
 
 ### AsyncLocal
 
 This pitfall is a bit harder to reason about.
 
-`AsyncLocal<T>` (and the lower-level `LogicalCallContext`) allow asynchronous code to use a kind of `async`-compatible almost-equivalent of thread local storage. 
+`AsyncLocal<T>` (and the lower-level `LogicalCallContext`) allow asynchronous code to use a kind of `async`-compatible almost-equivalent of thread local storage. The [way that this actually works]({% post_url 2013-04-04-implicit-async-context-asynclocal %}) is that as part of the `async` compiler transformation, the compiler-generated code will notify the logical call context that it needs to establish a copy-on-write scope.
 
+This provides a way for contextual information to flow "down" asynchronous calls. Note that the value does *not* flow "up".
 
+{% highlight csharp %}
+static AsyncLocal<int> context = new AsyncLocal<int>();
 
+static async Task MainAsync()
+{
+    context.Value = 1;
+    Console.WriteLine("Should be 1: " + context.Value);
+    await Async();
+    Console.WriteLine("Should be 1: " + context.Value);
+}
 
-## Recommended Guideline
+static async Task Async()
+{
+    Console.WriteLine("Should be 1: " + context.Value);
+    context.Value = 2;
+    Console.WriteLine("Should be 2: " + context.Value);
+    await Task.Yield();
+    Console.WriteLine("Should be 2: " + context.Value);
+}
+{% endhighlight %}
+
+In the example above, the context value is set in the "child" `Async` method, but when `Async` completes and the control flow moves back to `MainAsync`, the code executes in the "parent" context. So the "parent" value flows to the "child", but the "child" value does not flow to the "parent".
+
+The pitfall is that synchronous methods do not notify the logical call context that anything is different. For normal (non-task-returning) synchronous methods, this works out fine; from the logical call context's perspective, all synchronous invocations are "collapsed" - they're actually part of the context of the closest `async` method further up the call stack. For example:
+
+{% highlight csharp %}
+static AsyncLocal<int> context = new AsyncLocal<int>();
+
+static async Task MainAsync()
+{
+    context.Value = 1;
+    Console.WriteLine("Should be 1: " + context.Value);
+    await Async();
+    Console.WriteLine("Should be 1: " + context.Value);
+}
+
+static async Task Async()
+{
+    Console.WriteLine("Should be 1: " + context.Value);
+    Sync();
+    Console.WriteLine("Should be 2: " + context.Value);
+    await Task.Yield();
+    Console.WriteLine("Should be 2: " + context.Value);
+}
+
+static void Sync()
+{
+    Console.WriteLine("Should be 1: " + context.Value);
+    context.Value = 2;
+    Console.WriteLine("Should be 2: " + context.Value);
+}
+{% endhighlight %}
+
+In this example, `Async` does see the modification from its child `Sync` method. As I mentioned above, I prefer to think of this as the *synchronous* methods really being a part of the closest `async` context further up the stack. From the context's perspective, `Sync` is just a part of `Async`.
+
+When eliding `async` and `await`, you do need to be aware that the task-returning non-`async` method is seen by the context as though it were a regular synchronous method. So, if it does any modification of the logical call context, it will actually affect its *parent* context:
+
+{% highlight csharp %}
+static AsyncLocal<int> context = new AsyncLocal<int>();
+
+static async Task MainAsync()
+{
+    context.Value = 1;
+    Console.WriteLine("Should be 1: " + context.Value);
+    await Async();
+    Console.WriteLine("Should be 1: " + context.Value); // Is actually "2" - unexpected!
+}
+
+static Task Async()
+{
+    Console.WriteLine("Should be 1: " + context.Value);
+    context.Value = 2;
+    Console.WriteLine("Should be 2: " + context.Value);
+    return Task.CompletedTask;
+}
+{% endhighlight %}
+
+This is a rare scenario, but it is one of the pitfalls of eliding `async`/`await`.
+
+## Recommended Guidelines
 
 I suggest following these guidelines:
 
-1) Do **not** elide by default. Use the `async` and `await` for natural, easy-to-read code.
-2) Do *consider* eliding when the method is **just** a passthrough or overload.
+1. Do **not** elide by default. Use the `async` and `await` for natural, easy-to-read code.
+2. Do *consider* eliding when the method is **just** a passthrough or overload.
 
 Examples:
 
