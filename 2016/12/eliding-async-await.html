@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html>
+﻿<head>
+    <meta charset="utf-8"/>
+    
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Eliding Async and Await</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="A discussion about returning tasks directly rather than using async/await." />
+    <link rel="canonical" href="http://blog.stephencleary.com/2016/12/eliding-async-await.html" />
+    
+    <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
+    
+    <link type="text/css" rel="stylesheet" href="//netdna.bootstrapcdn.com/bootswatch/3.2.0/spacelab/bootstrap.min.css" />
+    <link type="text/css" rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" />
+    <style type="text/css">/* Layout Styles */
+/* ----------------------------------------------------------*/
+
+body {
+    padding-top: 50px;
+}
+
+.affix {
+    top: 70px;
+    bottom: 0;
+    overflow-y: auto;
+}
+
+.navbar-brand {
+    font-weight: bold;
+}
+
+.navbar-brand-container.active>a, .navbar-brand-container.active>a:hover, .navbar-brand-container.active>a:focus {
+    color: #3399f3;
+    background-color: transparent;
+}
+
+.sidebar {
+    margin-top: 20px;
+}
+
+.sidenavitem {
+    height: auto;
+}
+
+.sidebar img {
+    /* Responsive images */
+    display: inline-block;
+    height: auto;
+    max-width: 100%;
+}
+
+@media(max-width:767px) {
+    .affix {
+        position: static;
+    }
+}
+
+div .vertical-margins {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.page-header {
+    margin-top: 20px;
+}
+
+.center {
+    text-align: center;
+}
+
+.project-icon {
+    height: 128px;
+    width: 128px;
+}
+
+.list-group-item h2 {
+    margin-top: 10px;
+}
+
+/* Fixes for Google Custom Search in a Bootstrap page */
+/* ----------------------------------------------------------*/
+.google, .google *, .google *:before, .google *:after {
+    -webkit-box-sizing: content-box;
+    -moz-box-sizing: content-box;
+    box-sizing: content-box;
+}
+
+.google table {
+    border-collapse: separate;
+}
+
+.gsc-input-box {
+    height: auto !important;
+}
+
+/* Fixes for Amazon widget in Bootstrap page */
+.amzn_wdgt * {
+    -webkit-box-sizing: content-box;
+    -moz-box-sizing: content-box;
+    box-sizing: content-box;
+}
+
+/* Post styles */
+/* ----------------------------------------------------------*/
+
+code {
+    background-color: #F2F3F9;
+    color: inherit;
+}
+
+.post img {
+    /* Responsive images */
+    display: inline-block;
+    height: auto;
+    max-width: 100%;
+}
+
+.post .table {
+    table-layout: fixed;
+}
+
+.post .table code {
+    white-space: normal;
+}
+
+.post .yes {
+    color: #008000;
+}
+
+.post .no {
+    color: #FF0000;
+}
+
+/* Syntax highlighting styles */
+/* ----------------------------------------------------------*/
+
+.highlight  { background: #ffffff; }
+.highlight .c { color: #008000 } /* Comment */
+.highlight .k { color: #0000ff } /* Keyword */
+.highlight .cm { color: #008000 } /* Comment.Multiline */
+.highlight .cp { color: #0000ff } /* Comment.Preproc */
+.highlight .c1 { color: #008000 } /* Comment.Single */
+.highlight .cs { color: #008000 } /* Comment.Special */
+.highlight .ge { font-style: italic } /* Generic.Emph */
+.highlight .gh { font-weight: bold } /* Generic.Heading */
+.highlight .gp { font-weight: bold } /* Generic.Prompt */
+.highlight .gs { font-weight: bold } /* Generic.Strong */
+.highlight .gu { font-weight: bold } /* Generic.Subheading */
+.highlight .kc { color: #0000ff } /* Keyword.Constant */
+.highlight .kd { color: #0000ff } /* Keyword.Declaration */
+.highlight .kn { color: #0000ff } /* Keyword.Namespace */
+.highlight .kp { color: #0000ff } /* Keyword.Pseudo */
+.highlight .kr { color: #0000ff } /* Keyword.Reserved */
+.highlight .kt { color: #2b91af } /* Keyword.Type */
+.highlight .s { color: #a31515 } /* Literal.String */
+.highlight .nc { color: #2b91af } /* Name.Class */
+.highlight .ow { color: #0000ff } /* Operator.Word */
+.highlight .sb { color: #a31515 } /* Literal.String.Backtick */
+.highlight .sc { color: #a31515 } /* Literal.String.Char */
+.highlight .sd { color: #a31515 } /* Literal.String.Doc */
+.highlight .s2 { color: #a31515 } /* Literal.String.Double */
+.highlight .se { color: #a31515 } /* Literal.String.Escape */
+.highlight .sh { color: #a31515 } /* Literal.String.Heredoc */
+.highlight .si { color: #a31515 } /* Literal.String.Interpol */
+.highlight .sx { color: #a31515 } /* Literal.String.Other */
+.highlight .sr { color: #a31515 } /* Literal.String.Regex */
+.highlight .s1 { color: #a31515 } /* Literal.String.Single */
+.highlight .ss { color: #a31515 } /* Literal.String.Symbol */
+</style>
+    
+    <meta name="application-name" content="Stephen Cleary" />
+    <link rel="search" type="application/opensearchdescription+xml" href="http://stephencleary.com/opensearch.xml" title="Cleary Search">
+    <link rel="apple-touch-icon" sizes="57x57" href="http://stephencleary.com/icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://stephencleary.com/icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://stephencleary.com/icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="http://stephencleary.com/icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="http://stephencleary.com/icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="http://stephencleary.com/icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="http://stephencleary.com/icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="http://stephencleary.com/icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" href="http://stephencleary.com/icons/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon-precomposed" href="http://stephencleary.com/icons/apple-touch-icon-precomposed.png"/>
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="http://stephencleary.com/icons/favicon-32x32.png" sizes="32x32">
+    
+</head>
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <div class="navbar-brand-container"><a class="navbar-brand" href="http://stephencleary.com">Stephen Cleary</a></div>
+    </div>
+
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+        <ul class="nav navbar-nav">
+            <li  class="active"  ><a href="http://blog.stephencleary.com">Blog</a></li>
+            <li  ><a href="http://stephencleary.com/projects/">Projects</a></li>
+            <li  ><a href="http://stephencleary.com/publications/">Publications</a></li>
+            <li  ><a href="http://stephencleary.com/book/">Book</a></li>
+            <li  ><a href="http://stephencleary.com/contact/">Contact</a></li>
+            <li><a href="http://feeds.feedburner.com/NitoPrograms"><i class="fa fa-rss-square fa-lg"></i></a></li>
+            <li  ><a href="http://stephencleary.com/search/"><i class="fa fa-search"></i></a></li>
+        </ul>
+    </div>
+</nav>
+
+    <div class="container-fluid">
+        <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Eliding Async and Await</h1>
+          <small><time datetime="2016-12-01">Dec 1, 2016</time> &bull; <a data-disqus-identifier="/2016/12/eliding-async-await" href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>Once one has learned the basics of <code>async</code> and <code>await</code> and has gotten fairly comfortable with it, a common design question often comes up: If I can remove <code>async</code> and <code>await</code>, should I? There are a number of situations where you can elide the <code>async</code>/<code>await</code> keywords and just return the task directly.</p>
+
+<p>This is a surprisingly nuanced question, and in fact I now hold to a different answer than the position I originally took on this issue.</p>
+
+<p>First, let’s check out the argument in favor of eliding the keywords.</p>
+
+<h2 id="efficiency">Efficiency</h2>
+
+<p>It’s more efficient to elide <code>async</code> and <code>await</code>. By not including these keywords, the compiler can skip generating the <code>async</code> state machine. This means that there are fewer compiler-generated types in your assembly, less pressure on the garbage collector, and fewer CPU instructions to execute.</p>
+
+<p>However, it’s important to point out that each of these gains are absolutely minimal. There’s one fewer type, a handful of small objects saved from GC, and only a few CPU instructions skipped. The vast majority of the time, <code>async</code> is dealing with I/O, which completely dwarfs any performance gains. In almost every scenario, eliding <code>async</code> and <code>await</code> doesn’t make any difference to the running time of your application.</p>
+
+<p>For a thorough overview of the efficiency benefits of eliding <code>async</code> and <code>await</code>, see Stephen Toub’s classic video <a href="https://channel9.msdn.com/Events/Build/BUILD2011/TOOL-829T">The Zen of Async</a> or <a href="https://msdn.microsoft.com/en-us/magazine/hh456402.aspx">his MSDN article on the subject</a>.</p>
+
+<p>When I started writing about <code>async</code>, I would always recommend eliding <code>async</code> and <code>await</code>, but I’ve modified that stand in recent years. There are just too many pitfalls to recommend eliding as a default decision. These days I recommend keeping the <code>async</code> and <code>await</code> keywords around except for a few scenarios, because of the drawbacks described in the rest of this blog post.</p>
+
+<h2 id="pitfalls">Pitfalls</h2>
+
+<p>By eliding <code>async</code> and <code>await</code>, you can avoid the compiler modifications to your method. Unfortunately, this also means that all the compiler modifications to your method must now be done by hand if you desire the same semantics.</p>
+
+<h3 id="using">Using</h3>
+
+<p>One of the most common mistakes in eliding <code>async</code> and <code>await</code> is that developers forget that there is code at the end of their method that needs to run at the appropriate time. In particular, when using a <code>using</code> statement:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">GetWithKeywordsAsync</span><span class="p">(</span><span class="kt">string</span> <span class="n">url</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">client</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">())</span>
+        <span class="k">return</span> <span class="k">await</span> <span class="n">client</span><span class="p">.</span><span class="n">GetStringAsync</span><span class="p">(</span><span class="n">url</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">public</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">GetElidingKeywordsAsync</span><span class="p">(</span><span class="kt">string</span> <span class="n">url</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">client</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">client</span><span class="p">.</span><span class="n">GetStringAsync</span><span class="p">(</span><span class="n">url</span><span class="p">);</span>
+<span class="p">}</span></code></pre></div>
+
+<p>In this example, eliding the keywords will abort the download.</p>
+
+<p>It’s easier to understand if you walk through how the code progresses (if you need a review, my <a href="/2012/02/async-and-await.html">intro to <code>async</code> and <code>await</code> post</a> is still perfectly relevant today). For simplicity, I’ll assume that <code>HttpClient.GetStringAsync</code> never completes synchronously.</p>
+
+<p>With <code>GetWithKeywordsAsync</code>, the code does this:</p>
+
+<ol>
+  <li>Create the <code>HttpClient</code> object.</li>
+  <li>Invoke <code>GetStringAsync</code>, which returns an incomplete task.</li>
+  <li>Pauses the method until the task returned from <code>GetStringAsync</code> completes, returning an incomplete task.</li>
+  <li>When the task returned from <code>GetStringAsync</code> completes, it resumes executing the method.</li>
+  <li>Disposes the <code>HttpClient</code> object.</li>
+  <li>Completes the task previously returned from <code>GetWithKeywordsAsync</code>.</li>
+</ol>
+
+<p>With <code>GetElidingKeywordsAsync</code>, the code does this:</p>
+
+<ol>
+  <li>Create the <code>HttpClient</code> object.</li>
+  <li>Invoke <code>GetStringAsync</code>, which returns an incomplete task.</li>
+  <li>Disposes the <code>HttpClient</code> object.</li>
+  <li>Returns the task that that was returned from <code>GetStringAsync</code>.</li>
+</ol>
+
+<p>Clearly, the <code>HttpClient</code> is disposed before the <code>GET</code> task completes, and this causes that request to be cancelled. The appropriate fix is to (asynchronously) wait until the <code>GET</code> operation is complete, and only then dispose the <code>HttpClient</code>, which is exactly what happens if you use <code>async</code> and <code>await</code>.</p>
+
+<h3 id="exceptions">Exceptions</h3>
+
+<p>Another easily-overlooked pitfall is that of exceptions. The state machine for <code>async</code> methods will capture exceptions from your code and place them on the returned task. Without the <code>async</code> keyword, the exception is raised directly rather than going on the task:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">GetWithKeywordsAsync</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="kt">string</span> <span class="n">url</span> <span class="p">=</span> <span class="cm">/* Something that can throw an exception */</span><span class="p">;</span>
+    <span class="k">return</span> <span class="k">await</span> <span class="nf">DownloadStringAsync</span><span class="p">(</span><span class="n">url</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">public</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">GetElidingKeywordsAsync</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="kt">string</span> <span class="n">url</span> <span class="p">=</span> <span class="cm">/* Something that can throw an exception */</span><span class="p">;</span>
+    <span class="k">return</span> <span class="nf">DownloadStringAsync</span><span class="p">(</span><span class="n">url</span><span class="p">);</span>
+<span class="p">}</span></code></pre></div>
+
+<p>These methods work exactly the same as long as the calling method does something like this:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">GetWithKeywordsAsync</span><span class="p">();</span> <span class="c1">// works fine</span>
+
+<span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">GetElidingKeywordsAsync</span><span class="p">();</span> <span class="c1">// works fine</span></code></pre></div>
+
+<p>However, if the <em>method call</em> is separated from the <code>await</code>, then the semantics are different:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="kt">var</span> <span class="n">task</span> <span class="p">=</span> <span class="n">GetWithKeywordsAsync</span><span class="p">();</span>
+<span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">task</span><span class="p">;</span> <span class="c1">// Exception thrown here</span>
+
+<span class="kt">var</span> <span class="n">task</span> <span class="p">=</span> <span class="n">GetElidingKeywordsAsync</span><span class="p">();</span> <span class="c1">// Exception thrown here</span>
+<span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">task</span><span class="p">;</span></code></pre></div>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>The invocation of the method can be separated from the <code>await</code> in a variety of cases. For example, the calling method may have other work to do concurrently with the asynchronous work done by our method. This is most common in code that uses <code>Task.WhenAll</code>.</p>
+</div>
+
+<p>The expected asynchronous semantics are that exceptions are placed on the returned task. Since the returned task represents the execution of the method, if that execution of that method is terminated by an exception, then the natural representation of that scenario is a faulted task.</p>
+
+<p>So, eliding the keywords in this case causes different (and unexpected) exception behavior.</p>
+
+<!--
+This pitfall is especially notable when writing synchronous implementations of asynchronous APIs; for proper exception handling, catch any exceptions from the synchronous implementation and return a faulted task:
+
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">INetwork</span><span class="p">.</span><span class="n">GetElidingKeywordsAsync</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="k">try</span>
+    <span class="p">{</span>
+        <span class="kt">string</span> <span class="n">result</span> <span class="p">=</span> <span class="cm">/* Synchronous implementation */</span>
+        <span class="k">return</span> <span class="n">Task</span><span class="p">.</span><span class="n">FromResult</span><span class="p">(</span><span class="n">result</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="n">Task</span><span class="p">.</span><span class="n">FromException</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;(</span><span class="n">ex</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+-->
+
+<h3 id="asynclocal">AsyncLocal</h3>
+
+<p>This pitfall is a bit harder to reason about.</p>
+
+<p><code>AsyncLocal&lt;T&gt;</code> (and the lower-level <code>LogicalCallContext</code>) allow asynchronous code to use a kind of <code>async</code>-compatible almost-equivalent of thread local storage. The <a href="/2013/04/implicit-async-context-asynclocal.html">way that this actually works</a> is that as part of the <code>async</code> compiler transformation, the compiler-generated code will notify the logical call context that it needs to establish a copy-on-write scope.</p>
+
+<p>This provides a way for contextual information to flow “down” asynchronous calls. Note that the value does <em>not</em> flow “up”.</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">static</span> <span class="n">AsyncLocal</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">context</span> <span class="p">=</span> <span class="k">new</span> <span class="n">AsyncLocal</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;();</span>
+
+<span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">MainAsync</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">context</span><span class="p">.</span><span class="n">Value</span> <span class="p">=</span> <span class="m">1</span><span class="p">;</span>
+    <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Should be 1: &quot;</span> <span class="p">+</span> <span class="n">context</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span>
+    <span class="k">await</span> <span class="nf">Async</span><span class="p">();</span>
+    <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Should be 1: &quot;</span> <span class="p">+</span> <span class="n">context</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">Async</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Should be 1: &quot;</span> <span class="p">+</span> <span class="n">context</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span>
+    <span class="n">context</span><span class="p">.</span><span class="n">Value</span> <span class="p">=</span> <span class="m">2</span><span class="p">;</span>
+    <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Should be 2: &quot;</span> <span class="p">+</span> <span class="n">context</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span>
+    <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Yield</span><span class="p">();</span>
+    <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Should be 2: &quot;</span> <span class="p">+</span> <span class="n">context</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span>
+<span class="p">}</span></code></pre></div>
+
+<p>In the example above, the context value is set in the “child” <code>Async</code> method, but when <code>Async</code> completes and the control flow moves back to <code>MainAsync</code>, the code executes in the “parent” context. So the “parent” value flows to the “child”, but the “child” value does not flow to the “parent”.</p>
+
+<p>The pitfall is that synchronous methods do not notify the logical call context that anything is different. For normal (non-task-returning) synchronous methods, this works out fine; from the logical call context’s perspective, all synchronous invocations are “collapsed” - they’re actually part of the context of the closest <code>async</code> method further up the call stack. For example:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">static</span> <span class="n">AsyncLocal</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">context</span> <span class="p">=</span> <span class="k">new</span> <span class="n">AsyncLocal</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;();</span>
+
+<span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">MainAsync</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">context</span><span class="p">.</span><span class="n">Value</span> <span class="p">=</span> <span class="m">1</span><span class="p">;</span>
+    <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Should be 1: &quot;</span> <span class="p">+</span> <span class="n">context</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span>
+    <span class="k">await</span> <span class="nf">Async</span><span class="p">();</span>
+    <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Should be 1: &quot;</span> <span class="p">+</span> <span class="n">context</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">Async</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Should be 1: &quot;</span> <span class="p">+</span> <span class="n">context</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span>
+    <span class="n">Sync</span><span class="p">();</span>
+    <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Should be 2: &quot;</span> <span class="p">+</span> <span class="n">context</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span>
+    <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Yield</span><span class="p">();</span>
+    <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Should be 2: &quot;</span> <span class="p">+</span> <span class="n">context</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="k">void</span> <span class="nf">Sync</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Should be 1: &quot;</span> <span class="p">+</span> <span class="n">context</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span>
+    <span class="n">context</span><span class="p">.</span><span class="n">Value</span> <span class="p">=</span> <span class="m">2</span><span class="p">;</span>
+    <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Should be 2: &quot;</span> <span class="p">+</span> <span class="n">context</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span>
+<span class="p">}</span></code></pre></div>
+
+<p>In this example, <code>Async</code> does see the modification from its child <code>Sync</code> method. As I mentioned above, I prefer to think of this as the <em>synchronous</em> methods really being a part of the closest <code>async</code> context further up the stack. From the context’s perspective, <code>Sync</code> is just a part of <code>Async</code>.</p>
+
+<p>When eliding <code>async</code> and <code>await</code>, you do need to be aware that the task-returning non-<code>async</code> method is seen by the context as though it were a regular synchronous method. So, if it does any modification of the logical call context, it will actually affect its <em>parent</em> context:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">static</span> <span class="n">AsyncLocal</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">context</span> <span class="p">=</span> <span class="k">new</span> <span class="n">AsyncLocal</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;();</span>
+
+<span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">MainAsync</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">context</span><span class="p">.</span><span class="n">Value</span> <span class="p">=</span> <span class="m">1</span><span class="p">;</span>
+    <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Should be 1: &quot;</span> <span class="p">+</span> <span class="n">context</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span>
+    <span class="k">await</span> <span class="nf">Async</span><span class="p">();</span>
+    <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Should be 1: &quot;</span> <span class="p">+</span> <span class="n">context</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span> <span class="c1">// Is actually &quot;2&quot; - unexpected!</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="n">Task</span> <span class="nf">Async</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Should be 1: &quot;</span> <span class="p">+</span> <span class="n">context</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span>
+    <span class="n">context</span><span class="p">.</span><span class="n">Value</span> <span class="p">=</span> <span class="m">2</span><span class="p">;</span>
+    <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Should be 2: &quot;</span> <span class="p">+</span> <span class="n">context</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">Task</span><span class="p">.</span><span class="n">CompletedTask</span><span class="p">;</span>
+<span class="p">}</span></code></pre></div>
+
+<p>This is a rare scenario, but it is one of the pitfalls of eliding <code>async</code>/<code>await</code>.</p>
+
+<h2 id="recommended-guidelines">Recommended Guidelines</h2>
+
+<p>I suggest following these guidelines:</p>
+
+<ol>
+  <li>Do <strong>not</strong> elide by default. Use the <code>async</code> and <code>await</code> for natural, easy-to-read code.</li>
+  <li>Do <em>consider</em> eliding when the method is <strong>just</strong> a passthrough or overload.</li>
+</ol>
+
+<p>Examples:</p>
+
+<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Simple passthrough to next layer: elide.</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">PassthroughAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="n">_service</span><span class="p">.</span><span class="n">PassthroughAsync</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
+
+<span class="c1">// Simple overloads for a method: elide.</span>
+<span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">OverloadsAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="p">...</span> <span class="c1">// Core implementation, using await.</span>
+<span class="p">}</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">OverloadsAsync</span><span class="p">()</span> <span class="p">=&gt;</span> <span class="n">OverloadsAsync</span><span class="p">(</span><span class="n">CancellationToken</span><span class="p">.</span><span class="n">None</span><span class="p">);</span>
+
+<span class="c1">// Non-trivial passthrough: use keywords.</span>
+<span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">PassthroughAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// Reasoning: GetFirstArgument can throw.</span>
+    <span class="c1">//  Even if it doesn&#39;t throw today, some yahoo can change it tomorrow, and it&#39;s not possible for them to know to change *this* method, too.</span>
+    <span class="k">return</span> <span class="k">await</span> <span class="n">_service</span><span class="p">.</span><span class="n">PassthroughAsync</span><span class="p">(</span><span class="n">GetFirstArgument</span><span class="p">(),</span> <span class="n">x</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c1">// Non-trivial overloads for a method: use keywords.</span>
+<span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">OverloadsAsync</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="c1">// Same reasoning as above; GetDefaultCancellationTokenForThisScope can throw.</span>
+    <span class="k">return</span> <span class="k">await</span> <span class="nf">OverloadsAsync</span><span class="p">(</span><span class="n">GetDefaultCancellationTokenForThisScope</span><span class="p">());</span>
+<span class="p">}</span></code></pre></div>
+
+
+  </article>
+    
+    <footer>
+        
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2016/11/azure-functions.html" title="Azure Functions">&larr; Previous Post</a></li>
+            
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
+</div>
+        </div>
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+            
+            
+        </div>
+        <div class="col-sm-2 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading">About Stephen Cleary</div>
+                <div class="panel-body">
+                    <div class="center"><img src="http://stephencleary.com/www.assets/Me-large.jpg"/></div>
+                    <div class="center vertical-margins">Stephen Cleary is a <a href="http://stephencleary.com/god/">Christian</a>, husband, father, and programmer living in Northern Michigan.</div>
+                    <div class="center"><a href="http://mvp.microsoft.com/en-us/mvp/Stephen%20Cleary-5000058"><img class="mvp-logo" src="http://stephencleary.com/www.assets/MVP.png"/></a></div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">My book</div>
+                <div class="panel-body center">
+                    <div><a href="http://stephencleary.com/book/"><img src="http://stephencleary.com/www.assets/Book-small.jpg"/></a></div>
+                    <div>Available from <a href="http://tinyurl.com/ConcurrencyCookbook">O'Reilly</a> or <a href="http://tinyurl.com/ConcurrencyCookbookAmazon">Amazon</a>.</div>
+                    <div data-hide-after="2015-09-18 05-0700" class="hidden"><b><a href="http://tinyurl.com/ConcurrencyCookbook">Ebook is 50% off right now at O'Reilly</a> - use discount code <i>B2S5</i></b></div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Advertisement</div>
+                <div class="panel-body">
+                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2749292939902134" data-ad-slot="7584809820" data-ad-format="auto"></ins>
+                </div>
+            </div>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">Popular Posts</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2012/02/async-and-await.html">Async/await Intro</a></li>
+                        <li><a href="/2013/11/there-is-no-thread.html">There Is No Thread</a></li>
+                        <li><a href="/2012/07/dont-block-on-async-code.html">Don't Block on Async Code</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Series</div>
+                <div class="panel-body">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="/2016/02/react-redux-todomvc.html">React/Redux TodoMVC</a></li>
+                        <li><a href="/2014/04/a-tour-of-task-part-0-overview.html">A Tour of Task</a></li>
+                        <li><a href="/2013/10/taskrun-etiquette-and-proper-usage.html">Task.Run Etiquette</a></li>
+                        <li><a href="/2013/05/taskrun-vs-backgroundworker-intro.html">Task.Run vs. BackgroundWorker</a></li>
+                        <li><a href="/2013/01/async-oop-0-introduction.html">Async OOP</a></li>
+                        <li><a href="/2009/04/tcpip-net-sockets-faq.html">TCP/IP .NET Sockets FAQ</a></li>
+                        <li><a href="/2013/10/managed-services-roundup.html">Managed Services</a></li>
+                        <li><a href="/2009/08/how-to-implement-idisposable-and.html">IDisposable and Finalizers</a></li>
+                        <li><a href="/2011/02/option-parsing-introduction.html">Option Parsing</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="google">
+        <gcse:searchresults></gcse:searchresults>
+    </div>
+    
+    <!-- jQuery -->
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">window.jQuery || document.write('<script src="/lib/jquery-2.1.1.min.js"><\/script>')</script>
+
+<!-- Bootstrap -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript">window.jQuery.fn.modal || document.write('<script src="/lib/bootstrap.min.js"><\/script>')</script>
+<script type="text/javascript">
+    (function($) {
+        $(function() {
+            if ($('body').css('color') !== 'rgb(102, 102, 102)') {
+                $('head').prepend('<link rel="stylesheet" href="/lib/bootstrap.min.css" />');
+            }
+        });
+    })(window.jQuery);
+</script>
+
+<!-- Font Awesome -->
+<span id="facheck" class="fa" style="display:none"></span>
+<script type="text/javascript">
+    (function($) {
+        $(function() {
+            if ($('#facheck').css('fontFamily') !== 'FontAwesome') {
+                $('head').prepend('<link rel="stylesheet" href="/lib/font-awesome.min.css" />');
+            }
+        });
+    })(window.jQuery);
+</script>
+
+<!-- Scroll the sidebar into view (if necessary) -->
+
+
+<!-- Google analytics -->
+<script type="text/javascript">
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-8910661-5', 'stephencleary.com');
+    ga('send', 'pageview');
+</script>
+
+<!-- Show appropriate elements based on time -->
+<script type="text/javascript">
+    (function ($) {
+        $(function () {
+            var targets = $('[data-hide-after]');
+            targets.each(function () {
+                var $item = $(this);
+                if (moment() < moment($item.attr('data-hide-after'))) {
+                    $item.removeClass('hidden');
+                }
+            });
+        });
+    })(window.jQuery);
+</script>
+
+
+
+
+
+
+
+
+<!-- Disqus variables -->
+<script type="text/javascript">
+    var disqus_shortname = 'stephencleary';
+    var disqus_identifier = "/2016/12/eliding-async-await";
+    var disqus_title = "Eliding Async and Await";
+    var disqus_url = "http://blog.stephencleary.com/2016/12/eliding-async-await.html";
+</script>
+
+<!-- Disqus comment counter -->
+<script type="text/javascript">
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(s);
+    }());
+</script>
+
+<!-- Disqus comment section -->
+<script type="text/javascript">
+    (function() {
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+
+
+
+<!-- Google AdSense -->
+<script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<!-- Moment -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.6.0/moment.min.js"></script>
+<script type="text/javascript">window.moment || document.write('<script src="/lib/moment.min.js"><\/script>')</script>
+<script type="text/javascript">
+    (function($) {
+        $(function () {
+            $('time').each(function (_, e) {
+                var startOfToday = moment().startOf('day');
+                var publicationDate = moment($(e).attr('datetime'), 'YYYY-MM-DD');
+                var difference = startOfToday.diff(publicationDate, 'days');
+                var text = difference === 0 ? 'Today' :
+                    difference === 1 ? 'Yesterday' :
+                    publicationDate.from(startOfToday);
+                $(e).text(function(_, oldText) { return text + ' (' + oldText + ')'; });
+            });
+        });
+    })(window.jQuery);
+</script>
+
+
+
+
+</body>
+</html>
