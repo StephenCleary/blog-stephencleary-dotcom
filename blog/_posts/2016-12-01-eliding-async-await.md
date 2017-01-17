@@ -60,7 +60,7 @@ With `GetElidingKeywordsAsync`, the code does this:
 1. Create the `HttpClient` object.
 2. Invoke `GetStringAsync`, which returns an incomplete task.
 3. Disposes the `HttpClient` object.
-4. Returns the task that that was returned from `GetStringAsync`.
+4. Returns the task that was returned from `GetStringAsync`.
 
 Clearly, the `HttpClient` is disposed before the `GET` task completes, and this causes that request to be cancelled. The appropriate fix is to (asynchronously) wait until the `GET` operation is complete, and only then dispose the `HttpClient`, which is exactly what happens if you use `async` and `await`.
 
