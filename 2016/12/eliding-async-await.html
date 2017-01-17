@@ -282,7 +282,7 @@ code {
   <li>Create the <code>HttpClient</code> object.</li>
   <li>Invoke <code>GetStringAsync</code>, which returns an incomplete task.</li>
   <li>Disposes the <code>HttpClient</code> object.</li>
-  <li>Returns the task that that was returned from <code>GetStringAsync</code>.</li>
+  <li>Returns the task that was returned from <code>GetStringAsync</code>.</li>
 </ol>
 
 <p>Clearly, the <code>HttpClient</code> is disposed before the <code>GET</code> task completes, and this causes that request to be cancelled. The appropriate fix is to (asynchronously) wait until the <code>GET</code> operation is complete, and only then dispose the <code>HttpClient</code>, which is exactly what happens if you use <code>async</code> and <code>await</code>.</p>
