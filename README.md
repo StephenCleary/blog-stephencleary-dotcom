@@ -4,6 +4,7 @@
 - Copy setpath.ps1 to the directory where you uninstalled that zip (e.g., D:\Programs\PortableJekyll)
 - Install Python 2.
 - Run "gem install jekyll"
+- Run "gem install pygments"
 - Run "python -m pip install -U pip setuptools"
 - Run "easy_install Pygments"
 
