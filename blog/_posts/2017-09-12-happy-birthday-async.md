@@ -4,7 +4,7 @@ title: "Happy Birthday Async"
 description: "Async was officially released five years ago today."
 ---
 
-Today I'd like to say happy birthday to the `async` and `await` keywords!
+Today I'd like to say happy birthday to the C# `async` and `await` keywords!
 
 TODO: F#, then C#/VB.
 F# April 12, 2010
