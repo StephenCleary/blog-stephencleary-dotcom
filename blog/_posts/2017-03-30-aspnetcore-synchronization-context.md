@@ -13,6 +13,16 @@ My inital reply was just "well, that would be a short post!" Because there *isn'
 {:.center}
 [![]({{ site_url }}/assets/NoAspNetCoreSyncCtx.png)]({{ site_url }}/assets/NoAspNetCoreSyncCtx.png)
 
+## Why No SynchronizationContext?
+
+Stepping back a moment, a good question to ask is *why* the `AspNetSynchronizationContext` was removed in ASP.NET Core. While I'm not privy to the team's internal discussions on the subject, I assume it is for two reasons: performance and simplicity. Consider the performance aspect first.
+
+When an asynchronous handler resumes execution on legacy ASP.NET, the continuation is *queued* to the request context. The continuation must wait for any other continuations that have already been queued (only one may run at a time). When it is ready to run, a thread is taken from the thread pool, *enters* the request context, and then resumes executing the handler. That "re-entering" the request context involves a number of housekeeping tasks, such as setting `HttpContext.Current` and the current thread's identity and culture.
+
+With the contextless ASP.NET Core approach, when an asynchronous handler resumes execution, a thread is taken from the thread pool and executes the continuation. The context queue is avoided, and there is no "entering" of the request context necessary. In addition, the `async`/`await` mechanism is highly optimized for the contextless scenario. There's simply less work to do for asynchronous requests.
+
+Simplicity is another aspect of this decision. `AspNetSynchronizationContext` worked well, but it had some tricky parts, [particularly around identity management](http://www.hanselman.com/blog/SystemThreadingThreadCurrentPrincipalVsSystemWebHttpContextCurrentUserOrWhyFormsAuthenticationCanBeSubtle.aspx).
+
 OK, so there's no `SynchronizationContext`. What does that mean for developers?
 
 ## You Can Block on Async Code - But You Shouldn't
@@ -33,7 +43,9 @@ However, I still recommend that you use it in your core libraries - anything tha
 
 ## Beware Implicit Parallelism
 
-There's one more major concern when moving from a synchronizing context to a thread pool context (i.e., from legacy ASP.NET to ASP.NET Core). The legacy ASP.NET `SynchronizationContext` is an actual *synchronizing context*, meaning that within a request context, only one thread can actually *execute code* at a time. That is, asynchronous continuations may run on any thread, but *only one at a time*. ASP.NET Core does not have a `SynchronizationContext`, so `await` defaults to the thread pool context. So, in the ASP.NET Core world, asynchronous continuations may run on any thread, and they may all run in *parallel*.
+There is one more major concern when moving from a synchronizing context to a thread pool context (i.e., from legacy ASP.NET to ASP.NET Core).
+
+The legacy ASP.NET `SynchronizationContext` is an actual *synchronizing context*, meaning that within a request context, only one thread can actually *execute code* at a time. That is, asynchronous continuations may run on any thread, but *only one at a time*. ASP.NET Core does not have a `SynchronizationContext`, so `await` defaults to the thread pool context. So, in the ASP.NET Core world, asynchronous continuations may run on any thread, and they may all run in *parallel*.
 
 As a contrived example, consider this code, which downloads two strings and places them into a list. This code works fine in legacy ASP.NET because the request context only permits one continuation at a time:
 
@@ -60,3 +72,4 @@ The `result.Add(data)` line can only be executed by one thread at a time because
 However, this same code is unsafe on ASP.NET Core; specifically, the `result.Add(data)` line may be executed by two threads *at the same time,* without protecting the shared `List<string>`.
 
 Code such as this is rare; asynchronous code is by its nature functional, so it's far more *natural* to return results from asynchronous methods rather than modifying shared state. However, the quality of asynchronous code does vary, and there is doubtless some code out there that is not adequately shielded against parallel execution.
+
