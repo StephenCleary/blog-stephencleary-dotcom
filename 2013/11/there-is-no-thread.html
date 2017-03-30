@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -237,11 +237,11 @@ code {
 
 <p>Consider a generic “write” operation (to a file, network stream, USB toaster, whatever). Our code is simple:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">Button_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">Button_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="kt">byte</span><span class="p">[]</span> <span class="n">data</span> <span class="p">=</span> <span class="p">...</span>
   <span class="k">await</span> <span class="n">myDevice</span><span class="p">.</span><span class="n">WriteAsync</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">data</span><span class="p">.</span><span class="n">Length</span><span class="p">);</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>We already know that the UI thread is not blocked during the <code>await</code>. Question: Is there <em>another thread</em> that must sacrifice itself on the Altar of Blocking so that the UI thread may live?</p>
 
@@ -301,7 +301,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -316,11 +316,11 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

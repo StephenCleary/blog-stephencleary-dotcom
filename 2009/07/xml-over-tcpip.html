@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -271,7 +271,7 @@ code {
 
 <p>The following sample code takes an XElement and an Encoding, and translates the XML to a byte array (not including an XML prolog):</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="kt">byte</span><span class="p">[]</span> <span class="nf">ConvertXmlToByteArray</span><span class="p">(</span><span class="n">XElement</span> <span class="n">xml</span><span class="p">,</span> <span class="n">Encoding</span> <span class="n">encoding</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="kt">byte</span><span class="p">[]</span> <span class="nf">ConvertXmlToByteArray</span><span class="p">(</span><span class="n">XElement</span> <span class="n">xml</span><span class="p">,</span> <span class="n">Encoding</span> <span class="n">encoding</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">using</span> <span class="p">(</span><span class="n">MemoryStream</span> <span class="n">stream</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MemoryStream</span><span class="p">())</span>
     <span class="p">{</span>
@@ -285,13 +285,13 @@ code {
         <span class="p">}</span>
         <span class="k">return</span> <span class="n">stream</span><span class="p">.</span><span class="n">ToArray</span><span class="p">();</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>When reading XML from a byte array, one may either use an XmlReader or a StreamReader. Using an XmlReader allows incoming XML to use any encoding; however, it will get confused if the XML has an incorrect encoding specified in its prolog. Using a StreamReader will force the byte array to be interpreted according to a particular encoding, but does not allow any other encodings.</p>
 
 <p>If the application protocol specification does not specify an encoding, then the XmlReader must be used. Incorrect XML prologs cannot be allowed. The following sample code allows any encoding:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">XElement</span> <span class="nf">ConvertByteArrayToXml</span><span class="p">(</span><span class="kt">byte</span><span class="p">[]</span> <span class="n">data</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">XElement</span> <span class="nf">ConvertByteArrayToXml</span><span class="p">(</span><span class="kt">byte</span><span class="p">[]</span> <span class="n">data</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="c1">// Interpret the byte array allowing any encoding</span>
     <span class="n">XmlReaderSettings</span> <span class="n">settings</span> <span class="p">=</span> <span class="k">new</span> <span class="n">XmlReaderSettings</span><span class="p">();</span>
@@ -301,11 +301,11 @@ code {
     <span class="p">{</span>
         <span class="k">return</span> <span class="n">XElement</span><span class="p">.</span><span class="n">Load</span><span class="p">(</span><span class="n">reader</span><span class="p">);</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>If the application protocol specification does specify a particular encoding, then using a StreamReader will allow incorrect XML prologs. The following sample code forces a specific encoding:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">XElement</span> <span class="nf">ConvertByteArrayToXml</span><span class="p">(</span><span class="kt">byte</span><span class="p">[]</span> <span class="n">data</span><span class="p">,</span> <span class="n">Encoding</span> <span class="n">encoding</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">XElement</span> <span class="nf">ConvertByteArrayToXml</span><span class="p">(</span><span class="kt">byte</span><span class="p">[]</span> <span class="n">data</span><span class="p">,</span> <span class="n">Encoding</span> <span class="n">encoding</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="c1">// Interpret the byte array according to a specific encoding</span>
     <span class="k">using</span> <span class="p">(</span><span class="n">MemoryStream</span> <span class="n">stream</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MemoryStream</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
@@ -313,7 +313,7 @@ code {
     <span class="p">{</span>
         <span class="k">return</span> <span class="n">XElement</span><span class="p">.</span><span class="n">Load</span><span class="p">(</span><span class="n">reader</span><span class="p">);</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>The default <a href="http://msdn.microsoft.com/en-us/library/system.text.encoding.unicode.aspx">Encoding.Unicode</a> (UTF-16 little endian), <a href="http://msdn.microsoft.com/en-us/library/system.text.encoding.bigendianunicode.aspx">Encoding.BigEndianUnicode</a> (UTF-16 big endian), and <a href="http://msdn.microsoft.com/en-us/library/system.text.encoding.utf8.aspx">Encoding.UTF8</a> instances always write out BOMs and never throw on errors. A better choice is to create instances of <a href="http://msdn.microsoft.com/en-us/library/system.text.unicodeencoding.aspx">UnicodeEncoding</a> (UTF-16) or <a href="http://msdn.microsoft.com/en-us/library/system.text.utf8encoding.aspx">UTF8Encoding</a> that are more suitable for application protocols. For example, “new UTF8Encoding(false, true)” will create a UTF-8 encoding without BOM that throws on invalid characters.</p>
 
@@ -355,7 +355,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
             <ul class="pager">
                 <li class="previous"><a href="/2009/06/application-protocol-specifications.html" title="Application Protocol Specifications">&larr; Previous in TCP/IP .NET Sockets FAQ</a></li>
@@ -374,7 +374,7 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
                 <div class="panel panel-primary">
                     <div class="panel-heading">TCP/IP .NET Sockets FAQ</div>
@@ -399,7 +399,7 @@ code {
                 </div>
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

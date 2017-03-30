@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -231,7 +231,7 @@ code {
 
 <p>First up is the oft-overused <code>TaskFactory.StartNew</code> method. There are a few overloads available:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span> <span class="nf">StartNew</span><span class="p">(</span><span class="n">Action</span><span class="p">);</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">Task</span> <span class="nf">StartNew</span><span class="p">(</span><span class="n">Action</span><span class="p">);</span>
 <span class="n">Task</span> <span class="nf">StartNew</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span>
 <span class="n">Task</span> <span class="nf">StartNew</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">);</span>
 <span class="n">Task</span> <span class="nf">StartNew</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span>
@@ -249,12 +249,12 @@ code {
 <span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">StartNew</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="kt">object</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="kt">object</span><span class="p">);</span>
 <span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">StartNew</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="kt">object</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="kt">object</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span>
 <span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">StartNew</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="kt">object</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="kt">object</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">);</span>
-<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">StartNew</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="kt">object</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="kt">object</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span></code></pre></div>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">StartNew</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="kt">object</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="kt">object</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span></code></pre></figure>
 
 <p>The overloads containing an <code>object</code> parameter simply pass that value through to the continuation delegate; this is just an optimization to avoid an extra allocation in some cases, so we can ignore those overloads for now. That leaves two sets of overloads, which act like default parameters for the two core methods:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span> <span class="nf">StartNew</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span>
-<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">StartNew</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span></code></pre></div>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">Task</span> <span class="nf">StartNew</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">StartNew</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span></code></pre></figure>
 
 <p><code>StartNew</code> can take a delegate without a return value (<code>Action</code>) or with a return value (<code>Func&lt;TResult&gt;</code>), and returns an appropriate task type based on whether the delegate returns a value. Note that neither of these delegate types are <a href="/2014/02/synchronous-and-asynchronous-delegate.html"><code>async</code>-aware delegates</a>; this causes complications when developers try to use <code>StartNew</code> to start an asynchronous task.</p>
 
@@ -278,7 +278,7 @@ code {
 
 <p>However, this difference in behavior does not impact your code as long as you use one of the the common patterns for detecting cancellation. For asynchronous code, you’d <code>await</code> the task and catch an <code>OperationCanceledException</code> (for more complete examples, see the unit tests in <a href="https://gist.github.com/StephenCleary/dfd2a8b0a50ea3040695">this gist</a>):</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">try</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">try</span>
 <span class="p">{</span>
   <span class="c1">// &quot;task&quot; was started by StartNew, and either StartNew or</span>
   <span class="c1">// the task delegate observes a cancellation token.</span>
@@ -288,11 +288,11 @@ code {
 <span class="p">{</span>
   <span class="c1">// ex.CancellationToken contains the cancellation token,</span>
   <span class="c1">// if you need it.</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>For synchronous code, you’d call <code>Wait</code> (or <code>Result</code>) on the task and expect an <code>AggregateException</code> whose <code>InnerException</code> is an <code>OperationCanceledException</code> (for more complete examples, see the unit tests in <a href="https://gist.github.com/StephenCleary/6674ae30974f478a4b7f">this gist</a>):</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">try</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">try</span>
 <span class="p">{</span>
   <span class="c1">// &quot;task&quot; was started by StartNew, and either StartNew or</span>
   <span class="c1">// the task delegate observes a cancellation token.</span>
@@ -306,7 +306,7 @@ code {
     <span class="c1">// ex.CancellationToken contains the cancellation token,</span>
     <span class="c1">// if you need it.</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>In conclusion, the <code>CancellationToken</code> parameter of <code>StarNew</code> is nearly useless. It introduces some subtle changes in behavior, and is confusing to many developers. I never use it, myself.</p>
 
@@ -330,7 +330,7 @@ code {
 
 <p>The following code first creates a UI task factory to schedule work to the UI thread. Then, as a part of that work, it starts some work to run in the background.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">void</span> <span class="nf">Button_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="k">void</span> <span class="nf">Button_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">ui</span> <span class="p">=</span> <span class="k">new</span> <span class="n">TaskFactory</span><span class="p">(</span><span class="n">TaskScheduler</span><span class="p">.</span><span class="n">FromCurrentSynchronizationContext</span><span class="p">());</span>
     <span class="n">ui</span><span class="p">.</span><span class="n">StartNew</span><span class="p">(()</span> <span class="p">=&gt;</span>
@@ -341,7 +341,7 @@ code {
             <span class="n">Debug</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Background work on thread &quot;</span> <span class="p">+</span> <span class="n">Environment</span><span class="p">.</span><span class="n">CurrentManagedThreadId</span><span class="p">);</span>
         <span class="p">});</span>
     <span class="p">});</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>The output on my system is:</p>
 
@@ -365,7 +365,7 @@ Background work on thread 9
 
 <p><code>Task.Run</code> is the modern, preferred method for queueing work to the thread pool. It does not work with custom schedulers, but provides a simpler API than <code>Task.Factory.StartNew</code>, and is <code>async</code>-aware to boot:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span> <span class="nf">Run</span><span class="p">(</span><span class="n">Action</span><span class="p">);</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">Task</span> <span class="nf">Run</span><span class="p">(</span><span class="n">Action</span><span class="p">);</span>
 <span class="n">Task</span> <span class="nf">Run</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span>
 
 <span class="n">Task</span> <span class="nf">Run</span><span class="p">(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&gt;);</span>
@@ -375,7 +375,7 @@ Background work on thread 9
 <span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">Run</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">);</span>
 
 <span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">Run</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;&gt;);</span>
-<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">Run</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;&gt;,</span> <span class="n">CancellationToken</span><span class="p">);</span></code></pre></div>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">Run</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;&gt;,</span> <span class="n">CancellationToken</span><span class="p">);</span></code></pre></figure>
 
 <p>There are three axis of overloading going on here: whether or not there is a <code>CancellationToken</code>, whether the delegate returns a <code>TResult</code> value, and whether the delegate is synchronous (<code>Action</code>/<code>Func&lt;TResult&gt;</code>) or asynchronous (<code>Func&lt;Task&gt;</code>/<code>Func&lt;Task&lt;TResult&gt;&gt;</code>). Technically, <code>Task.Run</code> does not always create a Delegate Task; when it is given an asynchronous delegate, it actually returns a Promise Task. But conceptually, <code>Task.Run</code> is specifically for executing delegates on the thread pool, so I’m covering this set of overloads along with <code>StartNew</code> (which always does create Delegate Tasks).</p>
 
@@ -387,7 +387,7 @@ Background work on thread 9
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
             <ul class="pager">
                 <li class="previous"><a href="/2015/02/a-tour-of-task-part-8-starting.html" title="A Tour of Task, Part 8: Starting">&larr; Previous in A Tour of Task</a></li>
@@ -406,7 +406,7 @@ Background work on thread 9
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
                 <div class="panel panel-primary">
                     <div class="panel-heading">A Tour of Task</div>
@@ -428,7 +428,7 @@ Background work on thread 9
                 </div>
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

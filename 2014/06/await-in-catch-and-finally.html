@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -239,18 +239,18 @@ code {
 
 <p>For example, let’s say that you want to (asynchronously) log an exception in one of your <code>async</code> methods. The natural way to write this is:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">try</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">try</span>
 <span class="p">{</span>
   <span class="k">await</span> <span class="nf">OperationThatMayThrowAsync</span><span class="p">();</span>
 <span class="p">}</span>
 <span class="k">catch</span> <span class="p">(</span><span class="n">ExpectedException</span> <span class="n">ex</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="k">await</span> <span class="n">MyLogger</span><span class="p">.</span><span class="n">LogAsync</span><span class="p">(</span><span class="n">ex</span><span class="p">);</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>And this natural code works fine in Visual Studio “14”. However, the currently-released Visual Studio 2013 does not support <code>await</code> in a <code>catch</code>, so you would have to keep some kind of “error flag” and move the actual error handling logic outside the <code>catch</code> block:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">ExpectedException</span> <span class="n">exception</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">ExpectedException</span> <span class="n">exception</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
 <span class="k">try</span>
 <span class="p">{</span>
   <span class="k">await</span> <span class="nf">OperationThatMayThrowAsync</span><span class="p">();</span>
@@ -260,7 +260,7 @@ code {
   <span class="n">exception</span> <span class="p">=</span> <span class="n">ex</span><span class="p">;</span>
 <span class="p">}</span>
 <span class="k">if</span> <span class="p">(</span><span class="n">exception</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
-  <span class="k">await</span> <span class="n">MyLogger</span><span class="p">.</span><span class="n">LogAsync</span><span class="p">(</span><span class="n">exception</span><span class="p">);</span></code></pre></div>
+  <span class="k">await</span> <span class="n">MyLogger</span><span class="p">.</span><span class="n">LogAsync</span><span class="p">(</span><span class="n">exception</span><span class="p">);</span></code></pre></figure>
 
 <p>This is only a simple example; in real-world code, this can get ugly rather quickly!</p>
 
@@ -274,7 +274,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -289,11 +289,11 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

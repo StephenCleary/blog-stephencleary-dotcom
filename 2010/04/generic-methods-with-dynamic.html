@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -231,7 +231,7 @@ code {
 
 <p>We can use generics to turn one call site into many call sites, all cached independently, thereby improving performance when invoked later:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">static</span> <span class="kt">dynamic</span> <span class="nf">SingleCallSite</span><span class="p">(</span><span class="kt">dynamic</span> <span class="n">arg1</span><span class="p">,</span> <span class="kt">dynamic</span> <span class="n">arg2</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">static</span> <span class="kt">dynamic</span> <span class="nf">SingleCallSite</span><span class="p">(</span><span class="kt">dynamic</span> <span class="n">arg1</span><span class="p">,</span> <span class="kt">dynamic</span> <span class="n">arg2</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">return</span> <span class="n">arg1</span> <span class="p">+</span> <span class="n">arg2</span><span class="p">;</span>
 <span class="p">}</span>
@@ -240,11 +240,11 @@ code {
 <span class="p">{</span>
     <span class="kt">dynamic</span> <span class="n">darg1</span> <span class="p">=</span> <span class="n">arg1</span><span class="p">;</span>
     <span class="k">return</span> <span class="n">darg1</span> <span class="p">+</span> <span class="n">arg2</span><span class="p">;</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Even though the <strong>SingleCallSite</strong> method only has one call site (for the <strong>+</strong> operator) and the <strong>MultipleCallSites</strong> method has two call sites (one for the <strong>+</strong> operator, and one for converting the dynamic result to <strong>T</strong>), <strong>MultipleCallSites</strong> reliably runs faster, as this remarkably unscientific test code demonstrates:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">try</span>
     <span class="p">{</span>
@@ -274,7 +274,7 @@ code {
     <span class="p">}</span>
 
     <span class="n">Console</span><span class="p">.</span><span class="n">ReadKey</span><span class="p">();</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>This idea came from Luca Bolognese’s blog post <a href="http://blogs.msdn.com/lucabol/archive/2009/02/05/simulating-inumeric-with-dynamic-in-c-4-0.aspx">Simulating INumeric with dynamic in C# 4.0</a>, where he states that with a generic signature “you get a different call site with each combination of type arguments and, since they are separate, the binding caches should stay small.”</p>
 
@@ -283,7 +283,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -298,11 +298,11 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

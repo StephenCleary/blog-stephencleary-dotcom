@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -235,7 +235,7 @@ code {
 
 <p>Here’s the first brush of the code:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Listen for the user typing.</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Listen for the user typing.</span>
 <span class="kt">var</span> <span class="n">searchCommands</span> <span class="p">=</span> <span class="n">Observable</span><span class="p">.</span><span class="n">FromEvent</span><span class="p">&lt;</span><span class="n">EventArgs</span><span class="p">&gt;(</span><span class="k">this</span><span class="p">.</span><span class="n">textBoxSearch</span><span class="p">,</span> <span class="s">&quot;TextChanged&quot;</span><span class="p">)</span>
   <span class="p">.</span><span class="n">Select</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="k">this</span><span class="p">.</span><span class="n">textBoxSearch</span><span class="p">.</span><span class="n">Text</span><span class="p">)</span>
   <span class="p">.</span><span class="n">Throttle</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">FromMilliseconds</span><span class="p">(</span><span class="m">200</span><span class="p">))</span> <span class="c1">// For fast typists.</span>
@@ -266,7 +266,7 @@ code {
         <span class="k">this</span><span class="p">.</span><span class="n">labelStatus</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="s">&quot;Done!&quot;</span><span class="p">;</span>
       <span class="p">}))</span>
   <span class="p">.</span><span class="n">Switch</span><span class="p">()</span> <span class="c1">// Cancel existing searches when a new search starts.</span>
-  <span class="p">.</span><span class="n">Subscribe</span><span class="p">(</span><span class="n">response</span> <span class="p">=&gt;</span> <span class="k">this</span><span class="p">.</span><span class="n">listViewResults</span><span class="p">.</span><span class="n">Items</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">toListViewItem</span><span class="p">(</span><span class="n">response</span><span class="p">)));</span></code></pre></div>
+  <span class="p">.</span><span class="n">Subscribe</span><span class="p">(</span><span class="n">response</span> <span class="p">=&gt;</span> <span class="k">this</span><span class="p">.</span><span class="n">listViewResults</span><span class="p">.</span><span class="n">Items</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">toListViewItem</span><span class="p">(</span><span class="n">response</span><span class="p">)));</span></code></pre></figure>
 
 <p>The first chunk of the code is almost identical to the first chunk of the Rx hands-on lab code. The only difference is that I use ObserveOn(this) and Do() to clear out any previous search results when a new search <em>starts</em> (the hands-on lab clears previous search results when a search <em>completes</em>). I also do a Merge() with an empty string, which causes all results to be returned as soon as the form is loaded.</p>
 
@@ -292,7 +292,7 @@ code {
 
 <p>This code uses an asynchronous context. The simplest context is just an Object instance, which can be easily compared for equality and is guaranteed unique from any other context.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Our asynchronous context.</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Our asynchronous context.</span>
 <span class="kt">object</span> <span class="n">context</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
 
 <span class="c1">// Listen for the user typing.</span>
@@ -344,7 +344,7 @@ code {
       <span class="p">{</span>
         <span class="k">this</span><span class="p">.</span><span class="n">listViewResults</span><span class="p">.</span><span class="n">Items</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">toListViewItem</span><span class="p">(</span><span class="n">response</span><span class="p">.</span><span class="n">result</span><span class="p">));</span>
       <span class="p">}</span>
-    <span class="p">});</span></code></pre></div>
+    <span class="p">});</span></code></pre></figure>
 
 <p>The changes in this code all have to do with the asynchronous context. The local “context” variable always refers to the currently valid context (all other contexts are, by definition, invalid). When a new user search request is detected, we create a new context for the request, and we “bind” the context to the search request using an anonymous projection.</p>
 
@@ -363,7 +363,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -378,11 +378,11 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

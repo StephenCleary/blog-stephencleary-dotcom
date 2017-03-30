@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -229,44 +229,44 @@ code {
 
 <p>I actually debated quite a bit on how to start this series! I finally decided on starting with the constructors, even though the <code>Task</code> constructors are a red herring.</p>
 
-<p class="center"><img src="/assets/miniatus-grouper-247578_640.jpg" alt="" /><br />
+<p class="center"><img src="/assets/miniatus-grouper-247578_640.jpg" alt="" />  
 (not actually a red herring)</p>
 
 <p>The <code>Task</code> type has a whopping eight constructors:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span><span class="p">(</span><span class="n">Action</span><span class="p">);</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">Task</span><span class="p">(</span><span class="n">Action</span><span class="p">);</span>
 <span class="n">Task</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span>
 <span class="n">Task</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">);</span>
 <span class="n">Task</span><span class="p">(</span><span class="n">Action</span><span class="p">&lt;</span><span class="n">Object</span><span class="p">&gt;,</span> <span class="n">Object</span><span class="p">);</span>
 <span class="n">Task</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">);</span>
 <span class="n">Task</span><span class="p">(</span><span class="n">Action</span><span class="p">&lt;</span><span class="n">Object</span><span class="p">&gt;,</span> <span class="n">Object</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span>
 <span class="n">Task</span><span class="p">(</span><span class="n">Action</span><span class="p">&lt;</span><span class="n">Object</span><span class="p">&gt;,</span> <span class="n">Object</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">);</span>
-<span class="n">Task</span><span class="p">(</span><span class="n">Action</span><span class="p">&lt;</span><span class="n">Object</span><span class="p">&gt;,</span> <span class="n">Object</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">);</span></code></pre></div>
+<span class="n">Task</span><span class="p">(</span><span class="n">Action</span><span class="p">&lt;</span><span class="n">Object</span><span class="p">&gt;,</span> <span class="n">Object</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">);</span></code></pre></figure>
 
 <p>The BCL avoids default parameters because they don’t work well with <a href="http://haacked.com/archive/2010/08/10/versioning-issues-with-optional-arguments.aspx/">versioning</a> and reflection. However, I’m going to rewrite some of the members with optional parameters to reduce the number of overloads that I need to talk about.</p>
 
 <p>I’m going to call the eight constructors “actual members” because they actually exist. However, these can be reduced to only one “logical member”:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span><span class="p">(</span><span class="n">Action</span> <span class="n">action</span><span class="p">,</span> <span class="n">CancellationToken</span> <span class="n">token</span> <span class="p">=</span> <span class="k">new</span> <span class="n">CancellationToken</span><span class="p">(),</span> <span class="n">TaskCreationOptions</span> <span class="n">options</span> <span class="p">=</span> <span class="n">TaskCreationOptions</span><span class="p">.</span><span class="n">None</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">Task</span><span class="p">(</span><span class="n">Action</span> <span class="n">action</span><span class="p">,</span> <span class="n">CancellationToken</span> <span class="n">token</span> <span class="p">=</span> <span class="k">new</span> <span class="n">CancellationToken</span><span class="p">(),</span> <span class="n">TaskCreationOptions</span> <span class="n">options</span> <span class="p">=</span> <span class="n">TaskCreationOptions</span><span class="p">.</span><span class="n">None</span><span class="p">)</span>
     <span class="p">:</span> <span class="k">this</span><span class="p">(</span><span class="n">_</span> <span class="p">=&gt;</span> <span class="n">action</span><span class="p">(),</span> <span class="k">null</span><span class="p">,</span> <span class="n">token</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span> <span class="p">{</span> <span class="p">}</span>
-<span class="n">Task</span><span class="p">(</span><span class="n">Action</span><span class="p">&lt;</span><span class="n">Object</span><span class="p">&gt;,</span> <span class="n">Object</span><span class="p">,</span> <span class="n">CancellationToken</span> <span class="p">=</span> <span class="k">new</span> <span class="n">CancellationToken</span><span class="p">(),</span> <span class="n">TaskCreationOptions</span> <span class="p">=</span> <span class="n">TaskCreationOptions</span><span class="p">.</span><span class="n">None</span><span class="p">);</span></code></pre></div>
+<span class="n">Task</span><span class="p">(</span><span class="n">Action</span><span class="p">&lt;</span><span class="n">Object</span><span class="p">&gt;,</span> <span class="n">Object</span><span class="p">,</span> <span class="n">CancellationToken</span> <span class="p">=</span> <span class="k">new</span> <span class="n">CancellationToken</span><span class="p">(),</span> <span class="n">TaskCreationOptions</span> <span class="p">=</span> <span class="n">TaskCreationOptions</span><span class="p">.</span><span class="n">None</span><span class="p">);</span></code></pre></figure>
 
 <p>Similarly, the <code>Task&lt;T&gt;</code> type has eight actual constructors:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;);</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;);</span>
 <span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">);</span>
 <span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">TaskCreationOptions</span><span class="p">);</span>
 <span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Object</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">Object</span><span class="p">);</span>
 <span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">);</span>
 <span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Object</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">Object</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span>
 <span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Object</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">Object</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">);</span>
-<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Object</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">Object</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">);</span></code></pre></div>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Object</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">Object</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">);</span></code></pre></figure>
 
 <p>Which simplify down to a single logical constructor:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">action</span><span class="p">,</span> <span class="n">CancellationToken</span> <span class="n">token</span> <span class="p">=</span> <span class="k">new</span> <span class="n">CancellationToken</span><span class="p">(),</span> <span class="n">TaskCreationOptions</span> <span class="n">options</span> <span class="p">=</span> <span class="n">TaskCreationOptions</span><span class="p">.</span><span class="n">None</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">action</span><span class="p">,</span> <span class="n">CancellationToken</span> <span class="n">token</span> <span class="p">=</span> <span class="k">new</span> <span class="n">CancellationToken</span><span class="p">(),</span> <span class="n">TaskCreationOptions</span> <span class="n">options</span> <span class="p">=</span> <span class="n">TaskCreationOptions</span><span class="p">.</span><span class="n">None</span><span class="p">)</span>
     <span class="p">:</span> <span class="k">base</span><span class="p">(</span><span class="n">_</span> <span class="p">=&gt;</span> <span class="n">action</span><span class="p">(),</span> <span class="k">null</span><span class="p">,</span> <span class="n">token</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span> <span class="p">{</span> <span class="p">}</span>
-<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Object</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">Object</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">);</span></code></pre></div>
+<span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Object</span><span class="p">,</span> <span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">Object</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">);</span></code></pre></figure>
 
 <p>So, we have 16 actual constructors and two logical constructors.</p>
 
@@ -296,7 +296,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
             <ul class="pager">
                 <li class="previous"><a href="/2014/04/a-tour-of-task-part-0-overview.html" title="A Tour of Task, Part 0: Overview">&larr; Previous in A Tour of Task</a></li>
@@ -315,7 +315,7 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
                 <div class="panel panel-primary">
                     <div class="panel-heading">A Tour of Task</div>
@@ -337,7 +337,7 @@ code {
                 </div>
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

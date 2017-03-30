@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -253,7 +253,7 @@ code {
 
 <p>Then, take each unit test and re-write it so that it has a context:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="na">[TestMethod]</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="na">[TestMethod]</span>
 <span class="k">public</span> <span class="k">void</span> <span class="nf">FourDividedByTwoIsTwo</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="n">GeneralThreadAffineContext</span><span class="p">.</span><span class="n">Run</span><span class="p">(</span><span class="k">async</span> <span class="p">()</span> <span class="p">=&gt;</span>
@@ -271,7 +271,7 @@ code {
     <span class="p">{</span>
         <span class="k">await</span> <span class="n">MyClass</span><span class="p">.</span><span class="n">Divide</span><span class="p">(</span><span class="m">4</span><span class="p">,</span> <span class="m">0</span><span class="p">);</span>
     <span class="p">});</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Our unit test methods are not async. Each one sets up an async context and passes the <em>actual</em> test into it as an async lambda expression. So, the <em>actual</em> test code can still be written with all the benefits of async/await, and the async context takes care of making sure it runs as expected:</p>
 
@@ -279,7 +279,7 @@ code {
 
 <p>Just as importantly, the async context ensures that tests that <em>should</em> fail, <em>will</em> fail:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="na">[TestMethod]</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="na">[TestMethod]</span>
 <span class="k">public</span> <span class="k">void</span> <span class="nf">FourDividedByTwoIsThirteen_ShouldFail</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="n">GeneralThreadAffineContext</span><span class="p">.</span><span class="n">Run</span><span class="p">(</span><span class="k">async</span> <span class="p">()</span> <span class="p">=&gt;</span>
@@ -287,7 +287,7 @@ code {
         <span class="kt">int</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">MyClass</span><span class="p">.</span><span class="n">Divide</span><span class="p">(</span><span class="m">4</span><span class="p">,</span> <span class="m">2</span><span class="p">);</span>
         <span class="n">Assert</span><span class="p">.</span><span class="n">AreEqual</span><span class="p">(</span><span class="m">13</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
     <span class="p">});</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p><img src="/assets/AsyncUnitTests9.png" alt="" />  </p>
 
@@ -311,7 +311,7 @@ code {
 
 <p>Now you can write async unit tests (using async void):</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="na">[TestMethod]</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="na">[TestMethod]</span>
 <span class="k">public</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">FourDividedByTwoIsTwoAsync</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="kt">int</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">MyClass</span><span class="p">.</span><span class="n">Divide</span><span class="p">(</span><span class="m">4</span><span class="p">,</span> <span class="m">2</span><span class="p">);</span>
@@ -323,7 +323,7 @@ code {
 <span class="k">public</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">DenominatorIsZeroThrowsDivideByZeroAsync</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="k">await</span> <span class="n">MyClass</span><span class="p">.</span><span class="n">Divide</span><span class="p">(</span><span class="m">4</span><span class="p">,</span> <span class="m">0</span><span class="p">);</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>And it works:</p>
 
@@ -331,12 +331,12 @@ code {
 
 <p>And test failures actually fail:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="na">[TestMethod]</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="na">[TestMethod]</span>
 <span class="k">public</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">FourDividedByTwoIsThirteenAsync_ShouldFail</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="kt">int</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">MyClass</span><span class="p">.</span><span class="n">Divide</span><span class="p">(</span><span class="m">4</span><span class="p">,</span> <span class="m">2</span><span class="p">);</span>
     <span class="n">Assert</span><span class="p">.</span><span class="n">AreEqual</span><span class="p">(</span><span class="m">13</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p><img src="/assets/AsyncUnitTests11.png" alt="" />  </p>
 
@@ -367,7 +367,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -382,11 +382,11 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

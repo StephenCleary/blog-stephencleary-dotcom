@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -229,7 +229,7 @@ code {
 
 <p>Option argument classes must derive from <strong>IOptionArguments</strong>, which only has one method:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">/// &lt;summary&gt;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">/// &lt;summary&gt;</span>
 <span class="c1">/// An arguments class, which uses option attributes on its properties.</span>
 <span class="c1">/// &lt;/summary&gt;</span>
 <span class="k">public</span> <span class="k">interface</span> <span class="n">IOptionArguments</span>
@@ -238,7 +238,7 @@ code {
   <span class="c1">/// Validates the arguments by throwing &lt;see cref=&quot;OptionParsingException&quot;/&gt; errors as necessary.</span>
   <span class="c1">/// &lt;/summary&gt;</span>
   <span class="k">void</span> <span class="nf">Validate</span><span class="p">();</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>The <strong>Validate</strong> method should do any validation, and throw an exception if the option argument class properties are not acceptable. The <strong>OptionArgumentsBase</strong> type includes an implementation of <strong>Validate</strong> that just does some basic validation (we’ll cover it in detail next week). This method may be overridden in derived classes.</p>
 
@@ -246,7 +246,7 @@ code {
 
 <p>It’s possible to include any logic you need in the <strong>Validate</strong> method. This example forces an option value to be in the range [0, 3]:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">Program</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
   <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Options</span> <span class="p">:</span> <span class="n">OptionArgumentsBase</span>
   <span class="p">{</span>
@@ -282,7 +282,7 @@ code {
       <span class="k">return</span> <span class="m">1</span><span class="p">;</span>
     <span class="p">}</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <pre><code>&gt; CommandLineParsingTest.exe
 Level: 0
@@ -308,7 +308,7 @@ Level must be in the range [0, 3].
 
 <p>The example below requires a level to be specified:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">Program</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
   <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Options</span> <span class="p">:</span> <span class="n">OptionArgumentsBase</span>
   <span class="p">{</span>
@@ -344,7 +344,7 @@ Level must be in the range [0, 3].
       <span class="k">return</span> <span class="m">1</span><span class="p">;</span>
     <span class="p">}</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <pre><code>&gt; CommandLineParsingTest.exe
 Level must be specified.
@@ -361,7 +361,7 @@ Level: 0
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
             <ul class="pager">
                 <li class="previous"><a href="/2011/08/option-parsing-boolean-options.html" title="Option Parsing: Boolean Options">&larr; Previous in Option Parsing</a></li>
@@ -380,7 +380,7 @@ Level: 0
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
                 <div class="panel panel-primary">
                     <div class="panel-heading">Option Parsing</div>
@@ -405,7 +405,7 @@ Level: 0
                 </div>
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

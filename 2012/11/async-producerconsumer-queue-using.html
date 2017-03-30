@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -233,7 +233,7 @@ code {
 
 <p>Our producer can just enqueue a sequence of values, and then mark the queue as complete:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Produce</span><span class="p">(</span><span class="n">BufferBlock</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">queue</span><span class="p">,</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">values</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Produce</span><span class="p">(</span><span class="n">BufferBlock</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">queue</span><span class="p">,</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">values</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="k">value</span> <span class="k">in</span> <span class="n">values</span><span class="p">)</span>
     <span class="p">{</span>
@@ -241,11 +241,11 @@ code {
     <span class="p">}</span>
 
     <span class="n">queue</span><span class="p">.</span><span class="n">Complete</span><span class="p">();</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Similarly, the consumer can just await until a value is ready in the queue, and then add it to its collection of received values. Note that this works only if we have a single consumer; if we have multiple consumers, then they would all see the output available, but they wouldn’t all be able to receive it.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">IEnumerable</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;&gt;</span> <span class="n">Consume</span><span class="p">(</span><span class="n">BufferBlock</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">queue</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">IEnumerable</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;&gt;</span> <span class="n">Consume</span><span class="p">(</span><span class="n">BufferBlock</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">queue</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">ret</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;();</span>
     <span class="k">while</span> <span class="p">(</span><span class="k">await</span> <span class="n">queue</span><span class="p">.</span><span class="n">OutputAvailableAsync</span><span class="p">())</span>
@@ -254,11 +254,11 @@ code {
     <span class="p">}</span>
 
     <span class="k">return</span> <span class="n">ret</span><span class="p">;</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>We can wrap these up in a simple unit test:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="na">[TestMethod]</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="na">[TestMethod]</span>
 <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">ConsumerReceivesCorrectValues</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="c1">// Define the mesh.</span>
@@ -275,7 +275,7 @@ code {
     <span class="c1">// Ensure the consumer got what the producer sent (in the correct order).</span>
     <span class="kt">var</span> <span class="n">results</span> <span class="p">=</span> <span class="k">await</span> <span class="n">consumer</span><span class="p">;</span>
     <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">results</span><span class="p">.</span><span class="n">SequenceEqual</span><span class="p">(</span><span class="n">values</span><span class="p">));</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <h2 id="throttling">Throttling</h2>
 
@@ -283,7 +283,7 @@ code {
 
 <p>First, we need to change our producer. <code>Post</code> will (synchronously) block once the throttling threshold is reached, so we’ll switch to the asynchronous <code>SendAsync</code> (and make the producer itself asynchronous):</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">Produce</span><span class="p">(</span><span class="n">BufferBlock</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">queue</span><span class="p">,</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">values</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">Produce</span><span class="p">(</span><span class="n">BufferBlock</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">queue</span><span class="p">,</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">values</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="k">value</span> <span class="k">in</span> <span class="n">values</span><span class="p">)</span>
     <span class="p">{</span>
@@ -291,11 +291,11 @@ code {
     <span class="p">}</span>
 
     <span class="n">queue</span><span class="p">.</span><span class="n">Complete</span><span class="p">();</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Dataflow blocks have built-in support for throttling, so adding this to the mesh is rather easy once we have an asynchronous producer. We can say there should never be more than 5 data items in the queue, and it’s a one-line change (the line that defines the mesh):</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="na">[TestMethod]</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="na">[TestMethod]</span>
 <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">ConsumerReceivesCorrectValues</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="c1">// Define the mesh.</span>
@@ -312,7 +312,7 @@ code {
     <span class="c1">// Ensure the consumer got what the producer sent (in the correct order).</span>
     <span class="kt">var</span> <span class="n">results</span> <span class="p">=</span> <span class="k">await</span> <span class="n">consumer</span><span class="p">;</span>
     <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">results</span><span class="p">.</span><span class="n">SequenceEqual</span><span class="p">(</span><span class="n">values</span><span class="p">));</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <h2 id="multiple-producers">Multiple Producers</h2>
 
@@ -320,28 +320,28 @@ code {
 
 <p>First, we remove the block completion from the producers:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">Produce</span><span class="p">(</span><span class="n">BufferBlock</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">queue</span><span class="p">,</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">values</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">Produce</span><span class="p">(</span><span class="n">BufferBlock</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">queue</span><span class="p">,</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">values</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="k">value</span> <span class="k">in</span> <span class="n">values</span><span class="p">)</span>
     <span class="p">{</span>
         <span class="k">await</span> <span class="n">queue</span><span class="p">.</span><span class="n">SendAsync</span><span class="p">(</span><span class="k">value</span><span class="p">);</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Now, we can write a simple “producer manager” method that will complete the queue when all producers complete:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">ProduceAll</span><span class="p">(</span><span class="n">BufferBlock</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">queue</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">ProduceAll</span><span class="p">(</span><span class="n">BufferBlock</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">queue</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">producer1</span> <span class="p">=</span> <span class="n">Produce</span><span class="p">(</span><span class="n">queue</span><span class="p">,</span> <span class="n">Enumerable</span><span class="p">.</span><span class="n">Range</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">10</span><span class="p">));</span>
     <span class="kt">var</span> <span class="n">producer2</span> <span class="p">=</span> <span class="n">Produce</span><span class="p">(</span><span class="n">queue</span><span class="p">,</span> <span class="n">Enumerable</span><span class="p">.</span><span class="n">Range</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="m">10</span><span class="p">));</span>
     <span class="kt">var</span> <span class="n">producer3</span> <span class="p">=</span> <span class="n">Produce</span><span class="p">(</span><span class="n">queue</span><span class="p">,</span> <span class="n">Enumerable</span><span class="p">.</span><span class="n">Range</span><span class="p">(</span><span class="m">20</span><span class="p">,</span> <span class="m">10</span><span class="p">));</span>
     <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">WhenAll</span><span class="p">(</span><span class="n">producer1</span><span class="p">,</span> <span class="n">producer2</span><span class="p">,</span> <span class="n">producer3</span><span class="p">);</span>
     <span class="n">queue</span><span class="p">.</span><span class="n">Complete</span><span class="p">();</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>The updated test looks like this (note that because we have three independent producers, the order of results is no longer guaranteed):</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="na">[TestMethod]</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="na">[TestMethod]</span>
 <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">ConsumerReceivesCorrectValues</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="c1">// Define the mesh.</span>
@@ -357,7 +357,7 @@ code {
     <span class="c1">// Ensure the consumer got what the producer sent.</span>
     <span class="kt">var</span> <span class="n">results</span> <span class="p">=</span> <span class="k">await</span> <span class="n">consumer</span><span class="p">;</span>
     <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">results</span><span class="p">.</span><span class="n">OrderBy</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="n">x</span><span class="p">).</span><span class="n">SequenceEqual</span><span class="p">(</span><span class="n">Enumerable</span><span class="p">.</span><span class="n">Range</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">30</span><span class="p">)));</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <h2 id="multiple-consumers">Multiple Consumers</h2>
 
@@ -365,7 +365,7 @@ code {
 
 <p>Instead of fighting the flow, let’s change our consumer side to be TPL Dataflowish. Specifically, we’re going to replace the consumer <em>method</em> with a dataflow <code>ActionBlock</code>:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="na">[TestMethod]</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="na">[TestMethod]</span>
 <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">ConsumerReceivesCorrectValues</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">results</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;();</span>
@@ -384,13 +384,13 @@ code {
 
     <span class="c1">// Ensure the consumer got what the producer sent.</span>
     <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">results</span><span class="p">.</span><span class="n">OrderBy</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="n">x</span><span class="p">).</span><span class="n">SequenceEqual</span><span class="p">(</span><span class="n">Enumerable</span><span class="p">.</span><span class="n">Range</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">30</span><span class="p">)));</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Notice that we set the <code>ExecutionDataflowBlockOptions.BoundedCapacity</code> for the consumer block to <code>1</code>. This is necessary if we want to maintain throttling. Without this set, the producers could produce tons of data items which pass through the queue block and get buffered up in the consumer block (making our queue throttling meaningless).</p>
 
 <p>Now that we have a consumer block, it’s much more straightforward to add multiple consumers:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="na">[TestMethod]</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="na">[TestMethod]</span>
 <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">ConsumerReceivesCorrectValues</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">results1</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;();</span>
@@ -417,7 +417,7 @@ code {
     <span class="c1">// Ensure the consumer got what the producer sent.</span>
     <span class="kt">var</span> <span class="n">results</span> <span class="p">=</span> <span class="n">results1</span><span class="p">.</span><span class="n">Concat</span><span class="p">(</span><span class="n">results2</span><span class="p">).</span><span class="n">Concat</span><span class="p">(</span><span class="n">results3</span><span class="p">);</span>
     <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">results</span><span class="p">.</span><span class="n">OrderBy</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="n">x</span><span class="p">).</span><span class="n">SequenceEqual</span><span class="p">(</span><span class="n">Enumerable</span><span class="p">.</span><span class="n">Range</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">30</span><span class="p">)));</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Note that <code>ExecutionDataflowBlockOptions.BoundedCapacity</code> is now performing another important function: in addition to maintaining the throttling, it is performing load balancing. If this is left at the default value (<code>DataflowBlockOptions.Unbounded</code>), then all of the data items will end up in the first consumer, which will buffer them up until it can process them. With the buffer limited to a single data item, the queue will offer its item to the next consumer when the first consumer is busy.</p>
 
@@ -431,7 +431,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -446,11 +446,11 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

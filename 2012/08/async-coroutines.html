@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -237,7 +237,7 @@ code {
 
 <p>There isn’t that much to it. We define three co-routines with slightly different behavior to make it a little interesting: <code>FirstCoroutine</code> yields twice, <code>SecondCoroutine</code> yields three times, and <code>ThirdCoroutine</code> yields once.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
 
 <span class="k">partial</span> <span class="k">class</span> <span class="nc">Program</span>
@@ -292,11 +292,11 @@ code {
         <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;    Returned to ThirdCoroutine&quot;</span><span class="p">);</span>
         <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;    Finished ThirdCoroutine&quot;</span><span class="p">);</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>To run the co-routines exclusively, we create a <code>TaskFactory</code> wrapping a <code>ConcurrentExclusiveSchedulerPair.ExclusiveScheduler</code>. We also create a convenience method <code>RunCoroutineAsync</code>, which takes a co-routine delegate and executes it on that scheduler.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
 
 <span class="k">partial</span> <span class="k">class</span> <span class="nc">Program</span>
@@ -335,7 +335,7 @@ code {
 
         <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">WhenAll</span><span class="p">(</span><span class="n">coroutines</span><span class="p">);</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>The tricky part in this code is the double-<code>await</code> in <code>RunCoroutineAsync</code>. This is a <a href="http://blogs.msdn.com/b/pfxteam/archive/2011/10/24/10229468.aspx">normal pattern</a> when you use <code>TaskFactory.StartNew</code> with asynchronous delegates (alternatively, you could use <code>Task.Unwrap</code>).</p>
 
@@ -368,7 +368,7 @@ Finished FirstCoroutine
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -383,11 +383,11 @@ Finished FirstCoroutine
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

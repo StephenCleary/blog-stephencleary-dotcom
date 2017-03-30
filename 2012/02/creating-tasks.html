@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -235,7 +235,7 @@ code {
 
 <p>To create an event-based task, use the <a href="http://msdn.microsoft.com/en-us/library/dd449174.aspx"><strong>TaskCompletionSource&lt;TResult&gt;</strong></a> class:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">static</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">MyIntegerEventAsync</span><span class="p">()</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">static</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">MyIntegerEventAsync</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="n">TaskCompletionSource</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">tcs</span> <span class="p">=</span> <span class="k">new</span> <span class="n">TaskCompletionSource</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;();</span>
     
@@ -253,7 +253,7 @@ code {
     
     <span class="c1">// Return the Task&lt;int&gt;, which will complete when the event triggers.</span>
     <span class="k">return</span> <span class="n">tcs</span><span class="p">.</span><span class="n">Task</span><span class="p">;</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Remember that Task&lt;T&gt; and Task are awaitable, so you can await the result of MyIntegerEventAsync even though it’s not an async method.</p>
 
@@ -275,7 +275,7 @@ code {
 
 <p>Remember (from our <a href="/2012/02/async-and-await.html">async intro post</a>) that the async keyword does <em>not</em> run the method on a background thread. However, you can use <strong>Task.Run</strong> to run code on a background thread:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">MyThreadPoolMethod</span><span class="p">()</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">MyThreadPoolMethod</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="c1">// Do work (assuming we&#39;re running on the thread pool).</span>
 <span class="p">}</span>
@@ -285,7 +285,7 @@ code {
     <span class="kt">var</span> <span class="n">cpuResult</span> <span class="p">=</span> <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">MyThreadPoolMethod</span><span class="p">());</span>
     
     <span class="c1">// Use cpuResult...</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Task.Run will take a delegate and run it on the thread pool for you. It wraps the delegate into a Task&lt;T&gt; or Task, and the Task wrapper <a href="/2010/08/various-implementations-of-asynchronous.html">takes care of all the error handling and other stuff correctly</a>.</p>
 
@@ -323,11 +323,11 @@ code {
 
 <p>The flat-out easiest way to create Task objects is to write an asynchronous method:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">DivideAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">int</span> <span class="n">denominator</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">DivideAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">int</span> <span class="n">denominator</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
     <span class="k">return</span> <span class="n">numerator</span> <span class="p">/</span> <span class="n">denominator</span><span class="p">;</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>We do not create a Task&lt;int&gt; in our code, but the compiler rewrites our code so that a Task&lt;int&gt; is created and returned. When the method completes, the task completes. This type of task is actually an event-based task, since an event (the method returning) causes the task to complete.</p>
 
@@ -341,7 +341,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -356,11 +356,11 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

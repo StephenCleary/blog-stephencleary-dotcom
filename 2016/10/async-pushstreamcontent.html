@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -235,7 +235,7 @@ code {
 
 <p>It’s pretty straightforward to download a simple stream in WebAPI; there’s built-in support for that:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">static</span> <span class="n">HttpClient</span> <span class="n">Client</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="k">static</span> <span class="n">HttpClient</span> <span class="n">Client</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
 <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">HttpResponseMessage</span><span class="p">&gt;</span> <span class="n">Get</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">stream</span> <span class="p">=</span> <span class="k">await</span> <span class="n">Client</span><span class="p">.</span><span class="n">GetStreamAsync</span><span class="p">(</span><span class="s">&quot;https://raw.githubusercontent.com/StephenClearyExamples/AsyncDynamicZip/master/README.md&quot;</span><span class="p">);</span>
@@ -247,7 +247,7 @@ code {
     <span class="n">result</span><span class="p">.</span><span class="n">Content</span><span class="p">.</span><span class="n">Headers</span><span class="p">.</span><span class="n">ContentType</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MediaTypeHeaderValue</span><span class="p">(</span><span class="s">&quot;text/plain&quot;</span><span class="p">);</span>
     <span class="n">result</span><span class="p">.</span><span class="n">Content</span><span class="p">.</span><span class="n">Headers</span><span class="p">.</span><span class="n">ContentDisposition</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ContentDispositionHeaderValue</span><span class="p">(</span><span class="s">&quot;attachment&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="n">FileName</span> <span class="p">=</span> <span class="s">&quot;README.md&quot;</span> <span class="p">};</span>
     <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>First, we (asynchronously) send the HTTP request and get the stream back (at this point, the file is not in memory). Next, we create an <code>HttpResponseMessage</code> that will use that stream as its content (<code>StreamContent</code>). Finally, we set a few headers so that this file downloads nicely if a browser makes the request. If you hit this API in a browser, it will download the <code>README.md</code> file indirectly through the WebAPI.</p>
 
@@ -257,7 +257,7 @@ code {
 
 <p>We can do this as such (using the excellent <a href="https://www.nuget.org/packages/DotNetZip/"><code>DotNetZip</code> library</a>):</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">static</span> <span class="n">HttpClient</span> <span class="n">Client</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="k">static</span> <span class="n">HttpClient</span> <span class="n">Client</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
 <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">HttpResponseMessage</span><span class="p">&gt;</span> <span class="n">Get</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">filenamesAndUrls</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="kt">string</span><span class="p">&gt;</span>
@@ -285,7 +285,7 @@ code {
     <span class="n">result</span><span class="p">.</span><span class="n">Content</span><span class="p">.</span><span class="n">Headers</span><span class="p">.</span><span class="n">ContentType</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MediaTypeHeaderValue</span><span class="p">(</span><span class="s">&quot;application/octet-stream&quot;</span><span class="p">);</span>
     <span class="n">result</span><span class="p">.</span><span class="n">Content</span><span class="p">.</span><span class="n">Headers</span><span class="p">.</span><span class="n">ContentDisposition</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ContentDispositionHeaderValue</span><span class="p">(</span><span class="s">&quot;attachment&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="n">FileName</span> <span class="p">=</span> <span class="s">&quot;MyZipfile.zip&quot;</span> <span class="p">};</span>
     <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Here we’re downloading <em>two</em> files and combining them on-the-fly into a single zip which is downloaded by the user. First, we create the <code>MemoryStream</code> that the zip library will write to. Then, we download all the files asynchronously, and add them to the zip archive. Finally, we rewind the <code>MemoryStream</code> containing the zip file and send it to the browser using good ‘ol <code>StreamContent</code>.</p>
 
@@ -303,7 +303,7 @@ code {
 
 <p>I think of <code>PushStreamContent</code> as just a “callback”. When ASP.NET has sent the headers and is ready to send the actual content, it just invokes the callback that we give to <code>PushStreamContent</code>. Using this technique, our code looks like this:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">static</span> <span class="n">HttpClient</span> <span class="n">Client</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="k">static</span> <span class="n">HttpClient</span> <span class="n">Client</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
 <span class="k">public</span> <span class="n">HttpResponseMessage</span> <span class="nf">Get</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">filenamesAndUrls</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="kt">string</span><span class="p">&gt;</span>
@@ -330,7 +330,7 @@ code {
     <span class="n">result</span><span class="p">.</span><span class="n">Content</span><span class="p">.</span><span class="n">Headers</span><span class="p">.</span><span class="n">ContentType</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MediaTypeHeaderValue</span><span class="p">(</span><span class="s">&quot;application/octet-stream&quot;</span><span class="p">);</span>
     <span class="n">result</span><span class="p">.</span><span class="n">Content</span><span class="p">.</span><span class="n">Headers</span><span class="p">.</span><span class="n">ContentDisposition</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ContentDispositionHeaderValue</span><span class="p">(</span><span class="s">&quot;attachment&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="n">FileName</span> <span class="p">=</span> <span class="s">&quot;MyZipfile.zip&quot;</span> <span class="p">};</span>
     <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>With the callback approach, we can write the zip archive directly to the output stream.</p>
 
@@ -373,7 +373,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -388,11 +388,11 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

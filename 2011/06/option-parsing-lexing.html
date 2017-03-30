@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -243,10 +243,10 @@ code {
 
 <p>The shell escaping and quoting appears to be a simple algorithm: escaped characters (including normal characters) are passed through directly, and each (non-escaped) double-quote either starts or ends a quoted string. Consider the outputs from this example program:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">Environment</span><span class="p">.</span><span class="n">CommandLine</span><span class="p">);</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <pre><code>&gt; CommandLineParsingTest.exe ^^ "^"
 CommandLineParsingTest.exe ^ "^"
@@ -277,11 +277,11 @@ CommandLineParsingTest.exe "^^
 
 <p>Each non-escaped double-quote starts or ends a quoted string, just like command shell quoting. However, unlike command shell quoting, escaping is allowed within quoted strings. The .NET lexing also allows two consecutive double-quotes inside a quoted string to represent a single double-quote. Consider the outputs from this example program:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">arg</span> <span class="k">in</span> <span class="n">args</span><span class="p">)</span>
     <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">arg</span><span class="p">);</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <pre><code>&gt; CommandLineParsingTest.exe "a"
 a
@@ -333,7 +333,7 @@ c:\my path"
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
             <ul class="pager">
                 <li class="previous"><a href="/2011/06/option-parsing-option-parsing-pipeline.html" title="Option Parsing: The Option Parsing Pipeline">&larr; Previous in Option Parsing</a></li>
@@ -352,7 +352,7 @@ c:\my path"
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
                 <div class="panel panel-primary">
                     <div class="panel-heading">Option Parsing</div>
@@ -377,7 +377,7 @@ c:\my path"
                 </div>
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

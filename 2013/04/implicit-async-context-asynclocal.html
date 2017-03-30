@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -317,7 +317,7 @@ the thread pool context.</p>
 
 <p>First, let’s define a strongly-typed accessor for the logical call context data we’ll be using. Remember, we’re only storing immutable data, so we’ll use the new <a href="https://nuget.org/packages/Microsoft.Bcl.Immutable">immutable collections</a>:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">static</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">MyStack</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">static</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">MyStack</span>
 <span class="p">{</span>
     <span class="k">private</span> <span class="k">static</span> <span class="k">readonly</span> <span class="kt">string</span> <span class="n">name</span> <span class="p">=</span> <span class="n">Guid</span><span class="p">.</span><span class="n">NewGuid</span><span class="p">().</span><span class="n">ToString</span><span class="p">(</span><span class="s">&quot;N&quot;</span><span class="p">);</span>
 
@@ -339,7 +339,7 @@ the thread pool context.</p>
             <span class="n">CallContext</span><span class="p">.</span><span class="n">LogicalSetData</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="k">new</span> <span class="n">Wrapper</span> <span class="p">{</span> <span class="n">Value</span> <span class="p">=</span> <span class="k">value</span> <span class="p">});</span>
         <span class="p">}</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <div class="alert alert-info">
   <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
@@ -349,7 +349,7 @@ the thread pool context.</p>
 
 <p>So far, so good. Now we have a strongly-typed property we can use to get (or update) the current stack. Next we’ll start defining our public API. We want the ability to “push” a string onto the stack, and get back a disposable that will pop that string back off the stack when disposed. Simple enough:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">static</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">MyStack</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">static</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">MyStack</span>
 <span class="p">{</span>
     <span class="k">public</span> <span class="k">static</span> <span class="n">IDisposable</span> <span class="nf">Push</span><span class="p">([</span><span class="n">CallerMemberName</span><span class="p">]</span> <span class="kt">string</span> <span class="n">context</span> <span class="p">=</span> <span class="s">&quot;&quot;</span><span class="p">)</span>
     <span class="p">{</span>
@@ -374,11 +374,11 @@ the thread pool context.</p>
             <span class="n">disposed</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
         <span class="p">}</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>The final part of our public API is a method that returns the current stack. I’ll just return it as a string:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">static</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">MyStack</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">static</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">MyStack</span>
 <span class="p">{</span>
     <span class="k">public</span> <span class="k">static</span> <span class="kt">string</span> <span class="n">CurrentStack</span>
     <span class="p">{</span>
@@ -387,17 +387,17 @@ the thread pool context.</p>
             <span class="k">return</span> <span class="kt">string</span><span class="p">.</span><span class="n">Join</span><span class="p">(</span><span class="s">&quot; &quot;</span><span class="p">,</span> <span class="n">CurrentContext</span><span class="p">.</span><span class="n">Reverse</span><span class="p">());</span>
         <span class="p">}</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Now let’s turn our attention to the code that will be using <code>MyStack</code>. First, our “log” method:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">partial</span> <span class="k">class</span> <span class="nc">Program</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">partial</span> <span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
     <span class="k">static</span> <span class="k">void</span> <span class="nf">Log</span><span class="p">(</span><span class="kt">string</span> <span class="n">message</span><span class="p">)</span>
     <span class="p">{</span>
         <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">MyStack</span><span class="p">.</span><span class="n">CurrentStack</span> <span class="p">+</span> <span class="s">&quot;: &quot;</span> <span class="p">+</span> <span class="n">message</span><span class="p">);</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Yeah, that was pretty easy.</p>
 
@@ -425,7 +425,7 @@ Main 2: &lt;/SomeWork&gt;
 
 <p>The code, without further ado:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">partial</span> <span class="k">class</span> <span class="nc">Program</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">partial</span> <span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
     <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
     <span class="p">{</span>
@@ -457,7 +457,7 @@ Main 2: &lt;/SomeWork&gt;
             <span class="n">Log</span><span class="p">(</span><span class="s">&quot;&lt;/MoreWork&gt;&quot;</span><span class="p">);</span>
         <span class="p">}</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>One sample run from my machine is:</p>
 
@@ -489,7 +489,7 @@ Main 1: &lt;/SomeWork&gt;
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -504,11 +504,11 @@ Main 1: &lt;/SomeWork&gt;
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

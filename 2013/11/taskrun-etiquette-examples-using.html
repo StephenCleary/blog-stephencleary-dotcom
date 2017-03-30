@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -231,7 +231,7 @@ code {
 
 <p>This kind of user starts off with existing code, which usually does some kind of synchronous work (often database access or a web request).</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">MyService</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">class</span> <span class="nc">MyService</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="kt">int</span> <span class="nf">RetrieveValue</span><span class="p">(</span><span class="kt">int</span> <span class="n">id</span><span class="p">)</span>
   <span class="p">{</span>
@@ -240,11 +240,11 @@ code {
     <span class="n">Thread</span><span class="p">.</span><span class="n">Sleep</span><span class="p">(</span><span class="m">500</span><span class="p">);</span>
     <span class="k">return</span> <span class="m">42</span><span class="p">;</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>They’ve read a bit about how <code>async</code> helps in those areas, and decide to give it a spin. “Let’s see if I can figure out this <code>async</code> thing. I’ll just add an <code>async</code> and see what happens. Oh, I have to change the return type to <code>Task</code>, too.”</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Warning: bad code!</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Warning: bad code!</span>
 <span class="k">class</span> <span class="nc">MyService</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">RetrieveValueAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">id</span><span class="p">)</span>
@@ -254,11 +254,11 @@ code {
     <span class="n">Thread</span><span class="p">.</span><span class="n">Sleep</span><span class="p">(</span><span class="m">500</span><span class="p">);</span>
     <span class="k">return</span> <span class="m">42</span><span class="p">;</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>“Now the compiler is complaining that I’m not using <code>await</code>. OK, so what can I await? [Google-Fu] Ah, <code>Task.Run</code> looks promising!”</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Warning: bad code!</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Warning: bad code!</span>
 <span class="k">class</span> <span class="nc">MyService</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">RetrieveValueAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">id</span><span class="p">)</span>
@@ -271,7 +271,7 @@ code {
       <span class="k">return</span> <span class="m">42</span><span class="p">;</span>
     <span class="p">});</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>“Hey, it worked! My UI thread is no longer blocked! Yay for <code>async</code>!”</p>
 
@@ -279,7 +279,7 @@ code {
 
 <p>The proper approach is to <em>change the blocking call to an asynchronous call first</em> and then <em>allow <code>async</code> to grow from there</em>. So, starting from the same point, we first change the blocking call to an asynchronous call. In the real world, this would be like replacing <code>WebClient</code> with <code>HttpClient</code> or converting your Entity Framework queries to be asynchronous. In this example, I’m replacing <code>Thread.Sleep</code> with <code>Task.Delay</code>.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Warning: bad code!</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Warning: bad code!</span>
 <span class="k">class</span> <span class="nc">MyService</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="kt">int</span> <span class="nf">RetrieveValue</span><span class="p">(</span><span class="kt">int</span> <span class="n">id</span><span class="p">)</span>
@@ -289,11 +289,11 @@ code {
     <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">500</span><span class="p">);</span>
     <span class="k">return</span> <span class="m">42</span><span class="p">;</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Now we’re getting a compiler error, and we need to make the method <code>async</code>.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">MyService</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">class</span> <span class="nc">MyService</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">RetrieveValueAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">id</span><span class="p">)</span>
   <span class="p">{</span>
@@ -302,7 +302,7 @@ code {
     <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">500</span><span class="p">);</span>
     <span class="k">return</span> <span class="m">42</span><span class="p">;</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>And now we end up with a more correct implementation.</p>
 
@@ -311,7 +311,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
             <ul class="pager">
                 <li class="previous"><a href="/2013/10/taskrun-etiquette-and-proper-usage.html" title="Task.Run Etiquette and Proper Usage">&larr; Previous in Task.Run Etiquette</a></li>
@@ -330,7 +330,7 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
                 <div class="panel panel-primary">
                     <div class="panel-heading">Task.Run Etiquette</div>
@@ -345,7 +345,7 @@ code {
                 </div>
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

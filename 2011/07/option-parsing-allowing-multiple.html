@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -231,7 +231,7 @@ code {
 
 <p>If the option values are a series of enumerated flags, then the built-in enumeration parser will handle multiple values automatically:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">Program</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
 <span class="na">  [Flags]</span>
   <span class="k">private</span> <span class="k">enum</span> <span class="n">FavoriteThings</span>
@@ -269,7 +269,7 @@ code {
       <span class="k">return</span> <span class="m">1</span><span class="p">;</span>
     <span class="p">}</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <pre><code>&gt; CommandLineParsingTest.exe
 None
@@ -295,7 +295,7 @@ Could not parse  DogBites  as FavoriteThings
 
 <p>Note that using a property setter in this fashion is not a good OOP practice; however, the adverse design affects are contained within the options class.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">Program</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
   <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Options</span> <span class="p">:</span> <span class="n">OptionArgumentsBase</span>
   <span class="p">{</span>
@@ -337,7 +337,7 @@ Could not parse  DogBites  as FavoriteThings
       <span class="k">return</span> <span class="m">1</span><span class="p">;</span>
     <span class="p">}</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <pre><code>&gt; CommandLineParsingTest.exe
 
@@ -360,7 +360,7 @@ Could not parse  3,6  as Int32
 
 <p>We can again take advantage of the property setter hack, but we have to do our own parsing of the delimited value. We will use a property type of <strong>string</strong> to prevent automatic parsing.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">Program</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
   <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Options</span> <span class="p">:</span> <span class="n">OptionArgumentsBase</span>
   <span class="p">{</span>
@@ -404,7 +404,7 @@ Could not parse  3,6  as Int32
       <span class="k">return</span> <span class="m">1</span><span class="p">;</span>
     <span class="p">}</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <pre><code>&gt; CommandLineParsingTest.exe -n 3 -n 6
 3, 6
@@ -418,7 +418,7 @@ Could not parse  3,6  as Int32
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
             <ul class="pager">
                 <li class="previous"><a href="/2011/07/option-parsing-options-with-optional.html" title="Option Parsing: Options with Optional Arguments">&larr; Previous in Option Parsing</a></li>
@@ -437,7 +437,7 @@ Could not parse  3,6  as Int32
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
                 <div class="panel panel-primary">
                     <div class="panel-heading">Option Parsing</div>
@@ -462,7 +462,7 @@ Could not parse  3,6  as Int32
                 </div>
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

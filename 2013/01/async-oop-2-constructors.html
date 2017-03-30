@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -233,7 +233,7 @@ code {
 
 <p>Constructors cannot be <code>async</code>, but static methods can. It’s pretty easy to have a static creation method, making the type its own factory:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span>
 <span class="p">{</span>
   <span class="k">private</span> <span class="n">MyData</span> <span class="n">asyncData</span><span class="p">;</span>
   <span class="k">private</span> <span class="nf">MyClass</span><span class="p">()</span> <span class="p">{</span> <span class="p">...</span> <span class="p">}</span>
@@ -255,7 +255,7 @@ code {
 <span class="p">{</span>
   <span class="n">MyClass</span> <span class="n">instance</span> <span class="p">=</span> <span class="k">await</span> <span class="n">MyClass</span><span class="p">.</span><span class="n">CreateAsync</span><span class="p">();</span>
   <span class="p">...</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>It’s possible to have <code>Create</code> do all the initialization work, but I prefer to have the <code>async InitializeAsync</code> method.</p>
 
@@ -265,7 +265,7 @@ code {
 
 <p>If the instance you’re creating is a <em>shared resource</em>, then you can use <a href="/2012/08/asynchronous-lazy-initialization.html">asynchronous lazy initialization</a> to create your shared instance:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">static</span> <span class="n">AsyncLazy</span><span class="p">&lt;</span><span class="n">MyResource</span><span class="p">&gt;</span> <span class="n">resource</span> <span class="p">=</span> <span class="k">new</span> <span class="n">AsyncLazy</span><span class="p">&lt;</span><span class="n">MyResource</span><span class="p">&gt;(</span><span class="k">async</span> <span class="p">()</span> <span class="p">=&gt;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="k">static</span> <span class="n">AsyncLazy</span><span class="p">&lt;</span><span class="n">MyResource</span><span class="p">&gt;</span> <span class="n">resource</span> <span class="p">=</span> <span class="k">new</span> <span class="n">AsyncLazy</span><span class="p">&lt;</span><span class="n">MyResource</span><span class="p">&gt;(</span><span class="k">async</span> <span class="p">()</span> <span class="p">=&gt;</span>
 <span class="p">{</span>
   <span class="kt">var</span> <span class="n">data</span> <span class="p">=</span> <span class="k">await</span> <span class="n">GetResource</span><span class="p">();</span>
   <span class="k">return</span> <span class="k">new</span> <span class="nf">MyResource</span><span class="p">(</span><span class="n">data</span><span class="p">);</span>
@@ -274,7 +274,7 @@ code {
 <span class="k">public</span> <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">UseResourceAsync</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="n">MyResource</span> <span class="n">res</span> <span class="p">=</span> <span class="k">await</span> <span class="n">resource</span><span class="p">;</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p><code>AsyncLazy&lt;T&gt;</code> is a great fit for <em>resources</em>; in this example, <code>resource</code> will start being constructed the first time it’s <code>await</code>ed. Any other methods that <code>await</code> it will tie into the same construction, and when the construction is complete, all waiters are released. Any <code>await</code>s after the construction is complete continue immediately since the value is already available.</p>
 
@@ -292,7 +292,7 @@ code {
 
 <p>If you want to treat asynchronous initialization as an implementation detail, you can (optionally) define a “marker” interface for types that use asynchronous initialization:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">/// &lt;summary&gt;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">/// &lt;summary&gt;</span>
 <span class="c1">/// Marks a type as requiring asynchronous initialization and provides the result of that initialization.</span>
 <span class="c1">/// &lt;/summary&gt;</span>
 <span class="k">public</span> <span class="k">interface</span> <span class="n">IAsyncInitialization</span>
@@ -301,11 +301,11 @@ code {
     <span class="c1">/// The result of the asynchronous initialization of this instance.</span>
     <span class="c1">/// &lt;/summary&gt;</span>
     <span class="n">Task</span> <span class="n">Initialization</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>The pattern for asynchronous initialization then looks like this:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyFundamentalType</span> <span class="p">:</span> <span class="n">IAsyncInitialization</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyFundamentalType</span> <span class="p">:</span> <span class="n">IAsyncInitialization</span>
 <span class="p">{</span>
     <span class="k">public</span> <span class="nf">MyFundamentalType</span><span class="p">()</span>
     <span class="p">{</span>
@@ -319,7 +319,7 @@ code {
         <span class="c1">// Asynchronously initialize this instance.</span>
         <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>This pattern is quite simple, but it gives us some important semantics:</p>
 
@@ -331,16 +331,16 @@ code {
 
 <p>An instance of this type can be (manually) constructed like this:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="kt">var</span> <span class="n">myInstance</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MyFundamentalType</span><span class="p">();</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="kt">var</span> <span class="n">myInstance</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MyFundamentalType</span><span class="p">();</span>
 <span class="c1">// Danger: the instance is not initialized here!</span>
 <span class="k">await</span> <span class="n">myInstance</span><span class="p">.</span><span class="n">Initialization</span><span class="p">;</span>
-<span class="c1">// OK: the instance is initialized now.</span></code></pre></div>
+<span class="c1">// OK: the instance is initialized now.</span></code></pre></figure>
 
 <h3 id="composing-with-asynchronous-initialization">Composing with Asynchronous Initialization</h3>
 
 <p>It’s easy to create another type that depends on this fundamental type (i.e., asynchronous composition):</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyComposedType</span> <span class="p">:</span> <span class="n">IAsyncInitialization</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyComposedType</span> <span class="p">:</span> <span class="n">IAsyncInitialization</span>
 <span class="p">{</span>
     <span class="k">private</span> <span class="k">readonly</span> <span class="n">MyFundamentalType</span> <span class="n">_fundamental</span><span class="p">;</span>
 
@@ -360,7 +360,7 @@ code {
         <span class="c1">// Do our own initialization (synchronous or asynchronous).</span>
         <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>The main difference is that we wait for all of our components to initialize before we proceed with our initialization. Alternatively, you could proceed with some initialization and only wait on particular components when you need those particular ones to complete. However, every component should be initialized by the end of <code>InitializeAsync</code>.</p>
 
@@ -374,7 +374,7 @@ code {
 
 <p>In addition, if you’re using the <code>IAsyncInitialization</code> “marker” interface, you can test for that and asynchronously initialize instances that are provided to you by IoC/DI. This slightly complicates your <code>InitializeAsync</code> but allows you to treat asynchronous initialization as an implementation detail. For example, if <code>_fundamental</code> is of type <code>IMyFundamentalType</code>:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">InitializeAsync</span><span class="p">()</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">InitializeAsync</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="c1">// Asynchronously wait for the fundamental instance to initialize if necessary.</span>
     <span class="kt">var</span> <span class="n">asyncFundamental</span> <span class="p">=</span> <span class="n">_fundamental</span> <span class="k">as</span> <span class="n">IAsyncInitialization</span><span class="p">;</span>
@@ -383,7 +383,7 @@ code {
 
     <span class="c1">// Do our own initialization (synchronous or asynchronous).</span>
     <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <h3 id="top-level-handling">Top-Level Handling</h3>
 
@@ -391,14 +391,14 @@ code {
 
 <p>In many dynamic-creation scenarios (such as IoC/DI/<code>Activator.CreateInstance</code>), you can just check for <code>IAsyncInitialization</code> and initialize it directly:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="kt">object</span> <span class="n">myInstance</span> <span class="p">=</span> <span class="p">...;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="kt">object</span> <span class="n">myInstance</span> <span class="p">=</span> <span class="p">...;</span>
 <span class="kt">var</span> <span class="n">asyncInstance</span> <span class="p">=</span> <span class="n">myInstance</span> <span class="k">as</span> <span class="n">IAsyncInitialization</span><span class="p">;</span>
 <span class="k">if</span> <span class="p">(</span><span class="n">asyncInstance</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
-    <span class="k">await</span> <span class="n">asyncInstance</span><span class="p">.</span><span class="n">Initialization</span><span class="p">;</span></code></pre></div>
+    <span class="k">await</span> <span class="n">asyncInstance</span><span class="p">.</span><span class="n">Initialization</span><span class="p">;</span></code></pre></figure>
 
 <p>However, if you’re creating a type by data binding, or using IoC/DI to inject your view models into your view’s data context, then you don’t really have a place where you interact with the top-level instance. Data binding will take care of updating the UI when the initialization completes <em>unless the initialization fails</em>, so you’ll need to surface failures. Unfortunately, <code>Task</code> does not implement <code>INotifyPropertyChanged</code>, so the task completion is not surfaced automatically. You can use a type like <a href="http://nitoasyncex.codeplex.com/wikipage?title=NotifyTaskCompletion">NotifyTaskCompletion type in the AsyncEx library</a> to make this easy:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyViewModel</span> <span class="p">:</span> <span class="n">INotifyPropertyChanged</span><span class="p">,</span> <span class="n">IAsyncInitialization</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyViewModel</span> <span class="p">:</span> <span class="n">INotifyPropertyChanged</span><span class="p">,</span> <span class="n">IAsyncInitialization</span>
 <span class="p">{</span>
     <span class="k">public</span> <span class="nf">MyViewModel</span><span class="p">()</span>
     <span class="p">{</span>
@@ -412,7 +412,7 @@ code {
     <span class="p">{</span>
         <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">100</span><span class="p">);</span> <span class="c1">// asynchronous initialization</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Your data-binding code can use paths like <code>InitializationNotifier.IsCompleted</code> and <code>InitializationNotifier.ErrorMessage</code> to respond to the completion of the initialization task.</p>
 
@@ -424,7 +424,7 @@ code {
 
 <p>Here’s an example of what <strong>not</strong> to do:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span>
 <span class="p">{</span>
   <span class="k">private</span> <span class="n">MyData</span> <span class="n">asyncData</span><span class="p">;</span>
   <span class="k">public</span> <span class="nf">MyClass</span><span class="p">()</span>
@@ -437,7 +437,7 @@ code {
   <span class="p">{</span>
     <span class="n">asyncData</span> <span class="p">=</span> <span class="k">await</span> <span class="n">GetDataAsync</span><span class="p">();</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>At first glance, this seems like a reasonable approach: you get a regular constructor that kicks off an asynchronous operation; however, there are several drawbacks that are due to the use of <code>async void</code>.</p>
 
@@ -455,7 +455,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
             <ul class="pager">
                 <li class="previous"><a href="/2013/01/async-oop-1-inheritance-and-interfaces.html" title="Async OOP 1: Inheritance and Interfaces">&larr; Previous in Async OOP</a></li>
@@ -474,7 +474,7 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
                 <div class="panel panel-primary">
                     <div class="panel-heading">Async OOP</div>
@@ -493,7 +493,7 @@ code {
                 </div>
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

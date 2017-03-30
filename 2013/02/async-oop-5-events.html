@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -247,7 +247,7 @@ code {
 
 <p>Compared to the design, the code is actually quite simple:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">DeferralManager</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">DeferralManager</span>
 <span class="p">{</span>
   <span class="k">private</span> <span class="k">readonly</span> <span class="n">AsyncCountdownEvent</span> <span class="n">_count</span> <span class="p">=</span> <span class="k">new</span> <span class="n">AsyncCountdownEvent</span><span class="p">(</span><span class="m">1</span><span class="p">);</span>
 
@@ -280,7 +280,7 @@ code {
       <span class="n">_count</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
     <span class="p">}</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <div class="alert alert-info">
   <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
@@ -290,7 +290,7 @@ code {
 
 <p>Once you have a <code>DeferralManager</code>, you can extend your “command-style” event arguments type as such:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">MyEventArgs</span> <span class="p">:</span> <span class="n">EventArgs</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">class</span> <span class="nc">MyEventArgs</span> <span class="p">:</span> <span class="n">EventArgs</span>
 <span class="p">{</span>
   <span class="k">private</span> <span class="k">readonly</span> <span class="n">DeferralManager</span> <span class="n">deferrals</span> <span class="p">=</span> <span class="k">new</span> <span class="n">DeferralManager</span><span class="p">();</span>
 
@@ -305,11 +305,11 @@ code {
   <span class="p">{</span>
     <span class="k">return</span> <span class="n">deferrals</span><span class="p">.</span><span class="n">SignalAndWaitAsync</span><span class="p">();</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Then, each time you raise the event, use code similar to this:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="n">Task</span> <span class="nf">RaiseMyEventAsync</span><span class="p">()</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="n">Task</span> <span class="nf">RaiseMyEventAsync</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="kt">var</span> <span class="n">handler</span> <span class="p">=</span> <span class="n">MyEvent</span><span class="p">;</span>
   <span class="k">if</span> <span class="p">(</span><span class="n">handler</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
@@ -318,7 +318,7 @@ code {
   <span class="kt">var</span> <span class="n">args</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MyEventArgs</span><span class="p">(...);</span>
   <span class="n">handler</span><span class="p">(</span><span class="n">args</span><span class="p">);</span>
   <span class="k">return</span> <span class="n">args</span><span class="p">.</span><span class="n">WaitForDeferralsAsync</span><span class="p">();</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>One final note: ensure that your event arguments type (<code>MyEventArgs</code>) supports concurrent access. If there are multiple asynchronous handlers, they all will share a reference to the same event arguments instance. Ideally, all the properties on that type should be immutable.</p>
 
@@ -356,7 +356,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
             <ul class="pager">
                 <li class="previous"><a href="/2013/01/async-oop-4-state.html" title="Async OOP 4: State">&larr; Previous in Async OOP</a></li>
@@ -375,7 +375,7 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
                 <div class="panel panel-primary">
                     <div class="panel-heading">Async OOP</div>
@@ -394,7 +394,7 @@ code {
                 </div>
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

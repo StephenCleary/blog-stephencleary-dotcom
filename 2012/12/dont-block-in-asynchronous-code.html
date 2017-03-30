@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -237,7 +237,7 @@ code {
 
 <p>This code will deadlock in a free-threaded context (e.g., a Console application, unit test, or <code>Task.Run</code>):</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Creates a new task on the thread pool and waits for it.</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Creates a new task on the thread pool and waits for it.</span>
 <span class="c1">// This method will deadlock if called in a free-threaded context.</span>
 <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">Test</span><span class="p">()</span>
 <span class="p">{</span>
@@ -262,7 +262,7 @@ code {
 
   <span class="c1">// Block until the task is completed.</span>
   <span class="n">task</span><span class="p">.</span><span class="n">Wait</span><span class="p">();</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Do you see the problem? I didn’t.</p>
 
@@ -283,7 +283,7 @@ code {
 
 <p>One fun twist to this scenario is that if we use <code>ConfigureAwait</code>, then the method will <em>consistently</em> deadlock, regardless of its initial context:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Creates a new task on the thread pool and waits for it.</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Creates a new task on the thread pool and waits for it.</span>
 <span class="c1">// This method will always deadlock.</span>
 <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">Test</span><span class="p">()</span>
 <span class="p">{</span>
@@ -308,7 +308,7 @@ code {
 
   <span class="c1">// Block until the task is completed.</span>
   <span class="n">task</span><span class="p">.</span><span class="n">Wait</span><span class="p">();</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Most people would not write code like this. It’s very unnatural to call <code>Task.Wait</code> in an <code>async</code> method; the natural code would use <code>await</code> instead. I only came across this behavior while writing unit tests for my <a href="http://nitoasyncex.codeplex.com/">AsyncEx</a> library; these unit tests can get pretty complex and can involve a mixture of synchronous and asynchronous code.</p>
 
@@ -317,7 +317,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -332,11 +332,11 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -233,11 +233,11 @@ code {
 
 <p>The C# language authors attempted to make event subscription and unsubscription threadsafe by default. To do so, they allow (but do not require) locking on <code>this</code>, which is generally considered bad. This code:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">event</span> <span class="n">MyEventHandler</span> <span class="n">MyEvent</span><span class="p">;</span></code></pre></div>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">event</span> <span class="n">MyEventHandler</span> <span class="n">MyEvent</span><span class="p">;</span></code></pre></figure>
 
 <p>Logically becomes this code:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="n">MyEventHandler</span> <span class="n">__MyEvent</span><span class="p">;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="n">MyEventHandler</span> <span class="n">__MyEvent</span><span class="p">;</span>
 <span class="k">public</span> <span class="k">event</span> <span class="n">MyEventHandler</span> <span class="n">MyEvent</span>
 <span class="p">{</span>
     <span class="k">add</span>
@@ -255,7 +255,7 @@ code {
             <span class="k">this</span><span class="p">.</span><span class="n">__MyEvent</span> <span class="p">-=</span> <span class="k">value</span><span class="p">;</span>
         <span class="p">}</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Chris Burrows, a Microsoft developer on the C# compiler team, explains why this is bad in his blog post <a href="http://blogs.msdn.com/cburrows/archive/2008/02/18/field-like-events-considered-harmful.aspx">Field-like Events Considered Harmful</a>. His blog post covers the reasoning thoroughly, so it won’t be repeated here.</p>
 
@@ -269,10 +269,10 @@ code {
 
 <p>This is the standard, simple, and logical event-raising code:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">MyEvent</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">MyEvent</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">this</span><span class="p">.</span><span class="n">MyEvent</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="n">args</span><span class="p">);</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>If there are multiple threads subscribing to and unsubscribing from an event, then the built-in field-like event locking works <em>only</em> for subscribing and unsubscribing. The event raising code exposes a problem: if another thread unsubscribes from the event after the <code>if</code> statement but before the event is raised, then this code may result in a NullReferenceException!</p>
 
@@ -282,11 +282,11 @@ code {
 
 <p>One solution to the problem described above is to make a copy of the event delegate before testing it. The event raising code becomes:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">MyEventHandler</span> <span class="n">myEvent</span> <span class="p">=</span> <span class="k">this</span><span class="p">.</span><span class="n">MyEvent</span><span class="p">;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">MyEventHandler</span> <span class="n">myEvent</span> <span class="p">=</span> <span class="k">this</span><span class="p">.</span><span class="n">MyEvent</span><span class="p">;</span>
 <span class="k">if</span> <span class="p">(</span><span class="n">myEvent</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">myEvent</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="n">args</span><span class="p">);</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>This is the solution used by <a href="http://msdn.microsoft.com/en-us/library/w369ty8x.aspx">MSDN examples</a> and recommended by the semi-standard <a href="http://www.amazon.com/gp/product/0321545613?ie=UTF8&amp;tag=stepheclearys-20&amp;linkCode=as2&amp;camp=1789&amp;creative=390957&amp;creativeASIN=0321545613">Framework Design Guidelines</a> (my 2nd edition has it on page 157, but the relevant section of the book is available online <a href="http://blogs.msdn.com/brada/archive/2005/01/14/353132.aspx">here</a>).</p>
 
@@ -302,7 +302,7 @@ code {
 
 <p>Jon Skeet has a great treatment of this subject in his paper <a href="http://www.yoda.arachsys.com/csharp/events.html">Delegates and Events</a> (you may wish to skip to the section titled “Thread-safe events”). He covers everything that I’ve described above, but then proceeds on to propose another wrong solution. He dislikes the memory barrier solution (as do I), and attempts to solve it by wrapping the copy operation within the lock. As Jon points out, the event add/remove methods <em>may</em> lock <code>this</code> or they could lock something else (remember, a future C# compiler may choose to lock on a super-secret private field instead). So, the default add/remove methods have to be replaced with ones that perform an explicit lock, as such:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="kt">object</span> <span class="n">myEventLock</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">object</span><span class="p">();</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="kt">object</span> <span class="n">myEventLock</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">object</span><span class="p">();</span>
 <span class="k">private</span> <span class="n">MyEventHandler</span> <span class="n">myEvent</span><span class="p">;</span>
 <span class="k">public</span> <span class="n">MyEventHandler</span> <span class="n">MyEvent</span>
 <span class="p">{</span>
@@ -335,7 +335,7 @@ code {
     <span class="p">{</span>
         <span class="n">localMyEvent</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="n">args</span><span class="p">);</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>That’s a fair amount of code for a single event! Some people have even written helper objects to reduce the amount of code. Before jumping on that bandwagon, though, remember that this solution is also wrong.</p>
 
@@ -395,7 +395,7 @@ code {
 
 <p>One nice side effect of this approach is that the code becomes much simpler:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">event</span> <span class="n">MyEventHandler</span> <span class="n">MyEvent</span><span class="p">;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">event</span> <span class="n">MyEventHandler</span> <span class="n">MyEvent</span><span class="p">;</span>
 
 <span class="k">protected</span> <span class="k">virtual</span> <span class="nf">OnMyEvent</span><span class="p">(</span><span class="n">MyEventArgs</span> <span class="n">args</span><span class="p">)</span>
 <span class="p">{</span>
@@ -403,11 +403,11 @@ code {
     <span class="p">{</span>
         <span class="k">this</span><span class="p">.</span><span class="n">MyEvent</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="n">args</span><span class="p">);</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Efficiency freaks can go one step further and explicitly implement the backing field, add handler, and remove handler. By removing the default locking (which is useless), the code is more explicit but also more efficient:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="n">MyEventHandler</span> <span class="n">myEvent</span><span class="p">;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="n">MyEventHandler</span> <span class="n">myEvent</span><span class="p">;</span>
 <span class="k">public</span> <span class="k">event</span> <span class="n">MyEventHandler</span> <span class="n">MyEvent</span>
 <span class="p">{</span>
     <span class="k">add</span>
@@ -427,7 +427,7 @@ code {
     <span class="p">{</span>
         <span class="k">this</span><span class="p">.</span><span class="n">myEvent</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="n">args</span><span class="p">);</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Another side effect is that this type of event handling forces one towards <a href="http://msdn.microsoft.com/en-us/library/hkasytyf.aspx">Event-Based Asynchronous Programming</a> (or something very similar to it). EBAP is a logical conclusion for asynchronous object design, yielding maximal reusability. EBAP is also more consistent with regards to normal object concurrency restrictions: “Public static members of this type are thread safe. Any instance members are not guaranteed to be thread safe.” Events that can only be accessed by one thread follow this common pattern; the event, as an instance member, is not guaranteed to be thread safe.</p>
 
@@ -440,7 +440,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -455,11 +455,11 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

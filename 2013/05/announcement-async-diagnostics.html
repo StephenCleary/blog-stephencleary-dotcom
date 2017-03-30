@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -245,7 +245,7 @@ code {
 
 <p>Consider the following example program. It has reasonably realistic asynchronous method usage; the <code>MainAsync</code> method calls the <code>MyMethodAsync</code> method, which is overloaded to allow cancellation. <code>MyMethodAsync</code> in turn spins up a couple of parallel asynchronous tasks and waits for them both to complete. One of these tasks will throw an exception.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
 
@@ -280,7 +280,7 @@ code {
         <span class="kt">var</span> <span class="n">task2</span> <span class="p">=</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="p">{</span> <span class="k">throw</span> <span class="k">new</span> <span class="n">InvalidOperationException</span><span class="p">(</span><span class="n">message</span><span class="p">);</span> <span class="p">});</span> <span class="c1">// (line 33)</span>
         <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">WhenAll</span><span class="p">(</span><span class="n">task1</span><span class="p">,</span> <span class="n">task2</span><span class="p">);</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>If you run this program, you’ll see output like this:</p>
 
@@ -308,7 +308,7 @@ code {
 
 <p>Once it’s installed, it’ll bring up some installation/usage instructions. First, in one of your source files, apply the <code>AsyncDiagnosticAspect</code> to your assembly. Then, locate the place where you display or log your exceptions, and change <code>ToString</code> to <code>ToAsyncDiagnosticString</code>:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">Nito.AsyncEx.AsyncDiagnostics</span><span class="p">;</span>
@@ -346,7 +346,7 @@ code {
         <span class="kt">var</span> <span class="n">task2</span> <span class="p">=</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="p">{</span> <span class="k">throw</span> <span class="k">new</span> <span class="n">InvalidOperationException</span><span class="p">(</span><span class="n">message</span><span class="p">);</span> <span class="p">});</span>
         <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">WhenAll</span><span class="p">(</span><span class="n">task1</span><span class="p">,</span> <span class="n">task2</span><span class="p">);</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>With these few changes, the new output is the same, except for some additional information printed at the end of the exception stack trace:</p>
 
@@ -381,7 +381,7 @@ Logical stack:
 
 <p>Ready to go one step further? You can tie into the diagnostic stack and add whatever additional data you want:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">Nito.AsyncEx.AsyncDiagnostics</span><span class="p">;</span>
@@ -422,7 +422,7 @@ Logical stack:
         <span class="kt">var</span> <span class="n">task2</span> <span class="p">=</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="p">{</span> <span class="k">throw</span> <span class="k">new</span> <span class="n">InvalidOperationException</span><span class="p">(</span><span class="n">message</span><span class="p">);</span> <span class="p">});</span>
         <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">WhenAll</span><span class="p">(</span><span class="n">task1</span><span class="p">,</span> <span class="n">task2</span><span class="p">);</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>And whatever string you give it gets included in the logical stack:</p>
 
@@ -469,7 +469,7 @@ Logical stack:
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -484,11 +484,11 @@ Logical stack:
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -245,8 +245,8 @@ code {
 
 <p>Next, you’ll need to install some K runtime stuff. The best instructions I’ve found for this are on the <a href="https://github.com/aspnet/home">home page of the ASP.NET 5 GitHub repo</a>. If you just want to get started quickly, open up PowerShell and execute the following commands:</p>
 
-<div class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span class="nv">@powershell</span> <span class="n">-NoProfile</span> <span class="n">-ExecutionPolicy</span> <span class="n">unrestricted</span> <span class="n">-Command</span> <span class="s2">&quot;iex ((new-object net.webclient).DownloadString(&#39;https://raw.githubusercontent.com/aspnet/Home/master/kvminstall.ps1&#39;))&quot;</span>
-<span class="n">kvm</span> <span class="n">upgrade</span></code></pre></div>
+<figure class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span></span><span class="nv">@powershell</span> <span class="n">-NoProfile</span> <span class="n">-ExecutionPolicy</span> <span class="n">unrestricted</span> <span class="n">-Command</span> <span class="s2">&quot;iex ((new-object net.webclient).DownloadString(&#39;https://raw.githubusercontent.com/aspnet/Home/master/kvminstall.ps1&#39;))&quot;</span>
+<span class="n">kvm</span> <span class="n">upgrade</span></code></pre></figure>
 
 <h2 id="aside-how-many-runtimes">Aside: How Many Runtimes?</h2>
 
@@ -318,18 +318,18 @@ Active Version     Runtime Architecture Location                     Alias
 
 <p>The default code the template gives you is pretty straightforward:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">Program</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
     <span class="k">public</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
     <span class="p">{</span>
         <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Hello World&quot;</span><span class="p">);</span>
         <span class="n">Console</span><span class="p">.</span><span class="n">ReadLine</span><span class="p">();</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>So let’s just rewrite it to be asynchronous:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">Program</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
     <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
     <span class="p">{</span>
@@ -338,7 +338,7 @@ Active Version     Runtime Architecture Location                     Alias
         <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Still here!&quot;</span><span class="p">);</span>
         <span class="n">Console</span><span class="p">.</span><span class="n">ReadLine</span><span class="p">();</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Compile and run it, and you’ll see the Console application sticking around after the <code>await</code>!</p>
 
@@ -360,14 +360,14 @@ Active Version     Runtime Architecture Location                     Alias
 
 <p>It’s important to peek under the covers a bit. Pop open your <code>project.json</code>. See the <code>frameworks</code> section?</p>
 
-<div class="highlight"><pre><code class="language-json" data-lang="json"><span class="s2">&quot;frameworks&quot;</span> <span class="err">:</span> <span class="p">{</span>
+<figure class="highlight"><pre><code class="language-json" data-lang="json"><span></span><span class="s2">&quot;frameworks&quot;</span> <span class="err">:</span> <span class="p">{</span>
     <span class="nt">&quot;aspnet50&quot;</span> <span class="p">:</span> <span class="p">{</span> <span class="p">},</span>
     <span class="nt">&quot;aspnetcore50&quot;</span> <span class="p">:</span> <span class="p">{</span> 
         <span class="nt">&quot;dependencies&quot;</span><span class="p">:</span> <span class="p">{</span>
             <span class="nt">&quot;System.Console&quot;</span><span class="p">:</span> <span class="s2">&quot;4.0.0-beta-22523&quot;</span>
         <span class="p">}</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>There are two frameworks for this project: <code>aspnet50</code> is the regular desktop CLR-based framework - it’s the one that runs on the full .NET desktop framework. The <code>aspnetcore50</code> is the CoreCLR framework - it’s the new microkernel one. Since CoreCLR is a microkernel architecture, you need to explicitly bring in nearly everything you intend to use - in this case, the VS template automatically added a dependency on <code>System.Console</code> for you. (You can add more dependencies by installing NuGet packages; <code>System.Console</code> is in fact just a NuGet package that is already installed into this project).</p>
 
@@ -395,7 +395,7 @@ Active Version     Runtime Architecture Location                     Alias
 
 <p>One solution is to make use of conditional compilation. Remember, this project is being compiled separately for each platform. As <a href="http://weblog.west-wind.com/posts/2014/Dec/02/Creating-multitarget-NuGet-Packages-with-vNext">Rick Strahl pointed out</a>, each platform defines a compiler directive that is just the platform name in all uppercase:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">Program</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
     <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
     <span class="p">{</span>
@@ -408,7 +408,7 @@ Active Version     Runtime Architecture Location                     Alias
         <span class="n">Console</span><span class="p">.</span><span class="n">ReadLine</span><span class="p">();</span>
 <span class="cp">#endif</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>That works! So, you can use conditional compilation to take advantage of different APIs for different frameworks.</p>
 
@@ -420,9 +420,9 @@ Active Version     Runtime Architecture Location                     Alias
 
 <p>To limit the frameworks for my project, I just have to edit the <code>project.json</code> file and remove the CoreCLR:</p>
 
-<div class="highlight"><pre><code class="language-json" data-lang="json"><span class="s2">&quot;frameworks&quot;</span> <span class="err">:</span> <span class="p">{</span>
+<figure class="highlight"><pre><code class="language-json" data-lang="json"><span></span><span class="s2">&quot;frameworks&quot;</span> <span class="err">:</span> <span class="p">{</span>
     <span class="nt">&quot;aspnet50&quot;</span> <span class="p">:</span> <span class="p">{</span> <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Save the file, and now my project only targets the full desktop CLR.</p>
 
@@ -444,7 +444,7 @@ Active Version     Runtime Architecture Location                     Alias
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -459,11 +459,11 @@ Active Version     Runtime Architecture Location                     Alias
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

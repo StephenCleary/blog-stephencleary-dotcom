@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -231,7 +231,7 @@ code {
 
 <p>The <code>Result</code> member only exists on the <code>Task&lt;T&gt;</code> type; it does not exist on the <code>Task</code> type (which represents a task without a result value).</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">T</span> <span class="n">Result</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></div>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">T</span> <span class="n">Result</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></figure>
 
 <p><a href="/2014/10/a-tour-of-task-part-5-wait.html">Like <code>Wait</code></a>, <code>Result</code> will synchronously block the calling thread until the task completes. This is generally not a good idea for the same reason it wasn’t a good idea for <code>Wait</code>: <a href="/2012/07/dont-block-on-async-code.html">it’s easy to cause deadlocks</a>.</p>
 
@@ -241,7 +241,7 @@ code {
 
 <p>Speaking of exceptions, there’s a member specifically just for retrieving the exceptions from a task:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">AggregateException</span> <span class="n">Exception</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></div>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">AggregateException</span> <span class="n">Exception</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></figure>
 
 <p>Unlike <code>Result</code> and <code>Wait</code>, <code>Exception</code> will <em>not</em> block until the task completes; if called while the task is still in progress, it will just return <code>null</code>. If the task completes successfully <em>or</em> is cancelled, then <code>Exception</code> will still return <code>null</code>. If the task is faulted, then <code>Exception</code> will return the task’s exceptions wrapped in an <code>AggregateException</code>. Again, this usually just serves to complicate the error handling.</p>
 
@@ -249,15 +249,15 @@ code {
 
 <p>The <code>GetAwaiter</code> member was added to <code>Task</code> and <code>Task&lt;T&gt;</code> in .NET 4.5, and it’s available as an extension method on .NET 4.0 using the <code>Microsoft.Bcl.Async</code> NuGet package. Normally, the <code>GetAwaiter</code> method is just used by <code>await</code>, but it <em>is</em> possible to call it yourself:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">task</span> <span class="p">=</span> <span class="p">...;</span>
-<span class="n">T</span> <span class="n">result</span> <span class="p">=</span> <span class="n">task</span><span class="p">.</span><span class="n">GetAwaiter</span><span class="p">().</span><span class="n">GetResult</span><span class="p">();</span></code></pre></div>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">Task</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">task</span> <span class="p">=</span> <span class="p">...;</span>
+<span class="n">T</span> <span class="n">result</span> <span class="p">=</span> <span class="n">task</span><span class="p">.</span><span class="n">GetAwaiter</span><span class="p">().</span><span class="n">GetResult</span><span class="p">();</span></code></pre></figure>
 
 <p>The code above will synchronously block until the task completes. As such, it is subject to the <a href="/2012/07/dont-block-on-async-code.html">same old deadlock problems</a> as <code>Wait</code> and <code>Result</code>. However, it will <em>not</em> wrap the task exceptions in an <code>AggregateException</code>.</p>
 
 <p>The code above will retrieve the result value from a <code>Task&lt;T&gt;</code>. The same code pattern can also be applied to <code>Task</code> (without a result value); in this case “GetResult” actually means “check the task for errors”:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span> <span class="n">task</span> <span class="p">=</span> <span class="p">...;</span>
-<span class="n">task</span><span class="p">.</span><span class="n">GetAwaiter</span><span class="p">().</span><span class="n">GetResult</span><span class="p">();</span></code></pre></div>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">Task</span> <span class="n">task</span> <span class="p">=</span> <span class="p">...;</span>
+<span class="n">task</span><span class="p">.</span><span class="n">GetAwaiter</span><span class="p">().</span><span class="n">GetResult</span><span class="p">();</span></code></pre></figure>
 
 <p>In general, I try my best to avoid synchronously blocking on an asynchronous task. However, there are a handful of situations where I do violate that guideline. In those rare conditions, my preferred method is <code>GetAwaiter().GetResult()</code> because it preserves the task exceptions instead of wrapping them in an <code>AggregateException</code>.</p>
 
@@ -269,7 +269,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
             <ul class="pager">
                 <li class="previous"><a href="/2014/10/a-tour-of-task-part-5-wait.html" title="A Tour of Task, Part 5: Waiting">&larr; Previous in A Tour of Task</a></li>
@@ -288,7 +288,7 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
                 <div class="panel panel-primary">
                     <div class="panel-heading">A Tour of Task</div>
@@ -310,7 +310,7 @@ code {
                 </div>
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -231,7 +231,7 @@ code {
 
 <p>The default behavior in the <a href="http://nuget.org/List/Packages/Nito.KitchenSink.OptionParsing">Nito.KitchenSink option parsing library</a> is to <em>overwrite</em> previous values. In other words, options coming later on the command line may “override” options earlier on the command line. Consider this example:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">Program</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
   <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Options</span> <span class="p">:</span> <span class="n">OptionArgumentsBase</span>
   <span class="p">{</span>
@@ -260,7 +260,7 @@ code {
       <span class="k">return</span> <span class="m">1</span><span class="p">;</span>
     <span class="p">}</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <pre><code>&gt; CommandLineParsingTest.exe
 Level:
@@ -278,7 +278,7 @@ Level: 9
 
 <p>The <em>prevent</em> behavior can be implemented by having a nullable backing value, and throwing from the setter if it is already set. The only tricky part is choosing the exception to throw from the setter; I recommend throwing an exception derived from <strong>OptionParsingException</strong>, since that indicates a usage error. Any exception thrown from a property setter will be wrapped in an <strong>OptionParsingException.OptionArgumentException</strong> (in versions 1.1.2 and newer).</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">Program</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
   <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Options</span> <span class="p">:</span> <span class="n">OptionArgumentsBase</span>
   <span class="p">{</span>
@@ -322,7 +322,7 @@ Level: 9
       <span class="k">return</span> <span class="m">1</span><span class="p">;</span>
     <span class="p">}</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <pre><code>&gt; CommandLineParsingTest.exe
 Level:
@@ -336,7 +336,7 @@ The value may only be specified once.
 
 <p>Likewise, the <em>ignore</em> behavior can be implemented by having a nullable backing value, and ignoring the setter if it is already set:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">Program</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
   <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Options</span> <span class="p">:</span> <span class="n">OptionArgumentsBase</span>
   <span class="p">{</span>
@@ -379,7 +379,7 @@ The value may only be specified once.
       <span class="k">return</span> <span class="m">1</span><span class="p">;</span>
     <span class="p">}</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <pre><code>&gt; CommandLineParsingTest.exe
 Level:
@@ -396,7 +396,7 @@ Level: 3
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
             <ul class="pager">
                 <li class="previous"><a href="/2011/07/option-parsing-allowing-multiple.html" title="Option Parsing: Allowing Multiple Argument Values">&larr; Previous in Option Parsing</a></li>
@@ -415,7 +415,7 @@ Level: 3
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
                 <div class="panel panel-primary">
                     <div class="panel-heading">Option Parsing</div>
@@ -440,7 +440,7 @@ Level: 3
                 </div>
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

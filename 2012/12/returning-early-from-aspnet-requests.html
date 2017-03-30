@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -271,7 +271,7 @@ code {
   <p><strong>Update 2014-04:</strong> A newer version of this code is now <a href="https://github.com/StephenCleary/AspNetBackgroundTasks" class="alert-link">on GitHub</a> and available <a href="https://www.nuget.org/packages/Nito.AspNetBackgroundTasks/" class="alert-link">via NuGet</a>.</p>
 </div>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Web.Hosting</span><span class="p">;</span>
@@ -353,27 +353,27 @@ code {
     <span class="p">{</span>
         <span class="n">instance</span><span class="p">.</span><span class="n">Register</span><span class="p">(</span><span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(</span><span class="n">operation</span><span class="p">));</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p><code>BackgroundTaskManager</code> is a singleton that keeps track of background operations. It uses an <a href="http://nitoasyncex.codeplex.com/wikipage?title=AsyncCountdownEvent">AsyncCountdownEvent</a> from <a href="http://nitoasyncex.codeplex.com/">AsyncEx</a> as a counter of background operations (plus an extra count that is decremented when ASP.NET notifies us that the AppDomain is going down).</p>
 
 <p>You can queue synchronous or asynchronous work by calling <code>Run</code>:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">BackgroundTaskManager</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">BackgroundTaskManager</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span>
 <span class="p">{</span>
     <span class="n">Thread</span><span class="p">.</span><span class="n">Sleep</span><span class="p">(</span><span class="m">20000</span><span class="p">);</span>
 <span class="p">});</span>
 <span class="n">BackgroundTaskManager</span><span class="p">.</span><span class="n">Run</span><span class="p">(</span><span class="k">async</span> <span class="p">()</span> <span class="p">=&gt;</span>
 <span class="p">{</span>
     <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">20000</span><span class="p">);</span>
-<span class="p">});</span></code></pre></div>
+<span class="p">});</span></code></pre></figure>
 
 <p><code>BackgroundTaskManager</code> also publishes a <code>CancellationToken</code> that is canceled when ASP.NET notifies us that our AppDomain is shutting down. <code>async</code> code can use this to abort processing (when it is safe to do so):</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">BackgroundTaskManager</span><span class="p">.</span><span class="n">Run</span><span class="p">(</span><span class="k">async</span> <span class="p">()</span> <span class="p">=&gt;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">BackgroundTaskManager</span><span class="p">.</span><span class="n">Run</span><span class="p">(</span><span class="k">async</span> <span class="p">()</span> <span class="p">=&gt;</span>
 <span class="p">{</span>
     <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">20000</span><span class="p">,</span> <span class="n">BackgroundTaskManager</span><span class="p">.</span><span class="n">Shutdown</span><span class="p">);</span>
-<span class="p">});</span></code></pre></div>
+<span class="p">});</span></code></pre></figure>
 
 <p>One important note about background operations: <strong>exceptions are ignored!</strong> So if you want to catch errors and toss a “hail Mary” to ETW or the Event Log, you’ll need to do so with a <code>try ... catch</code> inside each operation. In the example above, if the AppDomain is recycled while the operation is doing the delay, the cancellation exception will be raised from the operation and then it will be ignored.</p>
 
@@ -382,7 +382,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -397,11 +397,11 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -276,21 +276,21 @@ code {
 
 <p>To conclude, synchronous methods should have a synchronous signature:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Documentation: This method is CPU-bound (use Task.Run to call from a UI thread).</span>
-<span class="k">void</span> <span class="nf">DoWork</span><span class="p">();</span></code></pre></div>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Documentation: This method is CPU-bound (use Task.Run to call from a UI thread).</span>
+<span class="k">void</span> <span class="nf">DoWork</span><span class="p">();</span></code></pre></figure>
 
 <p>Asynchronous methods should have an asynchronous signature:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span> <span class="nf">DoWorkAsync</span><span class="p">();</span></code></pre></div>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">Task</span> <span class="nf">DoWorkAsync</span><span class="p">();</span></code></pre></figure>
 
 <p>And methods that are a <em>mixture</em> of synchronous and asynchronous work should have an asynchronous signature with documentation pointing out their partially-synchronous nature:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Documentation: This method is CPU-bound (use Task.Run to call from a UI thread).</span>
-<span class="n">Task</span> <span class="nf">DoWorkAsync</span><span class="p">();</span></code></pre></div>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Documentation: This method is CPU-bound (use Task.Run to call from a UI thread).</span>
+<span class="n">Task</span> <span class="nf">DoWorkAsync</span><span class="p">();</span></code></pre></figure>
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
             <ul class="pager">
                 <li class="next"><a href="/2013/11/taskrun-etiquette-examples-using.html" title="Task.Run Etiquette Examples: Don&#39;t Use Task.Run for the Wrong Thing">Next in Task.Run Etiquette &rarr;</a></li>
@@ -308,7 +308,7 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
                 <div class="panel panel-primary">
                     <div class="panel-heading">Task.Run Etiquette</div>
@@ -323,7 +323,7 @@ code {
                 </div>
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

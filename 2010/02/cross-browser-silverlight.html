@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -233,19 +233,19 @@ code {
 
 <p>I recommend never using the Uri constructor taking a single string parameter; in the following example, the <code>&lt;a&gt;</code> item has an href attribute similar to <code>/</code>, which is quietly transformed by IE into a full <code>http://www.tempuri.org/</code>:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Fails on Google Chrome</span>
-<span class="k">new</span> <span class="nf">Uri</span><span class="p">(</span><span class="n">item</span><span class="p">.</span><span class="n">GetAttribute</span><span class="p">(</span><span class="s">&quot;href&quot;</span><span class="p">))</span></code></pre></div>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Fails on Google Chrome</span>
+<span class="k">new</span> <span class="nf">Uri</span><span class="p">(</span><span class="n">item</span><span class="p">.</span><span class="n">GetAttribute</span><span class="p">(</span><span class="s">&quot;href&quot;</span><span class="p">))</span></code></pre></figure>
 
 <p>Instead, pass the document <code>Uri</code> as the context of the relative uri string. If the second parameter is actually an absolute uri (e.g., when running in Internet Explorer), the context uri is ignored:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Works on both Chrome and IE</span>
-<span class="k">new</span> <span class="nf">Uri</span><span class="p">(</span><span class="n">HtmlPage</span><span class="p">.</span><span class="n">Document</span><span class="p">.</span><span class="n">DocumentUri</span><span class="p">,</span> <span class="n">item</span><span class="p">.</span><span class="n">GetAttribute</span><span class="p">(</span><span class="s">&quot;href&quot;</span><span class="p">))</span></code></pre></div>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Works on both Chrome and IE</span>
+<span class="k">new</span> <span class="nf">Uri</span><span class="p">(</span><span class="n">HtmlPage</span><span class="p">.</span><span class="n">Document</span><span class="p">.</span><span class="n">DocumentUri</span><span class="p">,</span> <span class="n">item</span><span class="p">.</span><span class="n">GetAttribute</span><span class="p">(</span><span class="s">&quot;href&quot;</span><span class="p">))</span></code></pre></figure>
 
 <h2 id="text-content">Text Content</h2>
 
 <p>Internet Explorer has an <code>innerText</code> attribute, while the DOM supports a <code>textContent</code> property. A simple extension method on <code>HtmlElement</code> suffices to get the text content of a node:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">static</span> <span class="kt">string</span> <span class="nf">GetTextContent</span><span class="p">(</span><span class="k">this</span> <span class="n">HtmlElement</span> <span class="n">htmlElement</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">static</span> <span class="kt">string</span> <span class="nf">GetTextContent</span><span class="p">(</span><span class="k">this</span> <span class="n">HtmlElement</span> <span class="n">htmlElement</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="kt">string</span> <span class="n">ret</span> <span class="p">=</span> <span class="n">htmlElement</span><span class="p">.</span><span class="n">GetProperty</span><span class="p">(</span><span class="s">&quot;textContent&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="kt">string</span><span class="p">;</span>
     <span class="k">if</span> <span class="p">(</span><span class="kt">string</span><span class="p">.</span><span class="n">IsNullOrEmpty</span><span class="p">(</span><span class="n">ret</span><span class="p">))</span>
@@ -258,7 +258,7 @@ code {
     <span class="p">}</span>
     
     <span class="k">return</span> <span class="n">ret</span><span class="p">;</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <h2 id="documentready">DocumentReady</h2>
 
@@ -268,22 +268,22 @@ code {
 
 <p>This has a few steps; I’ll be using as an example a Silverlight menu control I wrote that dynamically builds its menu from an unordered list in the HTML. First, the “initialization” code must be made a separate method in the Silverlight control (in this example, it’s <code>BuildMenu</code>):</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// In the Page constructor (there&#39;s only one page in this simple menu control):</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// In the Page constructor (there&#39;s only one page in this simple menu control):</span>
 <span class="n">HtmlPage</span><span class="p">.</span><span class="n">RegisterScriptableObject</span><span class="p">(</span><span class="s">&quot;SLMenu&quot;</span><span class="p">,</span> <span class="k">this</span><span class="p">);</span>
     
 <span class="c1">// Also defined as part of the Page class:</span>
 <span class="na">[ScriptableMember]</span>
-<span class="k">public</span> <span class="k">void</span> <span class="nf">BuildMenu</span><span class="p">()</span></code></pre></div>
+<span class="k">public</span> <span class="k">void</span> <span class="nf">BuildMenu</span><span class="p">()</span></code></pre></figure>
 
 <p>Define the “readyness” flags in plain, top-level JavaScript before the Silverlight control; this ensures that they’re interpreted immediately:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Top-level code; not in a function!</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Top-level code; not in a function!</span>
 <span class="kt">var</span> <span class="n">silverlightLoaded</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
-<span class="kt">var</span> <span class="n">htmlLoaded</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span></code></pre></div>
+<span class="kt">var</span> <span class="n">htmlLoaded</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span></code></pre></figure>
 
 <p>Also define the JavaScript function that the Silverlight control should call in top-level JavaScript before the Silverlight control:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Top-level code; not in a function!</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Top-level code; not in a function!</span>
 <span class="n">MenuOnLoad</span> <span class="p">=</span> <span class="n">function</span><span class="p">()</span> <span class="p">{</span>
     <span class="k">if</span> <span class="p">(!</span><span class="n">silverlightLoaded</span><span class="p">)</span> <span class="p">{</span>
         <span class="n">silverlightLoaded</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
@@ -291,24 +291,24 @@ code {
             <span class="n">menuControl</span><span class="p">.</span><span class="n">Content</span><span class="p">.</span><span class="n">SLMenu</span><span class="p">.</span><span class="n">BuildMenu</span><span class="p">();</span>
         <span class="p">}</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>The code above is straightforward; it marks Silverlight as having loaded and then invokes the initialization code if the HTML has already loaded. The code run by the HTML when it loads is similar (shown here using jQuery, but <code>window.onload</code> could be used as well):</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="err">$</span><span class="p">(</span><span class="n">function</span><span class="p">()</span> <span class="p">{</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="err">$</span><span class="p">(</span><span class="n">function</span><span class="p">()</span> <span class="p">{</span>
     <span class="k">if</span> <span class="p">(!</span><span class="n">htmlLoaded</span><span class="p">)</span> <span class="p">{</span>
         <span class="n">htmlLoaded</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">silverlightLoaded</span><span class="p">)</span> <span class="p">{</span>
             <span class="n">menuControl</span><span class="p">.</span><span class="n">Content</span><span class="p">.</span><span class="n">SLMenu</span><span class="p">.</span><span class="n">BuildMenu</span><span class="p">();</span>
         <span class="p">}</span>
     <span class="p">}</span>
-<span class="p">});</span></code></pre></div>
+<span class="p">});</span></code></pre></figure>
 
 <p>Finally, the Silverlight control must invoke the JavaScript <code>MenuOnLoad</code> function when it is loaded. This must come after its registration with the browser:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// In the Page constructor (there&#39;s only one page in this simple menu control):</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// In the Page constructor (there&#39;s only one page in this simple menu control):</span>
 <span class="n">HtmlPage</span><span class="p">.</span><span class="n">RegisterScriptableObject</span><span class="p">(</span><span class="s">&quot;SLMenu&quot;</span><span class="p">,</span> <span class="k">this</span><span class="p">);</span>
-<span class="n">HtmlPage</span><span class="p">.</span><span class="n">Window</span><span class="p">.</span><span class="n">Invoke</span><span class="p">(</span><span class="s">&quot;MenuOnLoad&quot;</span><span class="p">);</span></code></pre></div>
+<span class="n">HtmlPage</span><span class="p">.</span><span class="n">Window</span><span class="p">.</span><span class="n">Invoke</span><span class="p">(</span><span class="s">&quot;MenuOnLoad&quot;</span><span class="p">);</span></code></pre></figure>
 
 <h2 id="conclusion">Conclusion</h2>
 
@@ -321,7 +321,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -336,11 +336,11 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

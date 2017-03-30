@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -233,7 +233,7 @@ code {
 
 <p>The straightforward approach is to just use <code>ZipArchive</code> with <code>PushStreamContent</code>, very similar to <a href="/2016/10/async-pushstreamcontent.html">the previous example</a>:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">static</span> <span class="n">HttpClient</span> <span class="n">Client</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="k">static</span> <span class="n">HttpClient</span> <span class="n">Client</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
 <span class="k">public</span> <span class="n">HttpResponseMessage</span> <span class="nf">Get</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">filenamesAndUrls</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="kt">string</span><span class="p">&gt;</span>
@@ -261,7 +261,7 @@ code {
     <span class="n">result</span><span class="p">.</span><span class="n">Content</span><span class="p">.</span><span class="n">Headers</span><span class="p">.</span><span class="n">ContentType</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MediaTypeHeaderValue</span><span class="p">(</span><span class="s">&quot;application/octet-stream&quot;</span><span class="p">);</span>
     <span class="n">result</span><span class="p">.</span><span class="n">Content</span><span class="p">.</span><span class="n">Headers</span><span class="p">.</span><span class="n">ContentDisposition</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ContentDispositionHeaderValue</span><span class="p">(</span><span class="s">&quot;attachment&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="n">FileName</span> <span class="p">=</span> <span class="s">&quot;MyZipfile.zip&quot;</span> <span class="p">};</span>
     <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>This code <em>should</em> work, but it will actually fail (as of .NET 4.6.2). It will throw a <code>NotSupportedException</code> from within the <code>PushStreamContent</code> callback, so it’s annoying to find and debug.</p>
 
@@ -277,7 +277,7 @@ code {
 
 <p>The important parts of this stream wrapper look like this (the other members of <a href="https://github.com/StephenClearyExamples/AsyncDynamicZip/blob/full-ziparchive/Example/WebApplication/WriteOnlyStreamWrapper.cs">this type</a> just forward to the underlying stream):</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">WriteOnlyStreamWrapper</span> <span class="p">:</span> <span class="n">Stream</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">class</span> <span class="nc">WriteOnlyStreamWrapper</span> <span class="p">:</span> <span class="n">Stream</span>
 <span class="p">{</span>
     <span class="k">private</span> <span class="k">readonly</span> <span class="n">Stream</span> <span class="n">_stream</span><span class="p">;</span>
     <span class="k">private</span> <span class="kt">long</span> <span class="n">_position</span><span class="p">;</span>
@@ -317,13 +317,13 @@ code {
         <span class="n">_position</span> <span class="p">+=</span> <span class="n">count</span><span class="p">;</span>
         <span class="k">return</span> <span class="n">_stream</span><span class="p">.</span><span class="n">WriteAsync</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">cancellationToken</span><span class="p">);</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>The only tricky part about this wrapper is that we want to be sure to override the asynchronous methods as well as the synchronous ones. This is because the <code>Stream</code> base class will provide a default implementation of these that just runs the synchronous APIs on a thread pool thread. In other words, it’s using fake asynchrony by default! So we need to override them to provide true asynchrony.</p>
 
 <p>With that wrapper in place, our action method can be updated:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">static</span> <span class="n">HttpClient</span> <span class="n">Client</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="k">static</span> <span class="n">HttpClient</span> <span class="n">Client</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
 <span class="k">public</span> <span class="n">HttpResponseMessage</span> <span class="nf">Get</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">filenamesAndUrls</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="kt">string</span><span class="p">&gt;</span>
@@ -352,7 +352,7 @@ code {
     <span class="n">result</span><span class="p">.</span><span class="n">Content</span><span class="p">.</span><span class="n">Headers</span><span class="p">.</span><span class="n">ContentType</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MediaTypeHeaderValue</span><span class="p">(</span><span class="s">&quot;application/octet-stream&quot;</span><span class="p">);</span>
     <span class="n">result</span><span class="p">.</span><span class="n">Content</span><span class="p">.</span><span class="n">Headers</span><span class="p">.</span><span class="n">ContentDisposition</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ContentDispositionHeaderValue</span><span class="p">(</span><span class="s">&quot;attachment&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="n">FileName</span> <span class="p">=</span> <span class="s">&quot;MyZipfile.zip&quot;</span> <span class="p">};</span>
     <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>And <code>ZipArchive</code> is quite happy with the stream wrapper!</p>
 
@@ -362,7 +362,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -377,11 +377,11 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

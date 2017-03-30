@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -227,7 +227,7 @@ code {
   <article>
   <p><code>Task.CurrentId</code> returns the identifier of the <em>currently executing</em> <code>Task</code>, or <code>null</code> if there is no currently executing <code>Task</code>. So, what is <code>Task.CurrentId</code> in an <code>async</code> method?</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
 
 <span class="k">class</span> <span class="nc">Program</span>
@@ -250,7 +250,7 @@ code {
         <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Yield</span><span class="p">();</span>
         <span class="n">afterYield</span> <span class="p">=</span><span class="n">Task</span><span class="p">.</span><span class="n">CurrentId</span><span class="p">.</span><span class="n">HasValue</span> <span class="p">?</span> <span class="n">Task</span><span class="p">.</span><span class="n">CurrentId</span><span class="p">.</span><span class="n">ToString</span><span class="p">()</span> <span class="p">:</span> <span class="s">&quot;null&quot;</span><span class="p">;</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>The output of this program is <code>null,null,1</code>. A lot of developers are surprised at this; after all, when you return a <code>Task</code> from an <code>async</code> method, doesn’t that <code>Task</code> represent the complete method? Yes, it does <em>conceptually</em> represent the <code>async</code> method, but it does not <em>literally execute</em> the <code>async</code> method.</p>
 
@@ -258,7 +258,7 @@ code {
 
 <p>As a reminder, code-based tasks are usually started with <code>Task.Run</code> to toss work onto the thread pool, or <code>TaskFactory.StartNew</code> to specify a scheduler where the task will run. But you can still end up surprised when you schedule an <code>async</code> method. Consider the modified program:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
 
 <span class="k">class</span> <span class="nc">Program</span>
@@ -281,7 +281,7 @@ code {
         <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Yield</span><span class="p">();</span>
         <span class="n">afterYield</span> <span class="p">=</span> <span class="n">Task</span><span class="p">.</span><span class="n">CurrentId</span><span class="p">.</span><span class="n">HasValue</span> <span class="p">?</span> <span class="n">Task</span><span class="p">.</span><span class="n">CurrentId</span><span class="p">.</span><span class="n">ToString</span><span class="p">()</span> <span class="p">:</span> <span class="s">&quot;null&quot;</span><span class="p">;</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>The output of this program is <code>1,null,2</code>. That pesky <code>null</code> is still there! The <code>null</code> comes into play because the <code>async</code> method is first executed as an actual task on the thread pool. However, after its <code>await</code>, it resumes as a regular delegate on the thread pool (not an actual task).</p>
 
@@ -289,7 +289,7 @@ code {
 
 <p>I do make a different choice for my <a href="http://nitoasyncex.codeplex.com/wikipage?title=AsyncContext">AsyncContext</a> type. I started off with a design similar to the thread pool task scheduler (executing bare <code>Action</code> delegates), but I found the code simplified quite nicely if I treated <em>everything</em> as a <code>Task</code>. So this program will always use tasks:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">Nito.AsyncEx</span><span class="p">;</span>
 
@@ -311,7 +311,7 @@ code {
         <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Yield</span><span class="p">();</span>
         <span class="n">afterYield</span> <span class="p">=</span> <span class="n">Task</span><span class="p">.</span><span class="n">CurrentId</span><span class="p">.</span><span class="n">HasValue</span> <span class="p">?</span> <span class="n">Task</span><span class="p">.</span><span class="n">CurrentId</span><span class="p">.</span><span class="n">ToString</span><span class="p">()</span> <span class="p">:</span> <span class="s">&quot;null&quot;</span><span class="p">;</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>The output of this program is <code>1,2</code>, because <code>AsyncContext</code> wraps <em>everything</em> into a <code>Task</code> before executing it, including <code>async</code> method continuations.</p>
 
@@ -322,7 +322,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -337,11 +337,11 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

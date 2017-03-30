@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -265,7 +265,7 @@ code {
 
 <p>The number one argument against recursive locks is one of <em>inconsistency</em>. The entire purpose of a “lock” is to protect shared mutable state so that reads and writes appear atomic. In other words, the state is <em>consistent</em> whenever the lock is unlocked; while the lock is locked (held) by a section of code, the state may be <em>inconsistent</em>. Another way of saying this is that while the lock is held, it’s possible that invariants will not hold; acquiring a lock temporarily suspends all contractural invariants until the time the lock is released.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">void</span> <span class="nf">A</span><span class="p">()</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">void</span> <span class="nf">A</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="k">lock</span> <span class="p">(</span><span class="n">_mutex</span><span class="p">)</span>
   <span class="p">{</span>
@@ -281,7 +281,7 @@ code {
     <span class="n">A</span><span class="p">();</span>
     <span class="p">...</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Consider a simple example that is the most common argument for recursive locks: you have an existing method <code>A</code> that takes a lock, performs some operations, and then releases the lock. Now you need to write a method <code>B</code> that takes the lock, performs some operations (including the operations done by <code>A</code>), and then releases the lock. It’s natural from a code-reuse perspective to simply have <code>B</code> call <code>A</code>. Recursive locks permit this kind of code reuse.</p>
 
@@ -291,7 +291,7 @@ code {
 
 <p>The non-recursive approach would first refactor <code>A</code> into a new private method <code>C</code> that is clearly documented (often with a naming convention as well) to assume that it is called while under lock. Then both <code>A</code> and <code>B</code> call <code>C</code> while holding the lock.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">void</span> <span class="nf">A</span><span class="p">()</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">void</span> <span class="nf">A</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="k">lock</span> <span class="p">(</span><span class="n">_mutex</span><span class="p">)</span>
   <span class="p">{</span>
@@ -312,7 +312,7 @@ code {
 <span class="k">private</span> <span class="k">void</span> <span class="nf">C_UnderLock</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="p">...</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <h2 id="escalating-dependencies">Escalating Dependencies</h2>
 
@@ -340,7 +340,7 @@ code {
 
 <p>One example that is brought up to support recursive locks is a synchronized collection, where the <code>AddRange</code> method can call the <code>Add</code> method directly. To understand the problem with <em>uncertainty</em>, consider the methods under maintenance; we’re going to add support for <code>INotifyCollectionChanged</code>.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">void</span> <span class="nf">Add</span><span class="p">(</span><span class="n">T</span> <span class="n">item</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">void</span> <span class="nf">Add</span><span class="p">(</span><span class="n">T</span> <span class="n">item</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="k">lock</span> <span class="p">(</span><span class="n">_mutex</span><span class="p">)</span>
   <span class="p">{</span>
@@ -355,11 +355,11 @@ code {
     <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">item</span> <span class="k">in</span> <span class="n">items</span><span class="p">)</span>
       <span class="n">Add</span><span class="p">(</span><span class="n">item</span><span class="p">);</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>It seems straightforward: <code>AddRange</code> will still acquire the lock and add its items (by calling <code>Add</code>). <code>Add</code> will acquire the lock, add its item, release the lock, and then invoke <code>CollectionChanged</code>. There’s now a deadlock issue where there wasn’t one before - a kind of deadlock that will not be found by unit testing (or most any other kind of testing). Can you see it?</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">void</span> <span class="nf">Add</span><span class="p">(</span><span class="n">T</span> <span class="n">item</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">void</span> <span class="nf">Add</span><span class="p">(</span><span class="n">T</span> <span class="n">item</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="k">lock</span> <span class="p">(</span><span class="n">_mutex</span><span class="p">)</span>
   <span class="p">{</span>
@@ -375,7 +375,7 @@ code {
     <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">item</span> <span class="k">in</span> <span class="n">items</span><span class="p">)</span>
       <span class="n">Add</span><span class="p">(</span><span class="n">item</span><span class="p">);</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>The problem? Raising events like <code>CollectionChanged</code> is one way to invoke end-user code, and this should never, ever be done while holding a lock. In this case, the <code>Add</code> method releases its lock before raising the event, but it <em>can’t be sure</em> that the lock is actually <em>unlocked</em>. It may be, or it may be not (grrr schizophrenic locks!). And in fact, <code>AddRange</code> is in the same boat; it has no idea if it’s being called by <em>another</em> method while the lock is held (grrr escalating dependencies!).</p>
 
@@ -401,7 +401,7 @@ code {
 
 <p><code>Monitor</code> is a recursive lock, so let’s consider the scenario where <code>B</code> calls <code>A</code>. This time, <code>A</code> is going to wait for a condition (e.g., <code>Monitor.Wait</code>).</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">void</span> <span class="nf">A</span><span class="p">()</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">void</span> <span class="nf">A</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="k">lock</span> <span class="p">(</span><span class="n">_mutex</span><span class="p">)</span>
   <span class="p">{</span>
@@ -419,7 +419,7 @@ code {
     <span class="n">A</span><span class="p">();</span>
     <span class="p">...</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Now, what happens in that wait? The monitor (condition variable) unlocks the lock during the wait. It can’t just <em>release</em> the lock because it’s a recursive lock, so it has to unlock it <em>all the way</em>. Then, after the wait completes, it re-acquires the lock that many times. This is all documented behavior, and it’s the only reasonable way a recursive lock can work with a condition variable.</p>
 
@@ -476,7 +476,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -491,11 +491,11 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

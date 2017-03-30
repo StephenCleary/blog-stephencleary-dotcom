@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -282,7 +282,7 @@ code {
 
 <p>As described in <a href="http://www.amazon.com/gp/product/0735627045?ie=UTF8&amp;tag=stepheclearys-20&amp;linkCode=as2&amp;camp=1789&amp;creative=390957&amp;creativeASIN=0735627045">CLR via C#</a>, the JIT compiler for a method will determine which native code blocks reference which variables by building a “root table” for the method. It’s important to note that this table is quite accurate (though not 100% accurate - it <em>may</em> “hold onto” references slightly longer than necessary if it simplifies the table). Examine the simple code below:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">static</span> <span class="kt">object</span> <span class="nf">CheckType</span><span class="p">(</span><span class="kt">object</span> <span class="n">a</span><span class="p">,</span> <span class="n">Type</span> <span class="n">b</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">static</span> <span class="kt">object</span> <span class="nf">CheckType</span><span class="p">(</span><span class="kt">object</span> <span class="n">a</span><span class="p">,</span> <span class="n">Type</span> <span class="n">b</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="n">Type</span> <span class="n">t</span> <span class="p">=</span> <span class="n">a</span><span class="p">.</span><span class="n">GetType</span><span class="p">();</span>
   <span class="c1">// The object referenced by &quot;a&quot; may be eligible for GC here</span>
@@ -296,7 +296,7 @@ code {
     <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;no match...&quot;</span><span class="p">);</span>
     <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>The object referenced by “a” may be garbage collected as noted by the comments in this method (if it is not referenced elsewhere, of course). This is because the method’s root table would declare that this method uses the “a” variable just for the code doing the “a.GetType()”.</p>
 
@@ -347,7 +347,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
             <ul class="pager">
                 <li class="previous"><a href="/2009/08/q-if-dispose-calls-suppressfinalize-is.html" title="Q&amp;A: If Dispose calls SuppressFinalize, is KeepAlive required?">&larr; Previous in IDisposable and Finalizers</a></li>
@@ -366,7 +366,7 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
                 <div class="panel panel-primary">
                     <div class="panel-heading">IDisposable and Finalizers</div>
@@ -386,7 +386,7 @@ code {
                 </div>
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

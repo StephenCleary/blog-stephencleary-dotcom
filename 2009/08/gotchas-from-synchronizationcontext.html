@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -237,7 +237,7 @@ code {
 
 <p>If code for an asynchronous component needs to prevent reentrancy from a generic SynchronizationContext, it may easily do so by using the <a href="http://msdn.microsoft.com/en-us/library/system.threading.threadpool.aspx">ThreadPool</a>:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">/// &lt;summary&gt;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">/// &lt;summary&gt;</span>
 <span class="c1">/// Provides extension methods for &lt;see cref=&quot;SynchronizationContext&quot;/&gt;.</span>
 <span class="c1">/// &lt;/summary&gt;</span>
 <span class="k">public</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">SynchronizationContextExtensions</span>
@@ -271,7 +271,7 @@ code {
         <span class="c1">// The semantics of SynchronizationContext.Post allow it to invoke the delegate directly, but we can&#39;t allow that.</span>
         <span class="n">ThreadPool</span><span class="p">.</span><span class="n">QueueUserWorkItem</span><span class="p">((</span><span class="n">state</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="n">synchronizationContext</span><span class="p">.</span><span class="n">Post</span><span class="p">((</span><span class="n">state2</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="n">action</span><span class="p">(),</span> <span class="k">null</span><span class="p">));</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>This code or something similar may go into the next release of <a href="http://www.codeplex.com/NitoAsync">Nito.Async</a>. However, the code as-is will cause a deadlock when used with synchronization contexts that are sometimes reentrant (e.g., WindowsFormsSynchronizationContext.Send or DispatcherSynchronizationContext.Send if called from the specific thread associated with that synchronization context).</p>
 
@@ -302,7 +302,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -317,11 +317,11 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

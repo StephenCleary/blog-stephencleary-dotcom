@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -231,10 +231,10 @@ code {
 
 <p>Here’s a few tests using SQL Server Compact Edition to access the Northwind sample database. This code:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">db</span> <span class="p">=</span> <span class="k">new</span> <span class="n">NorthwindContext</span><span class="p">())</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">db</span> <span class="p">=</span> <span class="k">new</span> <span class="n">NorthwindContext</span><span class="p">())</span>
 <span class="p">{</span>
     <span class="n">MessageBox</span><span class="p">.</span><span class="n">Show</span><span class="p">(</span><span class="n">db</span><span class="p">.</span><span class="n">Orders</span><span class="p">.</span><span class="n">Count</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="n">x</span><span class="p">.</span><span class="n">Order_Date</span> <span class="p">&lt;</span> <span class="n">DateTime</span><span class="p">.</span><span class="n">Now</span><span class="p">).</span><span class="n">ToString</span><span class="p">());</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>will result in this trace:</p>
 
@@ -246,11 +246,11 @@ EntityFramework.NorthwindEntities Information: 0 : Finished 1 in 00:00:00.046659
 
 <p>Here’s some code that deletes an order:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">db</span> <span class="p">=</span> <span class="k">new</span> <span class="n">NorthwindContext</span><span class="p">())</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">db</span> <span class="p">=</span> <span class="k">new</span> <span class="n">NorthwindContext</span><span class="p">())</span>
 <span class="p">{</span>
     <span class="n">db</span><span class="p">.</span><span class="n">Orders</span><span class="p">.</span><span class="n">DeleteObject</span><span class="p">(</span><span class="n">db</span><span class="p">.</span><span class="n">Orders</span><span class="p">.</span><span class="n">OrderBy</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="n">x</span><span class="p">.</span><span class="n">Order_Date</span><span class="p">).</span><span class="n">First</span><span class="p">());</span>
     <span class="n">db</span><span class="p">.</span><span class="n">SaveChanges</span><span class="p">();</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>resulting in this trace:</p>
 
@@ -267,7 +267,7 @@ EntityFramework.NorthwindEntities Information: 0 : Finished 3 in 00:00:00.048280
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -282,11 +282,11 @@ EntityFramework.NorthwindEntities Information: 0 : Finished 3 in 00:00:00.048280
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

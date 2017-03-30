@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -229,7 +229,7 @@ code {
 
 <p>MSBuild does not support metadata having metadata. However, an “inversion” can be performed, where a new ItemGroup is created with the metadata as the primary item entry. The example below also places the original ItemGroup Identity as metadata on the new ItemGroup entries, creating a bidirectional mapping.</p>
 
-<div class="highlight"><pre><code class="language-xml" data-lang="xml"><span class="nt">&lt;Project</span> <span class="na">ToolsVersion=</span><span class="s">&quot;3.5&quot;</span> <span class="na">xmlns=</span><span class="s">&quot;http://schemas.microsoft.com/developer/msbuild/2003&quot;</span><span class="nt">&gt;</span>
+<figure class="highlight"><pre><code class="language-xml" data-lang="xml"><span></span><span class="nt">&lt;Project</span> <span class="na">ToolsVersion=</span><span class="s">&quot;3.5&quot;</span> <span class="na">xmlns=</span><span class="s">&quot;http://schemas.microsoft.com/developer/msbuild/2003&quot;</span><span class="nt">&gt;</span>
   <span class="nt">&lt;Import</span> <span class="na">Project=</span><span class="s">&quot;$(MSBuildExtensionsPath)\ExtensionPack\MSBuild.ExtensionPack.tasks&quot;</span><span class="nt">/&gt;</span>
  
   <span class="nt">&lt;ItemGroup&gt;</span>
@@ -252,7 +252,7 @@ code {
     <span class="nt">&lt;/ItemGroup&gt;</span>
     <span class="nt">&lt;Message</span> <span class="na">Text=</span><span class="s">quot;Project</span> <span class="err">files:</span> <span class="err">@(ProjectFiles)</span> <span class="err">(definitions:</span> <span class="err">@(ProjectFiles-</span><span class="nt">&gt;</span>&#39;%(ProjectDefinition)&#39;))&quot;/&gt;
   <span class="nt">&lt;/Target&gt;</span>
-<span class="nt">&lt;/Project&gt;</span></code></pre></div>
+<span class="nt">&lt;/Project&gt;</span>  </code></pre></figure>
 
 <pre><code>Project files: one.sln;two.sln;three.sln (definitions: First;Second;Third)
 </code></pre>
@@ -262,7 +262,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -277,11 +277,11 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -237,12 +237,12 @@ code {
 
 <p>Asynchronous methods look something like this:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">()</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="c1">// In the Real World, we would actually do something...</span>
   <span class="c1">// For this example, we&#39;re just going to (asynchronously) wait 100ms.</span>
   <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>The “async” keyword enables the “await” keyword in that method and changes how method results are handled. <em>That’s all the async keyword does!</em> It does not run this method on a thread pool thread, or do any other kind of magic. The async keyword <em>only</em> enables the await keyword (and manages the method results).</p>
 
@@ -266,7 +266,7 @@ code {
 
 <p>One important point about awaitables is this: it is the <em>type</em> that is awaitable, not the method returning the type. In other words, you can await the result of an async method that returns Task … <em>because the method returns Task, not because it’s async</em>. So you can also await the result of a <em>non-async</em> method that returns Task:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">NewStuffAsync</span><span class="p">()</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">NewStuffAsync</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="c1">// Use await and have fun with the new stuff.</span>
   <span class="k">await</span> <span class="p">...</span>
@@ -283,7 +283,7 @@ code {
   <span class="c1">// We can await Tasks, regardless of where they come from.</span>
   <span class="k">await</span> <span class="nf">NewStuffAsync</span><span class="p">();</span>
   <span class="k">await</span> <span class="nf">MyOldTaskParallelLibraryCode</span><span class="p">();</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <div class="alert alert-info">
   <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
@@ -309,13 +309,13 @@ code {
 
 <p>Async methods returning Task or void do not have a return value. Async methods returning Task&lt;T&gt; must return a value of type T:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">CalculateAnswer</span><span class="p">()</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">CalculateAnswer</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">100</span><span class="p">);</span> <span class="c1">// (Probably should be longer...)</span>
 
   <span class="c1">// Return a type of &quot;int&quot;, not &quot;Task&lt;int&gt;&quot;</span>
   <span class="k">return</span> <span class="m">42</span><span class="p">;</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>This is a bit odd to get used to, but there are <a href="/2011/09/async-ctp-why-do-keywords-work-that-way.html">good reasons</a> behind this design.</p>
 
@@ -340,7 +340,7 @@ code {
 
 <p>What does this mean in the real world? For one thing, capturing (and restoring) the UI/ASP.NET context is done transparently:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// WinForms example (it works exactly the same for WPF).</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// WinForms example (it works exactly the same for WPF).</span>
 <span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">DownloadFileButton_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="c1">// Since we asynchronously wait, the UI thread is not blocked by the file download.</span>
@@ -360,7 +360,7 @@ code {
   <span class="c1">// Since we resume on the ASP.NET context, we can access the current request.</span>
   <span class="c1">// We may actually be on another *thread*, but we have the same ASP.NET request context.</span>
   <span class="n">Response</span><span class="p">.</span><span class="n">Write</span><span class="p">(</span><span class="s">&quot;File downloaded!&quot;</span><span class="p">);</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>This is great for event handlers, but it turns out to not be what you want for most other code (which is, really, most of the async code you’ll be writing).</p>
 
@@ -368,7 +368,7 @@ code {
 
 <p>Most of the time, you don’t <em>need</em> to sync back to the “main” context. Most async methods will be designed with composition in mind: they await other operations, and each one represents an asynchronous operation itself (which can be composed by others). In this case, you want to tell the awaiter to <em>not</em> capture the current context by calling <strong>ConfigureAwait</strong> and passing false, e.g.:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">DownloadFileAsync</span><span class="p">(</span><span class="kt">string</span> <span class="n">fileName</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">DownloadFileAsync</span><span class="p">(</span><span class="kt">string</span> <span class="n">fileName</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="c1">// Use HttpClient or whatever to download the file contents.</span>
   <span class="kt">var</span> <span class="n">fileContents</span> <span class="p">=</span> <span class="k">await</span> <span class="n">DownloadFileContentsAsync</span><span class="p">(</span><span class="n">fileName</span><span class="p">).</span><span class="n">ConfigureAwait</span><span class="p">(</span><span class="k">false</span><span class="p">);</span>
@@ -390,7 +390,7 @@ code {
 
   <span class="c1">// Since we resume on the UI context, we can directly access UI elements.</span>
   <span class="n">resultTextBox</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="s">&quot;File downloaded!&quot;</span><span class="p">;</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>The important thing to note with this example is that each “level” of async method calls has its own context. DownloadFileButton_Click started in the UI context, and called DownloadFileAsync. DownloadFileAsync also started in the UI context, but then stepped out of its context by calling ConfigureAwait(false). The rest of DownloadFileAsync runs in the thread pool context. However, when DownloadFileAsync completes and DownloadFileButton_Click resumes, it <em>does</em> resume in the UI context.</p>
 
@@ -499,7 +499,7 @@ public async Task&lt;int&gt; GetFirstToRespondAsync()
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -514,11 +514,11 @@ public async Task&lt;int&gt; GetFirstToRespondAsync()
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -227,7 +227,7 @@ code {
   <article>
   <p>Last time we looked at <a href="/2013/11/taskrun-etiquette-examples-using.html">using <code>Task.Run</code> for the wrong thing</a> (code that is not CPU-bound). So let’s move on to the proper use case of <code>Task.Run</code>: CPU-bound code. We start off with some existing code, which synchronously does some heavy calculations.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">MyService</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">class</span> <span class="nc">MyService</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="kt">int</span> <span class="nf">CalculateMandelbrot</span><span class="p">()</span>
   <span class="p">{</span>
@@ -244,11 +244,11 @@ code {
 <span class="p">{</span>
   <span class="c1">// Blocks UI thread! :(</span>
   <span class="n">myService</span><span class="p">.</span><span class="n">CalculateMandelbrot</span><span class="p">();</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Now, we want to use this from a UI thread, but this method will block our thread. This <strong>is</strong> a problem that should be solved using <code>Task.Run</code>. Doing these calculations is a CPU-bound operation.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Warning: bad code!</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Warning: bad code!</span>
 <span class="k">class</span> <span class="nc">MyService</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">CalculateMandelbrotAsync</span><span class="p">()</span>
@@ -269,7 +269,7 @@ code {
 <span class="p">{</span>
   <span class="c1">// Does not block UI thread! Yay!</span>
   <span class="k">await</span> <span class="n">myService</span><span class="p">.</span><span class="n">CalculateMandelbrotAsync</span><span class="p">();</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>At first glance, it may look like this solves the problem. And it does solve <em>this</em> problem, but it does not do it in the best way.</p>
 
@@ -279,7 +279,7 @@ code {
 
 <p>Let’s introduce a simple ASP.NET MVC controller that returns a view using the (original, synchronous) service.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">MyService</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">class</span> <span class="nc">MyService</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="kt">int</span> <span class="nf">CalculateMandelbrot</span><span class="p">()</span>
   <span class="p">{</span>
@@ -299,13 +299,13 @@ code {
     <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="n">myService</span><span class="p">.</span><span class="n">CalculateMandelbrot</span><span class="p">();</span>
     <span class="k">return</span> <span class="nf">View</span><span class="p">(</span><span class="n">result</span><span class="p">);</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>So far, so good. When a request comes in, the controller uses the service to (synchronously) calculate the view data. A single request thread is used the entire time during that calculation.</p>
 
 <p>But the desktop app required a change in the service. It’s now <code>async</code>, which is “no problem” because ASP.NET MVC naturally supports asynchronous actions.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Warning: bad code!</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Warning: bad code!</span>
 <span class="k">class</span> <span class="nc">MyService</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">CalculateMandelbrotAsync</span><span class="p">()</span>
@@ -329,7 +329,7 @@ code {
     <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">myService</span><span class="p">.</span><span class="n">CalculateMandelbrotAsync</span><span class="p">();</span>
     <span class="k">return</span> <span class="nf">View</span><span class="p">(</span><span class="n">result</span><span class="p">);</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>And when we do testing, it works! Unfortunately, this change introduced a performance problem.</p>
 
@@ -367,7 +367,7 @@ code {
 
 <p>So, let’s be good API citizens (“APIs are all about etiquette”) and keep the new synchronous version along with the asynchronous version. That way there’s no breaking changes, right? It’s simple enough, and we can even implement it easily so that there’s no code duplication!</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Warning: bad code!</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Warning: bad code!</span>
 <span class="k">class</span> <span class="nc">MyService</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="kt">int</span> <span class="nf">CalculateMandelbrot</span><span class="p">()</span>
@@ -382,7 +382,7 @@ code {
   <span class="p">{</span>
     <span class="k">return</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">CalculateMandelbrot</span><span class="p">());</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Sweet. The UI app has its nice asynchronous method, and the ASP.NET app has its original synchronous method. Easy! And there are many other examples where synchronous and asynchronous APIs exist side-by-side, so developers are already used to this! But the fact is that <strong>using <code>Task.Run</code> for asynchronous wrappers is a code smell</strong>.</p>
 
@@ -402,7 +402,7 @@ code {
 
 <p>The key here is that the solution does not belong in the service. It belongs in the UI layer itself. Let the UI layer solve its own problems and leave the service out of it.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">MyService</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">class</span> <span class="nc">MyService</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="kt">int</span> <span class="nf">CalculateMandelbrot</span><span class="p">()</span>
   <span class="p">{</span>
@@ -418,7 +418,7 @@ code {
 <span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">MyButton_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">myService</span><span class="p">.</span><span class="n">CalculateMandelbrot</span><span class="p">());</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Now the service API is clean (it exposes a synchronous API for a naturally-synchronous, CPU-bound method), it works for all consumers (e.g., ASP.NET), and the <em>UI</em> layer is responsible for not blocking the <em>UI</em> thread.</p>
 
@@ -427,7 +427,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
             <ul class="pager">
                 <li class="previous"><a href="/2013/11/taskrun-etiquette-examples-using.html" title="Task.Run Etiquette Examples: Don&#39;t Use Task.Run for the Wrong Thing">&larr; Previous in Task.Run Etiquette</a></li>
@@ -446,7 +446,7 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
                 <div class="panel panel-primary">
                     <div class="panel-heading">Task.Run Etiquette</div>
@@ -461,7 +461,7 @@ code {
                 </div>
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

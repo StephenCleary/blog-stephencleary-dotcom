@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -237,7 +237,7 @@ code {
 
 <p><code>BackgroundWorker</code> has built-in support for progress reporting, and even automatically marshals to the UI thread. Like last time, we have to first set the <code>BackgroundWorker.WorkerSupportsProgress</code> property to allow progress reports. Then, the <code>DoWork</code> method can call the <code>BackgroundWorker.ReportProgress</code> method, which raises the <code>BackgroundWorker.ProgressChanged</code> event.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">void</span> <span class="nf">button1_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="k">void</span> <span class="nf">button1_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">bgw</span> <span class="p">=</span> <span class="k">new</span> <span class="n">BackgroundWorker</span><span class="p">();</span>
     <span class="n">bgw</span><span class="p">.</span><span class="n">WorkerReportsProgress</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
@@ -258,7 +258,7 @@ code {
         <span class="n">label1</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="s">&quot;Completed.&quot;</span><span class="p">;</span>
     <span class="p">};</span>
     <span class="n">bgw</span><span class="p">.</span><span class="n">RunWorkerAsync</span><span class="p">();</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Just like last time, this approach works but is rather convoluted. Again, we see the <code>BackgroundWorker</code> type having too many responsibilities: it has the enabling property, the method to report progress, and the event that is raised when the progress changes.</p>
 
@@ -266,7 +266,7 @@ code {
 
 <p>The new <code>async</code> support also introduces a pattern for progress reporting in asynchronous methods: the caller optionally creates an implementation of <code>IProgress&lt;T&gt;</code> (usually an instance of <code>Progress&lt;T&gt;</code>), and that instance is passed into the asynchronous method. The method then sends progress reports to its <code>IProgress&lt;T&gt;</code> instance (if it is not <code>null</code>).</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">button2_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">button2_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">progressHandler</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Progress</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;(</span><span class="k">value</span> <span class="p">=&gt;</span>
     <span class="p">{</span>
@@ -283,7 +283,7 @@ code {
         <span class="p">}</span>
     <span class="p">});</span>
     <span class="n">label2</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="s">&quot;Completed.&quot;</span><span class="p">;</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>What we end up here is also somewhat convoluted. Normally, the <code>IProgress&lt;T&gt;</code> is a method parameter, but for these examples I’m trying to keep everything in the same method. Also, in this example there’s no need to check <code>progress != null</code>, but that is standard practice for asynchronous code so I’m including it here.</p>
 
@@ -297,7 +297,7 @@ code {
 
 <p><code>BackgroundWorker.ReportProgress</code> takes an optional second argument, which is a custom “progress report” instance. This is then available to the progress changed handler as <code>ProgressChangedEventArgs.UserState</code>.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">void</span> <span class="nf">button1_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="k">void</span> <span class="nf">button1_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">bgw</span> <span class="p">=</span> <span class="k">new</span> <span class="n">BackgroundWorker</span><span class="p">();</span>
     <span class="n">bgw</span><span class="p">.</span><span class="n">WorkerReportsProgress</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
@@ -318,7 +318,7 @@ code {
         <span class="n">label1</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="s">&quot;Completed.&quot;</span><span class="p">;</span>
     <span class="p">};</span>
     <span class="n">bgw</span><span class="p">.</span><span class="n">RunWorkerAsync</span><span class="p">();</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>There are a couple of drawbacks to the way <code>BackgroundWorker</code> reports custom progress types. The first is that it is untyped (we just get an <code>object</code> instance, which we cast to <code>string</code>). The second is that we <em>must</em> pass back a “percent complete”, even if there is no way to calculate a meaningful value for that parameter. You can, of course, just pass zero and document that the caller should ignore that value.</p>
 
@@ -326,7 +326,7 @@ code {
 
 <p>The <code>IProgress&lt;T&gt;</code> and <code>Progress&lt;T&gt;</code> types allow any type for <code>T</code>, so changing the progress report type from <code>int</code> to <code>string</code> is quite straightforward:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">button2_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">button2_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">progressHandler</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Progress</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;(</span><span class="k">value</span> <span class="p">=&gt;</span>
     <span class="p">{</span>
@@ -343,7 +343,7 @@ code {
         <span class="p">}</span>
     <span class="p">});</span>
     <span class="n">label2</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="s">&quot;Completed.&quot;</span><span class="p">;</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <h3 id="discussion">Discussion</h3>
 
@@ -352,7 +352,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
             <ul class="pager">
                 <li class="previous"><a href="/2013/09/taskrun-vs-backgroundworker-round-4.html" title="Task.Run vs BackgroundWorker, Round 4: Cancellation">&larr; Previous in Task.Run vs. BackgroundWorker</a></li>
@@ -371,7 +371,7 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
                 <div class="panel panel-primary">
                     <div class="panel-heading">Task.Run vs. BackgroundWorker</div>
@@ -389,7 +389,7 @@ code {
                 </div>
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

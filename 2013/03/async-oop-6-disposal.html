@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -249,7 +249,7 @@ code {
 
 <p>This permits a nice, clean, <code>async</code>-friendly shutdown. The “asynchronous dispose” API for <code>ConcurrentExclusiveSchedulerPair</code> looks like this:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">ConcurrentExclusiveSchedulerPair</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">class</span> <span class="nc">ConcurrentExclusiveSchedulerPair</span>
 <span class="p">{</span>
   <span class="c1">// Informs the scheduler pair that it should not accept any more tasks.</span>
   <span class="k">public</span> <span class="k">void</span> <span class="nf">Complete</span><span class="p">();</span>
@@ -258,7 +258,7 @@ code {
   <span class="k">public</span> <span class="n">Task</span> <span class="n">Completion</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
 
   <span class="p">...</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>This pattern is similar to the <a href="/2013/01/async-oop-2-constructors.html">asynchronous initialization pattern</a> covered earlier in this series. With asynchronous initialization, the operation is started in the constructor and the <code>Initialization</code> property is used to detect the completion of (and get the results of) the asynchronous initialization. With asynchronous disposal, the operation is started by invoking <code>Complete</code> and the <code>Completion</code> property is used to detect the completion of (and get the results of) the asynchronous disposal. In both cases, the tasks are properties on the instance because they pertain strongly to the instance; this is a better design than returning a <code>Task</code> from the <code>Complete</code> method.</p>
 
@@ -266,7 +266,7 @@ code {
 
 <p>Dataflow blocks have this kind of API:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">interface</span> <span class="n">IDataflowBlock</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">interface</span> <span class="n">IDataflowBlock</span>
 <span class="p">{</span>
   <span class="c1">// Signals to the IDataflowBlock that it should not accept any more messages.</span>
   <span class="k">void</span> <span class="nf">Complete</span><span class="p">();</span>
@@ -276,7 +276,7 @@ code {
 
   <span class="c1">// Gets a Task that represents the asynchronous operation and completion of the dataflow block.</span>
   <span class="n">Task</span> <span class="n">Completion</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <div class="alert alert-info">
   <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
@@ -296,7 +296,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
             <ul class="pager">
                 <li class="previous"><a href="/2013/02/async-oop-5-events.html" title="Async OOP 5: Events">&larr; Previous in Async OOP</a></li>
@@ -315,7 +315,7 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
                 <div class="panel panel-primary">
                     <div class="panel-heading">Async OOP</div>
@@ -334,7 +334,7 @@ code {
                 </div>
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

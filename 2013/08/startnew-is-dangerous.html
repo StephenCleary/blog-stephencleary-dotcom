@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -283,22 +283,22 @@ code {
   </li>
 </ol>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span><span class="p">.</span><span class="n">Factory</span><span class="p">.</span><span class="n">StartNew</span><span class="p">(</span><span class="n">A</span><span class="p">);</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">Task</span><span class="p">.</span><span class="n">Factory</span><span class="p">.</span><span class="n">StartNew</span><span class="p">(</span><span class="n">A</span><span class="p">);</span>
 
-<span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">A</span><span class="p">()</span> <span class="p">{</span> <span class="p">}</span></code></pre></div>
+<span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">A</span><span class="p">()</span> <span class="p">{</span> <span class="p">}</span></code></pre></figure>
 
 <p>Well, you know it’s a trick question, eh? If you answered “a thread pool thread”, I’m sorry, but that’s not correct. “A” will run on whatever <code>TaskScheduler</code> is currently executing! OK, so let’s give a bit of context to the question: in the code below, what thread does the method “A” run on?</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">void</span> <span class="nf">Form1_Load</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="k">void</span> <span class="nf">Form1_Load</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">Task</span><span class="p">.</span><span class="n">Factory</span><span class="p">.</span><span class="n">StartNew</span><span class="p">(</span><span class="n">A</span><span class="p">);</span>
 <span class="p">}</span>
 
-<span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">A</span><span class="p">()</span> <span class="p">{</span> <span class="p">}</span></code></pre></div>
+<span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">A</span><span class="p">()</span> <span class="p">{</span> <span class="p">}</span></code></pre></figure>
 
 <p>In this case, “A” <em>will</em> run on a thread pool thread! But it’s important to understand <em>why</em>: <code>Task.Factory.StartNew</code> will first examine the current <code>TaskScheduler</code>. There is none, so it uses the thread pool <code>TaskScheduler</code>. Easy enough for the simple case, but let’s consider a more realistic example:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">void</span> <span class="nf">Form1_Load</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="k">void</span> <span class="nf">Form1_Load</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">Compute</span><span class="p">(</span><span class="m">3</span><span class="p">);</span>
 <span class="p">}</span>
@@ -323,7 +323,7 @@ code {
 <span class="k">private</span> <span class="kt">int</span> <span class="nf">A</span><span class="p">(</span><span class="kt">int</span> <span class="k">value</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">return</span> <span class="k">value</span><span class="p">;</span> <span class="c1">// CPU-intensive work.</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>This is a bit more complex, but it uses a pattern common in older code that used tasks before async was introduced. The <code>Compute</code> method first checks to see if it’s done computing; if it is, then it returns. If there’s more work to do, then it throws <code>A</code> onto the thread pool to do the CPU-intensive calculations. <code>Compute</code> also registers a continuation, so that when <code>A</code> is complete, it will marshal back to the UI thread, update the UI with the results so far, and then continue computing.</p>
 
@@ -337,14 +337,14 @@ code {
 
 <p>Unfortunately, the only overloads for <code>StartNew</code> that take a <code>TaskScheduler</code> also require you to specify the <code>CancellationToken</code> and <code>TaskCreationOptions</code>. This means that in order to use <code>Task.Factory.StartNew</code> to reliably, predictably queue work to the thread pool, you have to use an overload like this:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span><span class="p">.</span><span class="n">Factory</span><span class="p">.</span><span class="n">StartNew</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">.</span><span class="n">None</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">.</span><span class="n">DenyChildAttach</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">.</span><span class="n">Default</span><span class="p">);</span></code></pre></div>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">Task</span><span class="p">.</span><span class="n">Factory</span><span class="p">.</span><span class="n">StartNew</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">.</span><span class="n">None</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">.</span><span class="n">DenyChildAttach</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">.</span><span class="n">Default</span><span class="p">);</span></code></pre></figure>
 
 <p>And really, that’s kind of ridiculous. Just use <code>Task.Run(() =&gt; A());</code>.</p>
 
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -359,11 +359,11 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

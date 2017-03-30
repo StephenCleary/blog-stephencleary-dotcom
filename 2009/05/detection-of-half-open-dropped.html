@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -291,19 +291,19 @@ code {
 <p>There are several correct solutions to the half-open problem. Each one has their pros and cons, depending on the problem domain. This list is in order from best solution to worst solution (IMO):</p>
 
 <ol>
-  <li><strong>Add a keepalive message to the <a href="/2009/04/message-framing.html">application protocol framing</a> (an empty message).</strong> Length-prefixed and delimited systems may send empty messages (e.g., a length prefix of “0 bytes” or a single “end delimiter”).<br />
+  <li><strong>Add a keepalive message to the <a href="/2009/04/message-framing.html">application protocol framing</a> (an empty message).</strong> Length-prefixed and delimited systems may send empty messages (e.g., a length prefix of “0 bytes” or a single “end delimiter”).  
     <ul>
       <li><em>Advantages.</em> The higher-level protocol (the actual messages) are not affected.  </li>
       <li><em>Disadvantages.</em> This requires a change to the software on both sides of the connection, so it may not be an option if the application protocol is already specified and immutable.</li>
     </ul>
   </li>
-  <li><strong>Add a keepalive message to the actual application protocol (a “null” message).</strong> This adds a new message to the application protocol: a “null” message that should just be ignored.<br />
+  <li><strong>Add a keepalive message to the actual application protocol (a “null” message).</strong> This adds a new message to the application protocol: a “null” message that should just be ignored.  
     <ul>
       <li><em>Advantages.</em> This may be used if the application protocol uses a non-uniform message framing system. In this case, the first solution could not be used.  </li>
       <li><em>Disadvantages.</em> (Same as the first solution) This requires a change to the software on both sides of the connection, so it may not be an option if the application protocol is already specified and immutable.</li>
     </ul>
   </li>
-  <li><strong>Explicit timer assuming the worst.</strong> Have a timer and assume that the connection has been dropped when the timer expires (of course, the timer is reset each time data is transferred). This is the way HTTP servers work, if they support persistent connections.<br />
+  <li><strong>Explicit timer assuming the worst.</strong> Have a timer and assume that the connection has been dropped when the timer expires (of course, the timer is reset each time data is transferred). This is the way HTTP servers work, if they support persistent connections.  
     <ul>
       <li><em>Advantages.</em> Does not require changes to the application protocol; in situations where the code on the remote side cannot be changed, the first two solutions cannot be used. Furthermore, this solution causes less network traffic; it is the only solution that does not involve sending out keepalive (i.e., “are you still there?”) packets.  </li>
       <li><em>Disadvantages.</em> Depending on the protocol, this may cause a high number of valid connections to be dropped.</li>
@@ -330,7 +330,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
             <ul class="pager">
                 <li class="previous"><a href="/2009/04/message-framing.html" title="Message Framing">&larr; Previous in TCP/IP .NET Sockets FAQ</a></li>
@@ -349,7 +349,7 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
                 <div class="panel panel-primary">
                     <div class="panel-heading">TCP/IP .NET Sockets FAQ</div>
@@ -374,7 +374,7 @@ code {
                 </div>
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

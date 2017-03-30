@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -237,7 +237,7 @@ code {
 
 <p>The modified <strong>NorthwindEntities</strong> uses <strong>OnContextCreated</strong> to hook into its constructor and set up event handlers to respond whenever an entity is added to or removed from this context. Each event handler uses dynamic duck typing to access an “ObjectContext” property on the entity; if no such property exists, the entity is ignored.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="nn">System.ComponentModel</span><span class="p">;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">using</span> <span class="nn">System.ComponentModel</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Data.Objects.DataClasses</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">Microsoft.CSharp.RuntimeBinder</span><span class="p">;</span>
 
@@ -302,11 +302,11 @@ code {
       <span class="p">}</span>
     <span class="p">}</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>The disadvantage to this approach is that you have to add an <strong>ObjectContext</strong> property to each entity type, like this:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">namespace</span> <span class="nn">WindowsFormsApplication1</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">namespace</span> <span class="nn">WindowsFormsApplication1</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">Order</span>
   <span class="p">{</span>
@@ -318,7 +318,7 @@ code {
     <span class="c1">/// &lt;/summary&gt; </span>
     <span class="k">internal</span> <span class="n">NorthwindEntities</span> <span class="n">ObjectContext</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Alternatively, you could modify the creation template. Either way, it’s a fair amount of work.</p>
 
@@ -328,7 +328,7 @@ code {
 
 <p>This modified <strong>NorthwindEntities</strong> uses the same hooks as the one above, but it uses connected properties instead of dynamic duck typing:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="nn">System.ComponentModel</span><span class="p">;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">using</span> <span class="nn">System.ComponentModel</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Data.Objects.DataClasses</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">Nito.ConnectedProperties</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">Nito.ConnectedProperties.Implicit</span><span class="p">;</span>
@@ -384,7 +384,7 @@ code {
       <span class="k">return</span> <span class="nf">ObjectContext</span><span class="p">(</span><span class="n">entity</span><span class="p">).</span><span class="n">GetOrConnect</span><span class="p">(</span><span class="k">null</span><span class="p">);</span>
     <span class="p">}</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>The disadvantage of this approach is that you do need to take a dependency on the <a href="http://www.nuget.org/List/Packages/ConnectedProperties">Connected Properties</a> library, but I think that’s a reasonable tradeoff.</p>
 
@@ -393,7 +393,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -408,11 +408,11 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

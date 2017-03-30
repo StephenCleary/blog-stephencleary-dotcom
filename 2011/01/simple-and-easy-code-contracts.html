@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -270,17 +270,17 @@ code {
 
 <p>Preconditions require some condition at the beginning of a method. Common examples are requiring a parameter to be non-null, or to require the object to be in a particular state.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="kt">string</span> <span class="nf">GetObjectInfo</span><span class="p">(</span><span class="kt">object</span> <span class="n">obj</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="kt">string</span> <span class="nf">GetObjectInfo</span><span class="p">(</span><span class="kt">object</span> <span class="n">obj</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="n">Contract</span><span class="p">.</span><span class="n">Requires</span><span class="p">(</span><span class="n">obj</span> <span class="p">!=</span> <span class="k">null</span><span class="p">);</span>
   <span class="k">return</span> <span class="n">obj</span><span class="p">.</span><span class="n">ToString</span><span class="p">();</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <h2 id="postconditions-contractensures">Postconditions (Contract.Ensures)</h2>
 
 <p>Postconditions guarantee some condition at the end of a method. It is often used with Contract.Result to guarantee that a particular method won’t return null.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="kt">string</span> <span class="n">name</span><span class="p">;</span> <span class="c1">// never null</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="kt">string</span> <span class="n">name</span><span class="p">;</span> <span class="c1">// never null</span>
 <span class="k">public</span> <span class="kt">string</span> <span class="n">Name</span>
 <span class="p">{</span>
   <span class="k">get</span>
@@ -288,13 +288,13 @@ code {
     <span class="n">Contract</span><span class="p">.</span><span class="n">Ensures</span><span class="p">(</span><span class="n">Contract</span><span class="p">.</span><span class="n">Result</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;()</span> <span class="p">!=</span> <span class="k">null</span><span class="p">);</span>
     <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="n">name</span><span class="p">;</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <h2 id="preconditions-and-postconditions-on-interfaces">Preconditions and Postconditions on Interfaces</h2>
 
 <p>Both preconditions and postconditions are commonly placed on interface members. Code Contracts includes the ContractClassAttribute and ContractClassForAttribute to facilitate this:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="na">[ContractClass(typeof(MyInterfaceContracts))]</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="na">[ContractClass(typeof(MyInterfaceContracts))]</span>
 <span class="k">public</span> <span class="k">interface</span> <span class="n">IMyInterface</span>
 <span class="p">{</span>
   <span class="kt">string</span> <span class="nf">GetObjectInfo</span><span class="p">(</span><span class="kt">object</span> <span class="n">obj</span><span class="p">);</span>
@@ -318,11 +318,11 @@ code {
       <span class="k">return</span> <span class="k">null</span><span class="p">;</span> <span class="c1">// fake implementation does not need to satisfy postcondition</span>
     <span class="p">}</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>With generic interfaces, the same idea holds:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="na">[ContractClass(typeof(MyInterfaceContracts&lt;,&gt;))]</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="na">[ContractClass(typeof(MyInterfaceContracts&lt;,&gt;))]</span>
 <span class="k">public</span> <span class="k">interface</span> <span class="n">IMyInterface</span><span class="p">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">U</span><span class="p">&gt;</span>
 <span class="p">{</span>
   <span class="kt">string</span> <span class="nf">GetObjectInfo</span><span class="p">(</span><span class="kt">object</span> <span class="n">obj</span><span class="p">);</span>
@@ -346,13 +346,13 @@ code {
       <span class="k">return</span> <span class="k">null</span><span class="p">;</span> <span class="c1">// fake implementation does not need to satisfy postcondition</span>
     <span class="p">}</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <h2 id="invariants-contractinvariantmethod-contractinvariant">Invariants (ContractInvariantMethod, Contract.Invariant)</h2>
 
 <p>Object invariants are expressed using the ContractInvariantMethod. If they are enabled by the build, then they are checked at the beginning of each method (except constructors) and at the end of each method (except Dispose and the finalizer).</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">MyClass</span><span class="p">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">U</span><span class="p">&gt;:</span> <span class="k">public</span> <span class="n">IMyInterface</span><span class="p">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">U</span><span class="p">&gt;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">class</span> <span class="nc">MyClass</span><span class="p">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">U</span><span class="p">&gt;:</span> <span class="k">public</span> <span class="n">IMyInterface</span><span class="p">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">U</span><span class="p">&gt;</span>
 <span class="p">{</span>
   <span class="k">private</span> <span class="kt">string</span> <span class="n">name</span><span class="p">;</span>
 
@@ -382,7 +382,7 @@ code {
     <span class="n">Contract</span><span class="p">.</span><span class="n">Requires</span><span class="p">(</span><span class="n">obj</span> <span class="p">!=</span> <span class="k">null</span><span class="p">);</span>
     <span class="k">return</span> <span class="n">obj</span><span class="p">.</span><span class="n">ToString</span><span class="p">();</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <h2 id="assertions-and-assumptions-contractassert-contractassume">Assertions and Assumptions (Contract.Assert, Contract.Assume)</h2>
 
@@ -392,14 +392,14 @@ code {
 
 <p>In the example below, the static checker would complain because <strong>Type.MakeGenericType</strong> has preconditions that are difficult to prove. So we give it a little help by inserting some <strong>Contract.Assume</strong> calls, and the static checker is then pacified.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">static</span> <span class="n">IMyInterface</span><span class="p">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">U</span><span class="p">&gt;</span> <span class="n">CreateUsingReflection</span><span class="p">()</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">static</span> <span class="n">IMyInterface</span><span class="p">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">U</span><span class="p">&gt;</span> <span class="n">CreateUsingReflection</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="kt">var</span> <span class="n">openGenericReturnType</span> <span class="p">=</span> <span class="k">typeof</span><span class="p">(</span><span class="n">MyClass</span><span class="p">&lt;,&gt;);</span>
   <span class="n">Contract</span><span class="p">.</span><span class="n">Assume</span><span class="p">(</span><span class="n">openGenericReturnType</span><span class="p">.</span><span class="n">IsGenericTypeDefinition</span><span class="p">);</span>
   <span class="n">Contract</span><span class="p">.</span><span class="n">Assume</span><span class="p">(</span><span class="n">openGenericReturnType</span><span class="p">.</span><span class="n">GetGenericArguments</span><span class="p">().</span><span class="n">Length</span> <span class="p">==</span> <span class="m">2</span><span class="p">);</span>
   <span class="kt">var</span> <span class="n">constructedGenericReturnType</span> <span class="p">=</span> <span class="n">openGenericReturnType</span><span class="p">.</span><span class="n">MakeGenericType</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">T</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">U</span><span class="p">));</span>
   <span class="k">return</span> <span class="p">(</span><span class="n">IMyInterface</span><span class="p">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">U</span><span class="p">&gt;)</span><span class="n">Activator</span><span class="p">.</span><span class="n">CreateInstance</span><span class="p">(</span><span class="n">constructedGenericReturnType</span><span class="p">);</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <h2 id="for-more-information">For More Information</h2>
 
@@ -420,7 +420,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -435,11 +435,11 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

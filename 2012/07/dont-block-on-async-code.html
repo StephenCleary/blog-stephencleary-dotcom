@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -231,7 +231,7 @@ code {
 
 <p>Consider the example below. A button click will initiate a REST call and display the results in a text box (this sample is for Windows Forms, but the same principles apply to <em>any</em> UI application).</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// My &quot;library&quot; method.</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// My &quot;library&quot; method.</span>
 <span class="k">public</span> <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">JObject</span><span class="p">&gt;</span> <span class="n">GetJsonAsync</span><span class="p">(</span><span class="n">Uri</span> <span class="n">uri</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">client</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">())</span>
@@ -246,7 +246,7 @@ code {
 <span class="p">{</span>
   <span class="kt">var</span> <span class="n">jsonTask</span> <span class="p">=</span> <span class="n">GetJsonAsync</span><span class="p">(...);</span>
   <span class="n">textBox1</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="n">jsonTask</span><span class="p">.</span><span class="n">Result</span><span class="p">;</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>The “GetJson” helper method takes care of making the actual REST call and parsing it as JSON. The button click handler waits for the helper method to complete and then displays its results.</p>
 
@@ -256,7 +256,7 @@ code {
 
 <p>This example is very similar; we have a library method that performs a REST call, only this time it’s used in an ASP.NET context (Web API in this case, but the same principles apply to <em>any</em> ASP.NET application):</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// My &quot;library&quot; method.</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// My &quot;library&quot; method.</span>
 <span class="k">public</span> <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">JObject</span><span class="p">&gt;</span> <span class="n">GetJsonAsync</span><span class="p">(</span><span class="n">Uri</span> <span class="n">uri</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">client</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">())</span>
@@ -274,7 +274,7 @@ code {
     <span class="kt">var</span> <span class="n">jsonTask</span> <span class="p">=</span> <span class="n">GetJsonAsync</span><span class="p">(...);</span>
     <span class="k">return</span> <span class="n">jsonTask</span><span class="p">.</span><span class="n">Result</span><span class="p">.</span><span class="n">ToString</span><span class="p">();</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>This code will also deadlock. For the same reason.</p>
 
@@ -312,20 +312,20 @@ code {
 
 <p>Consider the first best practice. The new “library” method looks like this:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">JObject</span><span class="p">&gt;</span> <span class="n">GetJsonAsync</span><span class="p">(</span><span class="n">Uri</span> <span class="n">uri</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">JObject</span><span class="p">&gt;</span> <span class="n">GetJsonAsync</span><span class="p">(</span><span class="n">Uri</span> <span class="n">uri</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">client</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">())</span>
   <span class="p">{</span>
     <span class="kt">var</span> <span class="n">jsonString</span> <span class="p">=</span> <span class="k">await</span> <span class="n">client</span><span class="p">.</span><span class="n">GetStringAsync</span><span class="p">(</span><span class="n">uri</span><span class="p">).</span><span class="n">ConfigureAwait</span><span class="p">(</span><span class="k">false</span><span class="p">);</span>
     <span class="k">return</span> <span class="n">JObject</span><span class="p">.</span><span class="n">Parse</span><span class="p">(</span><span class="n">jsonString</span><span class="p">);</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>This changes the continuation behavior of GetJsonAsync so that it does <em>not</em> resume on the context. Instead, GetJsonAsync will resume on a thread pool thread. This enables GetJsonAsync to complete the Task it returned without having to re-enter the context.</p>
 
 <p>Consider the second best practice. The new “top-level” methods look like this:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">Button1_Click</span><span class="p">(...)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">Button1_Click</span><span class="p">(...)</span>
 <span class="p">{</span>
   <span class="kt">var</span> <span class="n">json</span> <span class="p">=</span> <span class="k">await</span> <span class="n">GetJsonAsync</span><span class="p">(...);</span>
   <span class="n">textBox1</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="n">json</span><span class="p">;</span>
@@ -338,7 +338,7 @@ code {
     <span class="kt">var</span> <span class="n">json</span> <span class="p">=</span> <span class="k">await</span> <span class="n">GetJsonAsync</span><span class="p">(...);</span>
     <span class="k">return</span> <span class="n">json</span><span class="p">.</span><span class="n">ToString</span><span class="p">();</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>This changes the blocking behavior of the top-level methods so that the context is never actually blocked; all “waits” are “asynchronous waits”.</p>
 
@@ -449,7 +449,7 @@ Boring list that I'm no longer interested enough in to maintain.
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -464,11 +464,11 @@ Boring list that I'm no longer interested enough in to maintain.
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

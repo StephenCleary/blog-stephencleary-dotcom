@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -248,7 +248,7 @@ code {
 
 <p>This example uses a “bool disposed” flag, set <em>before</em> disposing the unmanaged resource:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Do not run these tests from a Debug build or under the debugger. A standalone release build is required.</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Do not run these tests from a Debug build or under the debugger. A standalone release build is required.</span>
 <span class="k">private</span> <span class="kt">bool</span> <span class="n">disposed</span><span class="p">;</span>
  
 <span class="p">~</span><span class="n">Test</span><span class="p">()</span>
@@ -272,13 +272,13 @@ code {
  
         <span class="k">this</span><span class="p">.</span><span class="n">CloseHandle</span><span class="p">();</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <h3 id="example-2-not-requiring-gckeepalivethis">Example 2 not requiring GC.KeepAlive(this)</h3>
 
 <p>This example uses a “bool disposed” flag, set <em>after</em> disposing the unmanaged resource:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Do not run these tests from a Debug build or under the debugger. A standalone release build is required.</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Do not run these tests from a Debug build or under the debugger. A standalone release build is required.</span>
 <span class="k">private</span> <span class="kt">bool</span> <span class="n">disposed</span><span class="p">;</span>
  
 <span class="p">~</span><span class="n">Test</span><span class="p">()</span>
@@ -302,13 +302,13 @@ code {
         <span class="c1">// This is the soonest point that a GC can occur calling this object&#39;s finalizer</span>
         <span class="c1">//  and this.disposed has already been set to true.</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <h3 id="example-3-not-requiring-gckeepalivethis">Example 3 not requiring GC.KeepAlive(this)</h3>
 
 <p>This example uses an “invalid handle” flag:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Do not run these tests from a Debug build or under the debugger. A standalone release build is required.</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Do not run these tests from a Debug build or under the debugger. A standalone release build is required.</span>
 <span class="k">private</span> <span class="n">IntPtr</span> <span class="n">handle</span><span class="p">;</span>
  
 <span class="p">~</span><span class="n">Test</span><span class="p">()</span>
@@ -332,13 +332,13 @@ code {
         <span class="c1">// This is the soonest point that a GC can occur calling this object&#39;s finalizer</span>
         <span class="c1">//  and this.handle has already been set to IntPtr.Zero.</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <h3 id="example-4---requiring-gckeepalivethis">Example 4 - requiring GC.KeepAlive(this)</h3>
 
 <p>It is possible to create a more pathological case where GC.KeepAlive(this) is required; the code below requires GC.KeepAlive because it holds its actual handle value inside of another class:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Do not run these tests from a Debug build or under the debugger. A standalone release build is required.</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Do not run these tests from a Debug build or under the debugger. A standalone release build is required.</span>
 <span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Collections.Generic</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading</span><span class="p">;</span>
@@ -455,7 +455,7 @@ code {
         <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Thread &quot;</span> <span class="p">+</span> <span class="n">Thread</span><span class="p">.</span><span class="n">CurrentThread</span><span class="p">.</span><span class="n">ManagedThreadId</span> <span class="p">+</span>
             <span class="s">&quot;: Returning from Main&quot;</span><span class="p">);</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <h3 id="output-with-2-commented-out-as-written-above">Output with [2] commented out (as written above):</h3>
 
@@ -506,7 +506,7 @@ Thread 2: CloseHandle starting
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
             <ul class="pager">
                 <li class="previous"><a href="/2009/08/q-can-gcsuppressfinalizethis-be-called.html" title="Q&amp;A: Can GC.SuppressFinalize(this) be called at any time?">&larr; Previous in IDisposable and Finalizers</a></li>
@@ -525,7 +525,7 @@ Thread 2: CloseHandle starting
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
                 <div class="panel panel-primary">
                     <div class="panel-heading">IDisposable and Finalizers</div>
@@ -545,7 +545,7 @@ Thread 2: CloseHandle starting
                 </div>
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

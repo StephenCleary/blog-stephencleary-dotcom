@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -229,7 +229,7 @@ code {
 
 <h2 id="asyncstate">AsyncState</h2>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="kt">object</span> <span class="n">AsyncState</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="c1">// implements IAsyncResult.AsyncState</span></code></pre></div>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="kt">object</span> <span class="n">AsyncState</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="c1">// implements IAsyncResult.AsyncState</span></code></pre></figure>
 
 <p>The <code>AsyncState</code> property implements <code>IAsyncResult.AsyncState</code>. This member was useful back in the day, but not so much in modern applications.</p>
 
@@ -243,18 +243,18 @@ code {
 
 <p>In modern code, the <code>Task.AsyncState</code> member is mainly used for <a href="http://msdn.microsoft.com/en-us/library/hh873178(v=vs.110).aspx#TapToApm">interoperation from <code>Task</code> to APM</a>. This is only necessary if you’re writing <code>async</code>/<code>await</code> code that must exist within an older asynchronous framework (a rare situation these days). In that scenario, you’re implementing the <code>Begin*</code>/<code>End*</code> methods and using a <code>Task</code> instance as your implementation of <code>IAsyncResult</code>. The standard approach is to create a <code>Task&lt;T&gt;</code> using <code>TaskCompletionSource&lt;T&gt;</code>, and you pass the <code>state</code> parameter into the <code>TaskCompletionSource&lt;T&gt;</code> constructor:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">static</span> <span class="n">IAsyncResult</span> <span class="nf">BeginOperation</span><span class="p">(</span><span class="n">AsyncCallback</span> <span class="n">callback</span><span class="p">,</span> <span class="kt">object</span> <span class="n">state</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">static</span> <span class="n">IAsyncResult</span> <span class="nf">BeginOperation</span><span class="p">(</span><span class="n">AsyncCallback</span> <span class="n">callback</span><span class="p">,</span> <span class="kt">object</span> <span class="n">state</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">tcs</span> <span class="p">=</span> <span class="k">new</span> <span class="n">TaskCompletionSource</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">state</span><span class="p">);</span>
     <span class="p">...</span> <span class="c1">// start operation, and complete &quot;tcs&quot; when operation completes</span>
     <span class="k">return</span> <span class="n">tcs</span><span class="p">.</span><span class="n">Task</span><span class="p">;</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>There really isn’t a need to read <code>AsyncState</code> in modern code; it’s mainly important just because it implements <code>IAsyncResult.AsyncState</code>.</p>
 
 <h2 id="creationoptions">CreationOptions</h2>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">TaskCreationOptions</span> <span class="n">CreationOptions</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></div>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">TaskCreationOptions</span> <span class="n">CreationOptions</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></figure>
 
 <p><code>CreationOptions</code> merely allows you to read the task creation options that were used to create this task. You can specify these options when you create a task using <a href="/2014/05/a-tour-of-task-part-1-constructors.html">the task constructor</a>, <code>Task.Factory.StartNew</code>, or <code>TaskCompletionSource&lt;T&gt;</code>. I’ll cover the meanings of these options later, when we cover <code>Task.Factory.StartNew</code>.</p>
 
@@ -266,7 +266,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
             <ul class="pager">
                 <li class="previous"><a href="/2014/05/a-tour-of-task-part-1-constructors.html" title="A Tour of Task, Part 1: Constructors">&larr; Previous in A Tour of Task</a></li>
@@ -285,7 +285,7 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
                 <div class="panel panel-primary">
                     <div class="panel-heading">A Tour of Task</div>
@@ -307,7 +307,7 @@ code {
                 </div>
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

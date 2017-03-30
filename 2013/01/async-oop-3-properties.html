@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -245,7 +245,7 @@ code {
 
 <p>It <em>is</em> possible to have a property return a <code>Task&lt;T&gt;</code> just by returning the result of an <code>async</code> method:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span>
 <span class="p">{</span>
     <span class="k">private</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">GetMyProperty</span><span class="p">()</span>
     <span class="p">{</span>
@@ -265,11 +265,11 @@ code {
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">t</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MyClass</span><span class="p">();</span>
     <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">t</span><span class="p">.</span><span class="n">MyProperty</span><span class="p">;</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>However, I do not recommend this approach. If every access to a property is going to kick off a new asynchronous operation, then that “property” should really be a <em>method</em>:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span>
 <span class="p">{</span>
     <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">GetMyProperty</span><span class="p">()</span>
     <span class="p">{</span>
@@ -284,7 +284,7 @@ code {
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">t</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MyClass</span><span class="p">();</span>
     <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">t</span><span class="p">.</span><span class="n">GetMyProperty</span><span class="p">();</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Personally, I think the asynchronous method makes it clearer that a new asynchronous operation is initiated every time.</p>
 
@@ -294,7 +294,7 @@ code {
 
 <p>The easiest solution for this is to use <code>AsyncLazy&lt;T&gt;</code>, <a href="http://nitoasyncex.codeplex.com/wikipage?title=AsyncLazy">available in the AsyncEx library</a>:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span>
 <span class="p">{</span>
     <span class="k">public</span> <span class="nf">MyClass</span><span class="p">()</span>
     <span class="p">{</span>
@@ -314,7 +314,7 @@ code {
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">t</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MyClass</span><span class="p">();</span>
     <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">t</span><span class="p">.</span><span class="n">MyProperty</span><span class="p">;</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>In this case, I find the property syntax acceptable, since there’s only one actual asynchronous operation and every method waiting on it will wait on the same operation.</p>
 
@@ -324,7 +324,7 @@ code {
 
 <p>For this to work, the data-bound value must be initially set to some default or “unknown” value, and the type can implement <code>INotifyPropertyChanged</code> to let the data binding know when the asynchronous value has been determined.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span> <span class="p">:</span> <span class="n">INotifyPropertyChanged</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span> <span class="p">:</span> <span class="n">INotifyPropertyChanged</span>
 <span class="p">{</span>
     <span class="k">public</span> <span class="k">event</span> <span class="n">PropertyChangedEventHandler</span> <span class="n">PropertyChanged</span><span class="p">;</span>
     <span class="k">private</span> <span class="k">void</span> <span class="nf">OnPropertyChanged</span><span class="p">([</span><span class="n">CallerMemberName</span><span class="p">]</span> <span class="kt">string</span> <span class="n">propertyName</span> <span class="p">=</span> <span class="k">null</span><span class="p">)</span>
@@ -349,13 +349,13 @@ code {
         <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
         <span class="n">MyProperty</span> <span class="p">=</span> <span class="m">13</span><span class="p">;</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>In the example code above, I’m assuming that the code constructing a <code>MyClass</code> will call its <code>InitializeAsync</code> method. Alternatively, if this instance is contained in an enclosing data bound instance, you could wrap the construction and <code>InitializeAsync</code> into an asynchronous factory method <a href="/2013/01/async-oop-2-constructors.html">as we discussed last time</a>.</p>
 
 <p>If your property value is simply the result of a <code>Task&lt;TResult&gt;</code>, then you can use the <a href="http://nitoasyncex.codeplex.com/wikipage?title=NotifyTaskCompletion">NotifyTaskCompletion type in the AsyncEx library</a> to make this even easier:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span> <span class="p">:</span> <span class="n">INotifyPropertyChanged</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span> <span class="p">:</span> <span class="n">INotifyPropertyChanged</span>
 <span class="p">{</span>
     <span class="k">public</span> <span class="n">INotifyTaskCompletion</span><span class="p">&lt;</span><span class="kt">int?</span><span class="p">&gt;</span> <span class="n">MyProperty</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
 
@@ -369,7 +369,7 @@ code {
         <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
         <span class="k">return</span> <span class="m">13</span><span class="p">;</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>In this case, you can databind to <code>MyProperty.Result</code>, which will be initialized to the default value (<code>null</code>). When the <code>GetValueAsync</code> task completes, <code>MyProperty.Result</code> will be updated to the result value (<code>13</code>). <code>NotifyTaskCompletion</code> implements <code>INotifyPropertyChanged</code>, so this change will be picked up automatically by the data binding.</p>
 
@@ -381,7 +381,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
             <ul class="pager">
                 <li class="previous"><a href="/2013/01/async-oop-2-constructors.html" title="Async OOP 2: Constructors">&larr; Previous in Async OOP</a></li>
@@ -400,7 +400,7 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
                 <div class="panel panel-primary">
                     <div class="panel-heading">Async OOP</div>
@@ -419,7 +419,7 @@ code {
                 </div>
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

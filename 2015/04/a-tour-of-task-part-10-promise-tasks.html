@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -231,11 +231,11 @@ code {
 
 <p><code>Task.Delay</code> is the asynchronous equivalent of <code>Thread.Sleep</code>.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span> <span class="nf">Delay</span><span class="p">(</span><span class="kt">int</span><span class="p">);</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">Task</span> <span class="nf">Delay</span><span class="p">(</span><span class="kt">int</span><span class="p">);</span>
 <span class="n">Task</span> <span class="nf">Delay</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">);</span>
 
 <span class="n">Task</span> <span class="nf">Delay</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span>
-<span class="n">Task</span> <span class="nf">Delay</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span></code></pre></div>
+<span class="n">Task</span> <span class="nf">Delay</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span></code></pre></figure>
 
 <p>The <code>int</code> argument is treated as a number of milliseconds; I usually prefer the <code>TimeSpan</code> versions since they are more explicit. Using <code>int</code> millisecond values for timeouts is a holdover from an older API design; many Win32-level APIs only take timeout values as integer milliseconds. So, it makes sense to expose an <code>int</code> parameter for lower-level waits like <code>WaitHandle.WaitOne</code> or even <code>Task.Wait</code>. However, <code>Task.Delay</code> isn’t a thin wrapper over any Win32 API; the <code>int</code> parameter in this case is just provided for tradition.</p>
 
@@ -249,7 +249,7 @@ code {
 
 <p><code>Task.Yield</code> has several interesting aspects. To begin with, it doesn’t actually return a <code>Task</code>, so it’s not really a Promise Task kind of method:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">YieldAwaitable</span> <span class="nf">Yield</span><span class="p">();</span></code></pre></div>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">YieldAwaitable</span> <span class="nf">Yield</span><span class="p">();</span></code></pre></figure>
 
 <p>But it does kind of <em>act</em> kind of like a Promise Task. The <code>YieldAwaitable</code> type interacts with the <code>async</code> compiler transformation to <em>force</em> an asynchronous point within a method. By default, if <code>await</code> is used on an operation that has already completed, then the execution of the <code>async</code> method continues synchronously. <code>YieldAwaitable</code> throws a wrench into this by always claiming it is <em>not</em> completed, and then scheduling its continuations immediately. This causes <code>await</code> to schedule the rest of the <code>async</code> method for immediate execution and return.</p>
 
@@ -257,7 +257,7 @@ code {
 
 <p>However, I’ve never needed <code>Yield</code> in production code. There is one use case where developers sometimes (incorrectly) attempt to use <code>Yield</code>: to try to “refresh” the UI.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Bad code, do not use!!</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Bad code, do not use!!</span>
 <span class="k">async</span> <span class="n">Task</span> <span class="nf">LongRunningCpuBoundWorkAsync</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="c1">// This method is called directly from the UI, and</span>
@@ -269,13 +269,13 @@ code {
     <span class="p">...</span> <span class="c1">// CPU-bound work.</span>
     <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Yield</span><span class="p">();</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>However, this approach will not work. The reason is that UI message loops are <em>priority</em> queues, and any scheduled continuations have a much higher priority than “repaint the window”. So, the <code>Yield</code> schedules the continuation and returns to the message loop, and the message loop immediately executes that continuation without processing any of its <code>WM_PAINT</code> messages.</p>
 
 <p>Some developers have discovered that using <code>Task.Delay</code> instead of <code>Task.Yield</code> will allow message processing (messages are processed until the timer fires). However, a far cleaner solution is to do the CPU-bound work on a background thread:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">void</span> <span class="nf">LongRunningCpuBoundWork</span><span class="p">()</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">void</span> <span class="nf">LongRunningCpuBoundWork</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">!=</span> <span class="m">1000000</span><span class="p">;</span> <span class="p">++</span><span class="n">i</span><span class="p">)</span>
   <span class="p">{</span>
@@ -284,7 +284,7 @@ code {
 <span class="p">}</span>
 
 <span class="c1">// Called as:</span>
-<span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">LongRunningCpuBoundWork</span><span class="p">());</span></code></pre></div>
+<span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">LongRunningCpuBoundWork</span><span class="p">());</span></code></pre></figure>
 
 <p>In conclusion, <code>Task.Yield</code> is occasionally useful when unit testing, but much less so for production code.</p>
 
@@ -292,13 +292,13 @@ code {
 
 <p><code>Task.FromResult</code> will create a <em>completed</em> task with the specified value:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">FromResult</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">TResult</span><span class="p">);</span></code></pre></div>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">FromResult</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">TResult</span><span class="p">);</span></code></pre></figure>
 
 <p>It might seem silly at first to return a task that is already completed, but this is actually useful in several scenarios.</p>
 
 <p>For instance, an interface method may have an asynchronous (task-returning) signature, and if an implementation is synchronous, then it can use <code>Task.FromResult</code> to wrap up its (synchronous) result within a task. This is particularly useful when creating stubs for unit testing, but is also occasionally useful in production code:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">interface</span> <span class="n">IMyInterface</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">interface</span> <span class="n">IMyInterface</span>
 <span class="p">{</span>
   <span class="c1">// Implementations *might* need to be asynchronous,</span>
   <span class="c1">//  so we define an asynchronous API.</span>
@@ -313,13 +313,13 @@ code {
     <span class="kt">int</span> <span class="n">result</span> <span class="p">=</span> <span class="m">42</span><span class="p">;</span> <span class="c1">// Do synchronous work.</span>
     <span class="k">return</span> <span class="n">Task</span><span class="p">.</span><span class="n">FromResult</span><span class="p">(</span><span class="n">result</span><span class="p">);</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Be careful, though, that your synchronous implementation is not <em>blocking</em>. Implementing an asynchronous API with a blocking method is surprising behavior.</p>
 
 <p>Another use case of <code>Task.FromResult</code> is when doing some form of caching. In this case, you have some data that is synchronously retrieved (from the cache), and need to return it directly. In the case of a cache miss, then a true asynchronous operation is performed:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">GetValueAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">key</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">GetValueAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">key</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="kt">string</span> <span class="n">result</span><span class="p">;</span>
   <span class="k">if</span> <span class="p">(</span><span class="n">cache</span><span class="p">.</span><span class="n">TryGetValue</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="k">out</span> <span class="n">result</span><span class="p">))</span>
@@ -332,7 +332,7 @@ code {
   <span class="kt">string</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="p">...;</span>
   <span class="n">cache</span><span class="p">.</span><span class="n">TrySetValue</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
   <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <div class="alert alert-info">
   <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
@@ -342,7 +342,7 @@ code {
 
 <p>As of this writing, one final common use of <code>Task.FromResult</code> is just as a completed task. For this, the expressions <code>Task.FromResult(0)</code> or <code>Task.FromResult&lt;object&gt;(null)</code> are commonly used. This use case is similar to the synchronous implementation of an asynchronous API:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">interface</span> <span class="n">IPlugin</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">interface</span> <span class="n">IPlugin</span>
 <span class="p">{</span>
   <span class="c1">// Permit each plugin to initialize asynchronously.</span>
   <span class="n">Task</span> <span class="nf">InitializeAsync</span><span class="p">();</span>
@@ -355,7 +355,7 @@ code {
     <span class="c1">// The async equivalent of a noop.</span>
     <span class="k">return</span> <span class="n">Task</span><span class="p">.</span><span class="n">FromResult</span><span class="p">&lt;</span><span class="kt">object</span><span class="p">&gt;(</span><span class="k">null</span><span class="p">);</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <div class="alert alert-info">
   <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
@@ -367,7 +367,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
             <ul class="pager">
                 <li class="previous"><a href="/2015/03/a-tour-of-task-part-9-delegate-tasks.html" title="A Tour of Task, Part 9: Delegate Tasks">&larr; Previous in A Tour of Task</a></li>
@@ -385,7 +385,7 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
                 <div class="panel panel-primary">
                     <div class="panel-heading">A Tour of Task</div>
@@ -407,7 +407,7 @@ code {
                 </div>
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

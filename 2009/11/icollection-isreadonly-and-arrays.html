@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -242,7 +242,7 @@ code {
 
 <p>The built-in array type (which only allows one type of update) honors this interpretation by returning <code>false</code> for <code>IsReadOnly</code>:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="na">[TestMethod]</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="na">[TestMethod]</span>
 <span class="k">public</span> <span class="k">void</span> <span class="nf">Array_IsNotReadOnly</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="kt">int</span><span class="p">[]</span> <span class="n">array</span> <span class="p">=</span> <span class="k">new</span><span class="p">[]</span> <span class="p">{</span> <span class="m">1</span><span class="p">,</span> <span class="m">2</span><span class="p">,</span> <span class="m">3</span><span class="p">,</span> <span class="m">4</span> <span class="p">};</span>
@@ -254,7 +254,7 @@ code {
     <span class="n">Assert</span><span class="p">.</span><span class="n">AreEqual</span><span class="p">(</span><span class="s">&quot;Int32[]&quot;</span><span class="p">,</span> <span class="n">arrayAsIList</span><span class="p">.</span><span class="n">GetType</span><span class="p">().</span><span class="n">Name</span><span class="p">);</span>
     <span class="kt">bool</span> <span class="n">arrayAsIListIsReadOnly</span> <span class="p">=</span> <span class="n">arrayAsIList</span><span class="p">.</span><span class="n">IsReadOnly</span><span class="p">;</span>
     <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="n">arrayAsIListIsReadOnly</span><span class="p">);</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <h2 id="the-modern-interpretation">The Modern Interpretation</h2>
 
@@ -262,7 +262,7 @@ code {
 
 <p>Interestingly, the built-in array type honors this interpretation as well. It returns true for <code>IsReadOnly</code> (but only if accessed through a generic interface):</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="na">[TestMethod]</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="na">[TestMethod]</span>
 <span class="k">public</span> <span class="k">void</span> <span class="nf">Array_IsReadOnly</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="kt">int</span><span class="p">[]</span> <span class="n">array</span> <span class="p">=</span> <span class="k">new</span><span class="p">[]</span> <span class="p">{</span> <span class="m">1</span><span class="p">,</span> <span class="m">2</span><span class="p">,</span> <span class="m">3</span><span class="p">,</span> <span class="m">4</span> <span class="p">};</span>
@@ -271,7 +271,7 @@ code {
     <span class="n">Assert</span><span class="p">.</span><span class="n">AreEqual</span><span class="p">(</span><span class="s">&quot;Int32[]&quot;</span><span class="p">,</span> <span class="n">arrayAsIListOfT</span><span class="p">.</span><span class="n">GetType</span><span class="p">().</span><span class="n">Name</span><span class="p">);</span>
     <span class="kt">bool</span> <span class="n">arrayAsIListOfTIsReadOnly</span> <span class="p">=</span> <span class="n">arrayAsIListOfT</span><span class="p">.</span><span class="n">IsReadOnly</span><span class="p">;</span>
     <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">arrayAsIListOfTIsReadOnly</span><span class="p">);</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Presumably, any new list types that implement <code>IList</code> as well as <code>IList&lt;T&gt;</code> may need to return different values for <code>IList.IsReadOnly</code> and <code>IList&lt;T&gt;.IsReadOnly</code>. This is confusing, to say the least.</p>
 
@@ -295,7 +295,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -310,11 +310,11 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

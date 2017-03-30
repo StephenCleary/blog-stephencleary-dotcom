@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -231,7 +231,7 @@ code {
 
 <p>As it turns out, decoding (and encoding) are quite simple in Rx. The code below should be clear to anyone who’s been following the Rx team blog posts:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Linq</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Text</span><span class="p">;</span>
 
@@ -341,11 +341,11 @@ code {
         <span class="p">});</span>
     <span class="p">});</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>This class defines two operators (Encode and Decode) which can be used like this:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="na">[TestClass]</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="na">[TestClass]</span>
 <span class="k">public</span> <span class="k">class</span> <span class="nc">EncodingObservablesUnitTests</span>
 <span class="p">{</span>
 <span class="na">  [TestMethod]</span>
@@ -404,7 +404,7 @@ code {
 
     <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="n">result</span><span class="p">.</span><span class="n">SequenceEqual</span><span class="p">(</span><span class="k">new</span><span class="p">[]</span> <span class="p">{</span> <span class="err">&#39;\</span><span class="n">u0020</span><span class="err">&#39;</span><span class="p">,</span> <span class="err">&#39;\</span><span class="n">u0023</span><span class="err">&#39;</span><span class="p">,</span> <span class="err">&#39;\</span><span class="n">u2623</span><span class="err">&#39;</span> <span class="p">}));</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Note that I’ve defined the Encode and Decode operators as working on “chunks” of data. As such, they don’t really “fit in” with most LINQ and Rx operators, which work on individual data elements. However, this approach makes sense any time there’s buffered reading going on. The Encode and Decode operators here will work fine with the Rx team’s example AsyncRead operator.</p>
 
@@ -413,7 +413,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -428,11 +428,11 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

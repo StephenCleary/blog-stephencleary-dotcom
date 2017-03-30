@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -231,7 +231,7 @@ code {
 
 <p>Note that this is not a particularly well-designed class; I wrote it quickly. It’s posted here as an example of moderately difficult interop; specifically, how to read a multi-string value, where “multi-string” means a single buffer that is double-null-terminated and may contain embedded (single) nulls.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">IniReader</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">IniReader</span>
 <span class="p">{</span>
 <span class="na">    [DllImport(&quot;kernel32.dll&quot;, EntryPoint=&quot;GetPrivateProfileStringW&quot;, CharSet=CharSet.Unicode, ExactSpelling=true, SetLastError=true), SuppressUnmanagedCodeSecurity]</span>
     <span class="k">private</span> <span class="k">static</span> <span class="k">extern</span> <span class="kt">int</span> <span class="nf">GetPrivateProfileString</span><span class="p">(</span><span class="kt">string</span> <span class="n">lpAppName</span><span class="p">,</span> <span class="kt">string</span> <span class="n">lpKeyName</span><span class="p">,</span> <span class="kt">string</span> <span class="n">lpDefault</span><span class="p">,</span>
@@ -291,11 +291,11 @@ code {
     <span class="p">{</span>
         <span class="k">return</span> <span class="nf">GetPrivateProfileString</span><span class="p">(</span><span class="n">fileName</span><span class="p">,</span> <span class="n">sectionName</span><span class="p">,</span> <span class="n">keyName</span><span class="p">);</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -310,11 +310,11 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

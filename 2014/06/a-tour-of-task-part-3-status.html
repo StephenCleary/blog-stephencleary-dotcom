@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -227,7 +227,7 @@ code {
   <article>
   <h2 id="status">Status</h2>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">TaskStatus</span> <span class="n">Status</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></div>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">TaskStatus</span> <span class="n">Status</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></figure>
 
 <p>If you view a <code>Task</code> as a state machine, then the <code>Status</code> property represents the current state. Different types of tasks take different paths through the state machine.</p>
 
@@ -287,9 +287,9 @@ code {
 
 <p><code>Task</code> has a few convenience properties for determining the final state of a task:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="kt">bool</span> <span class="n">IsCompleted</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="kt">bool</span> <span class="n">IsCompleted</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
 <span class="kt">bool</span> <span class="n">IsCanceled</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
-<span class="kt">bool</span> <span class="n">IsFaulted</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></div>
+<span class="kt">bool</span> <span class="n">IsFaulted</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></figure>
 
 <p><code>IsCanceled</code> and <code>IsFaulted</code> map directly to the <code>Canceled</code> and <code>Faulted</code> states, but <code>IsCompleted</code> is tricky. <code>IsCompleted</code> does not map to <code>RanToCompletion</code>; rather, it is <code>true</code> if the task is in <em>any</em> final state. In other words:</p>
 
@@ -340,7 +340,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
             <ul class="pager">
                 <li class="previous"><a href="/2014/05/a-tour-of-task-part-2-asyncstate-and-creationoptions.html" title="A Tour of Task, Part 2: AsyncState and CreationOptions">&larr; Previous in A Tour of Task</a></li>
@@ -359,7 +359,7 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
                 <div class="panel panel-primary">
                     <div class="panel-heading">A Tour of Task</div>
@@ -381,7 +381,7 @@ code {
                 </div>
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

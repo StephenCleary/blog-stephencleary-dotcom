@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -231,19 +231,19 @@ code {
 
 <p>There are five overloads of <code>Wait</code>:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">void</span> <span class="nf">Wait</span><span class="p">();</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">void</span> <span class="nf">Wait</span><span class="p">();</span>
 <span class="k">void</span> <span class="nf">Wait</span><span class="p">(</span><span class="n">CancellationToken</span><span class="p">);</span>
 <span class="kt">bool</span> <span class="nf">Wait</span><span class="p">(</span><span class="kt">int</span><span class="p">);</span>
 <span class="kt">bool</span> <span class="nf">Wait</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">);</span>
-<span class="kt">bool</span> <span class="nf">Wait</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span></code></pre></div>
+<span class="kt">bool</span> <span class="nf">Wait</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span></code></pre></figure>
 
 <p>These nicely simplify down to a single <em>logical</em> method:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">void</span> <span class="nf">Wait</span><span class="p">()</span> <span class="p">{</span> <span class="n">Wait</span><span class="p">(-</span><span class="m">1</span><span class="p">);</span> <span class="p">}</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">void</span> <span class="nf">Wait</span><span class="p">()</span> <span class="p">{</span> <span class="n">Wait</span><span class="p">(-</span><span class="m">1</span><span class="p">);</span> <span class="p">}</span>
 <span class="k">void</span> <span class="nf">Wait</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">token</span><span class="p">)</span> <span class="p">{</span> <span class="n">Wait</span><span class="p">(-</span><span class="m">1</span><span class="p">,</span> <span class="n">token</span><span class="p">);</span> <span class="p">}</span>
 <span class="kt">bool</span> <span class="nf">Wait</span><span class="p">(</span><span class="kt">int</span> <span class="n">timeout</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">Wait</span><span class="p">(</span><span class="n">timeout</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">.</span><span class="n">None</span><span class="p">);</span> <span class="p">}</span>
 <span class="kt">bool</span> <span class="nf">Wait</span><span class="p">(</span><span class="n">TimeSpan</span> <span class="n">timeout</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">Wait</span><span class="p">(</span><span class="n">timeout</span><span class="p">.</span><span class="n">TotalMilliseconds</span><span class="p">);</span> <span class="p">}</span>
-<span class="kt">bool</span> <span class="nf">Wait</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span></code></pre></div>
+<span class="kt">bool</span> <span class="nf">Wait</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span></code></pre></figure>
 
 <p><code>Wait</code> is rather simple: it will block the calling thread until the task completes, a timeout occurs, or the wait is cancelled. If the wait is cancelled, then <code>Wait</code> raises an <code>OperationCanceledException</code>. If a timeout occurs, then <code>Wait</code> returns <code>false</code>. If the task completes in a failed or canceled state, then <code>Wait</code> wraps any exceptions into an <code>AggregateException</code>. Note that a canceled <em>task</em> will raise an <code>OperationCanceledException</code> wrapped in an <code>AggregateException</code>, whereas a canceled <em>wait</em> will raise an unwrapped <code>OperationCanceledException</code>.</p>
 
@@ -259,19 +259,19 @@ code {
 
 <p>The overloads for <code>WaitAll</code> are very similar to the overloads of <code>Wait</code>:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">static</span> <span class="k">void</span> <span class="nf">WaitAll</span><span class="p">(</span><span class="k">params</span> <span class="n">Task</span><span class="p">[]);</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">static</span> <span class="k">void</span> <span class="nf">WaitAll</span><span class="p">(</span><span class="k">params</span> <span class="n">Task</span><span class="p">[]);</span>
 <span class="k">static</span> <span class="k">void</span> <span class="nf">WaitAll</span><span class="p">(</span><span class="n">Task</span><span class="p">[],</span> <span class="n">CancellationToken</span><span class="p">);</span>
 <span class="k">static</span> <span class="kt">bool</span> <span class="nf">WaitAll</span><span class="p">(</span><span class="n">Task</span><span class="p">[],</span> <span class="kt">int</span><span class="p">);</span>
 <span class="k">static</span> <span class="kt">bool</span> <span class="nf">WaitAll</span><span class="p">(</span><span class="n">Task</span><span class="p">[],</span> <span class="n">TimeSpan</span><span class="p">);</span>
-<span class="k">static</span> <span class="kt">bool</span> <span class="nf">WaitAll</span><span class="p">(</span><span class="n">Task</span><span class="p">[],</span> <span class="kt">int</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span></code></pre></div>
+<span class="k">static</span> <span class="kt">bool</span> <span class="nf">WaitAll</span><span class="p">(</span><span class="n">Task</span><span class="p">[],</span> <span class="kt">int</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span></code></pre></figure>
 
 <p>Again, these nicely simplify down to a single logical method:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">static</span> <span class="k">void</span> <span class="nf">WaitAll</span><span class="p">(</span><span class="k">params</span> <span class="n">Task</span><span class="p">[]</span> <span class="n">tasks</span><span class="p">)</span> <span class="p">{</span> <span class="n">WaitAll</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="p">-</span><span class="m">1</span><span class="p">);</span> <span class="p">}</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">static</span> <span class="k">void</span> <span class="nf">WaitAll</span><span class="p">(</span><span class="k">params</span> <span class="n">Task</span><span class="p">[]</span> <span class="n">tasks</span><span class="p">)</span> <span class="p">{</span> <span class="n">WaitAll</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="p">-</span><span class="m">1</span><span class="p">);</span> <span class="p">}</span>
 <span class="k">static</span> <span class="k">void</span> <span class="nf">WaitAll</span><span class="p">(</span><span class="n">Task</span><span class="p">[]</span> <span class="n">tasks</span><span class="p">,</span> <span class="n">CancellationToken</span> <span class="n">token</span><span class="p">)</span> <span class="p">{</span> <span class="n">WaitAll</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="p">-</span><span class="m">1</span><span class="p">,</span> <span class="n">token</span><span class="p">);</span> <span class="p">}</span>
 <span class="k">static</span> <span class="kt">bool</span> <span class="nf">WaitAll</span><span class="p">(</span><span class="n">Task</span><span class="p">[]</span> <span class="n">tasks</span><span class="p">,</span> <span class="kt">int</span> <span class="n">timeout</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">WaitAll</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="n">timeout</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">.</span><span class="n">None</span><span class="p">);</span> <span class="p">}</span>
 <span class="k">static</span> <span class="kt">bool</span> <span class="nf">WaitAll</span><span class="p">(</span><span class="n">Task</span><span class="p">[]</span> <span class="n">tasks</span><span class="p">,</span> <span class="n">TimeSpan</span> <span class="n">timeout</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">WaitAll</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="n">timeout</span><span class="p">.</span><span class="n">TotalMilliseconds</span><span class="p">);</span> <span class="p">}</span>
-<span class="k">static</span> <span class="kt">bool</span> <span class="nf">WaitAll</span><span class="p">(</span><span class="n">Task</span><span class="p">[],</span> <span class="kt">int</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span></code></pre></div>
+<span class="k">static</span> <span class="kt">bool</span> <span class="nf">WaitAll</span><span class="p">(</span><span class="n">Task</span><span class="p">[],</span> <span class="kt">int</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span></code></pre></figure>
 
 <p>These are practically identical to <code>Task.Wait</code>, except they wait for multiple tasks to all complete. Similarly to <code>Task.Wait</code>, <code>Task.WaitAll</code> will throw <code>OperationCanceledException</code> if the wait is cancelled, or an <code>AggregateException</code> if any of the tasks fail or are cancelled. <code>WaitAll</code> will return <code>false</code> if a timeout occurs.</p>
 
@@ -287,19 +287,19 @@ code {
 
 <p><code>Task.WaitAny</code> is similar to <code>WaitAll</code> except it only waits for the first task to complete (and returns the index of that task). Again, we have the similar overloads:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">static</span> <span class="kt">int</span> <span class="nf">WaitAny</span><span class="p">(</span><span class="k">params</span> <span class="n">Task</span><span class="p">[]);</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">static</span> <span class="kt">int</span> <span class="nf">WaitAny</span><span class="p">(</span><span class="k">params</span> <span class="n">Task</span><span class="p">[]);</span>
 <span class="k">static</span> <span class="kt">int</span> <span class="nf">WaitAny</span><span class="p">(</span><span class="n">Task</span><span class="p">[],</span> <span class="n">CancellationToken</span><span class="p">);</span>
 <span class="k">static</span> <span class="kt">int</span> <span class="nf">WaitAny</span><span class="p">(</span><span class="n">Task</span><span class="p">[],</span> <span class="kt">int</span><span class="p">);</span>
 <span class="k">static</span> <span class="kt">int</span> <span class="nf">WaitAny</span><span class="p">(</span><span class="n">Task</span><span class="p">[],</span> <span class="n">TimeSpan</span><span class="p">);</span>
-<span class="k">static</span> <span class="kt">int</span> <span class="nf">WaitAny</span><span class="p">(</span><span class="n">Task</span><span class="p">[],</span> <span class="kt">int</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span></code></pre></div>
+<span class="k">static</span> <span class="kt">int</span> <span class="nf">WaitAny</span><span class="p">(</span><span class="n">Task</span><span class="p">[],</span> <span class="kt">int</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span></code></pre></figure>
 
 <p>Which simplify down to a single logical method:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">static</span> <span class="kt">int</span> <span class="nf">WaitAny</span><span class="p">(</span><span class="k">params</span> <span class="n">Task</span><span class="p">[]</span> <span class="n">tasks</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">WaitAny</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="p">-</span><span class="m">1</span><span class="p">);</span> <span class="p">}</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">static</span> <span class="kt">int</span> <span class="nf">WaitAny</span><span class="p">(</span><span class="k">params</span> <span class="n">Task</span><span class="p">[]</span> <span class="n">tasks</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">WaitAny</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="p">-</span><span class="m">1</span><span class="p">);</span> <span class="p">}</span>
 <span class="k">static</span> <span class="kt">int</span> <span class="nf">WaitAny</span><span class="p">(</span><span class="n">Task</span><span class="p">[]</span> <span class="n">tasks</span><span class="p">,</span> <span class="n">CancellationToken</span> <span class="n">token</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">WaitAny</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="p">-</span><span class="m">1</span><span class="p">,</span> <span class="n">token</span><span class="p">);</span> <span class="p">}</span>
 <span class="k">static</span> <span class="kt">int</span> <span class="nf">WaitAny</span><span class="p">(</span><span class="n">Task</span><span class="p">[]</span> <span class="n">tasks</span><span class="p">,</span> <span class="kt">int</span> <span class="n">timeout</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">WaitAny</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="n">timeout</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">.</span><span class="n">None</span><span class="p">);</span> <span class="p">}</span>
 <span class="k">static</span> <span class="kt">int</span> <span class="nf">WaitAny</span><span class="p">(</span><span class="n">Task</span><span class="p">[]</span> <span class="n">tasks</span><span class="p">,</span> <span class="n">TimeSpan</span> <span class="n">timeout</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">WaitAny</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="n">timeout</span><span class="p">.</span><span class="n">TotalMilliseconds</span><span class="p">);</span> <span class="p">}</span>
-<span class="k">static</span> <span class="kt">int</span> <span class="nf">WaitAny</span><span class="p">(</span><span class="n">Task</span><span class="p">[],</span> <span class="kt">int</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span></code></pre></div>
+<span class="k">static</span> <span class="kt">int</span> <span class="nf">WaitAny</span><span class="p">(</span><span class="n">Task</span><span class="p">[],</span> <span class="kt">int</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span></code></pre></figure>
 
 <p>The semantics of <code>WaitAny</code> are a bit different than <code>WaitAll</code> and <code>Wait</code>: <code>WaitAny</code> merely waits for the first task to complete. It will <em>not</em> propagate that task’s exception in an <code>AggregateException</code>. Rather, any task failures will need to be checked after <code>WaitAny</code> returns. <code>WaitAny</code> will return <code>-1</code> on timeout, and will throw <code>OperationCanceledException</code> if the wait is cancelled.</p>
 
@@ -309,7 +309,7 @@ code {
 
 <p>The <code>Task</code> type actually implements <code>IAsyncResult</code> for <a href="http://msdn.microsoft.com/en-us/library/hh873178(v=vs.110).aspx#TapToApm">easy interoperation with the (unfortunately named) Asynchronous Programming Model (APM)</a>. This means <code>Task</code> has a wait handle as one of its properties:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">WaitHandle</span> <span class="n">IAsyncResult</span><span class="p">.</span><span class="n">AsyncWaitHandle</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></div>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">WaitHandle</span> <span class="n">IAsyncResult</span><span class="p">.</span><span class="n">AsyncWaitHandle</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></figure>
 
 <p>Note that this member is explicitly implemented, so consuming code <em>must</em> cast the <code>Task</code> as <code>IAsyncResult</code> before reading it. The actual underlying wait handle is lazy-allocated.</p>
 
@@ -321,7 +321,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
             <ul class="pager">
                 <li class="previous"><a href="/2014/06/a-tour-of-task-part-4-id.html" title="A Tour of Task, Part 4: Id">&larr; Previous in A Tour of Task</a></li>
@@ -340,7 +340,7 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
                 <div class="panel panel-primary">
                     <div class="panel-heading">A Tour of Task</div>
@@ -362,7 +362,7 @@ code {
                 </div>
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

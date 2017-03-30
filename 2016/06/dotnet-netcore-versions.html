@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -265,12 +265,12 @@ code {
 
 <p>The <em>tooling</em> version is what should be referenced in your <code>global.json</code>. So a <code>global.json</code> targeting the current tooling release would look like:</p>
 
-<div class="highlight"><pre><code class="language-json" data-lang="json"><span class="p">{</span>
+<figure class="highlight"><pre><code class="language-json" data-lang="json"><span></span><span class="p">{</span>
     <span class="nt">&quot;projects&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="s2">&quot;src&quot;</span><span class="p">,</span> <span class="s2">&quot;test&quot;</span> <span class="p">],</span>
     <span class="nt">&quot;sdk&quot;</span><span class="p">:</span> <span class="p">{</span>
         <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;1.0.0-preview2-003121&quot;</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>The tooling version is also what gets reported from <code>dotnet --version</code>:</p>
 
@@ -314,14 +314,14 @@ code {
 
 <p>A full “install local” PowerShell script for the current tooling version would look something like this:</p>
 
-<div class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span class="c"># Download the &quot;dotnet-install.ps1&quot; script.</span>
+<figure class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span></span><span class="c"># Download the &quot;dotnet-install.ps1&quot; script.</span>
 <span class="nb">Invoke-WebRequest</span> <span class="s2">&quot;https://raw.githubusercontent.com/dotnet/cli/rel/1.0.0-preview2/scripts/obtain/dotnet-install.ps1&quot;</span> <span class="n">-OutFile</span> <span class="s2">&quot;.\dotnet-install.ps1&quot;</span>
 
 <span class="c"># Decide to install into a &quot;.dotnetcli&quot; local directory.</span>
 <span class="nv">$env:DOTNET_INSTALL_DIR</span> <span class="p">=</span> <span class="s2">&quot;$pwd\.dotnetcli&quot;</span>
 
 <span class="c"># Do the actual install.</span>
-<span class="p">&amp;</span> <span class="p">.\</span><span class="n">dotnet-install</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-Channel</span> <span class="s2">&quot;preview&quot;</span> <span class="n">-Version</span> <span class="s2">&quot;1.0.0-preview2-003121&quot;</span> <span class="n">-InstallDir</span> <span class="s2">&quot;$env:DOTNET_INSTALL_DIR&quot;</span></code></pre></div>
+<span class="p">&amp;</span> <span class="p">.\</span><span class="n">dotnet-install</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-Channel</span> <span class="s2">&quot;preview&quot;</span> <span class="n">-Version</span> <span class="s2">&quot;1.0.0-preview2-003121&quot;</span> <span class="n">-InstallDir</span> <span class="s2">&quot;$env:DOTNET_INSTALL_DIR&quot;</span></code></pre></figure>
 
 <h2 id="misc-tips">Misc Tips</h2>
 
@@ -365,7 +365,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -380,11 +380,11 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

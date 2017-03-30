@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -233,7 +233,7 @@ code {
 
 <p>So this is a much more complex example with both I/O portions and CPU-bound portions. Here’s how the service looks today; it uses synchronous (blocking) I/O calls as well as CPU-intensive analysis.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Warning: bad code!</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Warning: bad code!</span>
 <span class="k">class</span> <span class="nc">MyService</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="kt">int</span> <span class="nf">PredictStockMarket</span><span class="p">()</span>
@@ -254,13 +254,13 @@ code {
 
     <span class="k">return</span> <span class="m">42</span><span class="p">;</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Now, we want to start taking advantage of asynchronous code, so we can replace our blocking I/O with asynchronous I/O. But what do we do with the CPU-bound portions?</p>
 
 <p>A common mistake is to wrap them in <code>Task.Run</code>.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Warning: bad code!</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Warning: bad code!</span>
 <span class="k">class</span> <span class="nc">MyService</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">PredictStockMarketAsync</span><span class="p">()</span>
@@ -287,7 +287,7 @@ code {
 
     <span class="k">return</span> <span class="m">42</span><span class="p">;</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>The problems here are the <a href="/2013/11/taskrun-etiquette-examples-dont-use.html">same problems as last time</a>. We’re still using <code>Task.Run</code> in the implementation, and we get all the problems that come along with that. It’s still a fake-asynchronous method.</p>
 
@@ -297,7 +297,7 @@ code {
 
 <p>They concluded that the best solution is to use an asynchronous signature but document the method clearly so that its CPU-bound nature will not be surprising.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">MyService</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">class</span> <span class="nc">MyService</span>
 <span class="p">{</span>
   <span class="c1">/// &lt;summary&gt;</span>
   <span class="c1">/// This method is CPU-bound!</span>
@@ -320,11 +320,11 @@ code {
 
     <span class="k">return</span> <span class="m">42</span><span class="p">;</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>This allows UI-based clients to properly use <code>Task.Run</code> to call the service, while ASP.NET clients would just call the method directly.</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">MyButton_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">MyButton_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">myService</span><span class="p">.</span><span class="n">PredictStockMarketAsync</span><span class="p">());</span>
 <span class="p">}</span>
@@ -336,7 +336,7 @@ code {
     <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">myService</span><span class="p">.</span><span class="n">PredictStockMarketAsync</span><span class="p">();</span>
     <span class="k">return</span> <span class="nf">View</span><span class="p">(</span><span class="n">result</span><span class="p">);</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Doing CPU-bound work in a method with an asynchronous signature is not ideal, but it does allow every possible client to use the service in the way that makes most sense for them. Each client makes the best use of its own threading situation.</p>
 
@@ -345,7 +345,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
             <ul class="pager">
                 <li class="previous"><a href="/2013/11/taskrun-etiquette-examples-dont-use.html" title="Task.Run Etiquette Examples: Don&#39;t Use Task.Run in the Implementation">&larr; Previous in Task.Run Etiquette</a></li>
@@ -363,7 +363,7 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
                 <div class="panel panel-primary">
                     <div class="panel-heading">Task.Run Etiquette</div>
@@ -378,7 +378,7 @@ code {
                 </div>
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

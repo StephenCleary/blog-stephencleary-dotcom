@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -231,13 +231,13 @@ code {
 
 <p>Eventually, one hits a corner:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="na">[TestMethod]</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="na">[TestMethod]</span>
 <span class="k">public</span> <span class="k">void</span> <span class="nf">ValueTypes_AreNeverReferenceEqual</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">num</span> <span class="p">=</span> <span class="m">13</span><span class="p">;</span>
     
     <span class="n">Assert</span><span class="p">.</span><span class="n">IsFalse</span><span class="p">(</span><span class="kt">object</span><span class="p">.</span><span class="n">ReferenceEquals</span><span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="n">num</span><span class="p">));</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Of course, people rarely wish to test value types for reference equality; this corner is more likely to be found while testing instances of a generic type for reference equality. This result is often surprising; if everything in C# is an object (including a value of type Int32, which derives from ValueType, which derives from object), then why can’t they be compared for reference equality?</p>
 
@@ -247,20 +247,20 @@ code {
 
 <p>Boxed value types are real objects (though they lose their compile-time type information). They may be compared for reference equality:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="na">[TestMethod]</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="na">[TestMethod]</span>
 <span class="k">public</span> <span class="k">void</span> <span class="nf">BoxedValueTypes_CanBeReferenceEqual</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">num</span> <span class="p">=</span> <span class="p">(</span><span class="kt">object</span><span class="p">)</span><span class="m">13</span><span class="p">;</span>
 
     <span class="n">Assert</span><span class="p">.</span><span class="n">IsTrue</span><span class="p">(</span><span class="kt">object</span><span class="p">.</span><span class="n">ReferenceEquals</span><span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="n">num</span><span class="p">));</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Conclusion: contrary to popular opinion, not everything in C# is an object.</p>
 
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -275,11 +275,11 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

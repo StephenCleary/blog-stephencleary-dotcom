@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -253,7 +253,7 @@ code {
 
 <p>The UI framework is the same regardless of whether a BackgroundWorker or Task object is used for the background task:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Windows.Forms</span><span class="p">;</span>
 
 <span class="k">public</span> <span class="k">sealed</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">MainForm</span> <span class="p">:</span> <span class="n">Form</span>
@@ -338,7 +338,7 @@ code {
     <span class="c1">// Run the UI.</span>
     <span class="n">Application</span><span class="p">.</span><span class="n">Run</span><span class="p">(</span><span class="k">new</span> <span class="n">MainForm</span><span class="p">());</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>This defines a form called MainForm that has the UI described above. The two methods TaskIsRunning and TaskIsComplete handle the enabling and disabling of the buttons. There are also partial methods as placeholders for the button click events; these are used by the sample code below.</p>
 
@@ -348,7 +348,7 @@ code {
 
 <p>Here’s what the code looks like for a BGW that checks in frequently:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.ComponentModel</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Windows.Forms</span><span class="p">;</span>
@@ -439,7 +439,7 @@ code {
     <span class="c1">// Kick off the background task.</span>
     <span class="k">this</span><span class="p">.</span><span class="n">backgroundWorker</span><span class="p">.</span><span class="n">RunWorkerAsync</span><span class="p">();</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>You can copy and paste this code into a cs file in the Windows Forms solution, such as MainForm.cs. The solution should then build, and you can play with the buttons to test all three scenarios (successful completion, error condition, and cancellation).</p>
 
@@ -447,7 +447,7 @@ code {
 
 <p>Using the ProgressReporter class (defined below), translating this BGW code to Task code is rather easy; no explicit continuation scheduling is needed:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Windows.Forms</span><span class="p">;</span>
@@ -533,7 +533,7 @@ code {
       <span class="k">this</span><span class="p">.</span><span class="n">TaskIsComplete</span><span class="p">();</span>
     <span class="p">});</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>You can copy and paste this code into a cs file in the Windows Forms solution, such as MainForm.cs. The solution won’t build until you add the code for the ProgressReporter class below.</p>
 
@@ -549,7 +549,7 @@ code {
 
 <p>The code for this class is not very complex:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
 
@@ -698,14 +698,14 @@ code {
   <span class="p">{</span>
     <span class="k">return</span> <span class="n">task</span><span class="p">.</span><span class="n">ContinueWith</span><span class="p">(</span><span class="n">_</span> <span class="p">=&gt;</span> <span class="n">action</span><span class="p">(),</span> <span class="n">CancellationToken</span><span class="p">.</span><span class="n">None</span><span class="p">,</span> <span class="n">TaskContinuationOptions</span><span class="p">.</span><span class="n">OnlyOnCanceled</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="n">Scheduler</span><span class="p">);</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>You can copy and paste this code into a cs file in the Windows Forms solution, such as ProgressReporter.cs. The solution should then build, and you can play with the buttons to test all three scenarios (successful completion, error condition, and cancellation).</p>
 
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -720,11 +720,11 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

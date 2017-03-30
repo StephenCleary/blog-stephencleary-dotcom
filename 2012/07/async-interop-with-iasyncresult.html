@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -235,16 +235,16 @@ code {
 
 <p>By far, the easiest way to create a Task from a Begin/End method pair is to use one of the TaskFactory.FromAsync overloads, introduced in .NET 4.0:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">static</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">DivideAsync</span><span class="p">(</span><span class="k">this</span> <span class="n">Calculator</span> <span class="n">calc</span><span class="p">,</span> <span class="kt">int</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">int</span> <span class="n">denominator</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">static</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">DivideAsync</span><span class="p">(</span><span class="k">this</span> <span class="n">Calculator</span> <span class="n">calc</span><span class="p">,</span> <span class="kt">int</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">int</span> <span class="n">denominator</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="k">return</span> <span class="n">Task</span><span class="p">.</span><span class="n">Factory</span><span class="p">.</span><span class="n">FromAsync</span><span class="p">(</span><span class="n">calc</span><span class="p">.</span><span class="n">BeginDivide</span><span class="p">,</span> <span class="n">calc</span><span class="p">.</span><span class="n">EndDivide</span><span class="p">,</span> <span class="n">numerator</span><span class="p">,</span> <span class="n">denominator</span><span class="p">,</span> <span class="k">null</span><span class="p">);</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>It’s common to provide wrappers like this as extension methods. In fact, the Async CTP did exactly this for a lot of BCL classes.</p>
 
 <p>If you wanted to make your own wrapper, it’s easy enough to do using TaskCompletionSource. Just call the Begin method, passing an AsyncCallback that completes the Task based on the results of the End method (canceling the Task if End throws OperationCanceledException).</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">static</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">DivideAsync</span><span class="p">(</span><span class="k">this</span> <span class="n">Calculator</span> <span class="n">calc</span><span class="p">,</span> <span class="kt">int</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">int</span> <span class="n">denominator</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">static</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">DivideAsync</span><span class="p">(</span><span class="k">this</span> <span class="n">Calculator</span> <span class="n">calc</span><span class="p">,</span> <span class="kt">int</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">int</span> <span class="n">denominator</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="kt">var</span> <span class="n">tcs</span> <span class="p">=</span> <span class="k">new</span> <span class="n">TaskCompletionSource</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;();</span>
   <span class="n">calc</span><span class="p">.</span><span class="n">BeginDivide</span><span class="p">(</span><span class="n">numerator</span><span class="p">,</span> <span class="n">denominator</span><span class="p">,</span> <span class="n">iar</span> <span class="p">=&gt;</span>
@@ -254,7 +254,7 @@ code {
     <span class="k">catch</span><span class="p">(</span><span class="n">Exception</span> <span class="n">exc</span><span class="p">)</span> <span class="p">{</span> <span class="n">tcs</span><span class="p">.</span><span class="n">TrySetException</span><span class="p">(</span><span class="n">exc</span><span class="p">);</span> <span class="p">}</span>
   <span class="p">},</span> <span class="k">null</span><span class="p">);</span>
   <span class="k">return</span> <span class="n">tcs</span><span class="p">.</span><span class="n">Task</span><span class="p">;</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>The only real design decision is what to do if Begin throws an exception. TaskFactory.FromAsync will complete the Task with a default result, and then (synchronously) rethrow the exception. The code above just allows the exception to propagate.</p>
 
@@ -282,7 +282,7 @@ code {
 
 <p>Let’s start out with the Begin method implementation:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="n">IAsyncResult</span> <span class="nf">BeginDivide</span><span class="p">(</span><span class="kt">int</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">int</span> <span class="n">denominator</span><span class="p">,</span> <span class="n">AsyncCallback</span> <span class="n">callback</span><span class="p">,</span> <span class="kt">object</span> <span class="n">state</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="n">IAsyncResult</span> <span class="nf">BeginDivide</span><span class="p">(</span><span class="kt">int</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">int</span> <span class="n">denominator</span><span class="p">,</span> <span class="n">AsyncCallback</span> <span class="n">callback</span><span class="p">,</span> <span class="kt">object</span> <span class="n">state</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="kt">var</span> <span class="n">tcs</span> <span class="p">=</span> <span class="k">new</span> <span class="n">TaskCompletionSource</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;(</span><span class="n">state</span><span class="p">);</span>
   <span class="kt">var</span> <span class="n">task</span> <span class="p">=</span> <span class="n">DivideAsync</span><span class="p">(</span><span class="n">numerator</span><span class="p">,</span> <span class="n">denominator</span><span class="p">);</span>
@@ -301,7 +301,7 @@ code {
       <span class="n">callback</span><span class="p">(</span><span class="n">tcs</span><span class="p">.</span><span class="n">Task</span><span class="p">);</span>
   <span class="p">});</span>
   <span class="k">return</span> <span class="n">tcs</span><span class="p">.</span><span class="n">Task</span><span class="p">;</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>The Task returned by Begin needs to be a different instance than the Task returned by the Async implementation because <a href="http://blogs.msdn.com/b/junfeng/archive/2006/03/28/563627.aspx">IAsyncResult.AsyncState needs to return the state passed into the Begin method</a>.</p>
 
@@ -309,7 +309,7 @@ code {
 
 <p>Now, consider the End implementation:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="kt">int</span> <span class="nf">EndDivide</span><span class="p">(</span><span class="n">IAsyncResult</span> <span class="n">asyncResult</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="kt">int</span> <span class="nf">EndDivide</span><span class="p">(</span><span class="n">IAsyncResult</span> <span class="n">asyncResult</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="k">try</span>
   <span class="p">{</span>
@@ -320,7 +320,7 @@ code {
     <span class="n">ExceptionDispatchInfo</span><span class="p">.</span><span class="n">Capture</span><span class="p">(</span><span class="n">ex</span><span class="p">.</span><span class="n">InnerException</span><span class="p">).</span><span class="n">Throw</span><span class="p">();</span>
     <span class="k">throw</span><span class="p">;</span>
   <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>The End method must (synchronously) block if the operation has not completed. If there was an exception, the Task wraps it into an AggregateException, so our End method will unwrap the exception and rethrow it (preserving the stack trace). The extra “throw;” line is never executed; it <a href="http://connect.microsoft.com/VisualStudio/feedback/details/689516/exceptiondispatchinfo-api-modifications">just keeps the compiler happy</a>.</p>
 
@@ -328,7 +328,7 @@ code {
 
 <p>The BCL does not provide generic Begin/End implementations, but my <a href="http://nitoasyncex.codeplex.com/">AsyncEx</a> library does, as AsyncFactory.ToBegin and AsyncFactory.ToEnd:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="n">IAsyncResult</span> <span class="nf">BeginDivide</span><span class="p">(</span><span class="kt">int</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">int</span> <span class="n">denominator</span><span class="p">,</span> <span class="n">AsyncCallback</span> <span class="n">callback</span><span class="p">,</span> <span class="kt">object</span> <span class="n">state</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="n">IAsyncResult</span> <span class="nf">BeginDivide</span><span class="p">(</span><span class="kt">int</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">int</span> <span class="n">denominator</span><span class="p">,</span> <span class="n">AsyncCallback</span> <span class="n">callback</span><span class="p">,</span> <span class="kt">object</span> <span class="n">state</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="kt">var</span> <span class="n">task</span> <span class="p">=</span> <span class="n">DivideAsync</span><span class="p">(</span><span class="n">numerator</span><span class="p">,</span> <span class="n">denominator</span><span class="p">);</span>
   <span class="k">return</span> <span class="n">AsyncFactory</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;.</span><span class="n">ToBegin</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">state</span><span class="p">);</span>
@@ -337,11 +337,11 @@ code {
 <span class="k">public</span> <span class="kt">int</span> <span class="nf">EndDivide</span><span class="p">(</span><span class="n">IAsyncResult</span> <span class="n">asyncResult</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="k">return</span> <span class="n">AsyncFactory</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;.</span><span class="n">ToEnd</span><span class="p">(</span><span class="n">asyncResult</span><span class="p">);</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -356,11 +356,11 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

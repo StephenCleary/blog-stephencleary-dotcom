@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -233,7 +233,7 @@ code {
 
 <p>First, let’s look at how we can download a single file stream. On ASP.NET Core, we would use <code>FileStreamResult</code> to download a file to the browser:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">static</span> <span class="n">HttpClient</span> <span class="n">Client</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="k">static</span> <span class="n">HttpClient</span> <span class="n">Client</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
 <span class="na">[HttpGet]</span>
 <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">FileStreamResult</span><span class="p">&gt;</span> <span class="n">Get</span><span class="p">()</span>
 <span class="p">{</span>
@@ -243,7 +243,7 @@ code {
     <span class="p">{</span>
         <span class="n">FileDownloadName</span> <span class="p">=</span> <span class="s">&quot;README.md&quot;</span>
     <span class="p">};</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>There’s a couple of interesting notes here: we pass the <code>MediaTypeHeaderValue</code> directly to the constructor of the <code>FileStreamResult</code>, which takes care of setting the <code>Content-Type</code> header on the response. Also, we set the <code>FileDownloadName</code> property, which sets the <code>Content-Disposition</code> header on the response. The “ASP.NET Core way” is more about expressing intent rather than modifying the response directly.</p>
 
@@ -282,7 +282,7 @@ code {
 
 <p>The action results in ASP.NET Core will forward their implementation to their respective “executor” types by using dependency injection. For my simple case, I hard-code the executor:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">FileCallbackResult</span> <span class="p">:</span> <span class="n">FileResult</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">class</span> <span class="nc">FileCallbackResult</span> <span class="p">:</span> <span class="n">FileResult</span>
 <span class="p">{</span>
     <span class="k">private</span> <span class="n">Func</span><span class="p">&lt;</span><span class="n">Stream</span><span class="p">,</span> <span class="n">ActionContext</span><span class="p">,</span> <span class="n">Task</span><span class="p">&gt;</span> <span class="n">_callback</span><span class="p">;</span>
 
@@ -315,7 +315,7 @@ code {
             <span class="k">return</span> <span class="n">result</span><span class="p">.</span><span class="n">_callback</span><span class="p">(</span><span class="n">context</span><span class="p">.</span><span class="n">HttpContext</span><span class="p">.</span><span class="n">Response</span><span class="p">.</span><span class="n">Body</span><span class="p">,</span> <span class="n">context</span><span class="p">);</span>
         <span class="p">}</span>
     <span class="p">}</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>The <code>FileCallbackResult</code> collects and verifies all the result options, and the <code>FileCallbackResultExecutor</code> takes care of actually executing the result. This follows the same pattern as the built-in <code>FileResult</code> types. If I was to make this into a NuGet package, I’d probably resolve <code>FileCallbackResultExecutor</code> using dependency injection; but other than that, this is a very reusable solution.</p>
 
@@ -323,7 +323,7 @@ code {
 
 <p>With our new <code>FileCallbackResult</code> type, we can (finally) download multiple files and combine them into a single zip file on the fly:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">static</span> <span class="n">HttpClient</span> <span class="n">Client</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="k">static</span> <span class="n">HttpClient</span> <span class="n">Client</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
 <span class="na">[HttpGet]</span>
 <span class="k">public</span> <span class="n">IActionResult</span> <span class="nf">Get</span><span class="p">()</span>
 <span class="p">{</span>
@@ -349,7 +349,7 @@ code {
     <span class="p">{</span>
         <span class="n">FileDownloadName</span> <span class="p">=</span> <span class="s">&quot;MyZipfile.zip&quot;</span>
     <span class="p">};</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <p>Note that since we want our .NET Core app to run <em>anywhere</em>, we don’t take a dependency on <code>DotNetZip</code> (which as of this writing requires the full .NET framework); rather, we use the built-in <code>ZipArchive</code>. Since the <a href="https://github.com/dotnet/corefx/issues/11497">.NET Core version has the same bug</a> regarding output streams, we have to use a <a href="/2016/11/ziparchive-on-write-only-streams.html">stream wrapper just like we did last week</a>.</p>
 
@@ -379,7 +379,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -394,11 +394,11 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

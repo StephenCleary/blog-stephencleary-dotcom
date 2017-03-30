@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -227,7 +227,7 @@ code {
   <article>
   <p>Here’s a “sharp corner” of sorts, though it’s with the BCL rather than the C# language. It turns out that the property <strong>IsReadOnly</strong> changed meanings from <strong>IList</strong> to <strong>IList&lt;T&gt;</strong>. As of this writing, it’s unclear whether this change in meaning was intentional; the MSDN documentation for both properties is identical (and ambiguous).</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="na">[TestMethod]</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="na">[TestMethod]</span>
 <span class="k">public</span> <span class="k">void</span> <span class="nf">IListOfT_IsReadOnly_IsDifferentThan_IList_IsReadOnly</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="kt">int</span><span class="p">[]</span> <span class="n">array</span> <span class="p">=</span> <span class="k">new</span><span class="p">[]</span> <span class="p">{</span> <span class="m">13</span> <span class="p">};</span>
@@ -235,11 +235,11 @@ code {
     <span class="n">System</span><span class="p">.</span><span class="n">Collections</span><span class="p">.</span><span class="n">IList</span> <span class="n">nongeneric</span> <span class="p">=</span> <span class="n">array</span><span class="p">;</span>
 
     <span class="n">Assert</span><span class="p">.</span><span class="n">AreNotEqual</span><span class="p">(</span><span class="n">generic</span><span class="p">.</span><span class="n">IsReadOnly</span><span class="p">,</span> <span class="n">nongeneric</span><span class="p">.</span><span class="n">IsReadOnly</span><span class="p">);</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -254,11 +254,11 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">

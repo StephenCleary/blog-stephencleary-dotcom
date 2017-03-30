@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-﻿<head>
+<head>
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -238,23 +238,23 @@ code {
   <li>Consider Enumerable:</li>
 </ul>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">interface</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="k">out</span> <span class="n">T</span><span class="p">&gt;</span> <span class="p">{</span> <span class="n">IEnumerator</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">GetEnumerator</span><span class="p">();</span> <span class="p">}</span>
-<span class="k">interface</span> <span class="n">IEnumerator</span><span class="p">&lt;</span><span class="k">out</span> <span class="n">T</span><span class="p">&gt;</span> <span class="p">:</span> <span class="n">IDisposable</span> <span class="p">{</span> <span class="kt">bool</span> <span class="n">MoveNext</span><span class="p">();</span> <span class="n">T</span> <span class="n">Current</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="cm">/* Implicit throw */</span> <span class="p">}</span></code></pre></div>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">interface</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="k">out</span> <span class="n">T</span><span class="p">&gt;</span> <span class="p">{</span> <span class="n">IEnumerator</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">GetEnumerator</span><span class="p">();</span> <span class="p">}</span>
+<span class="k">interface</span> <span class="n">IEnumerator</span><span class="p">&lt;</span><span class="k">out</span> <span class="n">T</span><span class="p">&gt;</span> <span class="p">:</span> <span class="n">IDisposable</span> <span class="p">{</span> <span class="kt">bool</span> <span class="n">MoveNext</span><span class="p">();</span> <span class="n">T</span> <span class="n">Current</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="cm">/* Implicit throw */</span> <span class="p">}</span></code></pre></figure>
 
 <ul>
   <li>There are actually two interface concepts here (Enumerable and Disposable). For now, ignore Disposable.</li>
   <li>Swap arguments and results (mathematical duality):</li>
 </ul>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">interface</span> <span class="n">IObservable</span><span class="p">&lt;</span><span class="k">in</span> <span class="n">T</span><span class="p">&gt;</span> <span class="p">{</span> <span class="n">IDisposable</span> <span class="n">Register</span><span class="p">(</span><span class="n">IObserver</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">o</span><span class="p">);</span> <span class="p">}</span>
-<span class="k">interface</span> <span class="n">IObserver</span><span class="p">&lt;</span><span class="k">in</span> <span class="n">T</span><span class="p">&gt;</span> <span class="p">{</span> <span class="k">void</span> <span class="n">OnCompleted</span><span class="p">(</span><span class="kt">bool</span> <span class="n">done</span><span class="p">);</span> <span class="n">T</span> <span class="n">OnUpdate</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span> <span class="k">void</span> <span class="n">OnError</span><span class="p">(</span><span class="n">Exception</span> <span class="n">e</span><span class="p">);</span> <span class="p">}</span></code></pre></div>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">interface</span> <span class="n">IObservable</span><span class="p">&lt;</span><span class="k">in</span> <span class="n">T</span><span class="p">&gt;</span> <span class="p">{</span> <span class="n">IDisposable</span> <span class="n">Register</span><span class="p">(</span><span class="n">IObserver</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">o</span><span class="p">);</span> <span class="p">}</span>
+<span class="k">interface</span> <span class="n">IObserver</span><span class="p">&lt;</span><span class="k">in</span> <span class="n">T</span><span class="p">&gt;</span> <span class="p">{</span> <span class="k">void</span> <span class="n">OnCompleted</span><span class="p">(</span><span class="kt">bool</span> <span class="n">done</span><span class="p">);</span> <span class="n">T</span> <span class="n">OnUpdate</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span> <span class="k">void</span> <span class="n">OnError</span><span class="p">(</span><span class="n">Exception</span> <span class="n">e</span><span class="p">);</span> <span class="p">}</span></code></pre></figure>
 
 <ul>
   <li>A cleaner interface (getting rid of “bool done” by only calling “OnCompleted” when it’s true; changing OnUpdate to a method):</li>
 </ul>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">interface</span> <span class="n">IObservable</span><span class="p">&lt;</span><span class="k">in</span> <span class="n">T</span><span class="p">&gt;</span> <span class="p">{</span> <span class="n">IDisposable</span> <span class="n">Attach</span><span class="p">(</span><span class="n">IObserver</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">o</span><span class="p">);</span> <span class="p">}</span>
-<span class="k">interface</span> <span class="n">IObserver</span><span class="p">&lt;</span><span class="k">in</span> <span class="n">T</span><span class="p">&gt;</span> <span class="p">{</span> <span class="k">void</span> <span class="n">OnCompleted</span><span class="p">();</span> <span class="k">void</span> <span class="n">OnUpdate</span><span class="p">(</span><span class="n">T</span> <span class="k">value</span><span class="p">);</span> <span class="k">void</span> <span class="n">OnError</span><span class="p">(</span><span class="n">Exception</span> <span class="n">e</span><span class="p">);</span> <span class="p">}</span></code></pre></div>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">interface</span> <span class="n">IObservable</span><span class="p">&lt;</span><span class="k">in</span> <span class="n">T</span><span class="p">&gt;</span> <span class="p">{</span> <span class="n">IDisposable</span> <span class="n">Attach</span><span class="p">(</span><span class="n">IObserver</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">o</span><span class="p">);</span> <span class="p">}</span>
+<span class="k">interface</span> <span class="n">IObserver</span><span class="p">&lt;</span><span class="k">in</span> <span class="n">T</span><span class="p">&gt;</span> <span class="p">{</span> <span class="k">void</span> <span class="n">OnCompleted</span><span class="p">();</span> <span class="k">void</span> <span class="n">OnUpdate</span><span class="p">(</span><span class="n">T</span> <span class="k">value</span><span class="p">);</span> <span class="k">void</span> <span class="n">OnError</span><span class="p">(</span><span class="n">Exception</span> <span class="n">e</span><span class="p">);</span> <span class="p">}</span></code></pre></figure>
 
 <ul>
   <li>This makes the Iterator pattern (Enumerable) related to Subject Observer pattern (Observable).</li>
@@ -312,7 +312,7 @@ code {
   </li>
 </ul>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">Control</span> <span class="p">{</span> <span class="k">event</span> <span class="n">Action</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">KeyUp</span><span class="p">;</span> <span class="p">}</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">class</span> <span class="nc">Control</span> <span class="p">{</span> <span class="k">event</span> <span class="n">Action</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">KeyUp</span><span class="p">;</span> <span class="p">}</span>
 <span class="n">IObservable</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">GetKeyUp</span><span class="p">(</span><span class="k">this</span> <span class="n">Control</span> <span class="n">w</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="k">return</span> <span class="k">new</span> <span class="n">IObservible</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span>
@@ -327,36 +327,36 @@ code {
       <span class="p">};</span>
     <span class="p">}</span>
   <span class="p">};</span>
-<span class="p">}</span></code></pre></div>
+<span class="p">}</span></code></pre></figure>
 
 <ul>
   <li>Two IObservable<t> extension methods exist for attaching delegates:</t></li>
 </ul>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">static</span> <span class="n">IDisposable</span> <span class="n">Attach</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="k">this</span> <span class="n">IObservable</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">src</span><span class="p">,</span> <span class="n">Action</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="k">yield</span><span class="p">);</span>
-<span class="k">static</span> <span class="n">IDisposable</span> <span class="n">Attach</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="k">this</span> <span class="n">IObservable</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">src</span><span class="p">,</span> <span class="n">Action</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="k">yield</span><span class="p">,</span> <span class="n">Action</span><span class="p">&lt;</span><span class="n">Exception</span><span class="p">&gt;</span> <span class="k">throw</span><span class="p">);</span></code></pre></div>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">static</span> <span class="n">IDisposable</span> <span class="n">Attach</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="k">this</span> <span class="n">IObservable</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">src</span><span class="p">,</span> <span class="n">Action</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="k">yield</span><span class="p">);</span>
+<span class="k">static</span> <span class="n">IDisposable</span> <span class="n">Attach</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="k">this</span> <span class="n">IObservable</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">src</span><span class="p">,</span> <span class="n">Action</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="k">yield</span><span class="p">,</span> <span class="n">Action</span><span class="p">&lt;</span><span class="n">Exception</span><span class="p">&gt;</span> <span class="k">throw</span><span class="p">);</span></code></pre></figure>
 
 <ul>
   <li>The original style of event subscription treats the handler as a first-class object:</li>
 </ul>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Action</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">handler</span> <span class="p">=</span> <span class="p">...;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">Action</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">handler</span> <span class="p">=</span> <span class="p">...;</span>
 <span class="n">txtbox</span><span class="p">.</span><span class="n">KeyUp</span> <span class="p">+=</span> <span class="n">handler</span><span class="p">;</span>
-<span class="n">txtbox</span><span class="p">.</span><span class="n">KeyUp</span> <span class="p">-=</span> <span class="n">handler</span><span class="p">;</span></code></pre></div>
+<span class="n">txtbox</span><span class="p">.</span><span class="n">KeyUp</span> <span class="p">-=</span> <span class="n">handler</span><span class="p">;</span></code></pre></figure>
 
 <ul>
   <li>The Observable style of event subscription treats the event as a first-class object:</li>
 </ul>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="kt">var</span> <span class="n">keyup</span> <span class="p">=</span> <span class="n">txtbox</span><span class="p">.</span><span class="n">GetKeyUp</span><span class="p">();</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="kt">var</span> <span class="n">keyup</span> <span class="p">=</span> <span class="n">txtbox</span><span class="p">.</span><span class="n">GetKeyUp</span><span class="p">();</span>
 <span class="kt">var</span> <span class="n">detacher</span> <span class="p">=</span> <span class="n">keyup</span><span class="p">.</span><span class="n">Attach</span><span class="p">(...);</span>
-<span class="n">detacher</span><span class="p">.</span><span class="n">Dispose</span><span class="p">();</span></code></pre></div>
+<span class="n">detacher</span><span class="p">.</span><span class="n">Dispose</span><span class="p">();</span></code></pre></figure>
 
 <ul>
   <li>Observable event collections when used with combinators allow implicit state variables. e.g., consider a “drag &amp; drop”:</li>
 </ul>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="kt">var</span> <span class="n">W</span> <span class="p">=</span> <span class="p">...</span> <span class="n">control</span> <span class="n">to</span> <span class="n">be</span> <span class="n">dragged</span> <span class="p">...;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="kt">var</span> <span class="n">W</span> <span class="p">=</span> <span class="p">...</span> <span class="n">control</span> <span class="n">to</span> <span class="n">be</span> <span class="n">dragged</span> <span class="p">...;</span>
  
 <span class="c1">// Set up mouse down/up detector</span>
 <span class="kt">var</span> <span class="n">mouseDowns</span> <span class="p">=</span> <span class="k">from</span> <span class="n">md</span> <span class="k">in</span> <span class="n">W</span><span class="p">.</span><span class="n">GetMouseDown</span><span class="p">()</span> <span class="k">select</span> <span class="k">true</span><span class="p">;</span> <span class="c1">// Pushes &quot;true&quot; every time the mouse button goes down</span>
@@ -375,22 +375,22 @@ code {
                 <span class="k">from</span> <span class="n">delta</span> <span class="k">in</span> <span class="n">mouseDiffs</span> <span class="k">where</span> <span class="n">leftdown</span>
                 <span class="k">select</span> <span class="n">delta</span><span class="p">;</span> <span class="c1">// Pushes the difference in location each time the mouse moves while a button is down</span>
  
-<span class="n">mouseDrag</span><span class="p">.</span><span class="n">Attach</span><span class="p">(</span><span class="n">delta</span> <span class="p">=&gt;</span> <span class="p">{</span> <span class="p">...</span> <span class="n">move</span> <span class="n">W</span> <span class="n">according</span> <span class="n">to</span> <span class="n">delta</span> <span class="p">...</span> <span class="p">});</span></code></pre></div>
+<span class="n">mouseDrag</span><span class="p">.</span><span class="n">Attach</span><span class="p">(</span><span class="n">delta</span> <span class="p">=&gt;</span> <span class="p">{</span> <span class="p">...</span> <span class="n">move</span> <span class="n">W</span> <span class="n">according</span> <span class="n">to</span> <span class="n">delta</span> <span class="p">...</span> <span class="p">});</span></code></pre></figure>
 
 <ul>
   <li>You always need to be aware of side effects; use the Let operator to tame them:</li>
 </ul>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="kt">var</span> <span class="n">mouseDiffs</span> <span class="p">=</span> <span class="k">from</span> <span class="n">diff</span> <span class="k">in</span> <span class="n">mouseMoves</span><span class="p">.</span><span class="n">Skip</span><span class="p">(</span><span class="m">1</span><span class="p">).</span><span class="n">Zip</span><span class="p">(</span><span class="n">mouseMoves</span><span class="p">)</span> <span class="c1">// This part pushes the current and last location of the mouse every time it moves</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="kt">var</span> <span class="n">mouseDiffs</span> <span class="p">=</span> <span class="k">from</span> <span class="n">diff</span> <span class="k">in</span> <span class="n">mouseMoves</span><span class="p">.</span><span class="n">Skip</span><span class="p">(</span><span class="m">1</span><span class="p">).</span><span class="n">Zip</span><span class="p">(</span><span class="n">mouseMoves</span><span class="p">)</span> <span class="c1">// This part pushes the current and last location of the mouse every time it moves</span>
                  <span class="k">select</span> <span class="k">new</span> <span class="p">{</span> <span class="n">dX</span> <span class="p">=</span> <span class="n">diff</span><span class="p">.</span><span class="n">First</span><span class="p">.</span><span class="n">X</span> <span class="p">-</span> <span class="n">diff</span><span class="p">.</span><span class="n">Second</span><span class="p">.</span><span class="n">X</span><span class="p">,</span>
-                              <span class="n">dY</span> <span class="p">=</span> <span class="n">diff</span><span class="p">.</span><span class="n">First</span><span class="p">.</span><span class="n">Y</span> <span class="p">-</span> <span class="n">diff</span><span class="p">.</span><span class="n">Second</span><span class="p">.</span><span class="n">Y</span> <span class="p">};</span> <span class="c1">// Pushes the difference in location each time the mouse moves</span></code></pre></div>
+                              <span class="n">dY</span> <span class="p">=</span> <span class="n">diff</span><span class="p">.</span><span class="n">First</span><span class="p">.</span><span class="n">Y</span> <span class="p">-</span> <span class="n">diff</span><span class="p">.</span><span class="n">Second</span><span class="p">.</span><span class="n">Y</span> <span class="p">};</span> <span class="c1">// Pushes the difference in location each time the mouse moves</span></code></pre></figure>
 
 <p>should be:</p>
 
-<div class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="kt">var</span> <span class="n">mouseDiffs</span> <span class="p">=</span> <span class="n">mouseMoves</span><span class="p">.</span><span class="n">Let</span><span class="p">(</span><span class="n">_mouseMoves</span> <span class="p">=&gt;</span> <span class="c1">// This part avoids side effects on mouseMoves</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="kt">var</span> <span class="n">mouseDiffs</span> <span class="p">=</span> <span class="n">mouseMoves</span><span class="p">.</span><span class="n">Let</span><span class="p">(</span><span class="n">_mouseMoves</span> <span class="p">=&gt;</span> <span class="c1">// This part avoids side effects on mouseMoves</span>
                  <span class="k">from</span> <span class="n">diff</span> <span class="k">in</span> <span class="n">_mouseMoves</span><span class="p">.</span><span class="n">Skip</span><span class="p">(</span><span class="m">1</span><span class="p">).</span><span class="n">Zip</span><span class="p">(</span><span class="n">_mouseMoves</span><span class="p">)</span> <span class="c1">// This part pushes the current and last location of the mouse every time it moves</span>
                  <span class="k">select</span> <span class="k">new</span> <span class="p">{</span> <span class="n">dX</span> <span class="p">=</span> <span class="n">diff</span><span class="p">.</span><span class="n">First</span><span class="p">.</span><span class="n">X</span> <span class="p">-</span> <span class="n">diff</span><span class="p">.</span><span class="n">Second</span><span class="p">.</span><span class="n">X</span><span class="p">,</span>
-                              <span class="n">dY</span> <span class="p">=</span> <span class="n">diff</span><span class="p">.</span><span class="n">First</span><span class="p">.</span><span class="n">Y</span> <span class="p">-</span> <span class="n">diff</span><span class="p">.</span><span class="n">Second</span><span class="p">.</span><span class="n">Y</span> <span class="p">};</span> <span class="c1">// Pushes the difference in location each time the mouse moves</span></code></pre></div>
+                              <span class="n">dY</span> <span class="p">=</span> <span class="n">diff</span><span class="p">.</span><span class="n">First</span><span class="p">.</span><span class="n">Y</span> <span class="p">-</span> <span class="n">diff</span><span class="p">.</span><span class="n">Second</span><span class="p">.</span><span class="n">Y</span> <span class="p">};</span> <span class="c1">// Pushes the difference in location each time the mouse moves</span></code></pre></figure>
 
 <h2 id="my-thoughts">My thoughts</h2>
 
@@ -407,7 +407,7 @@ code {
 
   </article>
     
-    <footer>
+    <footer class="hidden-print">
         
         
         
@@ -422,11 +422,11 @@ code {
     </footer>
 </div>
         </div>
-        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix" data-spy="affix" role="navigation">
+        <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
             
         </div>
-        <div class="col-sm-2 sidebar">
+        <div class="col-sm-2 sidebar hidden-print">
             <div class="panel panel-default">
                 <div class="panel-heading">About Stephen Cleary</div>
                 <div class="panel-body">
