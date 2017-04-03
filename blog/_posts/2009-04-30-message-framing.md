@@ -46,7 +46,7 @@ Whether using length-prefixing or delimiters, one must include code to prevent d
 
 ## The Solution, Part 3 - Code
 
-A code sample for using length-prefixing is in its own blog post at [http://blog.stephencleary.com/2009/04/sample-code-length-prefix-message.html]({% post_url 2009-04-30-sample-code-length-prefix-message %}).
+A code sample for using length-prefixing is in [its own blog post]({% post_url 2009-04-30-sample-code-length-prefix-message %}).
 
 Another decent code example of length prefixing is on [Jon Cole's blog](http://blogs.msdn.com/joncole/archive/2006/04/25/simple-message-framing-sample-for-tcp-socket-part-2-asynchronous.aspx), although he assumes all the messages are just ASCII strings.
 

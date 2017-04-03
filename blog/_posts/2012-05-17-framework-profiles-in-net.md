@@ -75,6 +75,6 @@ The **.NETPortable** identifier is used for [portable libraries](http://go.micro
 
 The "Version" for the .NETPortable identifier looks like it refers to the maximum version supported by all the platforms in that profile.
 
-The .NETPortable identifier requires a profile. The profiles are listed below (or [click here to open in a separate page](http://portablelibraryprofiles.apps.stephencleary.com/)):
+The .NETPortable identifier requires a profile. The profiles are listed below (or [click here to open in a separate page](https://portablelibraryprofiles.stephencleary.com/)):
 
-<iframe src="http://portablelibraryprofiles.apps.stephencleary.com/" style="width:100%; height:40em;"></iframe>
+<iframe src="//portablelibraryprofiles.stephencleary.com/" style="width:100%; height:40em;"></iframe>
