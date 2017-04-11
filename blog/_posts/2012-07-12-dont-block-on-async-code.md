@@ -105,6 +105,14 @@ public static async Task<JObject> GetJsonAsync(Uri uri)
 
 This changes the continuation behavior of GetJsonAsync so that it does _not_ resume on the context. Instead, GetJsonAsync will resume on a thread pool thread. This enables GetJsonAsync to complete the Task it returned without having to re-enter the context.
 
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Using `ConfigureAwait(false)` to avoid deadlocks is a dangerous practice. You would have to use `ConfigureAwait(false)` for *every* `await` in the transitive closure of all methods called by the blocking code, *including all third- and second-party code*. Using `ConfigureAwait(false)` to avoid deadlock is at best [just a hack](https://msdn.microsoft.com/en-us/magazine/mt238404.aspx){:.alert-link}).
+
+As the title of this post points out, the better solution is "Don't block on async code".
+</div>
+
 Consider the second best practice. The new "top-level" methods look like this:
 
 {% highlight csharp %}

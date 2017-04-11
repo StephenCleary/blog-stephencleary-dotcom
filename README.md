@@ -32,6 +32,8 @@ Info block:
 
 ````
 <div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
 Blah blah [with links](http://example.com){:.alert-link}), and blah blah.
 </div>
 ````
