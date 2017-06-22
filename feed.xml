@@ -3,9 +3,28 @@
   <channel>
     <title>Stephen Cleary (the blog)</title>
     <description>Stephen Cleary's blog: async/await, programming, language design, and other sundry computer science topics.</description>
-    <link>http://blog.stephencleary.com/</link>
-    <atom:link rel="self" type="application/rss+xml" href="http://blog.stephencleary.com/feed.xml" />
-    <atom:link rel="search" type="application/opensearchdescription+xml" href="http://stephencleary.com/opensearch.xml" title="Cleary Search" />
+    <link>https://blog.stephencleary.com/</link>
+    <atom:link rel="self" type="application/rss+xml" href="https://blog.stephencleary.com/feed.xml" />
+    <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
+    
+      <item>
+        <title>Async JavaScript</title>
+        <description>&lt;p&gt;The &lt;code&gt;async&lt;/code&gt; and &lt;code&gt;await&lt;/code&gt; keywords first hit the scene way back in 2010, when it was introduced in F#. C# and VB followed fairly quickly in 2012, with Python and TypeScript adopting them in 2015.&lt;/p&gt;
+
+&lt;p&gt;Tuesday or Wednesday next week (the 27th and 28th of June), &lt;code&gt;async&lt;/code&gt; should officially become a part of JavaScript!&lt;/p&gt;
+
+&lt;p&gt;That is, the &lt;a href=&quot;https://github.com/tc39/ecmascript-asyncawait&quot;&gt;&lt;code&gt;async&lt;/code&gt; proposal&lt;/a&gt; &lt;a href=&quot;https://github.com/tc39/proposals/blob/master/finished-proposals.md&quot;&gt;has reached&lt;/a&gt; &lt;a href=&quot;https://tc39.github.io/process-document/&quot;&gt;Stage 4&lt;/a&gt;, is included in the &lt;a href=&quot;https://tc39.github.io/ecma262/2017/&quot;&gt;ES2017 language specification&lt;/a&gt;, and is expected to be ratified &lt;a href=&quot;https://www.ecma-international.org/memento/Ecma_meeting_calendar.htm&quot;&gt;next week&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Of course, JavaScript being what it is, lots of people have been &lt;a href=&quot;https://babeljs.io/docs/plugins/transform-async-to-generator/&quot;&gt;using it for some time already&lt;/a&gt;. Chrome even has &lt;a href=&quot;https://developers.google.com/web/fundamentals/getting-started/primers/async-functions&quot;&gt;native support&lt;/a&gt;!&lt;/p&gt;
+
+&lt;p&gt;JavaScript is perhaps the most widely-used language today, and this marks a big step forward in the &lt;code&gt;async&lt;/code&gt; invasion. Stay tuned on this blog for JavaScript-related &lt;code&gt;async&lt;/code&gt; tips in addition to the regular .NET ones! :)&lt;/p&gt;
+
+&lt;p&gt;Way to go, &lt;code&gt;async&lt;/code&gt;!&lt;/p&gt;
+</description>
+        <pubDate>Thu, 22 Jun 2017 00:00:00 -0400</pubDate>
+        <link>https://blog.stephencleary.com/2017/06/async-javascript.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2017/06/async-javascript.html</guid>
+      </item>
     
       <item>
         <title>ASP.NET Core SynchronizationContext</title>
@@ -60,6 +79,7 @@
     &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;();&lt;/span&gt;
     &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task1&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;GetOneAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;url1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
     &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task2&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;GetOneAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;url2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;WhenAll&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;task1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
     &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
 &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
 
@@ -77,8 +97,8 @@
 
 </description>
         <pubDate>Thu, 30 Mar 2017 00:00:00 -0400</pubDate>
-        <link>http://blog.stephencleary.com/2017/03/aspnetcore-synchronization-context.html</link>
-        <guid isPermaLink="true">http://blog.stephencleary.com/2017/03/aspnetcore-synchronization-context.html</guid>
+        <link>https://blog.stephencleary.com/2017/03/aspnetcore-synchronization-context.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2017/03/aspnetcore-synchronization-context.html</guid>
       </item>
     
       <item>
@@ -323,8 +343,8 @@ This pitfall is especially notable when writing synchronous implementations of a
 
 </description>
         <pubDate>Thu, 01 Dec 2016 00:00:00 -0500</pubDate>
-        <link>http://blog.stephencleary.com/2016/12/eliding-async-await.html</link>
-        <guid isPermaLink="true">http://blog.stephencleary.com/2016/12/eliding-async-await.html</guid>
+        <link>https://blog.stephencleary.com/2016/12/eliding-async-await.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2016/12/eliding-async-await.html</guid>
       </item>
     
       <item>
@@ -384,8 +404,8 @@ This pitfall is especially notable when writing synchronous implementations of a
 &lt;p&gt;I’m still learning Azure Functions myself, and you’re welcome to join me - or just watch me struggle - &lt;a href=&quot;https://github.com/StephenClearyApps/NetStandardTypes&quot;&gt;on GitHub&lt;/a&gt;.&lt;/p&gt;
 </description>
         <pubDate>Fri, 18 Nov 2016 00:00:00 -0500</pubDate>
-        <link>http://blog.stephencleary.com/2016/11/azure-functions.html</link>
-        <guid isPermaLink="true">http://blog.stephencleary.com/2016/11/azure-functions.html</guid>
+        <link>https://blog.stephencleary.com/2016/11/azure-functions.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2016/11/azure-functions.html</guid>
       </item>
     
       <item>
@@ -543,8 +563,8 @@ This pitfall is especially notable when writing synchronous implementations of a
 &lt;p&gt;A fully-working solution for ASP.NET Core 1.0 is &lt;a href=&quot;https://github.com/StephenClearyExamples/AsyncDynamicZip/tree/core-ziparchive&quot;&gt;available on GitHub&lt;/a&gt;.&lt;/p&gt;
 </description>
         <pubDate>Fri, 11 Nov 2016 00:00:00 -0500</pubDate>
-        <link>http://blog.stephencleary.com/2016/11/streaming-zip-on-aspnet-core.html</link>
-        <guid isPermaLink="true">http://blog.stephencleary.com/2016/11/streaming-zip-on-aspnet-core.html</guid>
+        <link>https://blog.stephencleary.com/2016/11/streaming-zip-on-aspnet-core.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2016/11/streaming-zip-on-aspnet-core.html</guid>
       </item>
     
       <item>
@@ -685,8 +705,8 @@ This pitfall is especially notable when writing synchronous implementations of a
 &lt;p&gt;A fully-working solution for ASP.NET 4.6 (using the built-in &lt;code&gt;ZipArchive&lt;/code&gt;) is &lt;a href=&quot;https://github.com/StephenClearyExamples/AsyncDynamicZip/tree/full-ziparchive&quot;&gt;available on GitHub&lt;/a&gt;.&lt;/p&gt;
 </description>
         <pubDate>Thu, 03 Nov 2016 00:00:00 -0400</pubDate>
-        <link>http://blog.stephencleary.com/2016/11/ziparchive-on-write-only-streams.html</link>
-        <guid isPermaLink="true">http://blog.stephencleary.com/2016/11/ziparchive-on-write-only-streams.html</guid>
+        <link>https://blog.stephencleary.com/2016/11/ziparchive-on-write-only-streams.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2016/11/ziparchive-on-write-only-streams.html</guid>
       </item>
     
       <item>
@@ -710,8 +730,8 @@ This pitfall is especially notable when writing synchronous implementations of a
 &lt;p&gt;There’s nothing really important in this blog post for modern code (the newer &lt;code&gt;PushStreamContent&lt;/code&gt; went live 3 years ago this month) - just an interesting historical note.&lt;/p&gt;
 </description>
         <pubDate>Thu, 27 Oct 2016 00:00:00 -0400</pubDate>
-        <link>http://blog.stephencleary.com/2016/10/async-pushstreamcontent-historical-note.html</link>
-        <guid isPermaLink="true">http://blog.stephencleary.com/2016/10/async-pushstreamcontent-historical-note.html</guid>
+        <link>https://blog.stephencleary.com/2016/10/async-pushstreamcontent-historical-note.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2016/10/async-pushstreamcontent-historical-note.html</guid>
       </item>
     
       <item>
@@ -863,8 +883,8 @@ This pitfall is especially notable when writing synchronous implementations of a
 &lt;p&gt;A fully-working solution for ASP.NET 4.6 is &lt;a href=&quot;https://github.com/StephenClearyExamples/AsyncDynamicZip/tree/full-dotnetzip&quot;&gt;available on GitHub&lt;/a&gt;.&lt;/p&gt;
 </description>
         <pubDate>Thu, 20 Oct 2016 00:00:00 -0400</pubDate>
-        <link>http://blog.stephencleary.com/2016/10/async-pushstreamcontent.html</link>
-        <guid isPermaLink="true">http://blog.stephencleary.com/2016/10/async-pushstreamcontent.html</guid>
+        <link>https://blog.stephencleary.com/2016/10/async-pushstreamcontent.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2016/10/async-pushstreamcontent.html</guid>
       </item>
     
       <item>
@@ -874,8 +894,8 @@ This pitfall is especially notable when writing synchronous implementations of a
 &lt;p&gt;My topic is &lt;a href=&quot;http://www.mkedotnet.com/sessions/asynchronous-parallel-reactive-help/&quot;&gt;Asynchronous? Parallel? Reactive? HELP!&lt;/a&gt;, which is a gentle introduction to various forms of concurrency, with guidance on how to choose between them.&lt;/p&gt;
 </description>
         <pubDate>Thu, 13 Oct 2016 00:00:00 -0400</pubDate>
-        <link>http://blog.stephencleary.com/2016/10/announcement-speaking-at-mkedotnet.html</link>
-        <guid isPermaLink="true">http://blog.stephencleary.com/2016/10/announcement-speaking-at-mkedotnet.html</guid>
+        <link>https://blog.stephencleary.com/2016/10/announcement-speaking-at-mkedotnet.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2016/10/announcement-speaking-at-mkedotnet.html</guid>
       </item>
     
       <item>
@@ -885,153 +905,8 @@ This pitfall is especially notable when writing synchronous implementations of a
 &lt;p&gt;Many thanks to Cleiton Gomes for doing it so beautifully!&lt;/p&gt;
 </description>
         <pubDate>Thu, 06 Oct 2016 00:00:00 -0400</pubDate>
-        <link>http://blog.stephencleary.com/2016/10/portuguese-translation-of-async.html</link>
-        <guid isPermaLink="true">http://blog.stephencleary.com/2016/10/portuguese-translation-of-async.html</guid>
-      </item>
-    
-      <item>
-        <title>DotNet / NetCore Versions</title>
-        <description>&lt;p&gt;Well, the .NET Core 1.0 RTM release went out yesterday, and everything went just fine!&lt;/p&gt;
-
-&lt;p&gt;No, just kidding. When does the first major release of a new platform ever go just fine? :)&lt;/p&gt;
-
-&lt;p&gt;Currently, there’s a bit of confusion out there because the &lt;em&gt;runtime&lt;/em&gt; (netcore) RTM’d, but the &lt;em&gt;tooling&lt;/em&gt; (dotnet) is still in preview. I’m writing down how all the pieces fit together (along with recent history) so I can keep it all straight in my head.&lt;/p&gt;
-
-&lt;p&gt;So, this is my short reference blog post pointing out which versions of which go with what. And stuff.&lt;/p&gt;
-
-&lt;h2 id=&quot;the-right-bits&quot;&gt;The Right Bits&lt;/h2&gt;
-
-&lt;p&gt;There have been several reports of odd Visual Studio behavior due to conflicting installs.&lt;/p&gt;
-
-&lt;p&gt;So, the &lt;strong&gt;first&lt;/strong&gt; thing to do is to uninstall all old DNX or dotnet tooling, and any pre-release netcore runtimes. See the end of this post for uninstall helps.&lt;/p&gt;
-
-&lt;p&gt;Then, install the &lt;a href=&quot;https://www.microsoft.com/net/core&quot;&gt;proper bits&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;For a Windows machine running Visual Studio, the proper bits are Visual Studio 2015 Update 3 followed by the .NET Core for Visual Studio Official MSI Installer (which includes some RTM pieces &lt;em&gt;and&lt;/em&gt; some preview pieces).&lt;/p&gt;
-
-&lt;p&gt;For a command-line setup, the proper bits are the .NET Core Runtime followed by the .NET Core SDK (which is in preview).&lt;/p&gt;
-
-&lt;p&gt;If you use ReSharper, be sure to upgrade to &lt;a href=&quot;https://confluence.jetbrains.com/display/ReSharper/ReSharper+2016.2+EAP&quot;&gt;2016.2 EAP 6&lt;/a&gt;.&lt;/p&gt;
-
-&lt;h2 id=&quot;dotnet-and-netcore&quot;&gt;DotNet and NetCore&lt;/h2&gt;
-
-&lt;p&gt;As previously noted, .NET Core did RTM yesterday, but the DotNet tooling is still in preview. Here’s a rundown of the recent releases and how they match:&lt;/p&gt;
-
-&lt;table class=&quot;table&quot;&gt;
-&lt;thead&gt;
-&lt;tr&gt;&lt;th&gt;.NET Core (runtime) Version&lt;/th&gt;&lt;th&gt;DotNet (tooling) Version&lt;/th&gt;&lt;/tr&gt;
-&lt;/thead&gt;
-&lt;tbody&gt;
-&lt;tr&gt;&lt;td&gt;RC1&lt;/td&gt;&lt;td&gt;&lt;span&gt;&lt;code&gt;1.0.0-rc1-update2&lt;/code&gt; (RC1)&lt;/span&gt;&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td&gt;RC2&lt;/td&gt;&lt;td&gt;&lt;span&gt;&lt;code&gt;1.0.0-preview1-002702&lt;/code&gt; (Preview 1)&lt;/span&gt;&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td&gt;&lt;/td&gt;&lt;td&gt;&lt;span&gt;&lt;code&gt;1.0.0-beta-002071&lt;/code&gt;&lt;/span&gt;&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td&gt;1.0.0 (RTM)&lt;/td&gt;&lt;td&gt;&lt;span&gt;&lt;code&gt;1.0.0-preview2-003121&lt;/code&gt; (Preview 2)&lt;/span&gt;&lt;/td&gt;&lt;/tr&gt;
-&lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;p&gt;The &lt;em&gt;tooling&lt;/em&gt; version is what should be referenced in your &lt;code&gt;global.json&lt;/code&gt;. So a &lt;code&gt;global.json&lt;/code&gt; targeting the current tooling release would look like:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;nt&quot;&gt;&amp;quot;projects&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;src&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;test&amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;],&lt;/span&gt;
-    &lt;span class=&quot;nt&quot;&gt;&amp;quot;sdk&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;nt&quot;&gt;&amp;quot;version&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;1.0.0-preview2-003121&amp;quot;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;The tooling version is also what gets reported from &lt;code&gt;dotnet --version&lt;/code&gt;:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;&amp;gt; dotnet --version
-1.0.0-preview2-003121
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;div class=&quot;alert alert-info&quot;&gt;
-  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
-
-  &lt;p&gt;The naming definitely got messed up for the tooling.&lt;/p&gt;
-
-  &lt;p&gt;It looks like it was originally tracking with the runtime release names (the “RC1” release names match), but then broke off on its own as “Preview 1” when the runtime went to “RC2”.&lt;/p&gt;
-
-  &lt;p&gt;Then there was an intermediate release between the two preview releases, to fix the tooling for F# projects. It was called “beta” for some reason.&lt;/p&gt;
-
-  &lt;p&gt;So the tooling has gone from RC to Preview 1 to Beta to Preview 2. However, those were not “real” Beta/RC releases - they were really just incremental previews. Future versions will doubtless have “real” Beta/RC names.&lt;/p&gt;
-&lt;/div&gt;
-
-&lt;h2 id=&quot;installing-tooling-on-ci-machines&quot;&gt;Installing Tooling on CI Machines&lt;/h2&gt;
-
-&lt;p&gt;Continuous Integration build servers also need to have the appropriate tooling installed. For a variety of reasons, I prefer to have my .NET Core projects locally install the exact version of tooling that they need.&lt;/p&gt;
-
-&lt;p&gt;The DotNet tooling has supported “scripted installs” via PowerShell / Bash scripts for a long time. It’s not too hard to install the tooling as part of your build script, if you know where the files are.&lt;/p&gt;
-
-&lt;p&gt;The basic idea is that you first download an “install” script and then invoke it with the desired “channel” and “version” to get the actual tooling.&lt;/p&gt;
-
-&lt;table class=&quot;table&quot;&gt;
-&lt;thead&gt;
-&lt;tr&gt;&lt;th&gt;DotNet (tooling) Version&lt;/th&gt;&lt;th&gt;Install Script Location&lt;/th&gt;&lt;th&gt;Install Script Invocation&lt;/th&gt;&lt;/tr&gt;
-&lt;/thead&gt;
-&lt;tbody&gt;
-&lt;tr&gt;&lt;td&gt;&lt;span&gt;&lt;code&gt;1.0.0-rc1-update2&lt;/code&gt;&lt;/span&gt;&lt;/td&gt;&lt;td&gt;&lt;span&gt;&lt;a href=&quot;https://raw.githubusercontent.com/aspnet/Home/dev/dnvminstall.ps1&quot;&gt;https://raw.githubusercontent.com/​aspnet/​Home/​dev/​dnvminstall.ps1&lt;/a&gt;&lt;/span&gt;&lt;/td&gt;&lt;td&gt;&lt;span&gt;&lt;code&gt;dnvm install 1.0.0-rc1-update2&lt;/code&gt;&lt;/span&gt;&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td&gt;&lt;span&gt;&lt;code&gt;1.0.0-preview1-002702&lt;/code&gt;&lt;/span&gt;&lt;/td&gt;&lt;td&gt;&lt;span&gt;&lt;a href=&quot;https://raw.githubusercontent.com/dotnet/cli/rel/1.0.0-preview1/scripts/obtain/dotnet-install.ps1&quot;&gt;https://raw.githubusercontent.com/​dotnet/​cli/​rel/​1.0.0-preview1/​scripts/​obtain/​dotnet-install.ps1&lt;/a&gt;&lt;/span&gt;&lt;/td&gt;&lt;td&gt;&lt;span&gt;&lt;code&gt;dotnet-install.ps1 -Channel &quot;preview&quot; -Version &quot;1.0.0-preview1-002702&quot;&lt;/code&gt;&lt;/span&gt;&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td&gt;&lt;span&gt;&lt;code&gt;1.0.0-beta-002071&lt;/code&gt;&lt;/span&gt;&lt;/td&gt;&lt;td&gt;&lt;span&gt;&lt;a href=&quot;https://raw.githubusercontent.com/dotnet/cli/rel/1.0.0-preview1/scripts/obtain/dotnet-install.ps1&quot;&gt;https://raw.githubusercontent.com/​dotnet/​cli/​rel/​1.0.0-preview1/​scripts/​obtain/​dotnet-install.ps1&lt;/a&gt;&lt;/span&gt;&lt;/td&gt;&lt;td&gt;&lt;span&gt;&lt;code&gt;dotnet-install.ps1 -Channel &quot;preview&quot; -Version &quot;1.0.0-beta-002071&quot;&lt;/code&gt;&lt;/span&gt;&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td&gt;&lt;span&gt;&lt;code&gt;1.0.0-preview2-003121&lt;/code&gt;&lt;/span&gt;&lt;/td&gt;&lt;td&gt;&lt;span&gt;&lt;a href=&quot;https://raw.githubusercontent.com/dotnet/cli/rel/1.0.0-preview2/scripts/obtain/dotnet-install.ps1&quot;&gt;https://raw.githubusercontent.com/​dotnet/​cli/​rel/​1.0.0-preview2/​scripts/​obtain/​dotnet-install.ps1&lt;/a&gt;&lt;/span&gt;&lt;/td&gt;&lt;td&gt;&lt;span&gt;&lt;code&gt;dotnet-install.ps1 -Channel &quot;preview&quot; -Version &quot;1.0.0-preview2-003121&quot;&lt;/code&gt;&lt;/span&gt;&lt;/td&gt;&lt;/tr&gt;
-&lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;p&gt;The Bash install scripts are located in the same place, just with a &lt;code&gt;.sh&lt;/code&gt; extension.&lt;/p&gt;
-
-&lt;p&gt;A full “install local” PowerShell script for the current tooling version would look something like this:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-powershell&quot; data-lang=&quot;powershell&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;c&quot;&gt;# Download the &amp;quot;dotnet-install.ps1&amp;quot; script.&lt;/span&gt;
-&lt;span class=&quot;nb&quot;&gt;Invoke-WebRequest&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;https://raw.githubusercontent.com/dotnet/cli/rel/1.0.0-preview2/scripts/obtain/dotnet-install.ps1&amp;quot;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;-OutFile&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;.\dotnet-install.ps1&amp;quot;&lt;/span&gt;
-
-&lt;span class=&quot;c&quot;&gt;# Decide to install into a &amp;quot;.dotnetcli&amp;quot; local directory.&lt;/span&gt;
-&lt;span class=&quot;nv&quot;&gt;$env:DOTNET_INSTALL_DIR&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;$pwd\.dotnetcli&amp;quot;&lt;/span&gt;
-
-&lt;span class=&quot;c&quot;&gt;# Do the actual install.&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;&amp;amp;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;.\&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dotnet-install&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ps1&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;-Channel&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;preview&amp;quot;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;-Version&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;1.0.0-preview2-003121&amp;quot;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;-InstallDir&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;$env:DOTNET_INSTALL_DIR&amp;quot;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;h2 id=&quot;misc-tips&quot;&gt;Misc Tips&lt;/h2&gt;
-
-&lt;p&gt;As a general rule, you want use the &lt;em&gt;highest&lt;/em&gt; available release of the &lt;code&gt;NETStandard.Library&lt;/code&gt; dependency (if you’re using it), but the &lt;em&gt;lowest&lt;/em&gt; possible &lt;code&gt;netstandard&lt;/code&gt; target (to reach the largest number of platforms). For more details, see the conceptual links below.&lt;/p&gt;
-
-&lt;h2 id=&quot;helpful-links&quot;&gt;Helpful Links&lt;/h2&gt;
-
-&lt;p&gt;If you have an upgrade problem that you just can’t figure out, join the &lt;a href=&quot;http://tattoocoder.com/aspnet-slack-sign-up/&quot;&gt;(unofficial) .NET Core Slack channel&lt;/a&gt; or the &lt;a href=&quot;https://gitter.im/dotnet/coreclr&quot;&gt;(official) .NET Core Gitter room&lt;/a&gt; and ask on there.&lt;/p&gt;
-
-&lt;p&gt;Good luck!&lt;/p&gt;
-
-&lt;h3 id=&quot;conceptual&quot;&gt;Conceptual&lt;/h3&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://github.com/dotnet/corefx/blob/master/Documentation/architecture/net-platform-standard.md&quot;&gt;All about netstandard&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://docs.microsoft.com/en-us/dotnet/articles/core/packages&quot;&gt;Packages, Metapackages, and Frameworks&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://docs.microsoft.com/en-us/dotnet/articles/core/deploying/reducing-dependencies&quot;&gt;Dependency Trimming&lt;/a&gt;&lt;/p&gt;
-
-&lt;h3 id=&quot;upgrading&quot;&gt;Upgrading&lt;/h3&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://weblog.west-wind.com/posts/2016/Jun/27/Upgrading-to-ASPNET-Core-RTM-from-RC2&quot;&gt;Upgrading to ASP.NET Core RTM from RC2 (Rick Strahl)&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://xunit.github.io/docs/getting-started-dotnet-core.html&quot;&gt;xUnit on .NET Core&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://github.com/dotnet/corefx/issues/8880&quot;&gt;OpenCover requires the -oldStyle flag to work on the .NET Core 1.0.0/RTM runtime&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;http://stackoverflow.com/questions/37288385/moq-netcore-failing-for-net-core-rc2&quot;&gt;Moq 4.6.25-alpha is missing a dependency, so you need to declare it manually&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://aspnet-aspnet.readthedocs-hosted.com/en/latest/migration/rc2-to-rtm.html&quot;&gt;[ASP.NET] Migrating from ASP.NET Core RC2 to ASP.NET Core 1.0&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://aspnet-aspnet.readthedocs-hosted.com/en/latest/migration/rc1-to-rtm.html&quot;&gt;[ASP.NET] Migrating from ASP.NET 5 RC1 to ASP.NET Core 1.0&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://docs.microsoft.com/en-us/dotnet/articles/core/migrating-from-dnx&quot;&gt;Migrating from DNX&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&quot;uninstalling-old-versions&quot;&gt;Uninstalling Old versions&lt;/h2&gt;
-
-&lt;p&gt;Some developers have reported that Visual Studio .NET Core RC2 will not uninstall without the MSI. If you need the MSI, you can get it from &lt;a href=&quot;https://download.microsoft.com/download/4/6/1/46116DFF-29F9-4FF8-94BF-F9BE05BE263B/DotNetCore.1.0.0.RC2-VS2015Tools.Preview1.exe&quot;&gt;here&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;Some developers have had problems with old uninstallers not cleaning up older versions of the tooling, and the problems with naming (where “RC1” and “RC2” tooling versions are &lt;em&gt;older&lt;/em&gt; than “Preview 2”) cause the wrong version of tooling to be found. The solution is to manually delete &lt;a href=&quot;https://files.gitter.im/aspnet/Home/ufDJ/2016-06-28-20_04_03-sdk.png&quot;&gt;the old versions&lt;/a&gt; from &lt;code&gt;%PROGRAMFILES%\dotnet\sdk&lt;/code&gt;.&lt;/p&gt;
-</description>
-        <pubDate>Tue, 28 Jun 2016 00:00:00 -0400</pubDate>
-        <link>http://blog.stephencleary.com/2016/06/dotnet-netcore-versions.html</link>
-        <guid isPermaLink="true">http://blog.stephencleary.com/2016/06/dotnet-netcore-versions.html</guid>
+        <link>https://blog.stephencleary.com/2016/10/portuguese-translation-of-async.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2016/10/portuguese-translation-of-async.html</guid>
       </item>
     
   </channel>

@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>ASP.NET Core SynchronizationContext</title>
+    <title>Async JavaScript</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="ASP.NET Core doesn't have a SynchronizationContext. But what does this mean for developers?" />
-    <link rel="canonical" href="https://blog.stephencleary.com/2017/03/aspnetcore-synchronization-context.html" />
+    <meta name="description" content="Async and Await are about to officially become part of JavaScript!" />
+    <link rel="canonical" href="https://blog.stephencleary.com/2017/06/async-javascript.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -219,79 +219,23 @@ code {
 
   <header>
       <div class="page-header">
-          <h1>ASP.NET Core SynchronizationContext</h1>
-          <small><time datetime="2017-03-30">Mar 30, 2017</time> &bull; <a data-disqus-identifier="/2017/03/aspnetcore-synchronization-context" href="#disqus_thread">Comments</a></small>
+          <h1>Async JavaScript</h1>
+          <small><time datetime="2017-06-22">Jun 22, 2017</time> &bull; <a data-disqus-identifier="/2017/06/async-javascript" href="#disqus_thread">Comments</a></small>
       </div>
   </header>
 
   <article>
-  <p><a href="http://davidpine.net/">David Pine</a> pinged me on Slack the other day, suggesting that I write a blog post about the <code>SynchronizationContext</code> in ASP.NET Core. So, here it is!</p>
+  <p>The <code>async</code> and <code>await</code> keywords first hit the scene way back in 2010, when it was introduced in F#. C# and VB followed fairly quickly in 2012, with Python and TypeScript adopting them in 2015.</p>
 
-<h2 id="there-isnt-one">There Isn’t One</h2>
+<p>Tuesday or Wednesday next week (the 27th and 28th of June), <code>async</code> should officially become a part of JavaScript!</p>
 
-<p>My inital reply was just “well, that would be a short post!” Because there <em>isn’t</em> a <code>SynchronizationContext</code> in ASP.NET Core.</p>
+<p>That is, the <a href="https://github.com/tc39/ecmascript-asyncawait"><code>async</code> proposal</a> <a href="https://github.com/tc39/proposals/blob/master/finished-proposals.md">has reached</a> <a href="https://tc39.github.io/process-document/">Stage 4</a>, is included in the <a href="https://tc39.github.io/ecma262/2017/">ES2017 language specification</a>, and is expected to be ratified <a href="https://www.ecma-international.org/memento/Ecma_meeting_calendar.htm">next week</a>.</p>
 
-<p class="center"><a href="/assets/NoAspNetCoreSyncCtx.png"><img src="/assets/NoAspNetCoreSyncCtx.png" alt="" /></a></p>
+<p>Of course, JavaScript being what it is, lots of people have been <a href="https://babeljs.io/docs/plugins/transform-async-to-generator/">using it for some time already</a>. Chrome even has <a href="https://developers.google.com/web/fundamentals/getting-started/primers/async-functions">native support</a>!</p>
 
-<h2 id="why-no-synchronizationcontext">Why No SynchronizationContext?</h2>
+<p>JavaScript is perhaps the most widely-used language today, and this marks a big step forward in the <code>async</code> invasion. Stay tuned on this blog for JavaScript-related <code>async</code> tips in addition to the regular .NET ones! :)</p>
 
-<p>Stepping back a moment, a good question to ask is <em>why</em> the <code>AspNetSynchronizationContext</code> was removed in ASP.NET Core. While I’m not privy to the team’s internal discussions on the subject, I assume it is for two reasons: performance and simplicity. Consider the performance aspect first.</p>
-
-<p>When an asynchronous handler resumes execution on legacy ASP.NET, the continuation is <em>queued</em> to the request context. The continuation must wait for any other continuations that have already been queued (only one may run at a time). When it is ready to run, a thread is taken from the thread pool, <em>enters</em> the request context, and then resumes executing the handler. That “re-entering” the request context involves a number of housekeeping tasks, such as setting <code>HttpContext.Current</code> and the current thread’s identity and culture.</p>
-
-<p>With the contextless ASP.NET Core approach, when an asynchronous handler resumes execution, a thread is taken from the thread pool and executes the continuation. The context queue is avoided, and there is no “entering” of the request context necessary. In addition, the <code>async</code>/<code>await</code> mechanism is highly optimized for the contextless scenario. There’s simply less work to do for asynchronous requests.</p>
-
-<p>Simplicity is another aspect of this decision. <code>AspNetSynchronizationContext</code> worked well, but it had some tricky parts, <a href="http://www.hanselman.com/blog/SystemThreadingThreadCurrentPrincipalVsSystemWebHttpContextCurrentUserOrWhyFormsAuthenticationCanBeSubtle.aspx">particularly around identity management</a>.</p>
-
-<p>OK, so there’s no <code>SynchronizationContext</code>. What does that mean for developers?</p>
-
-<h2 id="you-can-block-on-async-code---but-you-shouldnt">You Can Block on Async Code - But You Shouldn’t</h2>
-
-<p>The first and most obvious consequence is that there’s no context captured by <code>await</code>. This means that <a href="/2012/07/dont-block-on-async-code.html">blocking on asynchronous code won’t cause a deadlock.</a> You can use <code>Task.GetAwaiter().GetResult()</code> (or <code>Task.Wait</code> or <code>Task&lt;T&gt;.Result</code>) without fear of deadlock.</p>
-
-<p>However, you <em>shouldn’t</em>. Because the moment you block on asynchronous code, you’re giving up every benefit of asynchronous code in the first place. The enhanced scalability of asynchronous handlers is nullified as soon as you block a thread.</p>
-
-<p>There were a couple of scenarios in (legacy) ASP.NET where blocking was unfortunately necessary: ASP.NET MVC filters and child actions. However, in ASP.NET Core, the entire pipeline is fully asynchronous; both filters and view components execute asynchronously.</p>
-
-<p>In conclusion, <em>ideally</em> you should strive to use <code>async</code> all the way; but if your code needs to, it <em>can</em> block without danger.</p>
-
-<h2 id="you-dont-need-configureawaitfalse-but-still-use-it-in-libraries">You Don’t Need ConfigureAwait(false), But Still Use It in Libraries</h2>
-
-<p>Since there is no context anymore, there’s no need for <code>ConfigureAwait(false)</code>. Any code that <em>knows</em> it’s running under ASP.NET Core does not need to explicitly avoid its context. In fact, the ASP.NET Core team themselves have dropped the use of <code>ConfigureAwait(false)</code>.</p>
-
-<p>However, I still recommend that you use it in your core libraries - anything that may be reused in other applications. If you have code in a library that may also run in a UI app, or legacy ASP.NET app, or anywhere else there may be a context, then you should still use <code>ConfigureAwait(false)</code> in that library.</p>
-
-<h2 id="beware-implicit-parallelism">Beware Implicit Parallelism</h2>
-
-<p>There is one more major concern when moving from a synchronizing context to a thread pool context (i.e., from legacy ASP.NET to ASP.NET Core).</p>
-
-<p>The legacy ASP.NET <code>SynchronizationContext</code> is an actual <em>synchronizing context</em>, meaning that within a request context, only one thread can actually <em>execute code</em> at a time. That is, asynchronous continuations may run on any thread, but <em>only one at a time</em>. ASP.NET Core does not have a <code>SynchronizationContext</code>, so <code>await</code> defaults to the thread pool context. So, in the ASP.NET Core world, asynchronous continuations may run on any thread, and they may all run in <em>parallel</em>.</p>
-
-<p>As a contrived example, consider this code, which downloads two strings and places them into a list. This code works fine in legacy ASP.NET because the request context only permits one continuation at a time:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="n">HttpClient</span> <span class="n">_client</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
-
-<span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">List</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;&gt;</span> <span class="n">GetBothAsync</span><span class="p">(</span><span class="kt">string</span> <span class="n">url1</span><span class="p">,</span> <span class="kt">string</span> <span class="n">url2</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;();</span>
-    <span class="kt">var</span> <span class="n">task1</span> <span class="p">=</span> <span class="n">GetOneAsync</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">url1</span><span class="p">);</span>
-    <span class="kt">var</span> <span class="n">task2</span> <span class="p">=</span> <span class="n">GetOneAsync</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">url2</span><span class="p">);</span>
-    <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">WhenAll</span><span class="p">(</span><span class="n">task1</span><span class="p">,</span> <span class="n">task2</span><span class="p">);</span>
-    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
-<span class="p">}</span>
-
-<span class="k">async</span> <span class="n">Task</span> <span class="nf">GetOneAsync</span><span class="p">(</span><span class="n">List</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">result</span><span class="p">,</span> <span class="kt">string</span> <span class="n">url</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="kt">var</span> <span class="n">data</span> <span class="p">=</span> <span class="k">await</span> <span class="n">_client</span><span class="p">.</span><span class="n">GetStringAsync</span><span class="p">(</span><span class="n">url</span><span class="p">);</span>
-    <span class="n">result</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">data</span><span class="p">);</span>
-<span class="p">}</span></code></pre></figure>
-
-<p>The <code>result.Add(data)</code> line can only be executed by one thread at a time because it executes in the request context.</p>
-
-<p>However, this same code is unsafe on ASP.NET Core; specifically, the <code>result.Add(data)</code> line may be executed by two threads <em>at the same time,</em> without protecting the shared <code>List&lt;string&gt;</code>.</p>
-
-<p>Code such as this is rare; asynchronous code is by its nature functional, so it’s far more <em>natural</em> to return results from asynchronous methods rather than modifying shared state. However, the quality of asynchronous code does vary, and there is doubtless some code out there that is not adequately shielded against parallel execution.</p>
-
+<p>Way to go, <code>async</code>!</p>
 
   </article>
     
@@ -300,8 +244,8 @@ code {
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2016/12/eliding-async-await.html" title="Eliding Async and Await">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2017/06/async-javascript.html" title="Async JavaScript">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2017/03/aspnetcore-synchronization-context.html" title="ASP.NET Core SynchronizationContext">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="disqus_thread"></div>
@@ -440,9 +384,9 @@ code {
 <!-- Disqus variables -->
 <script type="text/javascript">
     var disqus_shortname = 'stephencleary';
-    var disqus_identifier = "/2017/03/aspnetcore-synchronization-context";
-    var disqus_title = "ASP.NET Core SynchronizationContext";
-    var disqus_url = "https://blog.stephencleary.com/2017/03/aspnetcore-synchronization-context.html";
+    var disqus_identifier = "/2017/06/async-javascript";
+    var disqus_title = "Async JavaScript";
+    var disqus_url = "https://blog.stephencleary.com/2017/06/async-javascript.html";
 </script>
 
 <!-- Disqus comment counter -->
