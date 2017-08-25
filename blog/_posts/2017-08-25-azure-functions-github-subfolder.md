@@ -13,4 +13,4 @@ You can use a different branch in GitHub for the output of your solution, but th
 project = src/FunctionApp1
 {% endhighlight %}
 
-If you run into deployment errors `The "Move" task failed unexpectedly. (System.Runtime.InteropServices.COMException (0x800700A1): The specified path is invalid.)` when the `_GenerateFunctionsPostBuild` target tries to copy your project output, then [ensure you're using v1.0.1 or later of `Microsoft.NET.Sdk.Functions`](https://stackoverflow.com/questions/45743877/azure-function-ci-build-error-cannot-create-a-file-when-that-file-already-exis).
+If you run into deployment errors like `The "Move" task failed unexpectedly. (System.Runtime.InteropServices.COMException (0x800700A1): The specified path is invalid.)` when the `_GenerateFunctionsPostBuild` target tries to copy your project output, then [ensure you're using v1.0.1 or later of `Microsoft.NET.Sdk.Functions`](https://stackoverflow.com/questions/45743877/azure-function-ci-build-error-cannot-create-a-file-when-that-file-already-exis).
