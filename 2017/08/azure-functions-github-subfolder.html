@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Announcing AsyncTime</title>
+    <title>Continuously Deploy Azure Functions from a GitHub Subfolder</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="AsyncTime is a new video series where I discuss all things async and await." />
-    <link rel="canonical" href="https://blog.stephencleary.com/2017/07/announcing-asynctime.html" />
+    <meta name="description" content="Setting up Azure Functions to continuously deploy from a subfolder of a GitHub repository." />
+    <link rel="canonical" href="https://blog.stephencleary.com/2017/08/azure-functions-github-subfolder.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -219,17 +219,20 @@ code {
 
   <header>
       <div class="page-header">
-          <h1>Announcing AsyncTime</h1>
-          <small><time datetime="2017-07-14">Jul 14, 2017</time> &bull; <a data-disqus-identifier="/2017/07/announcing-asynctime" href="#disqus_thread">Comments</a></small>
+          <h1>Continuously Deploy Azure Functions from a GitHub Subfolder</h1>
+          <small><time datetime="2017-08-25">Aug 25, 2017</time> &bull; <a data-disqus-identifier="/2017/08/azure-functions-github-subfolder" href="#disqus_thread">Comments</a></small>
       </div>
   </header>
 
   <article>
-  <p>A short post today just to announce a new project of mine: <a href="https://vimeo.com/ondemand/asynctime">AsyncTime!</a></p>
+  <p><a href="https://docs.microsoft.com/en-us/azure/azure-functions/functions-continuous-deployment">You can set up continuous deployment for Azure Functions from any branch of a GitHub repository</a>. Unfortunately, the deployment system will either just deploy your files (<code>Found solution 'D:\home\site\repository\src\Sample.sln' with no deployable projects. Deploying files instead.</code>) or may try to deploy the wrong project (e.g., if you have a console app in your solution).</p>
 
-<p><a href="https://vimeo.com/ondemand/asynctime">AsyncTime</a> is a series of short videos covering subjects that work better in a video format rather than a blog post format. Some of the videos will be only for subscribers, but I’m kicking off the channel with several big-picture videos that are free for everyone!</p>
+<p>You can use a different branch in GitHub for the output of your solution, but this is awkward. The solution I chose is to deploy the Azure Functions App from a <em>specific subfolder</em> of a GitHub repository. You can do this by <a href="https://github.com/projectkudu/kudu/wiki/Customizing-deployments">adding a <code>.deployment</code> file in the root of your repository that tells the deployment system where your Azure Functions App is</a>. E.g.:</p>
 
-<p>I hope this is a benefit for you; I’m certainly looking forward to it!</p>
+<figure class="highlight"><pre><code class="language-ini" data-lang="ini"><span></span><span class="k">[config]</span>
+<span class="na">project</span> <span class="o">=</span> <span class="s">src/FunctionApp1</span></code></pre></figure>
+
+<p>If you run into deployment errors like <code>The "Move" task failed unexpectedly. (System.Runtime.InteropServices.COMException (0x800700A1): The specified path is invalid.)</code> when the <code>_GenerateFunctionsPostBuild</code> target tries to copy your project output, then <a href="https://stackoverflow.com/questions/45743877/azure-function-ci-build-error-cannot-create-a-file-when-that-file-already-exis">ensure you’re using v1.0.1 or later of <code>Microsoft.NET.Sdk.Functions</code></a>.</p>
 
   </article>
     
@@ -238,8 +241,8 @@ code {
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2017/06/happy-birthday-iphone.html" title="Happy birthday, iPhone!">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2017/08/azure-functions-github-subfolder.html" title="Continuously Deploy Azure Functions from a GitHub Subfolder">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2017/07/announcing-asynctime.html" title="Announcing AsyncTime">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="disqus_thread"></div>
@@ -378,9 +381,9 @@ code {
 <!-- Disqus variables -->
 <script type="text/javascript">
     var disqus_shortname = 'stephencleary';
-    var disqus_identifier = "/2017/07/announcing-asynctime";
-    var disqus_title = "Announcing AsyncTime";
-    var disqus_url = "https://blog.stephencleary.com/2017/07/announcing-asynctime.html";
+    var disqus_identifier = "/2017/08/azure-functions-github-subfolder";
+    var disqus_title = "Continuously Deploy Azure Functions from a GitHub Subfolder";
+    var disqus_url = "https://blog.stephencleary.com/2017/08/azure-functions-github-subfolder.html";
 </script>
 
 <!-- Disqus comment counter -->
