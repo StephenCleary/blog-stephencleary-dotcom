@@ -8,6 +8,79 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>Azure Functions SPA</title>
+        <description>&lt;p&gt;It seems to me that Azure Functions are a perfect match for single-page applications. I believe SPAs are going to be a natural and common use case for Azure Functions in the near future.&lt;/p&gt;
+
+&lt;p&gt;I had to set up a SPA with an API running on Azure Functions recently, and it took me a bit to figure out all the pieces. Without further ado…&lt;/p&gt;
+
+&lt;h2 id=&quot;host-the-api&quot;&gt;Host the API&lt;/h2&gt;
+
+&lt;p&gt;The first step is to define your API and host it in Azure Functions. &lt;a href=&quot;https://blogs.msdn.microsoft.com/appserviceteam/2017/08/14/azure-functions-tools-released-for-visual-studio-2017-update-3/&quot;&gt;The Visual Studio tooling is out of preview now&lt;/a&gt;, and setting up a C# API is straightforward. Personally, I set up automated deployment from GitHub to my Azure Functions app.&lt;/p&gt;
+
+&lt;div class=&quot;alert alert-info&quot;&gt;
+  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
+
+  &lt;p&gt;Tip: If you want to deploy from a &lt;em&gt;subdirectory&lt;/em&gt; of a GitHub repository, &lt;a href=&quot;/2017/08/azure-functions-github-subfolder.html&quot;&gt;see this post&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;host-the-spa&quot;&gt;Host the SPA&lt;/h2&gt;
+
+&lt;p&gt;The second step is to host the SPA. I’m hosting mine on a static file server, which is easily done for free. With static file hosting, I can keep assets in external files without having to handle all of that in my Azure Functions. Or you can use Azure Blob Storage / Amazon S3 for a really cheap hosting solution, too.&lt;/p&gt;
+
+&lt;h2 id=&quot;serve-through-azure-functions-proxies&quot;&gt;Serve through Azure Functions Proxies&lt;/h2&gt;
+
+&lt;p&gt;The final step is to set up proxies that will forward API calls to the actual Azure Functions API or to the SPA. In your Azure Functions App, turn on Proxies (currently in preview). Then, in your Functions App project in Visual Studio, make a copy of the &lt;code&gt;host.json&lt;/code&gt; file, rename it to &lt;code&gt;proxies.json&lt;/code&gt;, and replace its contents with:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;quot;$schema&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;http://json.schemastore.org/proxies&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;quot;proxies&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;nt&quot;&gt;&amp;quot;api&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;nt&quot;&gt;&amp;quot;matchCondition&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;nt&quot;&gt;&amp;quot;route&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;/api/{*url}&amp;quot;&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
+            &lt;span class=&quot;nt&quot;&gt;&amp;quot;backendUri&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;https://%WEBSITE_HOSTNAME%/api/{url}&amp;quot;&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
+        &lt;span class=&quot;nt&quot;&gt;&amp;quot;app&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;nt&quot;&gt;&amp;quot;matchCondition&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;nt&quot;&gt;&amp;quot;route&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;{*url}&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+                &lt;span class=&quot;nt&quot;&gt;&amp;quot;methods&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;GET&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;HEAD&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;OPTIONS&amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
+            &lt;span class=&quot;nt&quot;&gt;&amp;quot;backendUri&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;https://%SPA_HOST%/&amp;quot;&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
+        &lt;span class=&quot;nt&quot;&gt;&amp;quot;appResources&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;nt&quot;&gt;&amp;quot;matchCondition&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;nt&quot;&gt;&amp;quot;route&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;/static/{*url}&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+                &lt;span class=&quot;nt&quot;&gt;&amp;quot;methods&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;GET&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;HEAD&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;OPTIONS&amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
+            &lt;span class=&quot;nt&quot;&gt;&amp;quot;backendUri&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;https://%SPA_HOST%/static/{url}&amp;quot;&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;The only part you need to change is &lt;code&gt;%SPA_HOST%&lt;/code&gt; - you can change this to where your SPA is hosted, or just keep the file as-is and add an application setting &lt;code&gt;SPA_HOST&lt;/code&gt; that points to your SPA.&lt;/p&gt;
+
+&lt;p&gt;This will set up three proxies: one for your API calls, one to serve up the SPA HTML, and one to serve up SPA static resources (JavaScript bundle, images, etc).&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;api&lt;/code&gt; proxy will forward all requests starting with &lt;code&gt;/api&lt;/code&gt; to the actual Azure Function implementations (using &lt;a href=&quot;https://github.com/projectkudu/kudu/wiki/Azure-runtime-environment&quot;&gt;the predefined &lt;code&gt;WEBSITE_HOSTNAME&lt;/code&gt; setting&lt;/a&gt;).&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;appResources&lt;/code&gt; proxy will forward all requests starting with &lt;code&gt;/static&lt;/code&gt; to your SPA host, preserving the remainder of your url.&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;app&lt;/code&gt; proxy will forward all remaining requests to the SPA.&lt;/p&gt;
+
+&lt;p&gt;A brief note on priorities: Azure Functions Proxies use the same &lt;a href=&quot;https://docs.microsoft.com/en-us/aspnet/web-api/overview/web-api-routing-and-actions/attribute-routing-in-web-api-2#route-order&quot;&gt;route ordering rules as WebAPI 2 attribute routing&lt;/a&gt;. So the &lt;code&gt;api&lt;/code&gt; and &lt;code&gt;appResources&lt;/code&gt; proxies are always evaluated before the &lt;code&gt;app&lt;/code&gt; proxy because they start with constant path segment prefixes (the &lt;code&gt;api&lt;/code&gt; proxy starts with an &lt;code&gt;/api/&lt;/code&gt; path segment, and the &lt;code&gt;appResources&lt;/code&gt; proxy starts with a &lt;code&gt;/static/&lt;/code&gt; path segment). This way, the &lt;code&gt;app&lt;/code&gt; proxy doesn’t intercept &lt;code&gt;/api&lt;/code&gt; and &lt;code&gt;/static&lt;/code&gt; requests.&lt;/p&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;Now you have a single Azure Functions App instance that serves both a SPA and its API! Since both your SPA app and your Azure Functions API exist on the same domain, you don’t need to open up CORS for your API.&lt;/p&gt;
+
+&lt;p&gt;Requests such as &lt;code&gt;/api/bob&lt;/code&gt; will be forwarded to your Azure Function &lt;code&gt;bob&lt;/code&gt;, and requests such as &lt;code&gt;/&lt;/code&gt; will be forwarded to your main SPA HTML page. Requests such as &lt;code&gt;/some/long/path&lt;/code&gt; will &lt;em&gt;also&lt;/em&gt; be forwarded to your SPA HTML page, so you can easily use HTML5 history routing instead of hash routing in your SPA, and your app will be served properly when users refresh the page.&lt;/p&gt;
+</description>
+        <pubDate>Thu, 31 Aug 2017 00:00:00 -0400</pubDate>
+        <link>https://blog.stephencleary.com/2017/08/azure-functions-spa.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2017/08/azure-functions-spa.html</guid>
+      </item>
+    
+      <item>
         <title>Continuously Deploy Azure Functions from a GitHub Subfolder</title>
         <description>&lt;p&gt;&lt;a href=&quot;https://docs.microsoft.com/en-us/azure/azure-functions/functions-continuous-deployment&quot;&gt;You can set up continuous deployment for Azure Functions from any branch of a GitHub repository&lt;/a&gt;. Unfortunately, the deployment system will either just deploy your files (&lt;code&gt;Found solution 'D:\home\site\repository\src\Sample.sln' with no deployable projects. Deploying files instead.&lt;/code&gt;) or may try to deploy the wrong project (e.g., if you have a console app in your solution).&lt;/p&gt;
 
@@ -761,31 +834,6 @@ This pitfall is especially notable when writing synchronous implementations of a
         <pubDate>Thu, 03 Nov 2016 00:00:00 -0400</pubDate>
         <link>https://blog.stephencleary.com/2016/11/ziparchive-on-write-only-streams.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2016/11/ziparchive-on-write-only-streams.html</guid>
-      </item>
-    
-      <item>
-        <title>Historical Asynchronous PushStreamContent</title>
-        <description>&lt;p&gt;Last time, &lt;a href=&quot;/2016/10/async-pushstreamcontent.html&quot;&gt;we looked at using &lt;code&gt;PushStreamContent&lt;/code&gt; with an asynchronous delegate to zip up files on-demand with a fully-asynchronous system&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;I didn’t want to complicate that post by mentioning the odd history of asynchronous &lt;code&gt;PushStreamContent&lt;/code&gt; use, but I personally find it - er, “interesting.” :)&lt;/p&gt;
-
-&lt;p&gt;Today, &lt;code&gt;PushStreamContent&lt;/code&gt; takes an &lt;a href=&quot;/2014/02/synchronous-and-asynchronous-delegate.html&quot;&gt;asynchronous delegate&lt;/a&gt; (&lt;code&gt;Func&amp;lt;Stream, HttpContent, TransportContext, Task&amp;gt;&lt;/code&gt;), and it finishes sending the response when that asynchronous delegate completes. This is the natural way of supporting asynchronous stream writes.&lt;/p&gt;
-
-&lt;p&gt;Historically, &lt;code&gt;PushStreamContent&lt;/code&gt; was a lot weirder. It always supported asynchronous writing of the response stream, but the way it used to do so was odd, to say the least.&lt;/p&gt;
-
-&lt;p&gt;When &lt;code&gt;PushStreamContent&lt;/code&gt; was first introduced, it only allowed &lt;em&gt;synchronous&lt;/em&gt; delegates (&lt;code&gt;Action&amp;lt;Stream, HttpContent, TransportContext&amp;gt;&lt;/code&gt;). It wasn’t really obvious, but it &lt;em&gt;did&lt;/em&gt; actually support asynchronous usage. What you had to do was pass an asynchronous lambda expression, which would actually get converted to an &lt;code&gt;async void&lt;/code&gt; method. One of the main &lt;a href=&quot;https://msdn.microsoft.com/en-us/magazine/jj991977.aspx&quot;&gt;problems with &lt;code&gt;async void&lt;/code&gt; methods&lt;/a&gt; is that it’s very difficult for the caller to know when the &lt;code&gt;async void&lt;/code&gt; method has completed.&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;PushStreamContent&lt;/code&gt; used to solve this in an unusual way: &lt;a href=&quot;http://stackoverflow.com/questions/15060214/web-api-httpclient-an-asynchronous-module-or-handler-completed-while-an-async&quot;&gt;&lt;code&gt;PushStreamContent&lt;/code&gt; would consider its callback “complete” when it closed the output stream&lt;/a&gt;. “Interesting,” indeed.&lt;/p&gt;
-
-&lt;p&gt;This unusual design implies an unwritten rule: after closing the output stream, the callback really shouldn’t do anything else.&lt;/p&gt;
-
-&lt;p&gt;Fortunately, &lt;a href=&quot;https://github.com/ASP-NET-MVC/aspnetwebstack/commit/262ec8b273e2c8b7a4ae4cc7d43ad8e3f9c36c64#diff-778a5a33d4cdc98ca84864b003b2c36c&quot;&gt;&lt;code&gt;PushStreamContent&lt;/code&gt; has been changed to support asynchronous delegates&lt;/a&gt; as first-class citizens (as of &lt;a href=&quot;https://www.nuget.org/packages/Microsoft.AspNet.WebApi.Client/5.0.0&quot;&gt;&lt;code&gt;Microsoft.AspNet.WebApi.Client&lt;/code&gt; version 5.0.0&lt;/a&gt;). Now it works just like any other asynchronous code, rather than having the odd “&lt;code&gt;async void&lt;/code&gt; that completes when the stream is closed” behavior.&lt;/p&gt;
-
-&lt;p&gt;There’s nothing really important in this blog post for modern code (the newer &lt;code&gt;PushStreamContent&lt;/code&gt; went live 3 years ago this month) - just an interesting historical note.&lt;/p&gt;
-</description>
-        <pubDate>Thu, 27 Oct 2016 00:00:00 -0400</pubDate>
-        <link>https://blog.stephencleary.com/2016/10/async-pushstreamcontent-historical-note.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2016/10/async-pushstreamcontent-historical-note.html</guid>
       </item>
     
   </channel>

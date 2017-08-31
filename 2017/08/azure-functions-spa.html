@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Stephen Cleary's Videos</title>
+    <title>Azure Functions SPA</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="" />
-    <link rel="canonical" href="https://blog.stephencleary.com/videos/" />
+    <meta name="description" content="Using Azure Functions to host a single-page application." />
+    <link rel="canonical" href="https://blog.stephencleary.com/2017/08/azure-functions-spa.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -203,7 +203,7 @@ code {
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
         <ul class="nav navbar-nav">
             <li  class="active"  ><a href="https://blog.stephencleary.com">Blog</a></li>
-            <li  class="active" ><a href="https://stephencleary.com/videos/">Videos</a></li>
+            <li ><a href="https://stephencleary.com/videos/">Videos</a></li>
             <li  ><a href="https://stephencleary.com/projects/">Projects</a></li>
             <li  ><a href="https://stephencleary.com/publications/">Publications</a></li>
             <li  ><a href="https://stephencleary.com/book/">Book</a></li>
@@ -216,14 +216,97 @@ code {
 
     <div class="container-fluid">
         <div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
-            <div>
-    <h1>Video Series</h1>
-    <div class="list-group">
-        <a href="https://vimeo.com/ondemand/asynctime" class="list-group-item clearfix"><img src="https://i.vimeocdn.com/vod_poster/156634_550x814.jpg" class="pull-right" style="width: 100px;" /><h2>Async Time!</h2><p>A regular series of short videos from "Mr. Async" Stephen Cleary. Big-picture discussions, reasons for best practices, async-related news, practical implementation decisions, and more!</p></a>
-    </div>
-    <!--
-    <h1>Video Training</h1>
-    -->
+            <div class="post">
+
+  <header>
+      <div class="page-header">
+          <h1>Azure Functions SPA</h1>
+          <small><time datetime="2017-08-31">Aug 31, 2017</time> &bull; <a data-disqus-identifier="/2017/08/azure-functions-spa" href="#disqus_thread">Comments</a></small>
+      </div>
+  </header>
+
+  <article>
+  <p>It seems to me that Azure Functions are a perfect match for single-page applications. I believe SPAs are going to be a natural and common use case for Azure Functions in the near future.</p>
+
+<p>I had to set up a SPA with an API running on Azure Functions recently, and it took me a bit to figure out all the pieces. Without further ado…</p>
+
+<h2 id="host-the-api">Host the API</h2>
+
+<p>The first step is to define your API and host it in Azure Functions. <a href="https://blogs.msdn.microsoft.com/appserviceteam/2017/08/14/azure-functions-tools-released-for-visual-studio-2017-update-3/">The Visual Studio tooling is out of preview now</a>, and setting up a C# API is straightforward. Personally, I set up automated deployment from GitHub to my Azure Functions app.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>Tip: If you want to deploy from a <em>subdirectory</em> of a GitHub repository, <a href="/2017/08/azure-functions-github-subfolder.html">see this post</a>.</p>
+</div>
+
+<h2 id="host-the-spa">Host the SPA</h2>
+
+<p>The second step is to host the SPA. I’m hosting mine on a static file server, which is easily done for free. With static file hosting, I can keep assets in external files without having to handle all of that in my Azure Functions. Or you can use Azure Blob Storage / Amazon S3 for a really cheap hosting solution, too.</p>
+
+<h2 id="serve-through-azure-functions-proxies">Serve through Azure Functions Proxies</h2>
+
+<p>The final step is to set up proxies that will forward API calls to the actual Azure Functions API or to the SPA. In your Azure Functions App, turn on Proxies (currently in preview). Then, in your Functions App project in Visual Studio, make a copy of the <code>host.json</code> file, rename it to <code>proxies.json</code>, and replace its contents with:</p>
+
+<figure class="highlight"><pre><code class="language-json" data-lang="json"><span></span><span class="p">{</span>
+    <span class="nt">&quot;$schema&quot;</span><span class="p">:</span> <span class="s2">&quot;http://json.schemastore.org/proxies&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;proxies&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&quot;api&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;matchCondition&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="nt">&quot;route&quot;</span><span class="p">:</span> <span class="s2">&quot;/api/{*url}&quot;</span>
+            <span class="p">},</span>
+            <span class="nt">&quot;backendUri&quot;</span><span class="p">:</span> <span class="s2">&quot;https://%WEBSITE_HOSTNAME%/api/{url}&quot;</span>
+        <span class="p">},</span>
+        <span class="nt">&quot;app&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;matchCondition&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="nt">&quot;route&quot;</span><span class="p">:</span> <span class="s2">&quot;{*url}&quot;</span><span class="p">,</span>
+                <span class="nt">&quot;methods&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="s2">&quot;HEAD&quot;</span><span class="p">,</span> <span class="s2">&quot;OPTIONS&quot;</span> <span class="p">]</span>
+            <span class="p">},</span>
+            <span class="nt">&quot;backendUri&quot;</span><span class="p">:</span> <span class="s2">&quot;https://%SPA_HOST%/&quot;</span>
+        <span class="p">},</span>
+        <span class="nt">&quot;appResources&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;matchCondition&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="nt">&quot;route&quot;</span><span class="p">:</span> <span class="s2">&quot;/static/{*url}&quot;</span><span class="p">,</span>
+                <span class="nt">&quot;methods&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="s2">&quot;HEAD&quot;</span><span class="p">,</span> <span class="s2">&quot;OPTIONS&quot;</span> <span class="p">]</span>
+            <span class="p">},</span>
+            <span class="nt">&quot;backendUri&quot;</span><span class="p">:</span> <span class="s2">&quot;https://%SPA_HOST%/static/{url}&quot;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>The only part you need to change is <code>%SPA_HOST%</code> - you can change this to where your SPA is hosted, or just keep the file as-is and add an application setting <code>SPA_HOST</code> that points to your SPA.</p>
+
+<p>This will set up three proxies: one for your API calls, one to serve up the SPA HTML, and one to serve up SPA static resources (JavaScript bundle, images, etc).</p>
+
+<p>The <code>api</code> proxy will forward all requests starting with <code>/api</code> to the actual Azure Function implementations (using <a href="https://github.com/projectkudu/kudu/wiki/Azure-runtime-environment">the predefined <code>WEBSITE_HOSTNAME</code> setting</a>).</p>
+
+<p>The <code>appResources</code> proxy will forward all requests starting with <code>/static</code> to your SPA host, preserving the remainder of your url.</p>
+
+<p>The <code>app</code> proxy will forward all remaining requests to the SPA.</p>
+
+<p>A brief note on priorities: Azure Functions Proxies use the same <a href="https://docs.microsoft.com/en-us/aspnet/web-api/overview/web-api-routing-and-actions/attribute-routing-in-web-api-2#route-order">route ordering rules as WebAPI 2 attribute routing</a>. So the <code>api</code> and <code>appResources</code> proxies are always evaluated before the <code>app</code> proxy because they start with constant path segment prefixes (the <code>api</code> proxy starts with an <code>/api/</code> path segment, and the <code>appResources</code> proxy starts with a <code>/static/</code> path segment). This way, the <code>app</code> proxy doesn’t intercept <code>/api</code> and <code>/static</code> requests.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>Now you have a single Azure Functions App instance that serves both a SPA and its API! Since both your SPA app and your Azure Functions API exist on the same domain, you don’t need to open up CORS for your API.</p>
+
+<p>Requests such as <code>/api/bob</code> will be forwarded to your Azure Function <code>bob</code>, and requests such as <code>/</code> will be forwarded to your main SPA HTML page. Requests such as <code>/some/long/path</code> will <em>also</em> be forwarded to your SPA HTML page, so you can easily use HTML5 history routing instead of hash routing in your SPA, and your app will be served properly when users refresh the page.</p>
+
+  </article>
+    
+    <footer class="hidden-print">
+        
+        
+        
+        <ul class="pager">
+            <li class="previous"><a href="/2017/08/azure-functions-github-subfolder.html" title="Continuously Deploy Azure Functions from a GitHub Subfolder">&larr; Previous Post</a></li>
+            
+        </ul>
+
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </footer>
 </div>
         </div>
         <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
@@ -356,9 +439,9 @@ code {
 <!-- Disqus variables -->
 <script type="text/javascript">
     var disqus_shortname = 'stephencleary';
-    var disqus_identifier = "videos";
-    var disqus_title = "Stephen Cleary&#39;s Videos";
-    var disqus_url = "https://blog.stephencleary.com/videos/";
+    var disqus_identifier = "/2017/08/azure-functions-spa";
+    var disqus_title = "Azure Functions SPA";
+    var disqus_url = "https://blog.stephencleary.com/2017/08/azure-functions-spa.html";
 </script>
 
 <!-- Disqus comment counter -->
