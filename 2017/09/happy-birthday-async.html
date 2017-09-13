@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Azure Functions SPA</title>
+    <title>Happy Birthday Async</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Using Azure Functions to host a single-page application." />
-    <link rel="canonical" href="https://blog.stephencleary.com/2017/08/azure-functions-spa.html" />
+    <meta name="description" content="Async was officially released five years ago today." />
+    <link rel="canonical" href="https://blog.stephencleary.com/2017/09/happy-birthday-async.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -220,77 +220,29 @@ code {
 
   <header>
       <div class="page-header">
-          <h1>Azure Functions SPA</h1>
-          <small><time datetime="2017-08-31">Aug 31, 2017</time> &bull; <a data-disqus-identifier="/2017/08/azure-functions-spa" href="#disqus_thread">Comments</a></small>
+          <h1>Happy Birthday Async</h1>
+          <small><time datetime="2017-09-12">Sep 12, 2017</time> &bull; <a data-disqus-identifier="/2017/09/happy-birthday-async" href="#disqus_thread">Comments</a></small>
       </div>
   </header>
 
   <article>
-  <p>It seems to me that Azure Functions are a perfect match for single-page applications. I believe SPAs are going to be a natural and common use case for Azure Functions in the near future.</p>
+  <p>Today I’d like to say happy birthday to the C# <code>async</code> and <code>await</code> keywords! They officially turn five years old today! C# and VB both officially adopted them on September 12, 2012.</p>
 
-<p>I had to set up a SPA with an API running on Azure Functions recently, and it took me a bit to figure out all the pieces. Without further ado…</p>
+<p>The <code>async</code> and <code>await</code> keywords themselves have a slightly longer history; they were originally introduced in F# on April 12th, 2010. <code>async</code> slowly moved into C#/VB, and from there they spread to Python, TypeScript, Hack, Dart, and (recently) JavaScript. Python was a huge win for <code>async</code>; the Python community is quick to pick up (or invent) the best language features, and they have one of the best language-improvement processes out there. Also, I find the Hack adoption particularly amusing - I mean, even <em>PHP</em> has <code>async</code> these days!</p>
 
-<h2 id="host-the-api">Host the API</h2>
+<p>The jury is still out on whether C++ will pick up <code>async</code>, and Java just seems to move at a snail’s pace these days.</p>
 
-<p>The first step is to define your API and host it in Azure Functions. <a href="https://blogs.msdn.microsoft.com/appserviceteam/2017/08/14/azure-functions-tools-released-for-visual-studio-2017-update-3/">The Visual Studio tooling is out of preview now</a>, and setting up a C# API is straightforward. Personally, I set up automated deployment from GitHub to my Azure Functions app.</p>
+<h2 id="remembering-ye-olde-async-days">Remembering Ye Olde Async Days</h2>
 
-<div class="alert alert-info">
-  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+<p>My original <a href="/2012/02/async-and-await.html">intro to <code>async</code>/<code>await</code> post</a> went live on my blog about five and a half years ago! It’s still fully relevant, which is unusual for a five-year-old blog post. And even today, it brings more traffic to my blog than any other post (about 15% of all my blog traffic is just for that one post).</p>
 
-  <p>Tip: If you want to deploy from a <em>subdirectory</em> of a GitHub repository, <a href="/2017/08/azure-functions-github-subfolder.html">see this post</a>.</p>
-</div>
+<p>My, how much has changed since that blog post was published! At that time, <code>async</code> was an experimental language modification that required you to install a Community Technology Preview (read: unsupported) package that changed the compilers and language features used by Visual Studio 2010. That is, unless you already installed updates to VS2010, in which case the Async CTP installation would just not work. Until they fixed it, and then it worked. Until the next VS2010 update, when it broke again. No, seriously, it was that bad! :)</p>
 
-<h2 id="host-the-spa">Host the SPA</h2>
+<p>Oh, and once (if) you managed to get the Async CTP <em>installed</em>, there were still <a href="https://blogs.msdn.microsoft.com/lucian/2011/04/17/async-ctp-refresh-what-bugs-remain-in-it/">a number of bugs</a>. And if you encountered them, there wasn’t much you could do about it: the resolution was essentially “don’t do that.” Of particular note was <em>using multiple <code>await</code>s in expressions</em>, like Lucian’s example <code>var x = await f() + await g();</code> Yeah, that didn’t even work. Your rule-of-thumb was one <code>await</code> per statement, and it was best if that statement did nothing else. <code>var fx = await f(); var gx = await g(); var x = fx + gx;</code> FTW!</p>
 
-<p>The second step is to host the SPA. I’m hosting mine on a static file server, which is easily done for free. With static file hosting, I can keep assets in external files without having to handle all of that in my Azure Functions. Or you can use Azure Blob Storage / Amazon S3 for a really cheap hosting solution, too.</p>
+<p>Also, overload resolution wasn’t quite right, especially for asynchronous delegate types. But there were no <code>async</code> lambdas anyway. And there was no <code>dynamic</code> compatibility with <code>await</code> at all. And a lot of compiler safeguards were missing (e.g., <code>async void Main</code> was allowed). And the debugger support was <em>horrible</em> - really, there was no debugging support <em>at all</em> back then.</p>
 
-<h2 id="serve-through-azure-functions-proxies">Serve through Azure Functions Proxies</h2>
-
-<p>The final step is to set up proxies that will forward API calls to the actual Azure Functions API or to the SPA. In your Azure Functions App, turn on Proxies (currently in preview). Then, in your Functions App project in Visual Studio, make a copy of the <code>host.json</code> file, rename it to <code>proxies.json</code>, and replace its contents with:</p>
-
-<figure class="highlight"><pre><code class="language-json" data-lang="json"><span></span><span class="p">{</span>
-    <span class="nt">&quot;$schema&quot;</span><span class="p">:</span> <span class="s2">&quot;http://json.schemastore.org/proxies&quot;</span><span class="p">,</span>
-    <span class="nt">&quot;proxies&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;api&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="nt">&quot;matchCondition&quot;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="nt">&quot;route&quot;</span><span class="p">:</span> <span class="s2">&quot;/api/{*url}&quot;</span>
-            <span class="p">},</span>
-            <span class="nt">&quot;backendUri&quot;</span><span class="p">:</span> <span class="s2">&quot;https://%WEBSITE_HOSTNAME%/api/{url}&quot;</span>
-        <span class="p">},</span>
-        <span class="nt">&quot;app&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="nt">&quot;matchCondition&quot;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="nt">&quot;route&quot;</span><span class="p">:</span> <span class="s2">&quot;{*url}&quot;</span><span class="p">,</span>
-                <span class="nt">&quot;methods&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="s2">&quot;HEAD&quot;</span><span class="p">,</span> <span class="s2">&quot;OPTIONS&quot;</span> <span class="p">]</span>
-            <span class="p">},</span>
-            <span class="nt">&quot;backendUri&quot;</span><span class="p">:</span> <span class="s2">&quot;https://%SPA_HOST%/&quot;</span>
-        <span class="p">},</span>
-        <span class="nt">&quot;appResources&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="nt">&quot;matchCondition&quot;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="nt">&quot;route&quot;</span><span class="p">:</span> <span class="s2">&quot;/static/{*url}&quot;</span><span class="p">,</span>
-                <span class="nt">&quot;methods&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="s2">&quot;HEAD&quot;</span><span class="p">,</span> <span class="s2">&quot;OPTIONS&quot;</span> <span class="p">]</span>
-            <span class="p">},</span>
-            <span class="nt">&quot;backendUri&quot;</span><span class="p">:</span> <span class="s2">&quot;https://%SPA_HOST%/static/{url}&quot;</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-<span class="p">}</span></code></pre></figure>
-
-<p>The only part you need to change is <code>%SPA_HOST%</code> - you can change this to where your SPA is hosted, or just keep the file as-is and add an application setting <code>SPA_HOST</code> that points to your SPA.</p>
-
-<p>This will set up three proxies: one for your API calls, one to serve up the SPA HTML, and one to serve up SPA static resources (JavaScript bundle, images, etc).</p>
-
-<p>The <code>api</code> proxy will forward all requests starting with <code>/api</code> to the actual Azure Function implementations (using <a href="https://github.com/projectkudu/kudu/wiki/Azure-runtime-environment">the predefined <code>WEBSITE_HOSTNAME</code> setting</a>).</p>
-
-<p>The <code>appResources</code> proxy will forward all requests starting with <code>/static</code> to your SPA host, preserving the remainder of your url.</p>
-
-<p>The <code>app</code> proxy will forward all remaining requests to the SPA.</p>
-
-<p>A brief note on priorities: Azure Functions Proxies use the same <a href="https://docs.microsoft.com/en-us/aspnet/web-api/overview/web-api-routing-and-actions/attribute-routing-in-web-api-2#route-order">route ordering rules as WebAPI 2 attribute routing</a>. So the <code>api</code> and <code>appResources</code> proxies are always evaluated before the <code>app</code> proxy because they start with constant path segment prefixes (the <code>api</code> proxy starts with an <code>/api/</code> path segment, and the <code>appResources</code> proxy starts with a <code>/static/</code> path segment). This way, the <code>app</code> proxy doesn’t intercept <code>/api</code> and <code>/static</code> requests.</p>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>Now you have a single Azure Functions App instance that serves both a SPA and its API! Since both your SPA app and your Azure Functions API exist on the same domain, you don’t need to open up CORS for your API.</p>
-
-<p>Requests such as <code>/api/bob</code> will be forwarded to your Azure Function <code>bob</code>, and requests such as <code>/</code> will be forwarded to your main SPA HTML page. Requests such as <code>/some/long/path</code> will <em>also</em> be forwarded to your SPA HTML page, so you can easily use HTML5 history routing instead of hash routing in your SPA, and your app will be served properly when users refresh the page.</p>
+<p>Today, <code>async</code> is truly a first-class citizen of C# and VB. With every release of Visual Studio, the debugger support for <code>async</code> code gets better and better. Tracing systems like Application Insights “just work” coordinating traces across asynchronous code. We recently got <a href="https://github.com/ljw1004/roslyn/blob/features/async-return/docs/specs/feature%20-%20arbitrary%20async%20returns.md">value-type <code>Task&lt;T&gt;</code> equivalents</a>, and new enhancements are on the horizon: better code generation around the <code>async</code> state machine, <a href="https://github.com/dotnet/roslyn/issues/261"><code>async</code> enumerators</a>, … the future is bright!</p>
 
   </article>
     
@@ -299,8 +251,8 @@ code {
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2017/08/azure-functions-github-subfolder.html" title="Continuously Deploy Azure Functions from a GitHub Subfolder">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2017/09/happy-birthday-async.html" title="Happy Birthday Async">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2017/08/azure-functions-spa.html" title="Azure Functions SPA">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="disqus_thread"></div>
@@ -439,9 +391,9 @@ code {
 <!-- Disqus variables -->
 <script type="text/javascript">
     var disqus_shortname = 'stephencleary';
-    var disqus_identifier = "/2017/08/azure-functions-spa";
-    var disqus_title = "Azure Functions SPA";
-    var disqus_url = "https://blog.stephencleary.com/2017/08/azure-functions-spa.html";
+    var disqus_identifier = "/2017/09/happy-birthday-async";
+    var disqus_title = "Happy Birthday Async";
+    var disqus_url = "https://blog.stephencleary.com/2017/09/happy-birthday-async.html";
 </script>
 
 <!-- Disqus comment counter -->
