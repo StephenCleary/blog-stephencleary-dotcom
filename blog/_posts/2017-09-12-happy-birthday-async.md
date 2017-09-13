@@ -6,9 +6,7 @@ description: "Async was officially released five years ago today."
 
 Today I'd like to say happy birthday to the C# `async` and `await` keywords! They officially turn five years old today! C# and VB both officially adopted them on September 12, 2012.
 
-The `async` and `await` keywords themselves have a slightly longer history; they were originally introduced in F# on April 12th, 2010. `async` slowly moved into C#/VB, and from there they spread to Python, TypeScript, Hack, and Dart. Python was a huge win for `async`; the Python community is quick to pick up (or invent) the best language features, and they have one of the best language-improvement processes out there. Also, I find the Hack adoption particularly amusing - I mean, even *PHP* has `async` these days!
-
-<!-- TODO: async timeline, JS adoption -->
+The `async` and `await` keywords themselves have a slightly longer history; they were originally introduced in F# on April 12th, 2010. `async` slowly moved into C#/VB, and from there they spread to Python, TypeScript, Hack, Dart, and (recently) JavaScript. Python was a huge win for `async`; the Python community is quick to pick up (or invent) the best language features, and they have one of the best language-improvement processes out there. Also, I find the Hack adoption particularly amusing - I mean, even *PHP* has `async` these days!
 
 The jury is still out on whether C++ will pick up `async`, and Java just seems to move at a snail's pace these days.
 
@@ -22,8 +20,4 @@ Oh, and once (if) you managed to get the Async CTP *installed*, there were still
 
 Also, overload resolution wasn't quite right, especially for asynchronous delegate types. But there were no `async` lambdas anyway. And there was no `dynamic` compatibility with `await` at all. And a lot of compiler safeguards were missing (e.g., `async void Main` was allowed). And the debugger support was *horrible* - really, there was no debugging support *at all* back then.
 
-Today, `async` is truly a first-class citizen of C# and VB. With every release of Visual Studio, the debugger support for `async` code gets better and better. Tracing systems like Application Insights "just work" coordinating traces across asynchronous code. And new enhancements are on the horizon: better code generation around the `async` state machine, [value-type `Task<T>` equivalents](https://github.com/ljw1004/roslyn/blob/features/async-return/docs/specs/feature%20-%20arbitrary%20async%20returns.md), [`async` enumerators](https://github.com/dotnet/roslyn/issues/261), ... the future is bright!
-
-## Why?
-
-Why is async taking over the world? Cloud and mobile.
+Today, `async` is truly a first-class citizen of C# and VB. With every release of Visual Studio, the debugger support for `async` code gets better and better. Tracing systems like Application Insights "just work" coordinating traces across asynchronous code. We recently got [value-type `Task<T>` equivalents](https://github.com/ljw1004/roslyn/blob/features/async-return/docs/specs/feature%20-%20arbitrary%20async%20returns.md), and new enhancements are on the horizon: better code generation around the `async` state machine, [`async` enumerators](https://github.com/dotnet/roslyn/issues/261), ... the future is bright!
