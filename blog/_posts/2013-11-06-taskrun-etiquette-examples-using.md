@@ -47,7 +47,7 @@ class MyService
 {
   public async Task<int> RetrieveValueAsync(int id)
   {
-    await Task.Run(() =>
+    return await Task.Run(() =>
     {
       // Do some blocking work.
       // DB access, web request, etc.
