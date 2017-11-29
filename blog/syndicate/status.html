@@ -1,0 +1,83 @@
+---
+layout: default
+id: 'syndicatestatus'
+title: 'Cleary Cryptocurrency Syndicate Status'
+---
+
+<div>
+    <h1>The Cleary Cryptocurrency Syndicate</h1>
+
+    <p><a href="https://etherscan.io/address/0x5c41fbe25f4ac0f9ca75b1439dc2b66798de4be4">Total syndicate investment (external link)</a></p>
+    
+    <table class="table">
+        <tr><th></th><th>Syndicate Total</th><th>My Investment</th></tr>
+        <tr><td>Initial Investment (USD)</td><td id="total-initial-investment"><i class="fa fa-spinner fa-spin"></i></td><td id="my-initial-investment"><i class="fa fa-spinner fa-spin"></i></td></tr>
+        <tr><td>Current Balance (ETH)</td><td id="total-current-balance"><i class="fa fa-spinner fa-spin"></i></td><td id="my-current-balance"><i class="fa fa-spinner fa-spin"></i></td></tr>
+        <tr><td>Current Value (USD)</td><td id="total-current-value"><i class="fa fa-spinner fa-spin"></i></td><td id="my-current-value"><i class="fa fa-spinner fa-spin"></i></td></tr>
+        <tr><td>Withdraw Value (USD)</td><td id="total-withdraw-value"><i class="fa fa-spinner fa-spin"></i></td><td id="my-withdraw-value" class="bg-primary"><i class="fa fa-spinner fa-spin"></i></td></tr>
+        <tr><td>Profit/Loss (USD)</td><td id="total-profit-loss"><i class="fa fa-spinner fa-spin"></i></td><td id="my-profit-loss"><i class="fa fa-spinner fa-spin"></i></td></tr>
+    </table>
+    
+    <p id="messages">Loading...</p>
+    
+    <p>Note: There are fees for transfer, exchange, and withdraw of funds. The "Withdraw Value" is the current value minus 5% for these fees and 15% for capital gains tax.</p>
+
+    <script>
+        var apikey = "RPV8XEHDKKUFDHU7AZVNCPCSMNCKRQ33TQ";
+        // https://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript
+        function getParameterByName(name, url) {
+            if (!url) url = window.location.href;
+            name = name.replace(/[\[\]]/g, "\\$&");
+            var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+                results = regex.exec(url);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, " "));
+        }
+        function pennyRound(value) {
+            return Math.round(value * 100) / 100;
+        }
+        function signed(value) {
+            return (value < 0) ? "" + (value) : "+" + pennyRound(value);
+        }
+        window.onload = function() {
+            var myInvestment = getParameterByName("v");
+            var totalInvestment = 16000;
+            var totalEth = 41.35328599; // TODO: update
+            var myEth = totalEth * myInvestment / totalInvestment;
+            document.getElementById("total-initial-investment").innerText = totalInvestment;
+            document.getElementById("my-initial-investment").innerText = myInvestment;
+            document.getElementById("total-current-balance").innerText = totalEth;
+            document.getElementById("my-current-balance").innerText = myEth;
+            fetch('https://api.etherscan.io/api?module=stats&action=ethprice&apikey=' + apikey).then(
+                function(response) {
+                    if (response.status !== 200) {
+                        document.getElementById("messages").innerText = "Error: " + response.status;
+                        return;
+                    }
+                    response.json().then(function(data) {
+                        var datestamp = new Date(data.result.ethusd_timestamp * 1000);
+                        var ethValue = Number(data.result.ethusd);
+                        var totalCurrentValue = totalEth * ethValue;
+                        var myCurrentValue = myEth * ethValue;
+                        var totalUnrealizedProfit = Math.max(totalCurrentValue - totalInvestment, 0);
+                        var myUnrealizedProfit = Math.max(myCurrentValue - myInvestment, 0);
+                        var totalWithdrawValue = totalCurrentValue * 0.95 - totalUnrealizedProfit * 0.15;
+                        var myWithdrawValue = myCurrentValue * 0.95 - myUnrealizedProfit * 0.15;
+                        var totalProfitLoss = totalWithdrawValue - totalInvestment;
+                        var myProfitLoss = myWithdrawValue - myInvestment;
+                        var totalProfitLossPercent = Math.round(totalProfitLoss / totalInvestment * 100);
+                        var myProfitLossPercent = Math.round(myProfitLoss / myInvestment * 100);
+                        document.getElementById("total-current-value").innerText = pennyRound(totalCurrentValue);
+                        document.getElementById("my-current-value").innerText = pennyRound(myCurrentValue);
+                        document.getElementById("total-withdraw-value").innerText = pennyRound(totalWithdrawValue);
+                        document.getElementById("my-withdraw-value").innerText = pennyRound(myWithdrawValue);
+                        document.getElementById("total-profit-loss").innerText = signed(pennyRound(totalProfitLoss)) + " (" + signed(totalProfitLossPercent) + "%)";
+                        document.getElementById("my-profit-loss").innerText = signed(pennyRound(myProfitLoss)) + " (" + signed(myProfitLossPercent) + "%)";
+                        document.getElementById("messages").innerText = "USD values calculated using ETH valuation of " + ethValue + ", as of " + datestamp;
+                    });
+                })
+                .catch(function (err) { document.getElementById("messages").innerText = "Error: " + err; });
+        }
+    </script>
+</div>
