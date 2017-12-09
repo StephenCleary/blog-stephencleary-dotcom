@@ -7,23 +7,34 @@ title: 'Cleary Cryptocurrency Syndicate Status'
 <div>
     <h1>The Cleary Cryptocurrency Syndicate</h1>
 
-    <p><a href="https://etherscan.io/address/0x5c41fbe25f4ac0f9ca75b1439dc2b66798de4be4">Total syndicate investment (external link)</a></p>
+    <h2>Current Status</h2>
     
     <table class="table">
         <tr><th></th><th>Syndicate Total</th><th>My Investment</th></tr>
-        <tr><td>Initial Investment (USD)</td><td id="total-initial-investment"><i class="fa fa-spinner fa-spin"></i></td><td id="my-initial-investment"><i class="fa fa-spinner fa-spin"></i></td></tr>
-        <tr><td>Current Balance (ETH)</td><td id="total-current-balance"><i class="fa fa-spinner fa-spin"></i></td><td id="my-current-balance"><i class="fa fa-spinner fa-spin"></i></td></tr>
-        <tr><td>Current Value (USD)</td><td id="total-current-value"><i class="fa fa-spinner fa-spin"></i></td><td id="my-current-value"><i class="fa fa-spinner fa-spin"></i></td></tr>
-        <tr><td>Withdraw Value (USD)</td><td id="total-withdraw-value"><i class="fa fa-spinner fa-spin"></i></td><td id="my-withdraw-value" class="bg-primary"><i class="fa fa-spinner fa-spin"></i></td></tr>
-        <tr><td>Profit/Loss (USD)</td><td id="total-profit-loss"><i class="fa fa-spinner fa-spin"></i></td><td id="my-profit-loss"><i class="fa fa-spinner fa-spin"></i></td></tr>
+        <tr><td>Investments (USD)</td><td id="total-investment-usd"><i class="fa fa-spinner fa-spin"></i></td><td id="my-investment-usd"><i class="fa fa-spinner fa-spin"></i></td></tr>
+        <tr><td>Investments (ETH)</td><td id="total-investment-eth"><i class="fa fa-spinner fa-spin"></i></td><td id="my-investment-eth"><i class="fa fa-spinner fa-spin"></i></td></tr>
+        <tr><td>Current Value (USD)</td><td id="total-current-usd"><i class="fa fa-spinner fa-spin"></i></td><td id="my-current-usd"><i class="fa fa-spinner fa-spin"></i></td></tr>
+        <tr><td>Withdraw Value (USD)</td><td id="total-withdraw-usd"><i class="fa fa-spinner fa-spin"></i></td><td id="my-withdraw-usd" class="bg-primary"><i class="fa fa-spinner fa-spin"></i></td></tr>
+        <tr><td>Profit/Loss (USD)</td><td id="total-profit-usd"><i class="fa fa-spinner fa-spin"></i></td><td id="my-profit-usd"><i class="fa fa-spinner fa-spin"></i></td></tr>
     </table>
     
     <p id="messages">Loading...</p>
     
-    <p>Note: There are fees for transfer, exchange, and withdraw of funds. The "Withdraw Value" is the current value minus 5% for these fees and 15% for capital gains tax.</p>
+    <p>Note: There are fees for transfer, exchange, and withdraw of funds. The "Withdraw Value" is the current value minus an estimated 5% for these fees and 15% capital gains tax on the profits.</p>
+
+    <p><a href="https://etherscan.io/address/0x5c41fbe25f4ac0f9ca75b1439dc2b66798de4be4">Total syndicate investment (external link)</a></p>
 
     <script>
         var apikey = "RPV8XEHDKKUFDHU7AZVNCPCSMNCKRQ33TQ";
+        var totalInvestmentUsd = 16000;
+        var totalInvestmentEth = 43.14090536;
+
+        // https://stephencleary.com/syndicate/status?usd=100&eth=0.2696306585
+        // https://stephencleary.com/syndicate/status?usd=200&eth=0.539261317
+        // https://stephencleary.com/syndicate/status?usd=300&eth=0.8088919755
+        // https://stephencleary.com/syndicate/status?usd=1000&eth=2.696306585
+        // https://stephencleary.com/syndicate/status?usd=13900&eth=37.4786615315
+
         // https://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript
         function getParameterByName(name, url) {
             if (!url) url = window.location.href;
@@ -34,21 +45,32 @@ title: 'Cleary Cryptocurrency Syndicate Status'
             if (!results[2]) return '';
             return decodeURIComponent(results[2].replace(/\+/g, " "));
         }
-        function pennyRound(value) {
-            return Math.round(value * 100) / 100;
+
+        // https://stackoverflow.com/questions/2901102/how-to-print-a-number-with-commas-as-thousands-separators-in-javascript
+        function numberWithCommas(x) {
+            return x.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         }
-        function signed(value) {
-            return (value < 0) ? "" + (value) : "+" + pennyRound(value);
+
+        function formatUSD(value) {
+            return '$' + numberWithCommas(Math.abs(value).toFixed(2));
         }
-        window.onload = function() {
-            var myInvestment = getParameterByName("v");
-            var totalInvestment = 16000;
-            var totalEth = 41.35328599; // TODO: update
-            var myEth = totalEth * myInvestment / totalInvestment;
-            document.getElementById("total-initial-investment").innerText = totalInvestment;
-            document.getElementById("my-initial-investment").innerText = myInvestment;
-            document.getElementById("total-current-balance").innerText = totalEth;
-            document.getElementById("my-current-balance").innerText = myEth;
+        function formatETH(value) {
+            return 'Ξ' + value;
+        }
+        function formatPercent(value) {
+            return value + '%';
+        }
+        function signed(value, formatter) {
+            return (value < 0) ? "-" + formatter(value) : "+" + formatter(value);
+        }
+
+        window.onload = function () {
+            var myInvestmentUsd = Number(getParameterByName("usd"));
+            var myInvestmentEth = Number(getParameterByName("eth"));
+            document.getElementById("total-investment-usd").innerText = formatUSD(totalInvestmentUsd);
+            document.getElementById("my-investment-usd").innerText = formatUSD(myInvestmentUsd);
+            document.getElementById("total-investment-eth").innerText = formatETH(totalInvestmentEth);
+            document.getElementById("my-investment-eth").innerText = formatETH(myInvestmentEth);
             fetch('https://api.etherscan.io/api?module=stats&action=ethprice&apikey=' + apikey).then(
                 function(response) {
                     if (response.status !== 200) {
@@ -58,23 +80,23 @@ title: 'Cleary Cryptocurrency Syndicate Status'
                     response.json().then(function(data) {
                         var datestamp = new Date(data.result.ethusd_timestamp * 1000);
                         var ethValue = Number(data.result.ethusd);
-                        var totalCurrentValue = totalEth * ethValue;
-                        var myCurrentValue = myEth * ethValue;
-                        var totalUnrealizedProfit = Math.max(totalCurrentValue - totalInvestment, 0);
-                        var myUnrealizedProfit = Math.max(myCurrentValue - myInvestment, 0);
-                        var totalWithdrawValue = totalCurrentValue * 0.95 - totalUnrealizedProfit * 0.15;
-                        var myWithdrawValue = myCurrentValue * 0.95 - myUnrealizedProfit * 0.15;
-                        var totalProfitLoss = totalWithdrawValue - totalInvestment;
-                        var myProfitLoss = myWithdrawValue - myInvestment;
-                        var totalProfitLossPercent = Math.round(totalProfitLoss / totalInvestment * 100);
-                        var myProfitLossPercent = Math.round(myProfitLoss / myInvestment * 100);
-                        document.getElementById("total-current-value").innerText = pennyRound(totalCurrentValue);
-                        document.getElementById("my-current-value").innerText = pennyRound(myCurrentValue);
-                        document.getElementById("total-withdraw-value").innerText = pennyRound(totalWithdrawValue);
-                        document.getElementById("my-withdraw-value").innerText = pennyRound(myWithdrawValue);
-                        document.getElementById("total-profit-loss").innerText = signed(pennyRound(totalProfitLoss)) + " (" + signed(totalProfitLossPercent) + "%)";
-                        document.getElementById("my-profit-loss").innerText = signed(pennyRound(myProfitLoss)) + " (" + signed(myProfitLossPercent) + "%)";
-                        document.getElementById("messages").innerText = "USD values calculated using ETH valuation of " + ethValue + ", as of " + datestamp;
+                        var totalCurrentValueUsd = totalInvestmentEth * ethValue;
+                        var myCurrentValueUsd = myInvestmentEth * ethValue;
+                        var totalUnrealizedProfitUsd = Math.max(totalCurrentValueUsd - totalInvestmentUsd, 0);
+                        var myUnrealizedProfitUsd = Math.max(myCurrentValueUsd - myInvestmentUsd, 0);
+                        var totalWithdrawValueUsd = totalCurrentValueUsd * 0.95 - totalUnrealizedProfitUsd * 0.15;
+                        var myWithdrawValueUsd = myCurrentValueUsd * 0.95 - myUnrealizedProfitUsd * 0.15;
+                        var totalProfitLossUsd = totalWithdrawValueUsd - totalInvestmentUsd;
+                        var myProfitLossUsd = myWithdrawValueUsd - myInvestmentUsd;
+                        var totalProfitLossPercent = Math.round(totalProfitLossUsd / totalInvestmentUsd * 100);
+                        var myProfitLossPercent = Math.round(myProfitLossUsd / myInvestmentUsd * 100);
+                        document.getElementById("total-current-usd").innerText = formatUSD(totalCurrentValueUsd);
+                        document.getElementById("my-current-usd").innerText = formatUSD(myCurrentValueUsd);
+                        document.getElementById("total-withdraw-usd").innerText = formatUSD(totalWithdrawValueUsd);
+                        document.getElementById("my-withdraw-usd").innerText = formatUSD(myWithdrawValueUsd);
+                        document.getElementById("total-profit-usd").innerText = signed(totalProfitLossUsd, formatUSD) + " (" + signed(totalProfitLossPercent, formatPercent) + ")";
+                        document.getElementById("my-profit-usd").innerText = signed(myProfitLossUsd, formatUSD) + " (" + signed(myProfitLossPercent, formatPercent) + ")";
+                        document.getElementById("messages").innerText = "USD values calculated using ETH valuation of " + formatUSD(ethValue) + ", which was the ETH market value as of as of " + datestamp;
                     });
                 })
                 .catch(function (err) { document.getElementById("messages").innerText = "Error: " + err; });
