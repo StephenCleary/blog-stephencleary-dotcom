@@ -28,6 +28,8 @@ title: 'Cleary Cryptocurrency Syndicate Status'
         var apikey = "RPV8XEHDKKUFDHU7AZVNCPCSMNCKRQ33TQ";
         var totalInvestmentUsd = 16000;
         var totalInvestmentEth = 43.14090536;
+        var myInvestmentUsd;
+        var myInvestmentEth;
 
         // https://stephencleary.com/syndicate/status?usd=100&eth=0.2696306585
         // https://stephencleary.com/syndicate/status?usd=200&eth=0.539261317
@@ -64,20 +66,14 @@ title: 'Cleary Cryptocurrency Syndicate Status'
             return (value < 0) ? "-" + formatter(value) : "+" + formatter(value);
         }
 
-        window.onload = function () {
-            var myInvestmentUsd = Number(getParameterByName("usd"));
-            var myInvestmentEth = Number(getParameterByName("eth"));
-            document.getElementById("total-investment-usd").innerText = formatUSD(totalInvestmentUsd);
-            document.getElementById("my-investment-usd").innerText = formatUSD(myInvestmentUsd);
-            document.getElementById("total-investment-eth").innerText = formatETH(totalInvestmentEth);
-            document.getElementById("my-investment-eth").innerText = formatETH(myInvestmentEth);
+        function recalculate() {
             fetch('https://api.etherscan.io/api?module=stats&action=ethprice&apikey=' + apikey).then(
-                function(response) {
+                function (response) {
                     if (response.status !== 200) {
                         document.getElementById("messages").innerText = "Error: " + response.status;
                         return;
                     }
-                    response.json().then(function(data) {
+                    response.json().then(function (data) {
                         var datestamp = new Date(data.result.ethusd_timestamp * 1000);
                         var ethValue = Number(data.result.ethusd);
                         var totalCurrentValueUsd = totalInvestmentEth * ethValue;
@@ -100,6 +96,17 @@ title: 'Cleary Cryptocurrency Syndicate Status'
                     });
                 })
                 .catch(function (err) { document.getElementById("messages").innerText = "Error: " + err; });
+        }
+
+        window.onload = function () {
+            myInvestmentUsd = Number(getParameterByName("usd"));
+            myInvestmentEth = Number(getParameterByName("eth"));
+            document.getElementById("total-investment-usd").innerText = formatUSD(totalInvestmentUsd);
+            document.getElementById("my-investment-usd").innerText = formatUSD(myInvestmentUsd);
+            document.getElementById("total-investment-eth").innerText = formatETH(totalInvestmentEth);
+            document.getElementById("my-investment-eth").innerText = formatETH(myInvestmentEth);
+            window.setInterval(recalculate, 10 * 1000);
+            recalculate();
         }
     </script>
 </div>
