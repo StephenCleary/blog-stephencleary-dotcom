@@ -352,6 +352,8 @@ code {
     <span class="p">};</span>
 <span class="p">}</span></code></pre></figure>
 
+<p>(The <code>WriteOnlyStreamWrapper</code> is from <a href="/2016/11/ziparchive-on-write-only-streams.html">here</a>)</p>
+
 <p>Note that since we want our .NET Core app to run <em>anywhere</em>, we don’t take a dependency on <code>DotNetZip</code> (which as of this writing requires the full .NET framework); rather, we use the built-in <code>ZipArchive</code>. Since the <a href="https://github.com/dotnet/corefx/issues/11497">.NET Core version has the same bug</a> regarding output streams, we have to use a <a href="/2016/11/ziparchive-on-write-only-streams.html">stream wrapper just like we did last week</a>.</p>
 
 <p>Our action now returns a <code>FileCallbackResult</code>, which will be evaluated by ASP.NET Core after our action returns. When it’s evaluated, it forwards to a <code>FileCallbackResultExecutor</code>, which then invokes the callback given to it by our action.</p>
