@@ -137,6 +137,8 @@ public IActionResult Get()
 }
 {% endhighlight %}
 
+(The `WriteOnlyStreamWrapper` is from [here]({% post_url 2016-11-03-ziparchive-on-write-only-streams %}))
+
 Note that since we want our .NET Core app to run *anywhere*, we don't take a dependency on `DotNetZip` (which as of this writing requires the full .NET framework); rather, we use the built-in `ZipArchive`. Since the [.NET Core version has the same bug](https://github.com/dotnet/corefx/issues/11497) regarding output streams, we have to use a [stream wrapper just like we did last week]({% post_url 2016-11-03-ziparchive-on-write-only-streams %}).
 
 Our action now returns a `FileCallbackResult`, which will be evaluated by ASP.NET Core after our action returns. When it's evaluated, it forwards to a `FileCallbackResultExecutor`, which then invokes the callback given to it by our action.
