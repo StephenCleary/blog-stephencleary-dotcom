@@ -20,7 +20,7 @@ title: 'Cleary Cryptocurrency Syndicate Status'
 
     <p id="messages">Loading...</p>
 
-    <p>Note: There are fees for transfer, exchange, and withdraw of funds. The "Withdraw Value" is the current value minus an estimated 5% for these fees and 15% capital gains tax on the profits.</p>
+    <p>Note: There are fees for transfer, exchange, and withdraw of funds. The "Withdraw Value" is the current value minus an estimated 5% for these fees and 19.25% capital gains tax on the profits.</p>
 
     <p><a href="https://etherscan.io/address/0x5c41fbe25f4ac0f9ca75b1439dc2b66798de4be4">Total syndicate investment (external link)</a></p>
 
@@ -32,6 +32,8 @@ title: 'Cleary Cryptocurrency Syndicate Status'
         var apikey = "RPV8XEHDKKUFDHU7AZVNCPCSMNCKRQ33TQ";
         var totalInvestmentUsd = 16000;
         var totalInvestmentEth = 43.14090536;
+        var capitalGainsTax = 0.1925;
+        var estimatedWithdrawlFees = 0.05;
         var myInvestmentUsd;
         var myInvestmentEth;
         var chart;
@@ -94,8 +96,8 @@ title: 'Cleary Cryptocurrency Syndicate Status'
                         var myUnrealizedProfitLossPercent = Math.round(myUnrealizedProfitLossUsd / myInvestmentUsd * 100);
                         var totalUnrealizedProfitUsd = Math.max(totalUnrealizedProfitLossUsd, 0);
                         var myUnrealizedProfitUsd = Math.max(myUnrealizedProfitLossUsd, 0);
-                        var totalWithdrawValueUsd = totalCurrentValueUsd * 0.95 - totalUnrealizedProfitUsd * 0.15;
-                        var myWithdrawValueUsd = myCurrentValueUsd * 0.95 - myUnrealizedProfitUsd * 0.15;
+                        var totalWithdrawValueUsd = totalCurrentValueUsd * (1 - estimatedWithdrawlFees) - totalUnrealizedProfitUsd * capitalGainsTax;
+                        var myWithdrawValueUsd = myCurrentValueUsd * (1 - estimatedWithdrawlFees) - myUnrealizedProfitUsd * capitalGainsTax;
                         var totalProfitLossUsd = totalWithdrawValueUsd - totalInvestmentUsd;
                         var myProfitLossUsd = myWithdrawValueUsd - myInvestmentUsd;
                         var totalProfitLossPercent = Math.round(totalProfitLossUsd / totalInvestmentUsd * 100);
