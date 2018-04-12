@@ -8,6 +8,19 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>Slides Available: Code PaLOUsa 2018</title>
+        <description>&lt;p&gt;I have &lt;a href=&quot;https://github.com/StephenCleary/Presentations/tree/0959859f132483d293bc35e1ad7284d18084f632/Understanding%20Ethereum%20Application%20Development&quot;&gt;uploaded the slides&lt;/a&gt; for the &lt;a href=&quot;http://www.codepalousa.com/Sessions/1115&quot;&gt;talk I gave a couple weeks ago at Code PaLOUsa 2018, entitled “Understanding Ethereum Application Development”&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;This talk is more of a conceptual overview of Ethereum application development, covering questions like “what does it mean to &lt;em&gt;run&lt;/em&gt; on the blockchain?” and “what’s the point of an oracle?” It does not cover the details of the Solidity language.&lt;/p&gt;
+
+&lt;p&gt;(Thanks to &lt;a href=&quot;https://twitter.com/carlowahlstedt&quot;&gt;@carlowahlstedt&lt;/a&gt; for reminding me to put this up!)&lt;/p&gt;
+</description>
+        <pubDate>Thu, 12 Apr 2018 00:00:00 -0400</pubDate>
+        <link>https://blog.stephencleary.com/2018/04/slides-available-codepalousa-2018.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2018/04/slides-available-codepalousa-2018.html</guid>
+      </item>
+    
+      <item>
         <title>Happy Birthday Async</title>
         <description>&lt;p&gt;Today I’d like to say happy birthday to the C# &lt;code&gt;async&lt;/code&gt; and &lt;code&gt;await&lt;/code&gt; keywords! They officially turn five years old today! C# and VB both officially adopted them on September 12, 2012.&lt;/p&gt;
 
@@ -558,165 +571,6 @@ This pitfall is especially notable when writing synchronous implementations of a
         <pubDate>Fri, 18 Nov 2016 00:00:00 -0500</pubDate>
         <link>https://blog.stephencleary.com/2016/11/azure-functions.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2016/11/azure-functions.html</guid>
-      </item>
-    
-      <item>
-        <title>Streaming Zip on ASP.NET Core</title>
-        <description>&lt;p&gt;A few weeks ago, I wrote about &lt;a href=&quot;/2016/10/async-pushstreamcontent.html&quot;&gt;using &lt;code&gt;PushStreamContent&lt;/code&gt; on ASP.NET&lt;/a&gt; to build a zip file on-demand that was totally asynchronous and did not have to buffer any intermeditate files in memory.&lt;/p&gt;
-
-&lt;p&gt;Today, let’s take a look at doing the same thing on ASP.NET Core!&lt;/p&gt;
-
-&lt;h2 id=&quot;downloading-a-simple-stream&quot;&gt;Downloading a Simple Stream&lt;/h2&gt;
-
-&lt;p&gt;First, let’s look at how we can download a single file stream. On ASP.NET Core, we would use &lt;code&gt;FileStreamResult&lt;/code&gt; to download a file to the browser:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;HttpClient&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Client&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;HttpClient&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-&lt;span class=&quot;na&quot;&gt;[HttpGet]&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FileStreamResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;stream&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Client&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;GetStreamAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;https://raw.githubusercontent.com/StephenClearyExamples/AsyncDynamicZip/master/README.md&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-
-    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;FileStreamResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MediaTypeHeaderValue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;text/plain&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;n&quot;&gt;FileDownloadName&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;README.md&amp;quot;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;There’s a couple of interesting notes here: we pass the &lt;code&gt;MediaTypeHeaderValue&lt;/code&gt; directly to the constructor of the &lt;code&gt;FileStreamResult&lt;/code&gt;, which takes care of setting the &lt;code&gt;Content-Type&lt;/code&gt; header on the response. Also, we set the &lt;code&gt;FileDownloadName&lt;/code&gt; property, which sets the &lt;code&gt;Content-Disposition&lt;/code&gt; header on the response. The “ASP.NET Core way” is more about expressing intent rather than modifying the response directly.&lt;/p&gt;
-
-&lt;p&gt;This is a nice approach, because there’s some pretty fancy encoding that needs to take place if these parameters are unusual. For example, if the &lt;code&gt;FileDownloadName&lt;/code&gt; uses non-ASCII characters, then the ASP.NET types will automatically encode it using RFC5987 (specifying &lt;code&gt;filename*&lt;/code&gt; instead of &lt;code&gt;filename&lt;/code&gt;).&lt;/p&gt;
-
-&lt;p&gt;The &lt;code&gt;FileStreamResult&lt;/code&gt; is one of the “file download” results available in ASP.NET Core. There are also some others, which form a hierarchy of result types:&lt;/p&gt;
-
-&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/FileResultHierarchy.png&quot;&gt;&lt;img src=&quot;/assets/FileResultHierarchy.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;The &lt;code&gt;FileResult&lt;/code&gt; base type has several derived types, each with a different purpose:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;&lt;code&gt;PhysicalFileResult&lt;/code&gt; sends an on-disk file identified by a physical path.&lt;/li&gt;
-  &lt;li&gt;&lt;code&gt;VirtualFileResult&lt;/code&gt; sends a file identified by a virtual path.&lt;/li&gt;
-  &lt;li&gt;&lt;code&gt;FileContentResult&lt;/code&gt; sends the file content as an in-memory byte array.&lt;/li&gt;
-  &lt;li&gt;&lt;code&gt;FileStreamResult&lt;/code&gt; sends the file content as a stream.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&quot;constructing-a-zip-file-on-the-fly&quot;&gt;Constructing a Zip File on the Fly&lt;/h2&gt;
-
-&lt;p&gt;Now, let’s extend this example to have the WebAPI download a single zip file which is constructed on-demand.&lt;/p&gt;
-
-&lt;p&gt;None of the available &lt;code&gt;FileResult&lt;/code&gt; types will do just what we want; &lt;code&gt;FileStreamResult&lt;/code&gt; comes closest, but it doesn’t allow us to write part of the stream and then do other work before finishing the stream. What we really need is a “callback” kind of result, just like what &lt;code&gt;PushStreamContent&lt;/code&gt; did.&lt;/p&gt;
-
-&lt;p&gt;So, let’s introduce our own &lt;code&gt;FileResult&lt;/code&gt; type, called &lt;code&gt;FileCallbackResult&lt;/code&gt;:&lt;/p&gt;
-
-&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/FileCallbackResultHierarchy.png&quot;&gt;&lt;img src=&quot;/assets/FileCallbackResultHierarchy.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;My original intention of inheriting from &lt;code&gt;FileResult&lt;/code&gt; is that we could take advantage of existing conventions and code. For example, I want to pass the &lt;code&gt;media-type&lt;/code&gt; into the constructor and set &lt;code&gt;FileDownloadName&lt;/code&gt; as a property, just like the other &lt;code&gt;FileResult&lt;/code&gt; types.&lt;/p&gt;
-
-&lt;p&gt;However, it turns out that using the same &lt;em&gt;code&lt;/em&gt; is a bit more difficult. It turns out that the action result types in ASP.NET Core do not process their results directly; rather, they use “executors”, which form their own similar hierarchy:&lt;/p&gt;
-
-&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/FileResultExecutorHierarchy.png&quot;&gt;&lt;img src=&quot;/assets/FileResultExecutorHierarchy.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;Since I want to re-use the &lt;em&gt;implementation&lt;/em&gt; of file results as much as possible, I tie into this hierarchy as well with my own &lt;code&gt;FileCallbackResultExecutor&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;The action results in ASP.NET Core will forward their implementation to their respective “executor” types by using dependency injection. For my simple case, I hard-code the executor:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;FileCallbackResult&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FileResult&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Stream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ActionContext&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_callback&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-
-    &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;FileCallbackResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;MediaTypeHeaderValue&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;contentType&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Stream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ActionContext&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;callback&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;base&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;contentType&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;?.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ToString&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;())&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;callback&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-            &lt;span class=&quot;k&quot;&gt;throw&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ArgumentNullException&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;nameof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;callback&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
-        &lt;span class=&quot;n&quot;&gt;_callback&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;callback&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-
-    &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ExecuteResultAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ActionContext&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;context&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-            &lt;span class=&quot;k&quot;&gt;throw&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ArgumentNullException&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;nameof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
-        &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;executor&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FileCallbackResultExecutor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;HttpContext&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;RequestServices&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;GetRequiredService&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ILoggerFactory&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;());&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;executor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExecuteAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-
-    &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;sealed&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;FileCallbackResultExecutor&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FileResultExecutorBase&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;FileCallbackResultExecutor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ILoggerFactory&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;loggerFactory&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-            &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;base&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CreateLogger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FileCallbackResultExecutor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;loggerFactory&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-
-        &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ExecuteAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ActionContext&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FileCallbackResult&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-            &lt;span class=&quot;n&quot;&gt;SetHeadersAndLog&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-            &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_callback&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;HttpContext&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Response&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Body&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;The &lt;code&gt;FileCallbackResult&lt;/code&gt; collects and verifies all the result options, and the &lt;code&gt;FileCallbackResultExecutor&lt;/code&gt; takes care of actually executing the result. This follows the same pattern as the built-in &lt;code&gt;FileResult&lt;/code&gt; types. If I was to make this into a NuGet package, I’d probably resolve &lt;code&gt;FileCallbackResultExecutor&lt;/code&gt; using dependency injection; but other than that, this is a very reusable solution.&lt;/p&gt;
-
-&lt;p&gt;The &lt;code&gt;FileCallbackResultExecutor&lt;/code&gt; is quite simple: it ties into &lt;code&gt;FileResultExecutorBase&lt;/code&gt;, calling &lt;code&gt;SetHeadersAndLog&lt;/code&gt; to set up all the response headers exactly the same way all the other file results do, and then just invokes its callback to write to the output stream.&lt;/p&gt;
-
-&lt;p&gt;With our new &lt;code&gt;FileCallbackResult&lt;/code&gt; type, we can (finally) download multiple files and combine them into a single zip file on the fly:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;HttpClient&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Client&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;HttpClient&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-&lt;span class=&quot;na&quot;&gt;[HttpGet]&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IActionResult&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;filenamesAndUrls&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Dictionary&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;README.md&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;https://raw.githubusercontent.com/StephenClearyExamples/AsyncDynamicZip/master/README.md&amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;.gitignore&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;https://raw.githubusercontent.com/StephenClearyExamples/AsyncDynamicZip/master/.gitignore&amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
-
-    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;FileCallbackResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MediaTypeHeaderValue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;application/octet-stream&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;outputStream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;zipArchive&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ZipArchive&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;WriteOnlyStreamWrapper&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;outputStream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ZipArchiveMode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Create&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-            &lt;span class=&quot;k&quot;&gt;foreach&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;kvp&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;filenamesAndUrls&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-            &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-                &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;zipEntry&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;zipArchive&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CreateEntry&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;kvp&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-                &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;zipStream&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;zipEntry&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Open&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;())&lt;/span&gt;
-                &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;stream&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Client&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;GetStreamAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;kvp&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Value&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
-                    &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;stream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CopyToAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;zipStream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-            &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;})&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;n&quot;&gt;FileDownloadName&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;MyZipfile.zip&amp;quot;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;Note that since we want our .NET Core app to run &lt;em&gt;anywhere&lt;/em&gt;, we don’t take a dependency on &lt;code&gt;DotNetZip&lt;/code&gt; (which as of this writing requires the full .NET framework); rather, we use the built-in &lt;code&gt;ZipArchive&lt;/code&gt;. Since the &lt;a href=&quot;https://github.com/dotnet/corefx/issues/11497&quot;&gt;.NET Core version has the same bug&lt;/a&gt; regarding output streams, we have to use a &lt;a href=&quot;/2016/11/ziparchive-on-write-only-streams.html&quot;&gt;stream wrapper just like we did last week&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;Our action now returns a &lt;code&gt;FileCallbackResult&lt;/code&gt;, which will be evaluated by ASP.NET Core after our action returns. When it’s evaluated, it forwards to a &lt;code&gt;FileCallbackResultExecutor&lt;/code&gt;, which then invokes the callback given to it by our action.&lt;/p&gt;
-
-&lt;p&gt;This solution has all the same advantages of our previous non-Core solution:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;All I/O is asynchronous. At no time are any threads blocked on I/O.&lt;/li&gt;
-  &lt;li&gt;The zip file is not held in memory. It is streamed directly to the client, compressing on-the-fly.&lt;/li&gt;
-  &lt;li&gt;For large files, not even a single file is read entirely into memory. Each file is individually compressed on-the-fly.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&quot;drawbacks-to-filecallbackresult&quot;&gt;Drawbacks to FileCallbackResult&lt;/h2&gt;
-
-&lt;p&gt;One of the major drawbacks to this approach is that I’m depending on some internals of ASP.NET Core. In particular, the whole “executor” thing (specifically, &lt;code&gt;FileResultExecutorBase&lt;/code&gt;) are in an &lt;code&gt;Internals&lt;/code&gt; namespace. This is an indicator that these types &lt;em&gt;would&lt;/em&gt; be &lt;code&gt;internal&lt;/code&gt;, but the ASP.NET team thought someone &lt;em&gt;might&lt;/em&gt; want to use them (and I’m glad they did!). So they’re technically &lt;code&gt;public&lt;/code&gt;, but with the caveat that they are considered implementation details and not part of a public contract. In other words, they can change without warning.&lt;/p&gt;
-
-&lt;p&gt;In my case, I think this is an acceptable tradeoff for &lt;code&gt;FileCallbackResult&lt;/code&gt;, since I want to tie into the existing file result code (&lt;code&gt;FileResultExecutorBase.SetHeadersAndLog&lt;/code&gt;). It would be easier for me to deal with breaking changes when updating rather than to duplicate all that logic and take over full maintenance/bug fixing responsibility for it.&lt;/p&gt;
-
-&lt;p&gt;The other major drawback is error handling. Any callback-based approach (such as &lt;code&gt;PushStreamContent&lt;/code&gt; or &lt;code&gt;FileCallbackResult&lt;/code&gt;) will have to deal with the fact that the HTTP response code has already been sent by the time the callback is invoked. So, any exceptions from the callback cannot send a detailed response to the client - they just get a generic “network error”.&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;PushStreamContent&lt;/code&gt; also had the caveat that the callback &lt;em&gt;must&lt;/em&gt; close the output stream. ASP.NET Core is not as picky about that; if you return from your callback without closing the output stream, ASP.NET Core will close it for you.&lt;/p&gt;
-
-&lt;h2 id=&quot;code&quot;&gt;Code&lt;/h2&gt;
-
-&lt;p&gt;A fully-working solution for ASP.NET Core 1.0 is &lt;a href=&quot;https://github.com/StephenClearyExamples/AsyncDynamicZip/tree/core-ziparchive&quot;&gt;available on GitHub&lt;/a&gt;.&lt;/p&gt;
-</description>
-        <pubDate>Fri, 11 Nov 2016 00:00:00 -0500</pubDate>
-        <link>https://blog.stephencleary.com/2016/11/streaming-zip-on-aspnet-core.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2016/11/streaming-zip-on-aspnet-core.html</guid>
       </item>
     
   </channel>
