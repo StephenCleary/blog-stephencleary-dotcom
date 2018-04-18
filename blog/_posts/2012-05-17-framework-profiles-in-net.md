@@ -71,6 +71,12 @@ And that's all I know about those.
 
 ### .NETPortable
 
+<div class="alert alert-danger" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Please note that Portable Class Libraries are deprecated. They have been replaced by netstandard. PCLs are only useful if you need to support older platforms.
+</div>
+
 The **.NETPortable** identifier is used for [portable libraries](http://go.microsoft.com/fwlink/?LinkId=210823). Each portable library may run on a number of different platforms, indicated by a profile named **Profile_N_**. For example, ".NETPortable,Version=v4.0,Profile=Profile1" refers to a portable library that can run on .NET 4.0, Silverlight 4, Windows Phone 7, Metro, or XBox 360.
 
 The "Version" for the .NETPortable identifier looks like it refers to the maximum version supported by all the platforms in that profile.
