@@ -8,6 +8,96 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>Unit Testing with Roslyn</title>
+        <description>&lt;h2 id=&quot;roslyn&quot;&gt;Roslyn&lt;/h2&gt;
+
+&lt;p&gt;Roslyn was a huge project that spanned many years. It was a difficult rewrite of the C# and VB compilers into managed code, with the intent of also enabling fast analysis of partial code segments. These days, Roslyn powers many different systems: the compiler itself, the little hints that pop up as you type, and even static analysis systems that you can bundle with your NuGet package to encourage proper usage.&lt;/p&gt;
+
+&lt;p&gt;I’ve thought many times about using Roslyn to create some analyzers for common mistakes with &lt;code&gt;Task&lt;/code&gt; and &lt;code&gt;async&lt;/code&gt;, but I’ve just never taken the time to do it. However, just recently, I had the opportunity to use Roslyn for something completely different.&lt;/p&gt;
+
+&lt;h2 id=&quot;dotnetapis&quot;&gt;DotNetApis&lt;/h2&gt;
+
+&lt;p&gt;I run &lt;a href=&quot;http://dotnetapis.com/&quot;&gt;a service called DotNetApis&lt;/a&gt; that autogenerates reference documentation for NuGet packages. It does this by walking the CLI metadata (using the awesome &lt;a href=&quot;https://github.com/jbevain/cecil&quot;&gt;Mono.Cecil&lt;/a&gt;) and matching accessible elements with their XML documentation.&lt;/p&gt;
+
+&lt;p&gt;The code that currently runs that site is a bit of a mess. I’ve been cleaning up the code into a v2 &lt;a href=&quot;https://github.com/StephenClearyApps/DotNetApis&quot;&gt;that is open-source through and through&lt;/a&gt;. As a part of this rewrite, I needed a way to unit test some odd code elements. In the v1 code, I had a single “test”/”sample” dll that had a bunch of weird members, and I ran my unit tests against that. This worked, but I wanted my unit tests to be more self-contained.&lt;/p&gt;
+
+&lt;p&gt;Enter Roslyn.&lt;/p&gt;
+
+&lt;p&gt;I have unit tests in DotNetApis v2 that need to compile some code (as a &lt;code&gt;string&lt;/code&gt;) and then parse the resulting dll and xml. Getting this working was surprisingly easy!&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AssemblyDefinition&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Dll&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;XDocument&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Xml&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Compile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;code&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;c1&quot;&gt;// Parse the C# code...&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;CSharpParseOptions&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;parseOptions&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CSharpParseOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;WithKind&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;SourceCodeKind&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Regular&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// ...as representing a complete .cs file&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;WithLanguageVersion&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;LanguageVersion&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Latest&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// ...enabling the latest language features&lt;/span&gt;
+
+  &lt;span class=&quot;c1&quot;&gt;// Compile the C# code...&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;CSharpCompilationOptions&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;compileOptions&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;CSharpCompilationOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;OutputKind&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;DynamicallyLinkedLibrary&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// ...to a dll&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;WithOptimizationLevel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;OptimizationLevel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Release&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// ...in Release configuration&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;WithAllowUnsafe&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;enabled&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// ...enabling unsafe code&lt;/span&gt;
+
+  &lt;span class=&quot;c1&quot;&gt;// Invoke the compiler...&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;CSharpCompilation&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;compilation&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;CSharpCompilation&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Create&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;TestInMemoryAssembly&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// ..with some fake dll name&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;WithOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;compileOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AddReferences&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;MetadataReference&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CreateFromFile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;typeof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Assembly&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Location&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// ...referencing the same mscorlib we&amp;#39;re running on&lt;/span&gt;
+
+  &lt;span class=&quot;c1&quot;&gt;// Parse and compile the C# code into a *.dll and *.xml file in-memory&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tree&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CSharpSyntaxTree&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ParseText&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;code&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;parseOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;compilation&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;compilation&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AddSyntaxTrees&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;tree&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;peStream&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MemoryStream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;xmlStream&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MemoryStream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;emitResult&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;compilation&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Emit&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;peStream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;xmlDocumentationStream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;xmlStream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;emitResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Success&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;throw&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;InvalidOperationException&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;Compilation failed: &amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Join&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;\n&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;emitResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Diagnostics&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+
+  &lt;span class=&quot;c1&quot;&gt;// Parse the *.dll (with Cecil) and the *.xml (with XDocument)&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;peStream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Seek&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;SeekOrigin&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Begin&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;xmlStream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Seek&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;SeekOrigin&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Begin&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AssemblyDefinition&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ReadAssembly&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;peStream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;XDocument&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Load&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;xmlStream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;This beautiful little utilty method takes C# code and spits out a parsed dll and xml file, all in-memory! The &lt;a href=&quot;https://github.com/StephenClearyApps/DotNetApis/blob/0b119d8698a3439b2170ae12c3a438fc2f6e9a0b/service/UnitTestUtility/Utility.cs&quot;&gt;actual code&lt;/a&gt; is a bit more complex for efficiency reasons. I currently have 86 unit tests using this method, with lots more on the way!&lt;/p&gt;
+
+&lt;p&gt;Here’s what one of the unit tests looks like:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;[Fact]&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Basic_InTopLevelType&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;code&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt;
+    &lt;span class=&quot;s&quot;&gt;@&amp;quot;public class SampleClass {&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;      /// &amp;lt;summary&amp;gt;Text to find.&amp;lt;/summary&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;      public void SampleMethod() { } }&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;assembly&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;xmldoc&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Compile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;code&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;type&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;assembly&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Modules&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;SelectMany&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Types&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Single&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Name&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;SampleClass&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;method&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Methods&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Single&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Name&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;SampleMethod&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+  &lt;span class=&quot;n&quot;&gt;Assert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Equal&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;M:SampleClass.SampleMethod&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;method&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;XmldocIdentifier&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;());&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;AssertXmldoc&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;Text to find.&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;xmldoc&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;method&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;AssertXmldoc&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;XDocument&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;xmldoc&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;expectedValue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IMemberDefinition&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;member&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;elementName&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;summary&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;doc&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;xmldoc&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Descendants&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;member&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FirstOrDefault&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Attribute&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;name&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)?.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Value&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;member&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;MemberXmldocIdentifier&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()).&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Element&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;elementName&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;Assert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Equal&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;expectedValue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Join&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;doc&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Nodes&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Select&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ToString&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;SaveOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;DisableFormatting&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))));&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;This unit test is checking that the &lt;a href=&quot;https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/xmldoc/processing-the-xml-file&quot;&gt;Xmldoc Identifier&lt;/a&gt; calculated by DotNetApis is in fact what we expect it to be (&lt;code&gt;M:SampleClass.SampleMethod&lt;/code&gt;) &lt;em&gt;and&lt;/em&gt; that it matches what the C# compiler generated in the xml file. The &lt;code&gt;AssertXmldoc&lt;/code&gt; helper is taking the Xmldoc Id from DotNetApis, looking it up in the *.xml file from the compiler, and asserting that the text we extract is what is expected.&lt;/p&gt;
+
+&lt;p&gt;Sure, this example is pretty easy, but I’ve also started adding the more rare cases like methods that take an array of pointers by reference. There’s a &lt;em&gt;lot&lt;/em&gt; of more complex cases that are undocumented, and we have to rely on observed compiler behavior.&lt;/p&gt;
+
+&lt;h2 id=&quot;roslyn-is-cool&quot;&gt;Roslyn is Cool&lt;/h2&gt;
+
+&lt;p&gt;That’s all I have to say. I just thought it’s &lt;em&gt;so cool&lt;/em&gt; how easy Roslyn made this. And it’s &lt;em&gt;fast&lt;/em&gt;, too! I can keep my Live Unit Testing running while hacking around, even with most of my tests running Roslyn, and it’s all pretty slick!&lt;/p&gt;
+</description>
+        <pubDate>Thu, 10 May 2018 00:00:00 -0400</pubDate>
+        <link>https://blog.stephencleary.com/2018/05/roslyn-unit-testing.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2018/05/roslyn-unit-testing.html</guid>
+      </item>
+    
+      <item>
         <title>Slides Available: Code PaLOUsa 2018</title>
         <description>&lt;p&gt;I have &lt;a href=&quot;https://github.com/StephenCleary/Presentations/tree/0959859f132483d293bc35e1ad7284d18084f632/Understanding%20Ethereum%20Application%20Development&quot;&gt;uploaded the slides&lt;/a&gt; for the &lt;a href=&quot;http://www.codepalousa.com/Sessions/1115&quot;&gt;talk I gave a couple weeks ago at Code PaLOUsa 2018, entitled “Understanding Ethereum Application Development”&lt;/a&gt;.&lt;/p&gt;
 
@@ -510,67 +600,6 @@ This pitfall is especially notable when writing synchronous implementations of a
         <pubDate>Thu, 01 Dec 2016 00:00:00 -0500</pubDate>
         <link>https://blog.stephencleary.com/2016/12/eliding-async-await.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2016/12/eliding-async-await.html</guid>
-      </item>
-    
-      <item>
-        <title>Azure Functions</title>
-        <description>&lt;p&gt;This past week was &lt;a href=&quot;https://connectevent.microsoft.com/&quot;&gt;Microsoft’s Connect 2016 conference&lt;/a&gt;. There were a lot of announcements, but IMO the one that most stands out is that Azure Functions have been officially released.&lt;/p&gt;
-
-&lt;p&gt;I’ve been following the development of Azure Functions with quite a bit of interest recently. I think they’ll have a &lt;em&gt;huge&lt;/em&gt; long-term impact on the cloud ecosystem.&lt;/p&gt;
-
-&lt;p&gt;Azure Functions (on the surface) are roughly equivalent to Amazon’s Lambdas, or Google’s Cloud Functions, with the notable exception that only Azure Functions work with .NET natively. All three of these (in conjunction with other cloud services such as queues and distributed data stores) provide the backbone of what is commonly called “serverless computing”. “Serverless computing” is a bit of a misnomer, since there &lt;em&gt;are&lt;/em&gt; servers involved in running code (of course), but the idea is that those servers are only &lt;em&gt;borrowed&lt;/em&gt; at a very abstract level. The idea is that you only pay for when your code is actually &lt;em&gt;running&lt;/em&gt;.&lt;/p&gt;
-
-&lt;p&gt;Azure Functions have a ways to go before they’re fully ready for adoption by most organizations (more detail below), but with this week’s announcement, you can start using them today if you are determined enough. :)&lt;/p&gt;
-
-&lt;p&gt;In my opinion, Azure Functions will essentially replace WebJobs. Functions give you the most abstract (read: most productive and cheapest) option for writing backend code:&lt;/p&gt;
-
-&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/Abstractions.png&quot;&gt;&lt;img src=&quot;/assets/Abstractions.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;To summarize: Azure Functions are awesome!&lt;/p&gt;
-
-&lt;h2 id=&quot;my-own-adventure&quot;&gt;My Own Adventure&lt;/h2&gt;
-
-&lt;p&gt;I’ve been playing with Azure Functions for a while on an &lt;a href=&quot;https://github.com/StephenClearyApps/NetStandardTypes&quot;&gt;open-source project&lt;/a&gt; that will (eventually) provide a website for searching for netstandard-compatible .NET types across all of NuGet.&lt;/p&gt;
-
-&lt;p&gt;There are two Azure Functions in that system: one that periodically checks for new NuGet packages, and one that loads those packages into memory, extracts their types, and updates the search index.&lt;/p&gt;
-
-&lt;p&gt;This has been a fun and instructive project so far, because I’m using Azure Functions &lt;em&gt;and&lt;/em&gt; Azure Search for the first time.&lt;/p&gt;
-
-&lt;p&gt;Azure Functions today are geared more towards simple implementations. Image resizing is the standard demo. Azure Functions work great when all the logic can fit into a single file. In my application, though, I have more advanced needs. I depend heavily on various NuGet packages (about 80 total), and I split up my own logic into several dlls. This is far beyond a “Hello, World” demo.&lt;/p&gt;
-
-&lt;h2 id=&quot;rough-spots&quot;&gt;Rough Spots&lt;/h2&gt;
-
-&lt;p&gt;One of the main problems with .NET Azure Functions is the lack of tooling. .NET Azure Functions have a &lt;code&gt;csx&lt;/code&gt; file as an entry point; this is a &lt;a href=&quot;http://scriptcs.net/&quot;&gt;C# script file&lt;/a&gt;, which have been around for a while but haven’t received any official support from Visual Studio or Visual Studio Code. Supposedly, there’s some way to get IntelliSense working with VSCode, but I was unable to get it set up properly.&lt;/p&gt;
-
-&lt;p&gt;So, the &lt;code&gt;csx&lt;/code&gt; file ends up with a very limited IntelliSense. This isn’t the end of the world; the common workaround is to have all your actual logic in a separate dll, and your &lt;code&gt;csx&lt;/code&gt; file literally just forwards to an entry point in that dll. Within the normal C# dll, you get full tooling support.&lt;/p&gt;
-
-&lt;p&gt;I am confident that this will be addressed in the near future, and Visual Studio (or at least Code) will fully understand &lt;code&gt;csx&lt;/code&gt; files for Azure Functions.&lt;/p&gt;
-
-&lt;p&gt;The other main problem I’ve run into is deployment. Currently, Azure Functions has a very script-centered mentality, so their continuous deployment assumes that the source &lt;em&gt;is&lt;/em&gt; what is deployed. It &lt;em&gt;will&lt;/em&gt; build solutions/projects that it finds, but what ends up in your repository has to follow a very particular folder structure. I’ve created a &lt;a href=&quot;https://github.com/StephenClearyApps/NetStandardTypes/tree/functions&quot;&gt;separate branch&lt;/a&gt; in my repo that contains the build outputs, and this is what is actually hooked up to the Azure Functions continuous deployment system. Fow now, I’m just copying the outputs by hand into the separate branch (yeah, bad, I know…).&lt;/p&gt;
-
-&lt;p&gt;I am hopeful that this will be addressed in the near future, with some kind of output folder working for the continuous deployment process rather than assuming the code &lt;em&gt;is&lt;/em&gt; the deployment.&lt;/p&gt;
-
-&lt;p&gt;Finally, I wasn’t able to get references working to &lt;a href=&quot;https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-csharp#package-management&quot;&gt;NuGet packages installed by the Azure Functions continuous deployment system&lt;/a&gt;. As a workaround, I just copy all the dlls from my project’s output directory (except the &lt;a href=&quot;https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-csharp#referencing-external-assemblies&quot;&gt;ones already preloaded by the Azure Functions runtime&lt;/a&gt;) into the &lt;code&gt;bin&lt;/code&gt; folder of my function.&lt;/p&gt;
-
-&lt;h2 id=&quot;tips&quot;&gt;Tips&lt;/h2&gt;
-
-&lt;p&gt;There’s a few tips that I’ve picked up when getting started with Azure Functions.&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Ensure your &lt;a href=&quot;https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference#folder-structure&quot;&gt;folder structure&lt;/a&gt; is correct, and don’t forget your hosts.json file.&lt;/li&gt;
-  &lt;li&gt;The Azure Functions portal has some awesome shortcuts (that really should be in other portals too, I’m looking at you, App Services!). The dev console and Kudu are particularly useful when setting up deployment.&lt;/li&gt;
-  &lt;li&gt;There are a few situations where restarting the Azure Functions host is necessary. For example, if you update a dll but do &lt;em&gt;not&lt;/em&gt; update its version, then your Function won’t “see” the updated dll. To force it to update, you can select “App Service Settings” from the Azure Functions portal and from there Restart your Azure Functions service.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&quot;the-future&quot;&gt;The Future&lt;/h2&gt;
-
-&lt;p&gt;The future is bright for Azure Functions! This is one of the most important improvements to Azure, and really sets up Microsoft for domination in the cloud space. Once the tooling and deployment are ironed out a bit, Azure Functions will become the default go-to choice for backend work in the cloud.&lt;/p&gt;
-
-&lt;p&gt;I’m still learning Azure Functions myself, and you’re welcome to join me - or just watch me struggle - &lt;a href=&quot;https://github.com/StephenClearyApps/NetStandardTypes&quot;&gt;on GitHub&lt;/a&gt;.&lt;/p&gt;
-</description>
-        <pubDate>Fri, 18 Nov 2016 00:00:00 -0500</pubDate>
-        <link>https://blog.stephencleary.com/2016/11/azure-functions.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2016/11/azure-functions.html</guid>
       </item>
     
   </channel>
