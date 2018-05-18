@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Unit Testing with Roslyn</title>
+    <title>Using VSCode with PEGJS</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="An unusual use case for Roslyn: unit testing DotNetApis." />
-    <link rel="canonical" href="https://blog.stephencleary.com/2018/05/roslyn-unit-testing.html" />
+    <meta name="description" content="Enabling VSCode's Problems window for PEGJS compilation by parsing its output." />
+    <link rel="canonical" href="https://blog.stephencleary.com/2018/05/vscode-for-pegjs.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -220,94 +220,73 @@ code {
 
   <header>
       <div class="page-header">
-          <h1>Unit Testing with Roslyn</h1>
-          <small><time datetime="2018-05-10">May 10, 2018</time> &bull; <a data-disqus-identifier="/2018/05/roslyn-unit-testing" href="#disqus_thread">Comments</a></small>
+          <h1>Using VSCode with PEGJS</h1>
+          <small><time datetime="2018-05-18">May 18, 2018</time> &bull; <a data-disqus-identifier="/2018/05/vscode-for-pegjs" href="#disqus_thread">Comments</a></small>
       </div>
   </header>
 
   <article>
-  <h2 id="roslyn">Roslyn</h2>
+  <h2 id="using-vscode-with-pegjs">Using VSCode with PEGJS</h2>
 
-<p>Roslyn was a huge project that spanned many years. It was a difficult rewrite of the C# and VB compilers into managed code, with the intent of also enabling fast analysis of partial code segments. These days, Roslyn powers many different systems: the compiler itself, the little hints that pop up as you type, and even static analysis systems that you can bundle with your NuGet package to encourage proper usage.</p>
+<p>VSCode has a pretty decent extension system. This week I was playing around with <a href="https://pegjs.org/">PEG JS</a>, a <a href="https://en.wikipedia.org/wiki/Parsing_expression_grammar">PEG</a> parser generator for JavaScript. I found <a href="https://github.com/SrTobi/code-pegjs-language">an extension</a> for VSCode syntax highlighting of <code>pegjs</code> files. There are a couple of other options for extensions, but it looks like none of them support reporting errors in VSCode’s <code>Problems</code> window.</p>
 
-<p>I’ve thought many times about using Roslyn to create some analyzers for common mistakes with <code>Task</code> and <code>async</code>, but I’ve just never taken the time to do it. However, just recently, I had the opportunity to use Roslyn for something completely different.</p>
+<p>It’s pretty straightforward to run the pegjs executable from a <code>package.json</code> npm script. In this example, I’m compiling my <code>pegjs</code> file into a <code>js</code> output file:</p>
 
-<h2 id="dotnetapis">DotNetApis</h2>
+<figure class="highlight"><pre><code class="language-json" data-lang="json"><span></span><span class="s2">&quot;peg&quot;</span><span class="err">:</span> <span class="s2">&quot;pegjs -o src/json-filter-expr.js src/json-filter-expr.pegjs&quot;</span></code></pre></figure>
 
-<p>I run <a href="http://dotnetapis.com/">a service called DotNetApis</a> that autogenerates reference documentation for NuGet packages. It does this by walking the CLI metadata (using the awesome <a href="https://github.com/jbevain/cecil">Mono.Cecil</a>) and matching accessible elements with their XML documentation.</p>
+<p>The problem is that if I run this task from VSCode and the compilation fails, there’s no indication in the VSCode Problems window.</p>
 
-<p>The code that currently runs that site is a bit of a mess. I’ve been cleaning up the code into a v2 <a href="https://github.com/StephenClearyApps/DotNetApis">that is open-source through and through</a>. As a part of this rewrite, I needed a way to unit test some odd code elements. In the v1 code, I had a single “test”/”sample” dll that had a bunch of weird members, and I ran my unit tests against that. This worked, but I wanted my unit tests to be more self-contained.</p>
+<h2 id="problem-matchers">Problem Matchers</h2>
 
-<p>Enter Roslyn.</p>
+<p>The solution is to write a <a href="https://code.visualstudio.com/docs/editor/tasks#_defining-a-problem-matcher">problem matcher</a>. This will enable VSCode to parse the <code>pegjs</code> output and report it just like any other kind of compilation error.</p>
 
-<p>I have unit tests in DotNetApis v2 that need to compile some code (as a <code>string</code>) and then parse the resulting dll and xml. Getting this working was surprisingly easy!</p>
+<p>There’s one other bump in the road. <code>pegjs</code> writes out its error messages like this:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="nf">static</span> <span class="p">(</span><span class="n">AssemblyDefinition</span> <span class="n">Dll</span><span class="p">,</span> <span class="n">XDocument</span> <span class="n">Xml</span><span class="p">)</span> <span class="n">Compile</span><span class="p">(</span><span class="kt">string</span> <span class="n">code</span><span class="p">)</span>
-<span class="p">{</span>
-  <span class="c1">// Parse the C# code...</span>
-  <span class="n">CSharpParseOptions</span> <span class="n">parseOptions</span> <span class="p">=</span> <span class="k">new</span> <span class="n">CSharpParseOptions</span><span class="p">()</span>
-    <span class="p">.</span><span class="n">WithKind</span><span class="p">(</span><span class="n">SourceCodeKind</span><span class="p">.</span><span class="n">Regular</span><span class="p">)</span> <span class="c1">// ...as representing a complete .cs file</span>
-    <span class="p">.</span><span class="n">WithLanguageVersion</span><span class="p">(</span><span class="n">LanguageVersion</span><span class="p">.</span><span class="n">Latest</span><span class="p">);</span> <span class="c1">// ...enabling the latest language features</span>
+<figure class="highlight"><pre><code class="language-text" data-lang="text"><span></span>40:3: Expected &quot;=&quot;, comment, end of line, or whitespace but &quot;/&quot; found.</code></pre></figure>
 
-  <span class="c1">// Compile the C# code...</span>
-  <span class="n">CSharpCompilationOptions</span> <span class="n">compileOptions</span> <span class="p">=</span>
-    <span class="k">new</span> <span class="nf">CSharpCompilationOptions</span><span class="p">(</span><span class="n">OutputKind</span><span class="p">.</span><span class="n">DynamicallyLinkedLibrary</span><span class="p">)</span> <span class="c1">// ...to a dll</span>
-    <span class="p">.</span><span class="n">WithOptimizationLevel</span><span class="p">(</span><span class="n">OptimizationLevel</span><span class="p">.</span><span class="n">Release</span><span class="p">)</span> <span class="c1">// ...in Release configuration</span>
-    <span class="p">.</span><span class="n">WithAllowUnsafe</span><span class="p">(</span><span class="n">enabled</span><span class="p">:</span> <span class="k">true</span><span class="p">);</span> <span class="c1">// ...enabling unsafe code</span>
+<p>However, problem matchers <em>must</em> be able to parse out at least a <code>file</code>, <code>line</code>, and <code>message</code>. <code>pegjs</code> is giving us <code>line</code>, <code>column</code>, and <code>message</code>, but not <code>file</code>.</p>
 
-  <span class="c1">// Invoke the compiler...</span>
-  <span class="n">CSharpCompilation</span> <span class="n">compilation</span> <span class="p">=</span>
-    <span class="n">CSharpCompilation</span><span class="p">.</span><span class="n">Create</span><span class="p">(</span><span class="s">&quot;TestInMemoryAssembly&quot;</span><span class="p">)</span> <span class="c1">// ..with some fake dll name</span>
-    <span class="p">.</span><span class="n">WithOptions</span><span class="p">(</span><span class="n">compileOptions</span><span class="p">)</span>
-    <span class="p">.</span><span class="n">AddReferences</span><span class="p">(</span><span class="n">MetadataReference</span><span class="p">.</span><span class="n">CreateFromFile</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="kt">object</span><span class="p">).</span><span class="n">Assembly</span><span class="p">.</span><span class="n">Location</span><span class="p">));</span> <span class="c1">// ...referencing the same mscorlib we&#39;re running on</span>
+<p>VSCode requires the <code>file</code>, which makes sense since it deals with a whole workspace and needs to know which file the problem is in. On the other hand, <code>pegjs</code> does not include a filename in its output, which makes sense because it can be run on only one file at a time, and the user specified the file name right there in the command line.</p>
 
-  <span class="c1">// Parse and compile the C# code into a *.dll and *.xml file in-memory</span>
-  <span class="kt">var</span> <span class="n">tree</span> <span class="p">=</span> <span class="n">CSharpSyntaxTree</span><span class="p">.</span><span class="n">ParseText</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">parseOptions</span><span class="p">);</span>
-  <span class="kt">var</span> <span class="n">compilation</span> <span class="p">=</span> <span class="n">compilation</span><span class="p">.</span><span class="n">AddSyntaxTrees</span><span class="p">(</span><span class="n">tree</span><span class="p">);</span>
-  <span class="kt">var</span> <span class="n">peStream</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MemoryStream</span><span class="p">();</span>
-  <span class="kt">var</span> <span class="n">xmlStream</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MemoryStream</span><span class="p">();</span>
-  <span class="kt">var</span> <span class="n">emitResult</span> <span class="p">=</span> <span class="n">compilation</span><span class="p">.</span><span class="n">Emit</span><span class="p">(</span><span class="n">peStream</span><span class="p">,</span> <span class="n">xmlDocumentationStream</span><span class="p">:</span> <span class="n">xmlStream</span><span class="p">);</span>
-  <span class="k">if</span> <span class="p">(!</span><span class="n">emitResult</span><span class="p">.</span><span class="n">Success</span><span class="p">)</span>
-    <span class="k">throw</span> <span class="k">new</span> <span class="nf">InvalidOperationException</span><span class="p">(</span><span class="s">&quot;Compilation failed: &quot;</span> <span class="p">+</span> <span class="kt">string</span><span class="p">.</span><span class="n">Join</span><span class="p">(</span><span class="s">&quot;\n&quot;</span><span class="p">,</span> <span class="n">emitResult</span><span class="p">.</span><span class="n">Diagnostics</span><span class="p">));</span>
+<h2 id="the-solution">The Solution</h2>
 
-  <span class="c1">// Parse the *.dll (with Cecil) and the *.xml (with XDocument)</span>
-  <span class="n">peStream</span><span class="p">.</span><span class="n">Seek</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="n">SeekOrigin</span><span class="p">.</span><span class="n">Begin</span><span class="p">);</span>
-  <span class="n">xmlStream</span><span class="p">.</span><span class="n">Seek</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="n">SeekOrigin</span><span class="p">.</span><span class="n">Begin</span><span class="p">);</span>
-  <span class="k">return</span> <span class="p">(</span><span class="n">AssemblyDefinition</span><span class="p">.</span><span class="n">ReadAssembly</span><span class="p">(</span><span class="n">peStream</span><span class="p">),</span> <span class="n">XDocument</span><span class="p">.</span><span class="n">Load</span><span class="p">(</span><span class="n">xmlStream</span><span class="p">));</span>
-<span class="p">}</span></code></pre></figure>
+<p>The solution I ended up going with is quite simple: I echo the filename from my npm script and then use a multiline problem matcher to parse out the filename:</p>
 
-<p>This beautiful little utilty method takes C# code and spits out a parsed dll and xml file, all in-memory! The <a href="https://github.com/StephenClearyApps/DotNetApis/blob/0b119d8698a3439b2170ae12c3a438fc2f6e9a0b/service/UnitTestUtility/Utility.cs">actual code</a> is a bit more complex for efficiency reasons. I currently have 86 unit tests using this method, with lots more on the way!</p>
+<figure class="highlight"><pre><code class="language-json" data-lang="json"><span></span><span class="s2">&quot;peg&quot;</span><span class="err">:</span> <span class="s2">&quot;echo src/json-filter-expr.pegjs &amp;&amp; pegjs -o src/json-filter-expr.js src/json-filter-expr.pegjs&quot;</span></code></pre></figure>
 
-<p>Here’s what one of the unit tests looks like:</p>
+<p>Now the output from <code>npm run peg</code> looks like this:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="na">[Fact]</span>
-<span class="k">public</span> <span class="k">void</span> <span class="nf">Basic_InTopLevelType</span><span class="p">()</span>
-<span class="p">{</span>
-  <span class="kt">var</span> <span class="n">code</span> <span class="p">=</span>
-    <span class="s">@&quot;public class SampleClass {</span>
-<span class="s">      /// &lt;summary&gt;Text to find.&lt;/summary&gt;</span>
-<span class="s">      public void SampleMethod() { } }&quot;</span><span class="p">;</span>
-  <span class="kt">var</span> <span class="p">(</span><span class="n">assembly</span><span class="p">,</span> <span class="n">xmldoc</span><span class="p">)</span> <span class="p">=</span> <span class="n">Compile</span><span class="p">(</span><span class="n">code</span><span class="p">);</span>
-  <span class="kt">var</span> <span class="n">type</span> <span class="p">=</span> <span class="n">assembly</span><span class="p">.</span><span class="n">Modules</span><span class="p">.</span><span class="n">SelectMany</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="n">x</span><span class="p">.</span><span class="n">Types</span><span class="p">).</span><span class="n">Single</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="n">x</span><span class="p">.</span><span class="n">Name</span> <span class="p">==</span> <span class="s">&quot;SampleClass&quot;</span><span class="p">);</span>
-  <span class="kt">var</span> <span class="n">method</span> <span class="p">=</span> <span class="n">type</span><span class="p">.</span><span class="n">Methods</span><span class="p">.</span><span class="n">Single</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="n">x</span><span class="p">.</span><span class="n">Name</span> <span class="p">==</span> <span class="s">&quot;SampleMethod&quot;</span><span class="p">);</span>
+<figure class="highlight"><pre><code class="language-text" data-lang="text"><span></span>src/json-filter-expr.pegjs
+40:3: Expected &quot;=&quot;, comment, end of line, or whitespace but &quot;/&quot; found.</code></pre></figure>
 
-  <span class="n">Assert</span><span class="p">.</span><span class="n">Equal</span><span class="p">(</span><span class="s">&quot;M:SampleClass.SampleMethod&quot;</span><span class="p">,</span> <span class="n">method</span><span class="p">.</span><span class="n">XmldocIdentifier</span><span class="p">());</span>
-  <span class="n">AssertXmldoc</span><span class="p">(</span><span class="s">&quot;Text to find.&quot;</span><span class="p">,</span> <span class="n">xmldoc</span><span class="p">,</span> <span class="n">method</span><span class="p">);</span>
-<span class="p">}</span>
+<p>And this can be matched with a multiline problem matcher that looks like this:</p>
 
-<span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">AssertXmldoc</span><span class="p">(</span><span class="n">XDocument</span> <span class="n">xmldoc</span><span class="p">,</span> <span class="kt">string</span> <span class="n">expectedValue</span><span class="p">,</span> <span class="n">IMemberDefinition</span> <span class="n">member</span><span class="p">,</span> <span class="kt">string</span> <span class="n">elementName</span> <span class="p">=</span> <span class="s">&quot;summary&quot;</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="kt">var</span> <span class="n">doc</span> <span class="p">=</span> <span class="n">xmldoc</span><span class="p">.</span><span class="n">Descendants</span><span class="p">(</span><span class="s">&quot;member&quot;</span><span class="p">).</span><span class="n">FirstOrDefault</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="n">x</span><span class="p">.</span><span class="n">Attribute</span><span class="p">(</span><span class="s">&quot;name&quot;</span><span class="p">)?.</span><span class="n">Value</span> <span class="p">==</span> <span class="n">member</span><span class="p">.</span><span class="n">MemberXmldocIdentifier</span><span class="p">()).</span><span class="n">Element</span><span class="p">(</span><span class="n">elementName</span><span class="p">);</span>
-    <span class="n">Assert</span><span class="p">.</span><span class="n">Equal</span><span class="p">(</span><span class="n">expectedValue</span><span class="p">,</span> <span class="kt">string</span><span class="p">.</span><span class="n">Join</span><span class="p">(</span><span class="s">&quot;&quot;</span><span class="p">,</span> <span class="n">doc</span><span class="p">.</span><span class="n">Nodes</span><span class="p">().</span><span class="n">Select</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="n">x</span><span class="p">.</span><span class="n">ToString</span><span class="p">(</span><span class="n">SaveOptions</span><span class="p">.</span><span class="n">DisableFormatting</span><span class="p">))));</span>
-<span class="p">}</span></code></pre></figure>
+<figure class="highlight"><pre><code class="language-json" data-lang="json"><span></span><span class="s2">&quot;problemMatcher&quot;</span><span class="err">:</span> <span class="p">{</span>
+    <span class="nt">&quot;owner&quot;</span><span class="p">:</span> <span class="s2">&quot;pegjs&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;fileLocation&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s2">&quot;relative&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;${workspaceFolder}&quot;</span>
+    <span class="p">],</span>
+    <span class="nt">&quot;pattern&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="nt">&quot;regexp&quot;</span><span class="p">:</span> <span class="s2">&quot;^([^\\s].*)$&quot;</span><span class="p">,</span>
+            <span class="nt">&quot;file&quot;</span><span class="p">:</span> <span class="mi">1</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="nt">&quot;regexp&quot;</span><span class="p">:</span> <span class="s2">&quot;^(\\d+):(\\d+):\\s*(.*)$&quot;</span><span class="p">,</span>
+            <span class="nt">&quot;line&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="nt">&quot;column&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="nt">&quot;message&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+            <span class="nt">&quot;loop&quot;</span><span class="p">:</span> <span class="kc">true</span>
+        <span class="p">}</span>
+    <span class="p">]</span>
+<span class="p">}</span><span class="err">,</span></code></pre></figure>
 
-<p>This unit test is checking that the <a href="https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/xmldoc/processing-the-xml-file">Xmldoc Identifier</a> calculated by DotNetApis is in fact what we expect it to be (<code>M:SampleClass.SampleMethod</code>) <em>and</em> that it matches what the C# compiler generated in the xml file. The <code>AssertXmldoc</code> helper is taking the Xmldoc Id from DotNetApis, looking it up in the *.xml file from the compiler, and asserting that the text we extract is what is expected.</p>
+<p>With this in place, I can get the nice output from VSCode whenever I have an error in my pegjs file:</p>
 
-<p>Sure, this example is pretty easy, but I’ve also started adding the more rare cases like methods that take an array of pointers by reference. There’s a <em>lot</em> of more complex cases that are undocumented, and we have to rely on observed compiler behavior.</p>
+<p class="center"><a href="/assets/vscode-pegjs.png"><img src="/assets/vscode-pegjs.png" alt="" /></a></p>
 
-<h2 id="roslyn-is-cool">Roslyn is Cool</h2>
-
-<p>That’s all I have to say. I just thought it’s <em>so cool</em> how easy Roslyn made this. And it’s <em>fast</em>, too! I can keep my Live Unit Testing running while hacking around, even with most of my tests running Roslyn, and it’s all pretty slick!</p>
+<p>Full source code is <a href="https://github.com/StephenCleary/json-filter-expr/blob/8a5c0fa113fce6cb065a72d93d4ff0ff79a389e5/.vscode/tasks.json">available online</a>.</p>
 
   </article>
     
@@ -316,8 +295,8 @@ code {
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2018/04/slides-available-codepalousa-2018.html" title="Slides Available: Code PaLOUsa 2018">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2018/05/vscode-for-pegjs.html" title="Using VSCode with PEGJS">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2018/05/roslyn-unit-testing.html" title="Unit Testing with Roslyn">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="disqus_thread"></div>
@@ -456,9 +435,9 @@ code {
 <!-- Disqus variables -->
 <script type="text/javascript">
     var disqus_shortname = 'stephencleary';
-    var disqus_identifier = "/2018/05/roslyn-unit-testing";
-    var disqus_title = "Unit Testing with Roslyn";
-    var disqus_url = "https://blog.stephencleary.com/2018/05/roslyn-unit-testing.html";
+    var disqus_identifier = "/2018/05/vscode-for-pegjs";
+    var disqus_title = "Using VSCode with PEGJS";
+    var disqus_url = "https://blog.stephencleary.com/2018/05/vscode-for-pegjs.html";
 </script>
 
 <!-- Disqus comment counter -->
