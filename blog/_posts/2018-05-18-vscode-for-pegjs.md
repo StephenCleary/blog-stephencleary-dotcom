@@ -4,8 +4,6 @@ title: "Using VSCode with PEGJS"
 description: "Enabling VSCode's Problems window for PEGJS compilation by parsing its output."
 ---
 
-## Using VSCode with PEGJS
-
 VSCode has a pretty decent extension system. This week I was playing around with [PEG JS](https://pegjs.org/), a [PEG](https://en.wikipedia.org/wiki/Parsing_expression_grammar) parser generator for JavaScript. I found [an extension](https://github.com/SrTobi/code-pegjs-language) for VSCode syntax highlighting of `pegjs` files. There are a couple of other options for extensions, but it looks like none of them support reporting errors in VSCode's `Problems` window.
 
 It's pretty straightforward to run the pegjs executable from a `package.json` npm script. In this example, I'm compiling my `pegjs` file into a `js` output file:
