@@ -234,7 +234,7 @@ code {
 
 <p>So this is a much more complex example with both I/O portions and CPU-bound portions. Here’s how the service looks today; it uses synchronous (blocking) I/O calls as well as CPU-intensive analysis.</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Warning: bad code!</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Warning: bad code!</span>
 <span class="k">class</span> <span class="nc">MyService</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="kt">int</span> <span class="nf">PredictStockMarket</span><span class="p">()</span>
@@ -261,7 +261,7 @@ code {
 
 <p>A common mistake is to wrap them in <code>Task.Run</code>.</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Warning: bad code!</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Warning: bad code!</span>
 <span class="k">class</span> <span class="nc">MyService</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">PredictStockMarketAsync</span><span class="p">()</span>
@@ -298,7 +298,7 @@ code {
 
 <p>They concluded that the best solution is to use an asynchronous signature but document the method clearly so that its CPU-bound nature will not be surprising.</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">class</span> <span class="nc">MyService</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">MyService</span>
 <span class="p">{</span>
   <span class="c1">/// &lt;summary&gt;</span>
   <span class="c1">/// This method is CPU-bound!</span>
@@ -325,7 +325,7 @@ code {
 
 <p>This allows UI-based clients to properly use <code>Task.Run</code> to call the service, while ASP.NET clients would just call the method directly.</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">MyButton_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">MyButton_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">myService</span><span class="p">.</span><span class="n">PredictStockMarketAsync</span><span class="p">());</span>
 <span class="p">}</span>

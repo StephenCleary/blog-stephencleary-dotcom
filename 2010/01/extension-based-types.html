@@ -244,7 +244,7 @@ code {
 
 <p>Here’s an example of an EBT that defines a single method, <code>MethodA</code>:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">interface</span> <span class="n">IMyInterface</span> <span class="p">{</span> <span class="p">}</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">interface</span> <span class="n">IMyInterface</span> <span class="p">{</span> <span class="p">}</span>
 <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyImplementation</span> <span class="p">:</span> <span class="n">IMyInterface</span> <span class="p">{</span> <span class="p">}</span>
     
 <span class="k">public</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">MyMethods</span>
@@ -267,7 +267,7 @@ code {
 
 <p>EBT inheritance is performed using interface inheritance. Here’s an example of a base interface that defines <code>MethodA</code> and a derived interface defining <code>MethodB</code>; the derived interface ends up supporting both methods:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">interface</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">interface</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
 <span class="k">public</span> <span class="k">interface</span> <span class="n">IDerived</span> <span class="p">:</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
 <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Derived</span> <span class="p">:</span> <span class="n">IDerived</span> <span class="p">{</span> <span class="p">}</span>
     
@@ -293,7 +293,7 @@ code {
 
 <p>A derived EBT may override a base EBT method by defining its own method with an identical signature. Here’s a derived type that overrides the <code>MethodA</code> defined by its base type:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">interface</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">interface</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
 <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Base</span> <span class="p">:</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
 <span class="k">public</span> <span class="k">interface</span> <span class="n">IDerived</span> <span class="p">:</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
 <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Derived</span> <span class="p">:</span> <span class="n">IDerived</span> <span class="p">{</span> <span class="p">}</span>
@@ -322,7 +322,7 @@ code {
 
 <p>In order to invoke the base method when the derived EBT overrides it, the compile-time type of the variable must explicitly be the base type. Here’s an example that invokes the derived and base <code>MethodA</code> implementations on the same object:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">interface</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">interface</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
 <span class="k">public</span> <span class="k">interface</span> <span class="n">IDerived</span> <span class="p">:</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
 <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Derived</span> <span class="p">:</span> <span class="n">IDerived</span> <span class="p">{</span> <span class="p">}</span>
     
@@ -348,7 +348,7 @@ code {
 
 <p>For convenience, an “identity transformation method” is usually provided that restricts the type of a subexpression; this way, a separate variable is not necessary. By convention, the identity transformation method is named <code>As{I}</code>. The following example shows how an <code>AsBase</code> method removes the need for the <code>IBase</code> variable:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">interface</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">interface</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
 <span class="k">public</span> <span class="k">interface</span> <span class="n">IDerived</span> <span class="p">:</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
 <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Derived</span> <span class="p">:</span> <span class="n">IDerived</span> <span class="p">{</span> <span class="p">}</span>
     
@@ -374,7 +374,7 @@ code {
 
 <p>It’s important to note that the compile-time type of the expression is what’s used for method overloading, so the EBT style of overriding inherited methods is <em>not</em> like object-oriented virtual function overriding:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">interface</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">interface</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
 <span class="k">public</span> <span class="k">interface</span> <span class="n">IDerived</span> <span class="p">:</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
 <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Derived</span> <span class="p">:</span> <span class="n">IDerived</span> <span class="p">{</span> <span class="p">}</span>
     
@@ -402,7 +402,7 @@ code {
 
 <p>Multiple inheritance is supported for EBTs; any ambiguity causes a compiler error:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">interface</span> <span class="n">IBaseA</span> <span class="p">{</span> <span class="p">}</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">interface</span> <span class="n">IBaseA</span> <span class="p">{</span> <span class="p">}</span>
 <span class="k">public</span> <span class="k">interface</span> <span class="n">IBaseB</span> <span class="p">{</span> <span class="p">}</span>
 <span class="k">public</span> <span class="k">interface</span> <span class="n">IDerived</span> <span class="p">:</span> <span class="n">IBaseA</span><span class="p">,</span> <span class="n">IBaseB</span> <span class="p">{</span> <span class="p">}</span>
 <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Derived</span> <span class="p">:</span> <span class="n">IDerived</span> <span class="p">{</span> <span class="p">}</span>
@@ -426,7 +426,7 @@ code {
 
 <p>Ambiguity may be resolved by overriding the method in the derived EBT, or by constraining the compile-time type using the identity transformation method. The second approach is more flexible, since it allows any user-defined extensions. This example uses the second approach:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">interface</span> <span class="n">IBaseA</span> <span class="p">{</span> <span class="p">}</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">interface</span> <span class="n">IBaseA</span> <span class="p">{</span> <span class="p">}</span>
 <span class="k">public</span> <span class="k">interface</span> <span class="n">IBaseB</span> <span class="p">{</span> <span class="p">}</span>
 <span class="k">public</span> <span class="k">interface</span> <span class="n">IDerived</span> <span class="p">:</span> <span class="n">IBaseA</span><span class="p">,</span> <span class="n">IBaseB</span> <span class="p">{</span> <span class="p">}</span>
 <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Derived</span> <span class="p">:</span> <span class="n">IDerived</span> <span class="p">{</span> <span class="p">}</span>
@@ -455,7 +455,7 @@ code {
 
 <p>Due to .NET limitations, properties may only be defined on interfaces (there’s no such thing as an “extension property”). However, they may be simulated:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">interface</span> <span class="n">IBase</span> <span class="p">{</span> <span class="kt">int</span> <span class="n">Property</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">}</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">interface</span> <span class="n">IBase</span> <span class="p">{</span> <span class="kt">int</span> <span class="n">Property</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">}</span>
 <span class="k">public</span> <span class="k">interface</span> <span class="n">IDerived</span> <span class="p">:</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
 <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Derived</span> <span class="p">:</span> <span class="n">IDerived</span>
 <span class="p">{</span>
@@ -491,7 +491,7 @@ code {
 
 <p>If a method is defined in the interface instead of as an extension method, then that method may never be overridden by a derived EBT type:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">interface</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">interface</span> <span class="n">IBase</span> <span class="p">{</span> <span class="p">}</span>
 <span class="k">public</span> <span class="k">interface</span> <span class="n">IDerived</span> <span class="p">:</span> <span class="n">IBase</span> <span class="p">{</span> <span class="k">void</span> <span class="n">MethodA</span><span class="p">();</span> <span class="p">}</span>
 <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Derived</span> <span class="p">:</span> <span class="n">IDerived</span>
 <span class="p">{</span>

@@ -234,7 +234,7 @@ code {
 
 <p>The straightforward approach is to just use <code>ZipArchive</code> with <code>PushStreamContent</code>, very similar to <a href="/2016/10/async-pushstreamcontent.html">the previous example</a>:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="k">static</span> <span class="n">HttpClient</span> <span class="n">Client</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">static</span> <span class="n">HttpClient</span> <span class="n">Client</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
 <span class="k">public</span> <span class="n">HttpResponseMessage</span> <span class="nf">Get</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">filenamesAndUrls</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="kt">string</span><span class="p">&gt;</span>
@@ -278,7 +278,7 @@ code {
 
 <p>The important parts of this stream wrapper look like this (the other members of <a href="https://github.com/StephenClearyExamples/AsyncDynamicZip/blob/full-ziparchive/Example/WebApplication/WriteOnlyStreamWrapper.cs">this type</a> just forward to the underlying stream):</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">class</span> <span class="nc">WriteOnlyStreamWrapper</span> <span class="p">:</span> <span class="n">Stream</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">WriteOnlyStreamWrapper</span> <span class="p">:</span> <span class="n">Stream</span>
 <span class="p">{</span>
     <span class="k">private</span> <span class="k">readonly</span> <span class="n">Stream</span> <span class="n">_stream</span><span class="p">;</span>
     <span class="k">private</span> <span class="kt">long</span> <span class="n">_position</span><span class="p">;</span>
@@ -324,7 +324,7 @@ code {
 
 <p>With that wrapper in place, our action method can be updated:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="k">static</span> <span class="n">HttpClient</span> <span class="n">Client</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">static</span> <span class="n">HttpClient</span> <span class="n">Client</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
 <span class="k">public</span> <span class="n">HttpResponseMessage</span> <span class="nf">Get</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">filenamesAndUrls</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="kt">string</span><span class="p">&gt;</span>

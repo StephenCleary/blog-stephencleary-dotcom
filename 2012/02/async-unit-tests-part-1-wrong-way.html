@@ -268,7 +268,7 @@ public void FourDividedByTwoIsTwo()
 }
 </code></pre>
 
-<p><img src="/assets/AsyncUnitTests1.png" alt="" />  </p>
+<p><img src="/assets/AsyncUnitTests1.png" alt="" /></p>
 
 <p>But one of the problems with this approach is unit tests that check error handling:</p>
 
@@ -281,11 +281,11 @@ public void DenominatorIsZeroThrowsDivideByZero()
 }
 </code></pre>
 
-<p><img src="/assets/AsyncUnitTests2.png" alt="" />  </p>
+<p><img src="/assets/AsyncUnitTests2.png" alt="" /></p>
 
 <p>This unit test is failing, even though the async method under test <em>is</em> throwing a DivideByZeroException. The Test Results Details explains why:</p>
 
-<p><img src="/assets/AsyncUnitTests3.png" alt="" />  </p>
+<p><img src="/assets/AsyncUnitTests3.png" alt="" /></p>
 
 <p>The Task class is wrapping our exception into an AggregateException. This is why the Task.Wait and Task.Result members should not be used with new async code (see the end of <a href="/2012/02/async-and-await.html">last week’s async intro post</a>).</p>
 
@@ -303,7 +303,7 @@ public async Task FourDividedByTwoIsTwoAsync()
 }
 </code></pre>
 
-<p><img src="/assets/AsyncUnitTests4.png" alt="" />  </p>
+<p><img src="/assets/AsyncUnitTests4.png" alt="" /></p>
 
 <p>Yay! It works!</p>
 
@@ -319,7 +319,7 @@ public async Task FourDividedByTwoIsThirteenAsync()
 }
 </code></pre>
 
-<p><img src="/assets/AsyncUnitTests5.png" alt="" />  </p>
+<p><img src="/assets/AsyncUnitTests5.png" alt="" /></p>
 
 <p>Um, that test should <em>certainly not</em> be passing! What is going on here???</p>
 
@@ -327,11 +327,11 @@ public async Task FourDividedByTwoIsThirteenAsync()
 
 <p>There is now a race condition. There’s no race condition in the test itself; it will always pass (incorrectly). The race condition is when the assertion fires. If the assertion fires <em>after</em> the unit test framework finishes the test run, then you’ll see a successful test run (like the last screenshot). But if the assertion fires <em>before</em> the unit test framework finishes the test run, then you’ll see something like this:</p>
 
-<p><img src="/assets/AsyncUnitTests6.png" alt="" />  </p>
+<p><img src="/assets/AsyncUnitTests6.png" alt="" /></p>
 
 <p>Clicking on the link shows that the Assertion is indeed failing on the thread pool, some time after the test is considered completed and “Passed”:</p>
 
-<p><img src="/assets/AsyncUnitTests7.png" alt="" />  </p>
+<p><img src="/assets/AsyncUnitTests7.png" alt="" /></p>
 
 <div class="alert alert-danger">
   <p><i class="fa fa-exclamation-triangle fa-2x pull-left"></i></p>

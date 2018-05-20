@@ -230,14 +230,14 @@ code {
 
 <p>Fortunately, <code>async</code> does work well with inheritance (and interfaces). Remember that <code>async</code> is an implementation detail, so interfaces can’t be defined with <code>async</code>. To define an asynchronous method in an interface, you just need to define a method with the same signature, minus the <code>async</code> keyword:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">interface</span> <span class="n">IMyInterface</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">interface</span> <span class="n">IMyInterface</span>
 <span class="p">{</span>
   <span class="n">Task</span> <span class="nf">MyMethodAsync</span><span class="p">();</span>
 <span class="p">}</span></code></pre></figure>
 
 <p>You can then implement it using <code>async</code>:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span> <span class="p">:</span> <span class="n">IMyInterface</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span> <span class="p">:</span> <span class="n">IMyInterface</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">MyMethodAsync</span><span class="p">()</span>
   <span class="p">{</span>

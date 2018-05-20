@@ -240,7 +240,7 @@ code {
 
 <p>SQLite has a simple “one database per file” concept that does not exist for all ADO.NET data sources. If you need to allow your application to access user-selected database files, it’s possible to “redirect” an Entity Framework connection string to an alternative data file. The correct way to do this is to crack the Entity Framework connection string, extract the SQLite connection string, crack the SQLite connection string, replace the data file, rebuild the SQLite connection string, and finally rebuild the Entity Framework connection string:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">/// &lt;summary&gt;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">/// &lt;summary&gt;</span>
 <span class="c1">/// Redirects a SQLite Entity Framework connection string to an alternative database file, optionally encrypted with a password.</span>
 <span class="c1">/// &lt;/summary&gt;</span>
 <span class="c1">/// &lt;param name=&quot;originalConnectionString&quot;&gt;The Visual-Studio-generated original Entity Framework connection string.&lt;/param&gt;</span>
@@ -270,7 +270,7 @@ code {
 
 <p>The redirected Entity Framework connection string may be passed to the ObjectContext-derived class constructor (e.g., the “MyEntities” class that the Entity Framework creates for you):</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">const</span> <span class="kt">string</span> <span class="n">OriginalConnectionString</span> <span class="p">=</span> <span class="s">&quot;...&quot;</span><span class="p">;</span> <span class="c1">// (Copy out of app.config)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">const</span> <span class="kt">string</span> <span class="n">OriginalConnectionString</span> <span class="p">=</span> <span class="s">&quot;...&quot;</span><span class="p">;</span> <span class="c1">// (Copy out of app.config)</span>
 <span class="kt">var</span> <span class="n">connectionString</span> <span class="p">=</span> <span class="n">RedirectedEntityFrameworkConnectionString</span><span class="p">(</span><span class="n">OriginalConnectionString</span><span class="p">,</span> <span class="n">myFileName</span><span class="p">,</span> <span class="k">null</span><span class="p">);</span>
 <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">context</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MyEntities</span><span class="p">(</span><span class="n">connectionString</span><span class="p">))</span>
 <span class="p">{</span>
@@ -283,7 +283,7 @@ code {
 
 <p>As a general rule, you should explicitly call “Connection.Open()” for any ObjectContext. You must also ensure that the ObjectContext is disposed, so that the database connection is cleanly closed. Once “Connection.Open()” has been called, the Entity Framework will no longer open and close its own transient connections.</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">myEntities</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MyEntities</span><span class="p">())</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">myEntities</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MyEntities</span><span class="p">())</span>
 <span class="p">{</span>
     <span class="c1">// Open the connection (to make it long-lived)</span>
     <span class="n">myEntities</span><span class="p">.</span><span class="n">Connection</span><span class="p">.</span><span class="n">Open</span><span class="p">();</span>
@@ -295,7 +295,7 @@ code {
 
 <p>It’s often useful to get at the SQLiteConnection being used by the Entity Framework. This is available through the “EntityConnection.StoreConnection” property, as illustrated by this code sample:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="kt">var</span> <span class="n">connection</span> <span class="p">=</span> <span class="p">(</span><span class="n">myEntities</span><span class="p">.</span><span class="n">Connection</span> <span class="k">as</span> <span class="n">EntityConnection</span><span class="p">).</span><span class="n">StoreConnection</span> <span class="k">as</span> <span class="n">SQLiteConnection</span><span class="p">;</span></code></pre></figure>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="kt">var</span> <span class="n">connection</span> <span class="p">=</span> <span class="p">(</span><span class="n">myEntities</span><span class="p">.</span><span class="n">Connection</span> <span class="k">as</span> <span class="n">EntityConnection</span><span class="p">).</span><span class="n">StoreConnection</span> <span class="k">as</span> <span class="n">SQLiteConnection</span><span class="p">;</span></code></pre></figure>
 
 <h2 id="directly-accessing-the-database-using-sql">Directly Accessing the Database Using SQL</h2>
 
@@ -303,7 +303,7 @@ code {
 
 <p>This is possible one of two ways; once the SQLiteConnection has been acquired (see above), it’s possible to create a SQLiteCommand and execute it:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">command</span> <span class="p">=</span> <span class="n">connection</span><span class="p">.</span><span class="n">CreateCommand</span><span class="p">())</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">command</span> <span class="p">=</span> <span class="n">connection</span><span class="p">.</span><span class="n">CreateCommand</span><span class="p">())</span>
 <span class="p">{</span>
     <span class="n">command</span><span class="p">.</span><span class="n">CommandText</span> <span class="p">=</span> <span class="s">&quot;PRAGMA encoding = \&quot;UTF-8\&quot;&quot;</span><span class="p">;</span>
     <span class="n">command</span><span class="p">.</span><span class="n">ExecuteNonQuery</span><span class="p">();</span>
@@ -311,7 +311,7 @@ code {
 
 <p>However, there’s an even easier way of doing this: Entity Framework exposes a method named “ExecuteStoreCommand”:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">myEntities</span><span class="p">.</span><span class="n">ExecuteStoreCommand</span><span class="p">(</span><span class="s">&quot;PRAGMA encoding = \&quot;UTF-8\&quot;&quot;</span><span class="p">);</span></code></pre></figure>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">myEntities</span><span class="p">.</span><span class="n">ExecuteStoreCommand</span><span class="p">(</span><span class="s">&quot;PRAGMA encoding = \&quot;UTF-8\&quot;&quot;</span><span class="p">);</span></code></pre></figure>
 
 <h2 id="entity-framework-transactions">Entity Framework Transactions</h2>
 
@@ -321,7 +321,7 @@ code {
 
 <p>Fortunately, SQLiteTransaction works perfectly well with the Entity Framework. My database schema upgrade code now looks like this (referencing the SQLiteConnection from above):</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">transaction</span> <span class="p">=</span> <span class="n">connection</span><span class="p">.</span><span class="n">BeginTransaction</span><span class="p">())</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">transaction</span> <span class="p">=</span> <span class="n">connection</span><span class="p">.</span><span class="n">BeginTransaction</span><span class="p">())</span>
 <span class="p">{</span>
     <span class="c1">// lots of time-consuming stuff</span>
 
@@ -336,7 +336,7 @@ code {
 
 <p>First, you need to enforce foreign keys on your database connection; see the <a href="http://www.sqlite.org/foreignkeys.html">SQLite foreign keys documentation</a> for more information. This is done simply as such:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">myEntities</span><span class="p">.</span><span class="n">ExecuteStoreCommand</span><span class="p">(</span><span class="s">&quot;PRAGMA foreign_keys = ON&quot;</span><span class="p">);</span></code></pre></figure>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">myEntities</span><span class="p">.</span><span class="n">ExecuteStoreCommand</span><span class="p">(</span><span class="s">&quot;PRAGMA foreign_keys = ON&quot;</span><span class="p">);</span></code></pre></figure>
 
 <p>The next step is to actually establish the Entity Framework relationships. Some SQLite databases work just fine; the EF designer is able to understand the foreign key relationships and adds them correctly. Other SQLite databases just import the entities themselves without the relationships; I’m not sure why this is the case.</p>
 
@@ -344,8 +344,8 @@ code {
 
 <h3 id="foreign-keys-01-to-n-and-1-to-n">Foreign Keys: 0..1 to N and 1 to N</h3>
 
-<p><a href="/assets/1toNp1.PNG"><img src="/assets/1toNp1.PNG" alt="" />  
-</a><a href="/assets/1toNp2.PNG"><img src="/assets/1toNp2.PNG" alt="" />  
+<p><a href="/assets/1toNp1.PNG"><img src="/assets/1toNp1.PNG" alt="" /><br />
+</a><a href="/assets/1toNp2.PNG"><img src="/assets/1toNp2.PNG" alt="" /><br />
 </a></p>
 
 <p>In this type of relationship, the “parent” table has an identity, and the “child” table has its own identity and a foreign key referring to a row in the “parent” table. To establish this relationship, follow these steps:</p>
@@ -364,8 +364,8 @@ code {
 
 <h3 id="foreign-keys-m-to-n">Foreign Keys: M to N</h3>
 
-<p><a href="/assets/MtoNp1.PNG"><img src="/assets/MtoNp1.PNG" alt="" />  
-</a><a href="/assets/MtoNp2.PNG"><img src="/assets/MtoNp2.PNG" alt="" />  
+<p><a href="/assets/MtoNp1.PNG"><img src="/assets/MtoNp1.PNG" alt="" /><br />
+</a><a href="/assets/MtoNp2.PNG"><img src="/assets/MtoNp2.PNG" alt="" /><br />
 </a></p>
 
 <p>This type of relationship has a special table in the database, commonly called a “join table”. Unfortunately, the Entity Framework support for SQLite does not pick up on these relationships either, so the join table will actually be added to the Entity Framework designer as an entity.</p>

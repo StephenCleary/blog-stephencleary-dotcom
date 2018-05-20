@@ -232,7 +232,7 @@ code {
 
 <p>This kind of user starts off with existing code, which usually does some kind of synchronous work (often database access or a web request).</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">class</span> <span class="nc">MyService</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">MyService</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="kt">int</span> <span class="nf">RetrieveValue</span><span class="p">(</span><span class="kt">int</span> <span class="n">id</span><span class="p">)</span>
   <span class="p">{</span>
@@ -245,7 +245,7 @@ code {
 
 <p>They’ve read a bit about how <code>async</code> helps in those areas, and decide to give it a spin. “Let’s see if I can figure out this <code>async</code> thing. I’ll just add an <code>async</code> and see what happens. Oh, I have to change the return type to <code>Task</code>, too.”</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Warning: bad code!</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Warning: bad code!</span>
 <span class="k">class</span> <span class="nc">MyService</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">RetrieveValueAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">id</span><span class="p">)</span>
@@ -259,7 +259,7 @@ code {
 
 <p>“Now the compiler is complaining that I’m not using <code>await</code>. OK, so what can I await? [Google-Fu] Ah, <code>Task.Run</code> looks promising!”</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Warning: bad code!</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Warning: bad code!</span>
 <span class="k">class</span> <span class="nc">MyService</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">RetrieveValueAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">id</span><span class="p">)</span>
@@ -280,7 +280,7 @@ code {
 
 <p>The proper approach is to <em>change the blocking call to an asynchronous call first</em> and then <em>allow <code>async</code> to grow from there</em>. So, starting from the same point, we first change the blocking call to an asynchronous call. In the real world, this would be like replacing <code>WebClient</code> with <code>HttpClient</code> or converting your Entity Framework queries to be asynchronous. In this example, I’m replacing <code>Thread.Sleep</code> with <code>Task.Delay</code>.</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Warning: bad code!</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Warning: bad code!</span>
 <span class="k">class</span> <span class="nc">MyService</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="kt">int</span> <span class="nf">RetrieveValue</span><span class="p">(</span><span class="kt">int</span> <span class="n">id</span><span class="p">)</span>
@@ -294,7 +294,7 @@ code {
 
 <p>Now we’re getting a compiler error, and we need to make the method <code>async</code>.</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">class</span> <span class="nc">MyService</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">MyService</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">RetrieveValueAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">id</span><span class="p">)</span>
   <span class="p">{</span>

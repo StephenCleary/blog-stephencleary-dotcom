@@ -234,7 +234,7 @@ code {
 
 <p>One mistake is to place a finalizer on a class that only has managed resources; this example code can result in an exception on the finalizer thread, which would crash the application:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// This is an example of an incorrect and buggy finalizer.</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// This is an example of an incorrect and buggy finalizer.</span>
 <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">SingleApplicationInstance</span>
 <span class="p">{</span>
     <span class="k">private</span> <span class="n">Mutex</span> <span class="n">namedMutex</span><span class="p">;</span>
@@ -261,7 +261,7 @@ code {
 
 <p>Here’s an exmple of a class that removes the finalizer and then implements IDisposable in a correct but needlessly complex way:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// This is an example of a needlessly complex IDisposable implementation.</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// This is an example of a needlessly complex IDisposable implementation.</span>
 <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">SingleApplicationInstance</span> <span class="p">:</span> <span class="n">IDisposable</span>
 <span class="p">{</span>
     <span class="k">private</span> <span class="n">Mutex</span> <span class="n">namedMutex</span><span class="p">;</span>
@@ -292,7 +292,7 @@ code {
 
 <p>An equivalent - and simpler - implementation is here:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// This is an example of a correct IDisposable implementation.</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// This is an example of a correct IDisposable implementation.</span>
 <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">SingleApplicationInstance</span> <span class="p">:</span> <span class="n">IDisposable</span>
 <span class="p">{</span>
     <span class="k">private</span> <span class="n">Mutex</span> <span class="n">namedMutex</span><span class="p">;</span>

@@ -228,7 +228,7 @@ code {
   <article>
   <p><code>Task.CurrentId</code> returns the identifier of the <em>currently executing</em> <code>Task</code>, or <code>null</code> if there is no currently executing <code>Task</code>. So, what is <code>Task.CurrentId</code> in an <code>async</code> method?</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
 
 <span class="k">class</span> <span class="nc">Program</span>
@@ -259,7 +259,7 @@ code {
 
 <p>As a reminder, code-based tasks are usually started with <code>Task.Run</code> to toss work onto the thread pool, or <code>TaskFactory.StartNew</code> to specify a scheduler where the task will run. But you can still end up surprised when you schedule an <code>async</code> method. Consider the modified program:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
 
 <span class="k">class</span> <span class="nc">Program</span>
@@ -290,7 +290,7 @@ code {
 
 <p>I do make a different choice for my <a href="http://nitoasyncex.codeplex.com/wikipage?title=AsyncContext">AsyncContext</a> type. I started off with a design similar to the thread pool task scheduler (executing bare <code>Action</code> delegates), but I found the code simplified quite nicely if I treated <em>everything</em> as a <code>Task</code>. So this program will always use tasks:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">Nito.AsyncEx</span><span class="p">;</span>
 

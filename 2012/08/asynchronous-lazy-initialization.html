@@ -230,7 +230,7 @@ code {
 
 <p>Stephen Toub first introduced this approach <a href="http://blogs.msdn.com/b/pfxteam/archive/2011/01/15/10116210.aspx">in a blog post way back in January, 2011</a>. This is his code, which I’ve updated, documented, and tweaked slightly:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span> 
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"> 
 <span class="c1">/// &lt;summary&gt;</span>
 <span class="c1">/// Provides support for asynchronous lazy initialization. This type is fully threadsafe.</span>
 <span class="c1">/// &lt;/summary&gt;</span>
@@ -285,7 +285,7 @@ code {
 
 <p>It takes a few minutes to wrap your head around the theory, but it’s really easy in practice:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">AsyncLazy</span><span class="p">&lt;</span><span class="n">MyResource</span><span class="p">&gt;</span> <span class="n">myResource</span> <span class="p">=</span> <span class="k">new</span> <span class="n">AsyncLazy</span><span class="p">&lt;</span><span class="n">MyResource</span><span class="p">&gt;(</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">AsyncLazy</span><span class="p">&lt;</span><span class="n">MyResource</span><span class="p">&gt;</span> <span class="n">myResource</span> <span class="p">=</span> <span class="k">new</span> <span class="n">AsyncLazy</span><span class="p">&lt;</span><span class="n">MyResource</span><span class="p">&gt;(</span>
     <span class="p">()</span> <span class="p">=&gt;</span> <span class="k">new</span> <span class="n">MyResource</span><span class="p">()</span>
     <span class="c1">// or:</span>
     <span class="c1">// async () =&gt; { var ret = new MyResource(); await ret.InitAsync(); return ret; }</span>

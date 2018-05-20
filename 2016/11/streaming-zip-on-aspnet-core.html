@@ -234,7 +234,7 @@ code {
 
 <p>First, let’s look at how we can download a single file stream. On ASP.NET Core, we would use <code>FileStreamResult</code> to download a file to the browser:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="k">static</span> <span class="n">HttpClient</span> <span class="n">Client</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">static</span> <span class="n">HttpClient</span> <span class="n">Client</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
 <span class="na">[HttpGet]</span>
 <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">FileStreamResult</span><span class="p">&gt;</span> <span class="n">Get</span><span class="p">()</span>
 <span class="p">{</span>
@@ -283,7 +283,7 @@ code {
 
 <p>The action results in ASP.NET Core will forward their implementation to their respective “executor” types by using dependency injection. For my simple case, I hard-code the executor:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">class</span> <span class="nc">FileCallbackResult</span> <span class="p">:</span> <span class="n">FileResult</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">FileCallbackResult</span> <span class="p">:</span> <span class="n">FileResult</span>
 <span class="p">{</span>
     <span class="k">private</span> <span class="n">Func</span><span class="p">&lt;</span><span class="n">Stream</span><span class="p">,</span> <span class="n">ActionContext</span><span class="p">,</span> <span class="n">Task</span><span class="p">&gt;</span> <span class="n">_callback</span><span class="p">;</span>
 
@@ -324,7 +324,7 @@ code {
 
 <p>With our new <code>FileCallbackResult</code> type, we can (finally) download multiple files and combine them into a single zip file on the fly:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="k">static</span> <span class="n">HttpClient</span> <span class="n">Client</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">static</span> <span class="n">HttpClient</span> <span class="n">Client</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">();</span>
 <span class="na">[HttpGet]</span>
 <span class="k">public</span> <span class="n">IActionResult</span> <span class="nf">Get</span><span class="p">()</span>
 <span class="p">{</span>

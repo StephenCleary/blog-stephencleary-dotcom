@@ -250,7 +250,7 @@ code {
 
 <p>One of the most common mistakes in eliding <code>async</code> and <code>await</code> is that developers forget that there is code at the end of their method that needs to run at the appropriate time. In particular, when using a <code>using</code> statement:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">GetWithKeywordsAsync</span><span class="p">(</span><span class="kt">string</span> <span class="n">url</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">GetWithKeywordsAsync</span><span class="p">(</span><span class="kt">string</span> <span class="n">url</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">client</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">())</span>
         <span class="k">return</span> <span class="k">await</span> <span class="n">client</span><span class="p">.</span><span class="n">GetStringAsync</span><span class="p">(</span><span class="n">url</span><span class="p">);</span>
@@ -292,7 +292,7 @@ code {
 
 <p>Another easily-overlooked pitfall is that of exceptions. The state machine for <code>async</code> methods will capture exceptions from your code and place them on the returned task. Without the <code>async</code> keyword, the exception is raised directly rather than going on the task:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">GetWithKeywordsAsync</span><span class="p">()</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">GetWithKeywordsAsync</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="kt">string</span> <span class="n">url</span> <span class="p">=</span> <span class="cm">/* Something that can throw an exception */</span><span class="p">;</span>
     <span class="k">return</span> <span class="k">await</span> <span class="nf">DownloadStringAsync</span><span class="p">(</span><span class="n">url</span><span class="p">);</span>
@@ -306,13 +306,13 @@ code {
 
 <p>These methods work exactly the same as long as the calling method does something like this:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">GetWithKeywordsAsync</span><span class="p">();</span> <span class="c1">// works fine</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">GetWithKeywordsAsync</span><span class="p">();</span> <span class="c1">// works fine</span>
 
 <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">GetElidingKeywordsAsync</span><span class="p">();</span> <span class="c1">// works fine</span></code></pre></figure>
 
 <p>However, if the <em>method call</em> is separated from the <code>await</code>, then the semantics are different:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="kt">var</span> <span class="n">task</span> <span class="p">=</span> <span class="n">GetWithKeywordsAsync</span><span class="p">();</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="kt">var</span> <span class="n">task</span> <span class="p">=</span> <span class="n">GetWithKeywordsAsync</span><span class="p">();</span>
 <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">task</span><span class="p">;</span> <span class="c1">// Exception thrown here</span>
 
 <span class="kt">var</span> <span class="n">task</span> <span class="p">=</span> <span class="n">GetElidingKeywordsAsync</span><span class="p">();</span> <span class="c1">// Exception thrown here</span>
@@ -332,7 +332,7 @@ code {
 This pitfall is especially notable when writing synchronous implementations of asynchronous APIs; for proper exception handling, catch any exceptions from the synchronous implementation and return a faulted task:
 
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">Task</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">INetwork</span><span class="p">.</span><span class="n">GetElidingKeywordsAsync</span><span class="p">()</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">INetwork</span><span class="p">.</span><span class="n">GetElidingKeywordsAsync</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="k">try</span>
     <span class="p">{</span>
@@ -355,7 +355,7 @@ This pitfall is especially notable when writing synchronous implementations of a
 
 <p>This provides a way for contextual information to flow “down” asynchronous calls. Note that the value does <em>not</em> flow “up”.</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">static</span> <span class="n">AsyncLocal</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">context</span> <span class="p">=</span> <span class="k">new</span> <span class="n">AsyncLocal</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;();</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">static</span> <span class="n">AsyncLocal</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">context</span> <span class="p">=</span> <span class="k">new</span> <span class="n">AsyncLocal</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;();</span>
 
 <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">MainAsync</span><span class="p">()</span>
 <span class="p">{</span>
@@ -378,7 +378,7 @@ This pitfall is especially notable when writing synchronous implementations of a
 
 <p>The pitfall is that synchronous methods do not notify the logical call context that anything is different. For normal (non-task-returning) synchronous methods, this works out fine; from the logical call context’s perspective, all synchronous invocations are “collapsed” - they’re actually part of the context of the closest <code>async</code> method further up the call stack. For example:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">static</span> <span class="n">AsyncLocal</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">context</span> <span class="p">=</span> <span class="k">new</span> <span class="n">AsyncLocal</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;();</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">static</span> <span class="n">AsyncLocal</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">context</span> <span class="p">=</span> <span class="k">new</span> <span class="n">AsyncLocal</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;();</span>
 
 <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">MainAsync</span><span class="p">()</span>
 <span class="p">{</span>
@@ -408,7 +408,7 @@ This pitfall is especially notable when writing synchronous implementations of a
 
 <p>When eliding <code>async</code> and <code>await</code>, you do need to be aware that the task-returning non-<code>async</code> method is seen by the context as though it were a regular synchronous method. So, if it does any modification of the logical call context, it will actually affect its <em>parent</em> context:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">static</span> <span class="n">AsyncLocal</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">context</span> <span class="p">=</span> <span class="k">new</span> <span class="n">AsyncLocal</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;();</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">static</span> <span class="n">AsyncLocal</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">context</span> <span class="p">=</span> <span class="k">new</span> <span class="n">AsyncLocal</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;();</span>
 
 <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">MainAsync</span><span class="p">()</span>
 <span class="p">{</span>
@@ -439,7 +439,7 @@ This pitfall is especially notable when writing synchronous implementations of a
 
 <p>Examples:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Simple passthrough to next layer: elide.</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Simple passthrough to next layer: elide.</span>
 <span class="n">Task</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">PassthroughAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="n">_service</span><span class="p">.</span><span class="n">PassthroughAsync</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
 
 <span class="c1">// Simple overloads for a method: elide.</span>

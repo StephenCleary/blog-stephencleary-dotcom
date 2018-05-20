@@ -230,7 +230,7 @@ code {
 
 <p>You can use a different branch in GitHub for the output of your solution, but this is awkward. The solution I chose is to deploy the Azure Functions App from a <em>specific subfolder</em> of a GitHub repository. You can do this by <a href="https://github.com/projectkudu/kudu/wiki/Customizing-deployments">adding a <code>.deployment</code> file in the root of your repository that tells the deployment system where your Azure Functions App is</a>. E.g.:</p>
 
-<figure class="highlight"><pre><code class="language-ini" data-lang="ini"><span></span><span class="k">[config]</span>
+<figure class="highlight"><pre><code class="language-ini" data-lang="ini"><span class="k">[config]</span>
 <span class="na">project</span> <span class="o">=</span> <span class="s">src/FunctionApp1</span></code></pre></figure>
 
 <p>If you run into deployment errors like <code>The "Move" task failed unexpectedly. (System.Runtime.InteropServices.COMException (0x800700A1): The specified path is invalid.)</code> when the <code>_GenerateFunctionsPostBuild</code> target tries to copy your project output, then <a href="https://stackoverflow.com/questions/45743877/azure-function-ci-build-error-cannot-create-a-file-when-that-file-already-exis">ensure you’re using v1.0.1 or later of <code>Microsoft.NET.Sdk.Functions</code></a>.</p>

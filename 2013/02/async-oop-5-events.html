@@ -248,7 +248,7 @@ code {
 
 <p>Compared to the design, the code is actually quite simple:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">DeferralManager</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">DeferralManager</span>
 <span class="p">{</span>
   <span class="k">private</span> <span class="k">readonly</span> <span class="n">AsyncCountdownEvent</span> <span class="n">_count</span> <span class="p">=</span> <span class="k">new</span> <span class="n">AsyncCountdownEvent</span><span class="p">(</span><span class="m">1</span><span class="p">);</span>
 
@@ -291,7 +291,7 @@ code {
 
 <p>Once you have a <code>DeferralManager</code>, you can extend your “command-style” event arguments type as such:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">class</span> <span class="nc">MyEventArgs</span> <span class="p">:</span> <span class="n">EventArgs</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">MyEventArgs</span> <span class="p">:</span> <span class="n">EventArgs</span>
 <span class="p">{</span>
   <span class="k">private</span> <span class="k">readonly</span> <span class="n">DeferralManager</span> <span class="n">deferrals</span> <span class="p">=</span> <span class="k">new</span> <span class="n">DeferralManager</span><span class="p">();</span>
 
@@ -310,7 +310,7 @@ code {
 
 <p>Then, each time you raise the event, use code similar to this:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="n">Task</span> <span class="nf">RaiseMyEventAsync</span><span class="p">()</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="n">Task</span> <span class="nf">RaiseMyEventAsync</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="kt">var</span> <span class="n">handler</span> <span class="p">=</span> <span class="n">MyEvent</span><span class="p">;</span>
   <span class="k">if</span> <span class="p">(</span><span class="n">handler</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>

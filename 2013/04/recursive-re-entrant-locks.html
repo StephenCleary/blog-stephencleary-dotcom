@@ -266,7 +266,7 @@ code {
 
 <p>The number one argument against recursive locks is one of <em>inconsistency</em>. The entire purpose of a “lock” is to protect shared mutable state so that reads and writes appear atomic. In other words, the state is <em>consistent</em> whenever the lock is unlocked; while the lock is locked (held) by a section of code, the state may be <em>inconsistent</em>. Another way of saying this is that while the lock is held, it’s possible that invariants will not hold; acquiring a lock temporarily suspends all contractural invariants until the time the lock is released.</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">void</span> <span class="nf">A</span><span class="p">()</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">void</span> <span class="nf">A</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="k">lock</span> <span class="p">(</span><span class="n">_mutex</span><span class="p">)</span>
   <span class="p">{</span>
@@ -292,7 +292,7 @@ code {
 
 <p>The non-recursive approach would first refactor <code>A</code> into a new private method <code>C</code> that is clearly documented (often with a naming convention as well) to assume that it is called while under lock. Then both <code>A</code> and <code>B</code> call <code>C</code> while holding the lock.</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">void</span> <span class="nf">A</span><span class="p">()</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">void</span> <span class="nf">A</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="k">lock</span> <span class="p">(</span><span class="n">_mutex</span><span class="p">)</span>
   <span class="p">{</span>
@@ -341,7 +341,7 @@ code {
 
 <p>One example that is brought up to support recursive locks is a synchronized collection, where the <code>AddRange</code> method can call the <code>Add</code> method directly. To understand the problem with <em>uncertainty</em>, consider the methods under maintenance; we’re going to add support for <code>INotifyCollectionChanged</code>.</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">void</span> <span class="nf">Add</span><span class="p">(</span><span class="n">T</span> <span class="n">item</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">void</span> <span class="nf">Add</span><span class="p">(</span><span class="n">T</span> <span class="n">item</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="k">lock</span> <span class="p">(</span><span class="n">_mutex</span><span class="p">)</span>
   <span class="p">{</span>
@@ -360,7 +360,7 @@ code {
 
 <p>It seems straightforward: <code>AddRange</code> will still acquire the lock and add its items (by calling <code>Add</code>). <code>Add</code> will acquire the lock, add its item, release the lock, and then invoke <code>CollectionChanged</code>. There’s now a deadlock issue where there wasn’t one before - a kind of deadlock that will not be found by unit testing (or most any other kind of testing). Can you see it?</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">void</span> <span class="nf">Add</span><span class="p">(</span><span class="n">T</span> <span class="n">item</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">void</span> <span class="nf">Add</span><span class="p">(</span><span class="n">T</span> <span class="n">item</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="k">lock</span> <span class="p">(</span><span class="n">_mutex</span><span class="p">)</span>
   <span class="p">{</span>
@@ -402,7 +402,7 @@ code {
 
 <p><code>Monitor</code> is a recursive lock, so let’s consider the scenario where <code>B</code> calls <code>A</code>. This time, <code>A</code> is going to wait for a condition (e.g., <code>Monitor.Wait</code>).</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">void</span> <span class="nf">A</span><span class="p">()</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">void</span> <span class="nf">A</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="k">lock</span> <span class="p">(</span><span class="n">_mutex</span><span class="p">)</span>
   <span class="p">{</span>

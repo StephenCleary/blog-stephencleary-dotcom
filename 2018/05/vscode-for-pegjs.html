@@ -230,7 +230,7 @@ code {
 
 <p>It’s pretty straightforward to run the pegjs executable from a <code>package.json</code> npm script. In this example, I’m compiling my <code>pegjs</code> file into a <code>js</code> output file:</p>
 
-<figure class="highlight"><pre><code class="language-json" data-lang="json"><span></span><span class="s2">&quot;peg&quot;</span><span class="err">:</span> <span class="s2">&quot;pegjs -o src/json-filter-expr.js src/json-filter-expr.pegjs&quot;</span></code></pre></figure>
+<figure class="highlight"><pre><code class="language-json" data-lang="json"><span class="s2">&quot;peg&quot;</span><span class="err">:</span> <span class="s2">&quot;pegjs -o src/json-filter-expr.js src/json-filter-expr.pegjs&quot;</span></code></pre></figure>
 
 <p>The problem is that if I run this task from VSCode and the compilation fails, there’s no indication in the VSCode Problems window.</p>
 
@@ -240,7 +240,7 @@ code {
 
 <p>There’s one other bump in the road. <code>pegjs</code> writes out its error messages like this:</p>
 
-<figure class="highlight"><pre><code class="language-text" data-lang="text"><span></span>40:3: Expected &quot;=&quot;, comment, end of line, or whitespace but &quot;/&quot; found.</code></pre></figure>
+<figure class="highlight"><pre><code class="language-text" data-lang="text">40:3: Expected &quot;=&quot;, comment, end of line, or whitespace but &quot;/&quot; found.</code></pre></figure>
 
 <p>However, problem matchers <em>must</em> be able to parse out at least a <code>file</code>, <code>line</code>, and <code>message</code>. <code>pegjs</code> is giving us <code>line</code>, <code>column</code>, and <code>message</code>, but not <code>file</code>.</p>
 
@@ -250,16 +250,16 @@ code {
 
 <p>The solution I ended up going with is quite simple: I echo the filename from my npm script and then use a multiline problem matcher to parse out the filename:</p>
 
-<figure class="highlight"><pre><code class="language-json" data-lang="json"><span></span><span class="s2">&quot;peg&quot;</span><span class="err">:</span> <span class="s2">&quot;echo src/json-filter-expr.pegjs &amp;&amp; pegjs -o src/json-filter-expr.js src/json-filter-expr.pegjs&quot;</span></code></pre></figure>
+<figure class="highlight"><pre><code class="language-json" data-lang="json"><span class="s2">&quot;peg&quot;</span><span class="err">:</span> <span class="s2">&quot;echo src/json-filter-expr.pegjs &amp;&amp; pegjs -o src/json-filter-expr.js src/json-filter-expr.pegjs&quot;</span></code></pre></figure>
 
 <p>Now the output from <code>npm run peg</code> looks like this:</p>
 
-<figure class="highlight"><pre><code class="language-text" data-lang="text"><span></span>src/json-filter-expr.pegjs
+<figure class="highlight"><pre><code class="language-text" data-lang="text">src/json-filter-expr.pegjs
 40:3: Expected &quot;=&quot;, comment, end of line, or whitespace but &quot;/&quot; found.</code></pre></figure>
 
 <p>And this can be matched with a multiline problem matcher that looks like this:</p>
 
-<figure class="highlight"><pre><code class="language-json" data-lang="json"><span></span><span class="s2">&quot;problemMatcher&quot;</span><span class="err">:</span> <span class="p">{</span>
+<figure class="highlight"><pre><code class="language-json" data-lang="json"><span class="s2">&quot;problemMatcher&quot;</span><span class="err">:</span> <span class="p">{</span>
     <span class="nt">&quot;owner&quot;</span><span class="p">:</span> <span class="s2">&quot;pegjs&quot;</span><span class="p">,</span>
     <span class="nt">&quot;fileLocation&quot;</span><span class="p">:</span> <span class="p">[</span>
         <span class="s2">&quot;relative&quot;</span><span class="p">,</span>

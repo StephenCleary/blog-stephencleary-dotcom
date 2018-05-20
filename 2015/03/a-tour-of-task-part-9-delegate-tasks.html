@@ -232,7 +232,7 @@ code {
 
 <p>First up is the oft-overused <code>TaskFactory.StartNew</code> method. There are a few overloads available:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">Task</span> <span class="nf">StartNew</span><span class="p">(</span><span class="n">Action</span><span class="p">);</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span> <span class="nf">StartNew</span><span class="p">(</span><span class="n">Action</span><span class="p">);</span>
 <span class="n">Task</span> <span class="nf">StartNew</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span>
 <span class="n">Task</span> <span class="nf">StartNew</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">);</span>
 <span class="n">Task</span> <span class="nf">StartNew</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span>
@@ -254,7 +254,7 @@ code {
 
 <p>The overloads containing an <code>object</code> parameter simply pass that value through to the continuation delegate; this is just an optimization to avoid an extra allocation in some cases, so we can ignore those overloads for now. That leaves two sets of overloads, which act like default parameters for the two core methods:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">Task</span> <span class="nf">StartNew</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span> <span class="nf">StartNew</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span>
 <span class="n">Task</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;</span> <span class="n">StartNew</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">TResult</span><span class="p">&gt;,</span> <span class="n">CancellationToken</span><span class="p">,</span> <span class="n">TaskCreationOptions</span><span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">);</span></code></pre></figure>
 
 <p><code>StartNew</code> can take a delegate without a return value (<code>Action</code>) or with a return value (<code>Func&lt;TResult&gt;</code>), and returns an appropriate task type based on whether the delegate returns a value. Note that neither of these delegate types are <a href="/2014/02/synchronous-and-asynchronous-delegate.html"><code>async</code>-aware delegates</a>; this causes complications when developers try to use <code>StartNew</code> to start an asynchronous task.</p>
@@ -279,7 +279,7 @@ code {
 
 <p>However, this difference in behavior does not impact your code as long as you use one of the the common patterns for detecting cancellation. For asynchronous code, you’d <code>await</code> the task and catch an <code>OperationCanceledException</code> (for more complete examples, see the unit tests in <a href="https://gist.github.com/StephenCleary/dfd2a8b0a50ea3040695">this gist</a>):</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">try</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">try</span>
 <span class="p">{</span>
   <span class="c1">// &quot;task&quot; was started by StartNew, and either StartNew or</span>
   <span class="c1">// the task delegate observes a cancellation token.</span>
@@ -293,7 +293,7 @@ code {
 
 <p>For synchronous code, you’d call <code>Wait</code> (or <code>Result</code>) on the task and expect an <code>AggregateException</code> whose <code>InnerException</code> is an <code>OperationCanceledException</code> (for more complete examples, see the unit tests in <a href="https://gist.github.com/StephenCleary/6674ae30974f478a4b7f">this gist</a>):</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">try</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">try</span>
 <span class="p">{</span>
   <span class="c1">// &quot;task&quot; was started by StartNew, and either StartNew or</span>
   <span class="c1">// the task delegate observes a cancellation token.</span>
@@ -331,7 +331,7 @@ code {
 
 <p>The following code first creates a UI task factory to schedule work to the UI thread. Then, as a part of that work, it starts some work to run in the background.</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">private</span> <span class="k">void</span> <span class="nf">Button_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">void</span> <span class="nf">Button_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="kt">var</span> <span class="n">ui</span> <span class="p">=</span> <span class="k">new</span> <span class="n">TaskFactory</span><span class="p">(</span><span class="n">TaskScheduler</span><span class="p">.</span><span class="n">FromCurrentSynchronizationContext</span><span class="p">());</span>
     <span class="n">ui</span><span class="p">.</span><span class="n">StartNew</span><span class="p">(()</span> <span class="p">=&gt;</span>
@@ -366,7 +366,7 @@ Background work on thread 9
 
 <p><code>Task.Run</code> is the modern, preferred method for queueing work to the thread pool. It does not work with custom schedulers, but provides a simpler API than <code>Task.Factory.StartNew</code>, and is <code>async</code>-aware to boot:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">Task</span> <span class="nf">Run</span><span class="p">(</span><span class="n">Action</span><span class="p">);</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span> <span class="nf">Run</span><span class="p">(</span><span class="n">Action</span><span class="p">);</span>
 <span class="n">Task</span> <span class="nf">Run</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">);</span>
 
 <span class="n">Task</span> <span class="nf">Run</span><span class="p">(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&gt;);</span>

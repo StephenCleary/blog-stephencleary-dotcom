@@ -232,7 +232,7 @@ code {
 
 <p>If the option values are a series of enumerated flags, then the built-in enumeration parser will handle multiple values automatically:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">class</span> <span class="nc">Program</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
 <span class="na">  [Flags]</span>
   <span class="k">private</span> <span class="k">enum</span> <span class="n">FavoriteThings</span>
@@ -296,7 +296,7 @@ Could not parse  DogBites  as FavoriteThings
 
 <p>Note that using a property setter in this fashion is not a good OOP practice; however, the adverse design affects are contained within the options class.</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">class</span> <span class="nc">Program</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
   <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Options</span> <span class="p">:</span> <span class="n">OptionArgumentsBase</span>
   <span class="p">{</span>
@@ -361,7 +361,7 @@ Could not parse  3,6  as Int32
 
 <p>We can again take advantage of the property setter hack, but we have to do our own parsing of the delimited value. We will use a property type of <strong>string</strong> to prevent automatic parsing.</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">class</span> <span class="nc">Program</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
   <span class="k">private</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">Options</span> <span class="p">:</span> <span class="n">OptionArgumentsBase</span>
   <span class="p">{</span>

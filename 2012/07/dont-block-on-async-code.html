@@ -232,7 +232,7 @@ code {
 
 <p>Consider the example below. A button click will initiate a REST call and display the results in a text box (this sample is for Windows Forms, but the same principles apply to <em>any</em> UI application).</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// My &quot;library&quot; method.</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// My &quot;library&quot; method.</span>
 <span class="k">public</span> <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">JObject</span><span class="p">&gt;</span> <span class="n">GetJsonAsync</span><span class="p">(</span><span class="n">Uri</span> <span class="n">uri</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">client</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">())</span>
@@ -257,7 +257,7 @@ code {
 
 <p>This example is very similar; we have a library method that performs a REST call, only this time it’s used in an ASP.NET context (Web API in this case, but the same principles apply to <em>any</em> ASP.NET application):</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// My &quot;library&quot; method.</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// My &quot;library&quot; method.</span>
 <span class="k">public</span> <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">JObject</span><span class="p">&gt;</span> <span class="n">GetJsonAsync</span><span class="p">(</span><span class="n">Uri</span> <span class="n">uri</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">client</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">())</span>
@@ -313,7 +313,7 @@ code {
 
 <p>Consider the first best practice. The new “library” method looks like this:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">JObject</span><span class="p">&gt;</span> <span class="n">GetJsonAsync</span><span class="p">(</span><span class="n">Uri</span> <span class="n">uri</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">JObject</span><span class="p">&gt;</span> <span class="n">GetJsonAsync</span><span class="p">(</span><span class="n">Uri</span> <span class="n">uri</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">client</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HttpClient</span><span class="p">())</span>
   <span class="p">{</span>
@@ -334,7 +334,7 @@ code {
 
 <p>Consider the second best practice. The new “top-level” methods look like this:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">Button1_Click</span><span class="p">(...)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">Button1_Click</span><span class="p">(...)</span>
 <span class="p">{</span>
   <span class="kt">var</span> <span class="n">json</span> <span class="p">=</span> <span class="k">await</span> <span class="n">GetJsonAsync</span><span class="p">(...);</span>
   <span class="n">textBox1</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="n">json</span><span class="p">;</span>
@@ -356,7 +356,7 @@ code {
 <h2 id="resources">Resources</h2>
 
 <ul>
-  <li>My <a href="/2012/02/async-and-await.html">introduction to async/await</a> is a good starting point. </li>
+  <li>My <a href="/2012/02/async-and-await.html">introduction to async/await</a> is a good starting point.</li>
   <li>Stephen Toub’s blog post <a href="http://blogs.msdn.com/b/pfxteam/archive/2011/01/13/10115163.aspx">Await, and UI, and deadlocks! Oh, my!</a> covers this exact type of deadlock (in January of 2011, no less!).</li>
   <li>If you prefer videos, <a href="http://channel9.msdn.com/Events/BUILD/BUILD2011/TOOL-829T">Stephen Toub demoed this deadlock live</a> (39:40 - 42:50, but the whole presentation is great!). <a href="http://blogs.msdn.com/b/lucian/archive/2012/03/29/talk-async-part-1-the-message-loop-and-the-task-type.aspx">Lucian Wischik also demoed this deadlock</a> using VB (17:10 - 19:15).</li>
   <li>The <a href="http://blogs.msdn.com/b/pfxteam/archive/2012/04/12/10293335.aspx">Async/Await FAQ</a> goes into detail on exactly when contexts are captured and used for continuations.</li>

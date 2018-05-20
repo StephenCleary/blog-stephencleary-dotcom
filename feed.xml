@@ -13,7 +13,7 @@
 
 &lt;p&gt;It’s pretty straightforward to run the pegjs executable from a &lt;code&gt;package.json&lt;/code&gt; npm script. In this example, I’m compiling my &lt;code&gt;pegjs&lt;/code&gt; file into a &lt;code&gt;js&lt;/code&gt; output file:&lt;/p&gt;
 
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;peg&amp;quot;&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;pegjs -o src/json-filter-expr.js src/json-filter-expr.pegjs&amp;quot;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;peg&amp;quot;&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;pegjs -o src/json-filter-expr.js src/json-filter-expr.pegjs&amp;quot;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
 &lt;p&gt;The problem is that if I run this task from VSCode and the compilation fails, there’s no indication in the VSCode Problems window.&lt;/p&gt;
 
@@ -23,7 +23,7 @@
 
 &lt;p&gt;There’s one other bump in the road. &lt;code&gt;pegjs&lt;/code&gt; writes out its error messages like this:&lt;/p&gt;
 
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;&lt;span&gt;&lt;/span&gt;40:3: Expected &amp;quot;=&amp;quot;, comment, end of line, or whitespace but &amp;quot;/&amp;quot; found.&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;40:3: Expected &amp;quot;=&amp;quot;, comment, end of line, or whitespace but &amp;quot;/&amp;quot; found.&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
 &lt;p&gt;However, problem matchers &lt;em&gt;must&lt;/em&gt; be able to parse out at least a &lt;code&gt;file&lt;/code&gt;, &lt;code&gt;line&lt;/code&gt;, and &lt;code&gt;message&lt;/code&gt;. &lt;code&gt;pegjs&lt;/code&gt; is giving us &lt;code&gt;line&lt;/code&gt;, &lt;code&gt;column&lt;/code&gt;, and &lt;code&gt;message&lt;/code&gt;, but not &lt;code&gt;file&lt;/code&gt;.&lt;/p&gt;
 
@@ -33,16 +33,16 @@
 
 &lt;p&gt;The solution I ended up going with is quite simple: I echo the filename from my npm script and then use a multiline problem matcher to parse out the filename:&lt;/p&gt;
 
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;peg&amp;quot;&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;echo src/json-filter-expr.pegjs &amp;amp;&amp;amp; pegjs -o src/json-filter-expr.js src/json-filter-expr.pegjs&amp;quot;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;peg&amp;quot;&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;echo src/json-filter-expr.pegjs &amp;amp;&amp;amp; pegjs -o src/json-filter-expr.js src/json-filter-expr.pegjs&amp;quot;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
 &lt;p&gt;Now the output from &lt;code&gt;npm run peg&lt;/code&gt; looks like this:&lt;/p&gt;
 
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;&lt;span&gt;&lt;/span&gt;src/json-filter-expr.pegjs
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;src/json-filter-expr.pegjs
 40:3: Expected &amp;quot;=&amp;quot;, comment, end of line, or whitespace but &amp;quot;/&amp;quot; found.&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
 &lt;p&gt;And this can be matched with a multiline problem matcher that looks like this:&lt;/p&gt;
 
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;problemMatcher&amp;quot;&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;problemMatcher&amp;quot;&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
     &lt;span class=&quot;nt&quot;&gt;&amp;quot;owner&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;pegjs&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
     &lt;span class=&quot;nt&quot;&gt;&amp;quot;fileLocation&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;
         &lt;span class=&quot;s2&quot;&gt;&amp;quot;relative&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
@@ -69,7 +69,7 @@
 
 &lt;p&gt;Full source code is &lt;a href=&quot;https://github.com/StephenCleary/json-filter-expr/blob/8a5c0fa113fce6cb065a72d93d4ff0ff79a389e5/.vscode/tasks.json&quot;&gt;available online&lt;/a&gt;.&lt;/p&gt;
 </description>
-        <pubDate>Fri, 18 May 2018 00:00:00 -0400</pubDate>
+        <pubDate>Fri, 18 May 2018 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2018/05/vscode-for-pegjs.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2018/05/vscode-for-pegjs.html</guid>
       </item>
@@ -92,7 +92,7 @@
 
 &lt;p&gt;I have unit tests in DotNetApis v2 that need to compile some code (as a &lt;code&gt;string&lt;/code&gt;) and then parse the resulting dll and xml. Getting this working was surprisingly easy!&lt;/p&gt;
 
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AssemblyDefinition&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Dll&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;XDocument&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Xml&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Compile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;code&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AssemblyDefinition&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Dll&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;XDocument&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Xml&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Compile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;code&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
 &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
   &lt;span class=&quot;c1&quot;&gt;// Parse the C# code...&lt;/span&gt;
   &lt;span class=&quot;n&quot;&gt;CSharpParseOptions&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;parseOptions&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CSharpParseOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
@@ -130,7 +130,7 @@
 
 &lt;p&gt;Here’s what one of the unit tests looks like:&lt;/p&gt;
 
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;[Fact]&lt;/span&gt;
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;na&quot;&gt;[Fact]&lt;/span&gt;
 &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Basic_InTopLevelType&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
 &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
   &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;code&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt;
@@ -159,7 +159,7 @@
 
 &lt;p&gt;That’s all I have to say. I just thought it’s &lt;em&gt;so cool&lt;/em&gt; how easy Roslyn made this. And it’s &lt;em&gt;fast&lt;/em&gt;, too! I can keep my Live Unit Testing running while hacking around, even with most of my tests running Roslyn, and it’s all pretty slick!&lt;/p&gt;
 </description>
-        <pubDate>Thu, 10 May 2018 00:00:00 -0400</pubDate>
+        <pubDate>Thu, 10 May 2018 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2018/05/roslyn-unit-testing.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2018/05/roslyn-unit-testing.html</guid>
       </item>
@@ -172,7 +172,7 @@
 
 &lt;p&gt;(Thanks to &lt;a href=&quot;https://twitter.com/carlowahlstedt&quot;&gt;@carlowahlstedt&lt;/a&gt; for reminding me to put this up!)&lt;/p&gt;
 </description>
-        <pubDate>Thu, 12 Apr 2018 00:00:00 -0400</pubDate>
+        <pubDate>Thu, 12 Apr 2018 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2018/04/slides-available-codepalousa-2018.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2018/04/slides-available-codepalousa-2018.html</guid>
       </item>
@@ -197,7 +197,7 @@
 
 &lt;p&gt;Today, &lt;code&gt;async&lt;/code&gt; is truly a first-class citizen of C# and VB. With every release of Visual Studio, the debugger support for &lt;code&gt;async&lt;/code&gt; code gets better and better. Tracing systems like Application Insights “just work” coordinating traces across asynchronous code. We recently got &lt;a href=&quot;https://github.com/ljw1004/roslyn/blob/features/async-return/docs/specs/feature%20-%20arbitrary%20async%20returns.md&quot;&gt;value-type &lt;code&gt;Task&amp;lt;T&amp;gt;&lt;/code&gt; equivalents&lt;/a&gt;, and new enhancements are on the horizon: better code generation around the &lt;code&gt;async&lt;/code&gt; state machine, &lt;a href=&quot;https://github.com/dotnet/roslyn/issues/261&quot;&gt;&lt;code&gt;async&lt;/code&gt; enumerators&lt;/a&gt;, … the future is bright!&lt;/p&gt;
 </description>
-        <pubDate>Tue, 12 Sep 2017 00:00:00 -0400</pubDate>
+        <pubDate>Tue, 12 Sep 2017 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2017/09/happy-birthday-async.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2017/09/happy-birthday-async.html</guid>
       </item>
@@ -226,7 +226,7 @@
 
 &lt;p&gt;The final step is to set up proxies that will forward API calls to the actual Azure Functions API or to the SPA. In your Azure Functions App, turn on Proxies (currently in preview). Then, in your Functions App project in Visual Studio, make a copy of the &lt;code&gt;host.json&lt;/code&gt; file, rename it to &lt;code&gt;proxies.json&lt;/code&gt;, and replace its contents with:&lt;/p&gt;
 
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
     &lt;span class=&quot;nt&quot;&gt;&amp;quot;$schema&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;http://json.schemastore.org/proxies&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
     &lt;span class=&quot;nt&quot;&gt;&amp;quot;proxies&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
         &lt;span class=&quot;nt&quot;&gt;&amp;quot;api&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
@@ -270,7 +270,7 @@
 
 &lt;p&gt;Requests such as &lt;code&gt;/api/bob&lt;/code&gt; will be forwarded to your Azure Function &lt;code&gt;bob&lt;/code&gt;, and requests such as &lt;code&gt;/&lt;/code&gt; will be forwarded to your main SPA HTML page. Requests such as &lt;code&gt;/some/long/path&lt;/code&gt; will &lt;em&gt;also&lt;/em&gt; be forwarded to your SPA HTML page, so you can easily use HTML5 history routing instead of hash routing in your SPA, and your app will be served properly when users refresh the page.&lt;/p&gt;
 </description>
-        <pubDate>Thu, 31 Aug 2017 00:00:00 -0400</pubDate>
+        <pubDate>Thu, 31 Aug 2017 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2017/08/azure-functions-spa.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2017/08/azure-functions-spa.html</guid>
       </item>
@@ -281,12 +281,12 @@
 
 &lt;p&gt;You can use a different branch in GitHub for the output of your solution, but this is awkward. The solution I chose is to deploy the Azure Functions App from a &lt;em&gt;specific subfolder&lt;/em&gt; of a GitHub repository. You can do this by &lt;a href=&quot;https://github.com/projectkudu/kudu/wiki/Customizing-deployments&quot;&gt;adding a &lt;code&gt;.deployment&lt;/code&gt; file in the root of your repository that tells the deployment system where your Azure Functions App is&lt;/a&gt;. E.g.:&lt;/p&gt;
 
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ini&quot; data-lang=&quot;ini&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;[config]&lt;/span&gt;
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ini&quot; data-lang=&quot;ini&quot;&gt;&lt;span class=&quot;k&quot;&gt;[config]&lt;/span&gt;
 &lt;span class=&quot;na&quot;&gt;project&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;src/FunctionApp1&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
 &lt;p&gt;If you run into deployment errors like &lt;code&gt;The &quot;Move&quot; task failed unexpectedly. (System.Runtime.InteropServices.COMException (0x800700A1): The specified path is invalid.)&lt;/code&gt; when the &lt;code&gt;_GenerateFunctionsPostBuild&lt;/code&gt; target tries to copy your project output, then &lt;a href=&quot;https://stackoverflow.com/questions/45743877/azure-function-ci-build-error-cannot-create-a-file-when-that-file-already-exis&quot;&gt;ensure you’re using v1.0.1 or later of &lt;code&gt;Microsoft.NET.Sdk.Functions&lt;/code&gt;&lt;/a&gt;.&lt;/p&gt;
 </description>
-        <pubDate>Fri, 25 Aug 2017 00:00:00 -0400</pubDate>
+        <pubDate>Fri, 25 Aug 2017 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2017/08/azure-functions-github-subfolder.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2017/08/azure-functions-github-subfolder.html</guid>
       </item>
@@ -299,7 +299,7 @@
 
 &lt;p&gt;I hope this is a benefit for you; I’m certainly looking forward to it!&lt;/p&gt;
 </description>
-        <pubDate>Fri, 14 Jul 2017 00:00:00 -0400</pubDate>
+        <pubDate>Fri, 14 Jul 2017 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2017/07/announcing-asynctime.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2017/07/announcing-asynctime.html</guid>
       </item>
@@ -324,7 +324,7 @@
 
 &lt;p&gt;So, happy birthday, iPhone, and thanks for all you’ve done!&lt;/p&gt;
 </description>
-        <pubDate>Thu, 29 Jun 2017 00:00:00 -0400</pubDate>
+        <pubDate>Thu, 29 Jun 2017 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2017/06/happy-birthday-iphone.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2017/06/happy-birthday-iphone.html</guid>
       </item>
@@ -343,7 +343,7 @@
 
 &lt;p&gt;Way to go, &lt;code&gt;async&lt;/code&gt;!&lt;/p&gt;
 </description>
-        <pubDate>Thu, 22 Jun 2017 00:00:00 -0400</pubDate>
+        <pubDate>Thu, 22 Jun 2017 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2017/06/async-javascript.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2017/06/async-javascript.html</guid>
       </item>
@@ -394,7 +394,7 @@
 
 &lt;p&gt;As a contrived example, consider this code, which downloads two strings and places them into a list. This code works fine in legacy ASP.NET because the request context only permits one continuation at a time:&lt;/p&gt;
 
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;HttpClient&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_client&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;HttpClient&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;HttpClient&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_client&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;HttpClient&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
 
 &lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;GetBothAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;url1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;url2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
 &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
@@ -418,7 +418,7 @@
 &lt;p&gt;Code such as this is rare; asynchronous code is by its nature functional, so it’s far more &lt;em&gt;natural&lt;/em&gt; to return results from asynchronous methods rather than modifying shared state. However, the quality of asynchronous code does vary, and there is doubtless some code out there that is not adequately shielded against parallel execution.&lt;/p&gt;
 
 </description>
-        <pubDate>Thu, 30 Mar 2017 00:00:00 -0400</pubDate>
+        <pubDate>Thu, 30 Mar 2017 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2017/03/aspnetcore-synchronization-context.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2017/03/aspnetcore-synchronization-context.html</guid>
       </item>

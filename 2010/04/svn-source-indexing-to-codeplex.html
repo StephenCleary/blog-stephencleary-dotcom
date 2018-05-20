@@ -253,7 +253,7 @@ code {
 <ol>
   <li>Build the library binaries (and PDBs).</li>
   <li>Ensure all source code is checked in.</li>
-  <li>Source-index the PDBs; assuming the PDBs are in the “..\Binaries” directory and DTfW was installed in “c:\Program Files\Debugging Tools for Windows (x86)”:  </li>
+  <li>Source-index the PDBs; assuming the PDBs are in the “..\Binaries” directory and DTfW was installed in “c:\Program Files\Debugging Tools for Windows (x86)”:</li>
 </ol>
 
 <p><em>“c:\Program Files\Debugging Tools for Windows (x86)\srcsrv\ssindex.cmd” /SYSTEM=SVN /SYMBOLS=..\Binaries /Debug</em></p>
@@ -266,9 +266,9 @@ code {
   <p>Note that the “/Debug” switch is just an output verbosity option for SSIndex.cmd. The output from SSIndex should include a “wrote stream” message for each PDB. If there is anything in the output that looks like “[ERROR]”, “zero source files found”, or if no PDB files were found, then the source indexing was <strong>not</strong> successful for those PDB files.</p>
 </div>
 
-<p>The following command can be used to verify that the PDB was correctly source indexed:  </p>
+<p>The following command can be used to verify that the PDB was correctly source indexed:</p>
 
-<p><em>“c:\Program Files\Debugging Tools for Windows (x86)\srcsrv\srctool.exe” MyLibrary.pdb</em>  </p>
+<p><em>“c:\Program Files\Debugging Tools for Windows (x86)\srcsrv\srctool.exe” MyLibrary.pdb</em></p>
 
 <p>If the PDB is not source indexed, srctool will simply print “MyLibrary.pdb is not source indexed”. If it is source indexed, then it will display all the source server commands that will retrieve the correct source files.</p>
 

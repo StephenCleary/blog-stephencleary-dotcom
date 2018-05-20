@@ -236,7 +236,7 @@ code {
 
 <p>Let’s tackle the server first. If we want to create an asynchronous WCF service method, we have to set OperationContract.AsyncPattern to true and follow the Asynchronous Programming Model (APM) pattern:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="na">[DataContract]</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="na">[DataContract]</span>
 <span class="k">public</span> <span class="k">class</span> <span class="nc">CalculatorFault</span>
 <span class="p">{</span>
 <span class="na">  [DataMember]</span>
@@ -261,7 +261,7 @@ code {
 
 <p>If we’re going to have an asynchronous server, we’re going to want to use the Task-based Asynchronous Pattern (TAP) to write it. So here’s our implementation, error handling and all:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">class</span> <span class="nc">Calculator</span> <span class="p">:</span> <span class="n">ICalculator</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">Calculator</span> <span class="p">:</span> <span class="n">ICalculator</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">uint</span><span class="p">&gt;</span> <span class="n">DivideAsync</span><span class="p">(</span><span class="kt">uint</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">uint</span> <span class="n">denominator</span><span class="p">)</span>
   <span class="p">{</span>
@@ -286,7 +286,7 @@ code {
 
 <p>OK, so we’ve got our implementation (using TAP), and our interface (using APM). Now we have to wire them together by writing Begin/End wrapper methods around our TAP method:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">class</span> <span class="nc">Calculator</span> <span class="p">:</span> <span class="n">ICalculator</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">Calculator</span> <span class="p">:</span> <span class="n">ICalculator</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="n">IAsyncResult</span> <span class="nf">BeginDivide</span><span class="p">(</span><span class="kt">uint</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">uint</span> <span class="n">denominator</span><span class="p">,</span> <span class="n">AsyncCallback</span> <span class="n">callback</span><span class="p">,</span> <span class="kt">object</span> <span class="n">state</span><span class="p">)</span>
   <span class="p">{</span>
@@ -327,7 +327,7 @@ code {
 
 <p>The wrappers are also tedious, especially if you have a lot of methods to wrap. My <a href="http://nitoasyncex.codeplex.com/">AsyncEx library</a> includes AsyncFactory.ToBegin and AsyncFactory.ToEnd methods that handle the TAP-to-APM conversion cleanly. That’s what I use:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">class</span> <span class="nc">Calculator</span> <span class="p">:</span> <span class="n">ICalculator</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">Calculator</span> <span class="p">:</span> <span class="n">ICalculator</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="n">IAsyncResult</span> <span class="nf">BeginDivide</span><span class="p">(</span><span class="kt">uint</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">uint</span> <span class="n">denominator</span><span class="p">,</span> <span class="n">AsyncCallback</span> <span class="n">callback</span><span class="p">,</span> <span class="kt">object</span> <span class="n">state</span><span class="p">)</span>
   <span class="p">{</span>
@@ -349,7 +349,7 @@ code {
 
 <p>There are two ways to add TAP support. You can add it manually by implementing a TAP wrapper method around the APM methods:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">static</span> <span class="k">class</span> <span class="nc">Program</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">static</span> <span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
   <span class="c1">// Wrap those Begin/End methods back into a Task-based API.</span>
   <span class="k">public</span> <span class="k">static</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">uint</span><span class="p">&gt;</span> <span class="n">DivideAsyncTask</span><span class="p">(</span><span class="k">this</span> <span class="n">CalculatorClient</span> <span class="n">client</span><span class="p">,</span> <span class="kt">uint</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">uint</span> <span class="n">denominator</span><span class="p">)</span>
@@ -383,7 +383,7 @@ code {
 
 <p>Now, we’re ready to actually call the client. I have some TAP code that uses the WCF client proxy (“CallCalculator”) as well as a simple Main:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">static</span> <span class="k">class</span> <span class="nc">Program</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">static</span> <span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
   <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">CallCalculator</span><span class="p">()</span>
   <span class="p">{</span>
@@ -432,7 +432,7 @@ code {
 
 <p>Let’s start over, this time targeting .NET 4.5 for both server and client. First, the service interface:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="na">[DataContract]</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="na">[DataContract]</span>
 <span class="k">public</span> <span class="k">class</span> <span class="nc">CalculatorFault</span>
 <span class="p">{</span>
 <span class="na">  [DataMember]</span>
@@ -456,7 +456,7 @@ code {
 
 <p>The core implementation is <em>exactly the same:</em></p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">class</span> <span class="nc">Calculator</span> <span class="p">:</span> <span class="n">ICalculator</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">Calculator</span> <span class="p">:</span> <span class="n">ICalculator</span>
 <span class="p">{</span>
   <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">uint</span><span class="p">&gt;</span> <span class="n">DivideAsync</span><span class="p">(</span><span class="kt">uint</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">uint</span> <span class="n">denominator</span><span class="p">)</span>
   <span class="p">{</span>
@@ -489,7 +489,7 @@ code {
 
 <p>The client code is <em>exactly the same</em> as if the TaskWsdlImportExtension was used:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">static</span> <span class="k">class</span> <span class="nc">Program</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">static</span> <span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
   <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">CallCalculator</span><span class="p">()</span>
   <span class="p">{</span>

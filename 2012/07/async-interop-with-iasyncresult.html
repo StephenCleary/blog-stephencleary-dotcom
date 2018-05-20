@@ -236,7 +236,7 @@ code {
 
 <p>By far, the easiest way to create a Task from a Begin/End method pair is to use one of the TaskFactory.FromAsync overloads, introduced in .NET 4.0:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">static</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">DivideAsync</span><span class="p">(</span><span class="k">this</span> <span class="n">Calculator</span> <span class="n">calc</span><span class="p">,</span> <span class="kt">int</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">int</span> <span class="n">denominator</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">static</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">DivideAsync</span><span class="p">(</span><span class="k">this</span> <span class="n">Calculator</span> <span class="n">calc</span><span class="p">,</span> <span class="kt">int</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">int</span> <span class="n">denominator</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="k">return</span> <span class="n">Task</span><span class="p">.</span><span class="n">Factory</span><span class="p">.</span><span class="n">FromAsync</span><span class="p">(</span><span class="n">calc</span><span class="p">.</span><span class="n">BeginDivide</span><span class="p">,</span> <span class="n">calc</span><span class="p">.</span><span class="n">EndDivide</span><span class="p">,</span> <span class="n">numerator</span><span class="p">,</span> <span class="n">denominator</span><span class="p">,</span> <span class="k">null</span><span class="p">);</span>
 <span class="p">}</span></code></pre></figure>
@@ -245,7 +245,7 @@ code {
 
 <p>If you wanted to make your own wrapper, it’s easy enough to do using TaskCompletionSource. Just call the Begin method, passing an AsyncCallback that completes the Task based on the results of the End method (canceling the Task if End throws OperationCanceledException).</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">static</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">DivideAsync</span><span class="p">(</span><span class="k">this</span> <span class="n">Calculator</span> <span class="n">calc</span><span class="p">,</span> <span class="kt">int</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">int</span> <span class="n">denominator</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">static</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">DivideAsync</span><span class="p">(</span><span class="k">this</span> <span class="n">Calculator</span> <span class="n">calc</span><span class="p">,</span> <span class="kt">int</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">int</span> <span class="n">denominator</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="kt">var</span> <span class="n">tcs</span> <span class="p">=</span> <span class="k">new</span> <span class="n">TaskCompletionSource</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;();</span>
   <span class="n">calc</span><span class="p">.</span><span class="n">BeginDivide</span><span class="p">(</span><span class="n">numerator</span><span class="p">,</span> <span class="n">denominator</span><span class="p">,</span> <span class="n">iar</span> <span class="p">=&gt;</span>
@@ -283,7 +283,7 @@ code {
 
 <p>Let’s start out with the Begin method implementation:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="n">IAsyncResult</span> <span class="nf">BeginDivide</span><span class="p">(</span><span class="kt">int</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">int</span> <span class="n">denominator</span><span class="p">,</span> <span class="n">AsyncCallback</span> <span class="n">callback</span><span class="p">,</span> <span class="kt">object</span> <span class="n">state</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="n">IAsyncResult</span> <span class="nf">BeginDivide</span><span class="p">(</span><span class="kt">int</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">int</span> <span class="n">denominator</span><span class="p">,</span> <span class="n">AsyncCallback</span> <span class="n">callback</span><span class="p">,</span> <span class="kt">object</span> <span class="n">state</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="kt">var</span> <span class="n">tcs</span> <span class="p">=</span> <span class="k">new</span> <span class="n">TaskCompletionSource</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;(</span><span class="n">state</span><span class="p">);</span>
   <span class="kt">var</span> <span class="n">task</span> <span class="p">=</span> <span class="n">DivideAsync</span><span class="p">(</span><span class="n">numerator</span><span class="p">,</span> <span class="n">denominator</span><span class="p">);</span>
@@ -310,7 +310,7 @@ code {
 
 <p>Now, consider the End implementation:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="kt">int</span> <span class="nf">EndDivide</span><span class="p">(</span><span class="n">IAsyncResult</span> <span class="n">asyncResult</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="kt">int</span> <span class="nf">EndDivide</span><span class="p">(</span><span class="n">IAsyncResult</span> <span class="n">asyncResult</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="k">try</span>
   <span class="p">{</span>
@@ -329,7 +329,7 @@ code {
 
 <p>The BCL does not provide generic Begin/End implementations, but my <a href="http://nitoasyncex.codeplex.com/">AsyncEx</a> library does, as AsyncFactory.ToBegin and AsyncFactory.ToEnd:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="n">IAsyncResult</span> <span class="nf">BeginDivide</span><span class="p">(</span><span class="kt">int</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">int</span> <span class="n">denominator</span><span class="p">,</span> <span class="n">AsyncCallback</span> <span class="n">callback</span><span class="p">,</span> <span class="kt">object</span> <span class="n">state</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="n">IAsyncResult</span> <span class="nf">BeginDivide</span><span class="p">(</span><span class="kt">int</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">int</span> <span class="n">denominator</span><span class="p">,</span> <span class="n">AsyncCallback</span> <span class="n">callback</span><span class="p">,</span> <span class="kt">object</span> <span class="n">state</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="kt">var</span> <span class="n">task</span> <span class="p">=</span> <span class="n">DivideAsync</span><span class="p">(</span><span class="n">numerator</span><span class="p">,</span> <span class="n">denominator</span><span class="p">);</span>
   <span class="k">return</span> <span class="n">AsyncFactory</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;.</span><span class="n">ToBegin</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">state</span><span class="p">);</span>

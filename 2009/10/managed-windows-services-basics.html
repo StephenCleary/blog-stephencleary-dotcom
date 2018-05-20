@@ -244,7 +244,7 @@ code {
 
 <p>Services do not start with their current directory set to where their executable is. They usually end up running with their current directory set to the Windows or Windows System folder. It’s not unusual for Windows Services to set their current directory near the beginning of their Main method, before calling <a href="http://msdn.microsoft.com/en-us/library/system.serviceprocess.servicebase.run.aspx">ServiceBase.Run</a>:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="n">Environment</span><span class="p">.</span><span class="n">CurrentDirectory</span> <span class="p">=</span> <span class="n">Path</span><span class="p">.</span><span class="n">GetDirectoryName</span><span class="p">(</span><span class="n">Assembly</span><span class="p">.</span><span class="n">GetExecutingAssembly</span><span class="p">().</span><span class="n">Location</span><span class="p">);</span></code></pre></figure>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Environment</span><span class="p">.</span><span class="n">CurrentDirectory</span> <span class="p">=</span> <span class="n">Path</span><span class="p">.</span><span class="n">GetDirectoryName</span><span class="p">(</span><span class="n">Assembly</span><span class="p">.</span><span class="n">GetExecutingAssembly</span><span class="p">().</span><span class="n">Location</span><span class="p">);</span></code></pre></figure>
 
 <h2 id="services-and-threading">Services and Threading</h2>
 

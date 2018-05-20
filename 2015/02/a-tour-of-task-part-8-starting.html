@@ -238,7 +238,7 @@ code {
 
 <p>The most basic way to start a task is to just call its <code>Start</code> method. Sounds simple, right?</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">void</span> <span class="nf">Start</span><span class="p">();</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">void</span> <span class="nf">Start</span><span class="p">();</span>
 <span class="k">void</span> <span class="nf">Start</span><span class="p">(</span><span class="n">TaskScheduler</span><span class="p">);</span></code></pre></figure>
 
 <p>As you may guess by now, the default <code>TaskScheduler</code> is not <code>TaskScheduler.Default</code>. It is <code>TaskScheduler.Current</code>. And, once again, this brings up <a href="/2013/08/startnew-is-dangerous.html">all the same problems that <code>Task.Factory.StartNew</code> has with its similar treatment of <code>TaskScheduler</code></a>.</p>
@@ -259,7 +259,7 @@ code {
 
 <p><code>RunSynchronously</code> is very similar to <code>Start</code>, and has the same overloads:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">void</span> <span class="nf">RunSynchronously</span><span class="p">();</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">void</span> <span class="nf">RunSynchronously</span><span class="p">();</span>
 <span class="k">void</span> <span class="nf">RunSynchronously</span><span class="p">(</span><span class="n">TaskScheduler</span><span class="p">);</span></code></pre></figure>
 
 <p><code>RunSynchronously</code> will attempt to start the task immediately and execute it <em>on the current thread</em>. This does not always happen, however; the final decision is up to the task scheduler that is passed to <code>RunSynchronously</code>. For example, a task scheduler for the UI thread will not permit a task to run on a thread pool thread. If the task scheduler refuses to execute the task synchronously, then <code>RunSynchronously</code> behaves just like <code>Start</code>; that is, the task is queued to the task scheduler for future execution. Also just like <code>Start</code>, <code>RunSynchronously</code> can only be called on a task that is in the <code>Created</code> state, and can only be called on a task once.</p>
@@ -272,7 +272,7 @@ code {
 
 <p><code>Task</code> has an explicit interface implementation of a member called <code>CompletedSynchronously</code>:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="kt">bool</span> <span class="n">IAsyncResult</span><span class="p">.</span><span class="n">CompletedSynchronously</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></figure>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="kt">bool</span> <span class="n">IAsyncResult</span><span class="p">.</span><span class="n">CompletedSynchronously</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></figure>
 
 <p>If you believe the MSDN documentation, this member should return <code>true</code> if the task was completed synchronously. Unfortunately, this member actually always returns <code>false</code>, even for synchronously-completed Promise Tasks such as those returned from <code>Task.FromResult</code>.</p>
 

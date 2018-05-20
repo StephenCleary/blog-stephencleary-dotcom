@@ -236,7 +236,7 @@ code {
 
 <p>To create an event-based task, use the <a href="http://msdn.microsoft.com/en-us/library/dd449174.aspx"><strong>TaskCompletionSource&lt;TResult&gt;</strong></a> class:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">static</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">MyIntegerEventAsync</span><span class="p">()</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">static</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">MyIntegerEventAsync</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="n">TaskCompletionSource</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">tcs</span> <span class="p">=</span> <span class="k">new</span> <span class="n">TaskCompletionSource</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;();</span>
     
@@ -276,7 +276,7 @@ code {
 
 <p>Remember (from our <a href="/2012/02/async-and-await.html">async intro post</a>) that the async keyword does <em>not</em> run the method on a background thread. However, you can use <strong>Task.Run</strong> to run code on a background thread:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">MyThreadPoolMethod</span><span class="p">()</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">MyThreadPoolMethod</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="c1">// Do work (assuming we&#39;re running on the thread pool).</span>
 <span class="p">}</span>
@@ -324,7 +324,7 @@ code {
 
 <p>The flat-out easiest way to create Task objects is to write an asynchronous method:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">DivideAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">int</span> <span class="n">denominator</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">DivideAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">int</span> <span class="n">denominator</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
     <span class="k">return</span> <span class="n">numerator</span> <span class="p">/</span> <span class="n">denominator</span><span class="p">;</span>

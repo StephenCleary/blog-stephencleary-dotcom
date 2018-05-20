@@ -233,9 +233,11 @@ code {
   <li><a href="http://www.amazon.com/gp/product/0735615799?ie=UTF8&amp;tag=stepheclearys-20&amp;linkCode=as2&amp;camp=1789&amp;creative=390957&amp;creativeASIN=0735615799">Network Programming for Microsoft Windows, by Jones and Ohlund</a>. Chapter 5 has an excellent overview of the various I/O models available, which helps socket programmers understand how the BCL code is using asynchronous calls under the hood. This entire book should be read by TCP/IP programmers.</li>
 </ul>
 
-<p>Note that when reading the unmanaged socket documentation, there are some potentially confusing terms:
- - The terms <em>blocking</em> and <em>nonblocking</em> do not mean the same as the terms <em>synchronous</em> and <em>asynchronous</em>. Nonblocking sockets were a special quasi-asynchronous socket mode that is maintained only for backwards compatibility. Most modern WinSock programs (including .NET programs) use blocking sockets.
- - TCP is a byte stream, connection-oriented protocol. Ignore any remarks specifically for message-based or connectionless protocols; they do not apply to TCP sockets.</p>
+<p>Note that when reading the unmanaged socket documentation, there are some potentially confusing terms:</p>
+<ul>
+  <li>The terms <em>blocking</em> and <em>nonblocking</em> do not mean the same as the terms <em>synchronous</em> and <em>asynchronous</em>. Nonblocking sockets were a special quasi-asynchronous socket mode that is maintained only for backwards compatibility. Most modern WinSock programs (including .NET programs) use blocking sockets.</li>
+  <li>TCP is a byte stream, connection-oriented protocol. Ignore any remarks specifically for message-based or connectionless protocols; they do not apply to TCP sockets.</li>
+</ul>
 
 <p>There is a command-line utility that comes with Windows named <em>netstat</em> which displays TCP/IP endpoints. Other useful tools from Microsoft (that are not built in to the OS) are <a href="http://technet.microsoft.com/en-us/sysinternals/bb897437.aspx">TCPView</a> (a GUI version of netstat), <a href="http://technet.microsoft.com/en-us/sysinternals/bb896653.aspx">Process Explorer</a> (which also displays TCP/IP endpoints for each process), and <a href="http://technet.microsoft.com/en-us/sysinternals/bb896647.aspx">DbgView</a> (which displays trace statements from the Debug and default TraceSource classes in realtime).</p>
 

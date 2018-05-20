@@ -246,7 +246,7 @@ code {
 
 <p>Next, you’ll need to install some K runtime stuff. The best instructions I’ve found for this are on the <a href="https://github.com/aspnet/home">home page of the ASP.NET 5 GitHub repo</a>. If you just want to get started quickly, open up PowerShell and execute the following commands:</p>
 
-<figure class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span></span><span class="nv">@powershell</span> <span class="n">-NoProfile</span> <span class="n">-ExecutionPolicy</span> <span class="n">unrestricted</span> <span class="n">-Command</span> <span class="s2">&quot;iex ((new-object net.webclient).DownloadString(&#39;https://raw.githubusercontent.com/aspnet/Home/master/kvminstall.ps1&#39;))&quot;</span>
+<figure class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span class="nv">@powershell</span> <span class="n">-NoProfile</span> <span class="n">-ExecutionPolicy</span> <span class="n">unrestricted</span> <span class="n">-Command</span> <span class="s2">&quot;iex ((new-object net.webclient).DownloadString(&#39;https://raw.githubusercontent.com/aspnet/Home/master/kvminstall.ps1&#39;))&quot;</span>
 <span class="n">kvm</span> <span class="n">upgrade</span></code></pre></figure>
 
 <h2 id="aside-how-many-runtimes">Aside: How Many Runtimes?</h2>
@@ -319,7 +319,7 @@ Active Version     Runtime Architecture Location                     Alias
 
 <p>The default code the template gives you is pretty straightforward:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">class</span> <span class="nc">Program</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
     <span class="k">public</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
     <span class="p">{</span>
@@ -330,7 +330,7 @@ Active Version     Runtime Architecture Location                     Alias
 
 <p>So let’s just rewrite it to be asynchronous:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">class</span> <span class="nc">Program</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
     <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
     <span class="p">{</span>
@@ -361,7 +361,7 @@ Active Version     Runtime Architecture Location                     Alias
 
 <p>It’s important to peek under the covers a bit. Pop open your <code>project.json</code>. See the <code>frameworks</code> section?</p>
 
-<figure class="highlight"><pre><code class="language-json" data-lang="json"><span></span><span class="s2">&quot;frameworks&quot;</span> <span class="err">:</span> <span class="p">{</span>
+<figure class="highlight"><pre><code class="language-json" data-lang="json"><span class="s2">&quot;frameworks&quot;</span> <span class="err">:</span> <span class="p">{</span>
     <span class="nt">&quot;aspnet50&quot;</span> <span class="p">:</span> <span class="p">{</span> <span class="p">},</span>
     <span class="nt">&quot;aspnetcore50&quot;</span> <span class="p">:</span> <span class="p">{</span> 
         <span class="nt">&quot;dependencies&quot;</span><span class="p">:</span> <span class="p">{</span>
@@ -396,7 +396,7 @@ Active Version     Runtime Architecture Location                     Alias
 
 <p>One solution is to make use of conditional compilation. Remember, this project is being compiled separately for each platform. As <a href="http://weblog.west-wind.com/posts/2014/Dec/02/Creating-multitarget-NuGet-Packages-with-vNext">Rick Strahl pointed out</a>, each platform defines a compiler directive that is just the platform name in all uppercase:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="k">public</span> <span class="k">class</span> <span class="nc">Program</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">Program</span>
 <span class="p">{</span>
     <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
     <span class="p">{</span>
@@ -421,7 +421,7 @@ Active Version     Runtime Architecture Location                     Alias
 
 <p>To limit the frameworks for my project, I just have to edit the <code>project.json</code> file and remove the CoreCLR:</p>
 
-<figure class="highlight"><pre><code class="language-json" data-lang="json"><span></span><span class="s2">&quot;frameworks&quot;</span> <span class="err">:</span> <span class="p">{</span>
+<figure class="highlight"><pre><code class="language-json" data-lang="json"><span class="s2">&quot;frameworks&quot;</span> <span class="err">:</span> <span class="p">{</span>
     <span class="nt">&quot;aspnet50&quot;</span> <span class="p">:</span> <span class="p">{</span> <span class="p">}</span>
 <span class="p">}</span></code></pre></figure>
 

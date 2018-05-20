@@ -236,7 +236,7 @@ code {
 
 <p>When returning a value from an <strong>async</strong> method, the method body returns the value directly, but the method itself is declared as returning a <strong>Task&lt;TResult&gt;</strong>. There is a bit of “disconnect” when you declare a method returning one type and have to return another type:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Actual syntax</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Actual syntax</span>
 <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">GetValue</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="k">await</span> <span class="n">TaskEx</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
@@ -245,7 +245,7 @@ code {
 
 <p>Question: Why can’t I write this:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Hypothetical syntax</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Hypothetical syntax</span>
 <span class="k">public</span> <span class="k">async</span> <span class="kt">int</span> <span class="nf">GetValue</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="k">await</span> <span class="n">TaskEx</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
@@ -266,7 +266,7 @@ code {
 
 <p>There is still a “disconnect” between the method declaration return type and the method body return type. Another option that <a href="http://gauravsmathur.wordpress.com/2010/11/04/something-wrong-with-async-await-and-the-tasktask/">has been suggested</a> is to add a keyword to <strong>return</strong> to indicate that the value given to <strong>return</strong> is not really what’s being returned, e.g.:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Hypothetical syntax</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Hypothetical syntax</span>
 <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">GetValue</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="k">await</span> <span class="n">TaskEx</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
@@ -283,7 +283,7 @@ code {
 
 <p>Question: Why can’t <strong>async</strong> be inferred based on the presence of <strong>await</strong>:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Hypothetical syntax</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Hypothetical syntax</span>
 <span class="k">public</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">GetValue</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="c1">// The presence of &quot;await&quot; implies that this is an &quot;async&quot; method.</span>
@@ -301,7 +301,7 @@ code {
 
 <p>Question: Since it makes sense to explicitly include <strong>async</strong> (see above), why can’t <strong>await</strong> be inferred based on the presence of <strong>async</strong>:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Hypothetical syntax</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Hypothetical syntax</span>
 <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">GetValue</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="c1">// &quot;await&quot; is implied, since this is an &quot;async&quot; method.</span>
@@ -315,7 +315,7 @@ code {
 
 <p>Parallel composition in the Async CTP is done using <strong>TaskEx.WhenAny</strong> and <strong>TaskEx.WhenAll</strong> methods. Here’s a simple example which starts two operations immediately and asynchronously waits for both of them to complete:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span></span><span class="c1">// Actual syntax</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Actual syntax</span>
 <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">GetValue</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="c1">// Asynchronously retrieve two partial values.</span>

@@ -250,7 +250,7 @@ code {
 
 <p>However, actually getting it to build is a bit more challenging. I currently have the following set up as a PowerShell “Install Script” for my AppVeyor build:</p>
 
-<figure class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span></span><span class="n">iex</span> <span class="p">((</span><span class="nb">new-object</span> <span class="n">net</span><span class="p">.</span><span class="n">webclient</span><span class="p">).</span><span class="n">DownloadString</span><span class="p">(</span><span class="s1">&#39;https://raw.githubusercontent.com/aspnet/Home/master/kvminstall.ps1&#39;</span><span class="p">))</span>
+<figure class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span class="n">iex</span> <span class="p">((</span><span class="nb">new-object</span> <span class="n">net</span><span class="p">.</span><span class="n">webclient</span><span class="p">).</span><span class="n">DownloadString</span><span class="p">(</span><span class="s1">&#39;https://raw.githubusercontent.com/aspnet/Home/master/kvminstall.ps1&#39;</span><span class="p">))</span>
 
 <span class="nv">$env:Path</span> <span class="p">=</span> <span class="s2">&quot;C:\Program Files (x86)\MSBuild\14.0\Bin;&quot;</span> <span class="p">+</span> <span class="no">[Environment]</span><span class="p">::</span><span class="n">GetEnvironmentVariables</span><span class="p">(</span><span class="s2">&quot;Machine&quot;</span><span class="p">)[</span><span class="s2">&quot;Path&quot;</span><span class="p">]</span> <span class="p">+</span> <span class="s2">&quot;;&quot;</span> <span class="p">+</span> <span class="no">[Environment]</span><span class="p">::</span><span class="n">GetEnvironmentVariables</span><span class="p">(</span><span class="s2">&quot;User&quot;</span><span class="p">)[</span><span class="s2">&quot;Path&quot;</span><span class="p">]</span>
 
@@ -260,13 +260,13 @@ code {
 
 <p>There’s just one more step: we need to restore packages before building. I have the following set up as a PowerShell “Before Build Script”:</p>
 
-<figure class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span></span><span class="n">kpm</span> <span class="n">restore</span></code></pre></figure>
+<figure class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span class="n">kpm</span> <span class="n">restore</span></code></pre></figure>
 
 <p>You should now be able to kick off a build without errors.</p>
 
 <p>Before moving on, let’s add in just a bit to get unit tests working. AppVeyor tries to do as much as possible for you using reasonable defaults, but it’s not (yet) capable of auto-detecting the xUnit .NET Core unit test project. You should be able to get unit tests running in your build by changing the test settings from <code>Auto</code> to <code>Script</code> and specifying this PowerShell script to run:</p>
 
-<figure class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span></span><span class="n">cd</span> <span class="n">test</span><span class="p">/</span><span class="n">UnitTests</span>
+<figure class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span class="n">cd</span> <span class="n">test</span><span class="p">/</span><span class="n">UnitTests</span>
 <span class="n">k</span> <span class="n">test</span></code></pre></figure>
 
 <p>The first line changes to the directory where my unit test <code>project.json</code> file is (you may need to change this if your unit test project is named differently). The second line simply executes the tests.</p>
@@ -277,7 +277,7 @@ code {
 
 <p>First, you need to declare dependencies on the <code>OpenCover</code>, <code>coveralls.io</code>, and <code>ReportGenerator</code> packages in your unit test project. This way they’ll be picked up by <code>kpm restore</code> and installed on the AppVeyor build server. The <a href="https://github.com/StephenCleary/Deque/blob/cf0b28933befe5303c037739c94f16267de8b71e/test/UnitTests/project.json"><code>project.json</code> for my unit test project</a> has these dependencies:</p>
 
-<figure class="highlight"><pre><code class="language-json" data-lang="json"><span></span><span class="s2">&quot;dependencies&quot;</span><span class="err">:</span> <span class="p">{</span>
+<figure class="highlight"><pre><code class="language-json" data-lang="json"><span class="s2">&quot;dependencies&quot;</span><span class="err">:</span> <span class="p">{</span>
     <span class="nt">&quot;Nito.Collections.Deque&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="nt">&quot;xunit&quot;</span><span class="p">:</span> <span class="s2">&quot;2.0.0.0-rc3-build2880&quot;</span><span class="p">,</span>
     <span class="nt">&quot;xunit.runner.aspnet&quot;</span><span class="p">:</span> <span class="s2">&quot;2.0.0.0-rc3-build52&quot;</span><span class="p">,</span>
@@ -298,7 +298,7 @@ code {
 
 <p>With all that said, you should be able to execute something like the following to generate a code coverage report:</p>
 
-<figure class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span></span><span class="n">cd</span> <span class="n">artifacts</span><span class="p">\</span><span class="n">bin</span><span class="p">\</span><span class="n">Nito</span><span class="p">.</span><span class="n">Collections</span><span class="p">.</span><span class="n">Deque</span><span class="p">\</span><span class="n">Debug</span><span class="p">\</span><span class="n">net45</span>
+<figure class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span class="n">cd</span> <span class="n">artifacts</span><span class="p">\</span><span class="n">bin</span><span class="p">\</span><span class="n">Nito</span><span class="p">.</span><span class="n">Collections</span><span class="p">.</span><span class="n">Deque</span><span class="p">\</span><span class="n">Debug</span><span class="p">\</span><span class="n">net45</span>
 
 <span class="nv">$env:KRE_APPBASE</span> <span class="p">=</span> <span class="s2">&quot;../../../../../test/UnitTests&quot;</span>
 
@@ -334,11 +334,11 @@ Alternative Visited Methods 64 of 83 (77.11)
 
 <p>The detailed code coverage data is also written out to a local file, in this case, <code>artifacts\bin\Nito.Collections.Deque\Debug\net45\coverage.xml</code>. To upload this coverage data to Coveralls, first link the GitHub project to Coveralls using their dashboard. Then, copy your <strong>Repo Token</strong> and set it as an environment variable <code>COVERALLS_REPO_TOKEN</code>:</p>
 
-<figure class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span></span><span class="nv">$env:COVERALLS_REPO_TOKEN</span> <span class="p">=</span> <span class="s2">&quot;Repo Token&quot;</span></code></pre></figure>
+<figure class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span class="nv">$env:COVERALLS_REPO_TOKEN</span> <span class="p">=</span> <span class="s2">&quot;Repo Token&quot;</span></code></pre></figure>
 
 <p>You can now use <code>coveralls.io</code> to upload the code coverage data to Coveralls. The only gotcha I ran into here is that the <code>coverall.io</code> package runs into errors if it tries to use a hash of the source files (instead of the source files themselves), so I just pass <code>--full-sources</code> to force it to load the full source files:</p>
 
-<figure class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span></span><span class="n">C</span><span class="err">:</span><span class="p">\</span><span class="n">Users</span><span class="p">\</span><span class="n">stephen</span><span class="p">\.</span><span class="n">k</span><span class="p">\</span><span class="n">packages</span><span class="p">\</span><span class="n">coveralls</span><span class="p">.</span><span class="n">io</span><span class="p">\</span><span class="n">1</span><span class="p">.</span><span class="n">3</span><span class="p">.</span><span class="n">2</span><span class="p">\</span><span class="n">tools</span><span class="p">\</span><span class="n">coveralls</span><span class="p">.</span><span class="n">net</span><span class="p">.</span><span class="n">exe</span> <span class="p">-</span><span class="n">-opencover</span> <span class="n">coverage</span><span class="p">.</span><span class="n">xml</span> <span class="p">-</span><span class="n">-full-sources</span></code></pre></figure>
+<figure class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span class="n">C</span><span class="err">:</span><span class="p">\</span><span class="n">Users</span><span class="p">\</span><span class="n">stephen</span><span class="p">\.</span><span class="n">k</span><span class="p">\</span><span class="n">packages</span><span class="p">\</span><span class="n">coveralls</span><span class="p">.</span><span class="n">io</span><span class="p">\</span><span class="n">1</span><span class="p">.</span><span class="n">3</span><span class="p">.</span><span class="n">2</span><span class="p">\</span><span class="n">tools</span><span class="p">\</span><span class="n">coveralls</span><span class="p">.</span><span class="n">net</span><span class="p">.</span><span class="n">exe</span> <span class="p">-</span><span class="n">-opencover</span> <span class="n">coverage</span><span class="p">.</span><span class="n">xml</span> <span class="p">-</span><span class="n">-full-sources</span></code></pre></figure>
 
 <p>It can take a few minutes for Coveralls.io to actually process and dispaly the coverage data, but after a few browser refreshes you should see the coverage data on their website!</p>
 
@@ -358,7 +358,7 @@ Alternative Visited Methods 64 of 83 (77.11)
 
 <p>Next, we can replace our existing test script with something a bit more fancy:</p>
 
-<figure class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span></span><span class="n">cd</span> <span class="n">artifacts</span><span class="p">\</span><span class="n">bin</span><span class="p">\</span><span class="n">Nito</span><span class="p">.</span><span class="n">Collections</span><span class="p">.</span><span class="n">Deque</span><span class="p">\</span><span class="n">Debug</span><span class="p">\</span><span class="n">net45</span>
+<figure class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span class="n">cd</span> <span class="n">artifacts</span><span class="p">\</span><span class="n">bin</span><span class="p">\</span><span class="n">Nito</span><span class="p">.</span><span class="n">Collections</span><span class="p">.</span><span class="n">Deque</span><span class="p">\</span><span class="n">Debug</span><span class="p">\</span><span class="n">net45</span>
 
 <span class="nv">$env:KRE_APPBASE</span> <span class="p">=</span> <span class="s2">&quot;../../../../../test/UnitTests&quot;</span>
 
@@ -390,7 +390,7 @@ Alternative Visited Methods 64 of 83 (77.11)
 
 <p><code>ReportGenerator</code> takes the output from OpenCover (that same <code>coverage.xml</code> file) and generates reports with the full code coverage information. I added a <a href="https://github.com/StephenCleary/Deque/blob/cf0b28933befe5303c037739c94f16267de8b71e/Coverage.ps1"><code>Coverage.ps1</code> script to my solution</a> that does <em>almost</em> the same thing as the AppVeyor test script, except it generates a local report instead of uploading to Coveralls:</p>
 
-<figure class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span></span><span class="n">pushd</span>
+<figure class="highlight"><pre><code class="language-powershell" data-lang="powershell"><span class="n">pushd</span>
 
 <span class="n">cd</span> <span class="n">artifacts</span><span class="p">\</span><span class="n">bin</span><span class="p">\</span><span class="n">Nito</span><span class="p">.</span><span class="n">Collections</span><span class="p">.</span><span class="n">Deque</span><span class="p">\</span><span class="n">Debug</span><span class="p">\</span><span class="n">net45</span>
 
