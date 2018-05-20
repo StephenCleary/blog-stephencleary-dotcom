@@ -27,7 +27,7 @@ D:\Programs\PortableJekyll\setpath.ps1
 You need a Windows machine with Git, Docker, and VSCode installed.
 
 ```
-git clone https://github.com/StephenCleary/blog-stephencleary-dotcom.git
+git clone --recurse-submodules https://github.com/StephenCleary/blog-stephencleary-dotcom.git
 git submodule foreach 'git checkout gh-pages'
 ```
 
