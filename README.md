@@ -9,19 +9,27 @@
 - Run "easy_install Pygments"
 
 To serve locally (with future posts):
-> D:\Programs\PortableJekyll\setpath.ps1
-> .\serve.ps1
+
+```
+D:\Programs\PortableJekyll\setpath.ps1
+.\serve.ps1
+```
 
 To build:
-> D:\Programs\PortableJekyll\setpath.ps1
-> .\build.ps1
+
+```
+D:\Programs\PortableJekyll\setpath.ps1
+.\build.ps1
+```
 
 # Getting Started:
 
 You need a Windows machine with Git, Docker, and VSCode installed.
 
-> git clone https://github.com/StephenCleary/blog-stephencleary-dotcom.git
-> git submodule foreach 'git checkout gh-pages'
+```
+git clone https://github.com/StephenCleary/blog-stephencleary-dotcom.git
+git submodule foreach 'git checkout gh-pages'
+```
 
 # Patterns:
 
