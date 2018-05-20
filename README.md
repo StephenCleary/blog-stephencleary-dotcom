@@ -16,6 +16,13 @@ To build:
 > D:\Programs\PortableJekyll\setpath.ps1
 > .\build.ps1
 
+# Getting Started:
+
+You need a Windows machine with Git, Docker, and VSCode installed.
+
+> git clone https://github.com/StephenCleary/blog-stephencleary-dotcom.git
+> git submodule foreach 'git checkout gh-pages'
+
 # Patterns:
 
 Link to other posts: `[text to be highlighted]({% post_url 2016-01-01-post-file-name %})`
