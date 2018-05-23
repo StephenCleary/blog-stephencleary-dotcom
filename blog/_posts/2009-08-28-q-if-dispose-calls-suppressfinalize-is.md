@@ -2,6 +2,7 @@
 layout: post
 title: "Q&A: If Dispose calls SuppressFinalize, is KeepAlive required?"
 series: "IDisposable and Finalizers"
+seriesOrder: 7
 seriesTitle: "Q&A: Is KeepAlive Required with SuppressFinalize?"
 ---
 ## Question: If we include a call to GC.SuppressFinalize(this) in Dispose, is the the call to GC.KeepAlive(this) still required?

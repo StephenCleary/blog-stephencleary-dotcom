@@ -2,6 +2,7 @@
 layout: post
 title: "Sample Code: Getting the Local IP Addresses"
 series: "TCP/IP .NET Sockets FAQ"
+seriesOrder: 920
 seriesTitle: "Local IP Addresses Example"
 ---
 The sample code below enumerates all the adapters on a machine, and then enumerates all IPv4 addresses for each adapter. This is necessary because [a computer may have multiple IP addresses]({% post_url 2009-05-18-getting-local-ip-address %}).

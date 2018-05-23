@@ -11,39 +11,17 @@
         <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             {% strip %}
             {% if page.series %}
-                {% for orderedSeries in site.series %}
-                    {% if orderedSeries.name == page.series %}
-                        {% assign ordered = orderedSeries %}
-                    {% endif %}
-                {% endfor %}
                 <div class="panel panel-primary">
                     <div class="panel-heading">{{ page.series }}</div>
                     <div class="panel-body sidenav">
                         <ul class="nav nav-pills nav-stacked">
-                            {% if ordered %}
-                                {% for other in ordered.posts %}
-                                    {% for sibling in site.posts %}
-                                        {% if sibling.series == page.series and sibling.seriesTitle == other %}
-                                            {% if sibling.id == page.id %}
-                                                <li class="active sidenavitem"><a href="{{ sibling.url }}">{{ sibling.seriesTitle }}</a></li>
-                                            {% else %}
-                                                <li class="sidenavitem"><a href="{{ sibling.url }}">{{ sibling.seriesTitle }}</a></li>
-                                            {% endif %}
-                                        {% endif %}
-                                    {% endfor %}
-                                {% endfor %}
-                            {% else %}
-                                {% assign siblings = site.posts | sort 'date' %}
-                                {% for sibling in siblings %}
-                                    {% if sibling.series == page.series %}
-                                        {% if sibling.id == page.id %}
-                                            <li class="active sidenavitem"><a href="{{ sibling.url }}">{{ sibling.seriesTitle }}</a></li>
-                                        {% else %}
-                                            <li class="sidenavitem"><a href="{{ sibling.url }}">{{ sibling.seriesTitle }}</a></li>
-                                        {% endif %}
-                                    {% endif %}
-                                {% endfor %}
-                            {% endif %}
+                            {% for sibling in site.data.series[page.series] %}
+                                {% if sibling.id == page.id %}
+                                    <li class="active sidenavitem"><a href="{{ sibling.url }}">{{ sibling.seriesTitle }}</a></li>
+                                {% else %}
+                                    <li class="sidenavitem"><a href="{{ sibling.url }}">{{ sibling.seriesTitle }}</a></li>
+                                {% endif %}
+                            {% endfor %}
                         </ul>
                     </div>
                 </div>

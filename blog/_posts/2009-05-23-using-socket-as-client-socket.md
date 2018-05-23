@@ -2,6 +2,7 @@
 layout: post
 title: "Using Socket as a Client Socket"
 series: "TCP/IP .NET Sockets FAQ"
+seriesOrder: 230
 seriesTitle: "Client Sockets"
 ---
 A client socket connects to a known server socket. To do so, it usually proceeds through the operations below.

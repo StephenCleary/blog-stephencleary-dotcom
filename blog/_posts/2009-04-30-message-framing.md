@@ -2,6 +2,7 @@
 layout: post
 title: "Message Framing"
 series: "TCP/IP .NET Sockets FAQ"
+seriesOrder: 110
 seriesTitle: "Message Framing"
 ---
 ## The Problem

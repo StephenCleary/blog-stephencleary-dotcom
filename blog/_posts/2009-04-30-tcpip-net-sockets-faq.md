@@ -2,6 +2,7 @@
 layout: post
 title: "TCP/IP .NET Sockets FAQ"
 series: "TCP/IP .NET Sockets FAQ"
+seriesOrder: 0
 seriesTitle: "Overview"
 ---
 This is an attempt to address some TCP/IP frequently asked questions and present best practices. While the [WinSock Programmer's FAQ](http://tangentsoft.net/wskfaq/) will remain the ultimate FAQ for native code, there is a growing need for a simplified version that addresses the managed interface to TCP/IP sockets.

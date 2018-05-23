@@ -2,6 +2,7 @@
 layout: post
 title: "XML over TCP/IP"
 series: "TCP/IP .NET Sockets FAQ"
+seriesOrder: 140
 seriesTitle: "XML"
 ---
 XML is a popular choice when designing communications protocols, since XML parsers are ubiquitous. The phrase "XML over TCP" makes a good executive summary, but this FAQ entry is concerned with how to actually make it work. One should always write an application protocol specification document to clearly define the actual communication.

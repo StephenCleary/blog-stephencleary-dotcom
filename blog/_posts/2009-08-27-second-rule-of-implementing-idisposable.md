@@ -2,6 +2,7 @@
 layout: post
 title: "The Second Rule of Implementing IDisposable and Finalizers"
 series: "IDisposable and Finalizers"
+seriesOrder: 3
 seriesTitle: "Rule 2: Managed Resources"
 ---
 ## For a class owning managed resources, implement IDisposable (but not a finalizer)

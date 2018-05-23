@@ -2,6 +2,7 @@
 layout: post
 title: "Q&A: Should I Set Variables to Null to Assist Garbage Collection?"
 series: "IDisposable and Finalizers"
+seriesOrder: 8
 seriesTitle: "Q&A: Seting Variables to Null"
 ---
 This is a common question with rather complex reasoning behind the answer.

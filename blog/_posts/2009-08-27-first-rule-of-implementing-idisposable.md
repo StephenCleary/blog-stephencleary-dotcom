@@ -2,6 +2,7 @@
 layout: post
 title: "The First Rule of Implementing IDisposable and Finalizers"
 series: "IDisposable and Finalizers"
+seriesOrder: 2
 seriesTitle: "Rule 1: Don't"
 ---
 ## Don't do it (unless you need to).

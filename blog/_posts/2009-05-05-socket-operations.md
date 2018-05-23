@@ -2,6 +2,7 @@
 layout: post
 title: "Socket Operations"
 series: "TCP/IP .NET Sockets FAQ"
+seriesOrder: 210
 seriesTitle: "Socket Operations"
 ---
 There are a few logical operations that may be performed on a TCP/IP socket, regardless of whether the socket is synchronous or asynchronous. Each of the operations below is marked "immediate" (meaning it is completed immediately) or "delayed" (meaning it depends on the network for completion).

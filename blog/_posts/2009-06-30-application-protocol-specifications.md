@@ -2,6 +2,7 @@
 layout: post
 title: "Application Protocol Specifications"
 series: "TCP/IP .NET Sockets FAQ"
+seriesOrder: 130
 seriesTitle: "Application Protocol Specifications"
 ---
 When designing an application protocol, one should publish an application protocol specification document. Having a clearly-defined specification helps prevent errors on both sides.

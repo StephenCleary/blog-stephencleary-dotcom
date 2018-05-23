@@ -2,6 +2,7 @@
 layout: post
 title: "The Third Rule of Implementing IDisposable and Finalizers"
 series: "IDisposable and Finalizers"
+seriesOrder: 4
 seriesTitle: "Rule 3: Unmanaged Resource"
 ---
 ## For a class owning a single unmanaged resource, implement IDisposable and a finalizer

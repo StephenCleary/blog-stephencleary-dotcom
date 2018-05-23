@@ -2,6 +2,7 @@
 layout: post
 title: "TCP/IP Resources"
 series: "TCP/IP .NET Sockets FAQ"
+seriesOrder: 310
 seriesTitle: "Resources"
 ---
 There are two books that any TCP/IP network programmer needs to have. Unfortunately, they were both written well before .NET, so they only deal with unmanaged code - specifically, the WinSock API. However, the .NET Socket class methods directly correspond to WinSock function calls, so knowledge can be gleaned from these books and directly applied to managed code.

@@ -2,6 +2,7 @@
 layout: post
 title: "Detection of Half-Open (Dropped) Connections"
 series: "TCP/IP .NET Sockets FAQ"
+seriesOrder: 120
 seriesTitle: "Half-Open Connections"
 ---
 There is a three-way handshake to open a TCP/IP connection, and a four-way handshake to close it. However, once the connection has been established, if neither side sends any data, then no packets are sent over the connection. TCP is an "idle" protocol, happy to assume that the connection is active until proven otherwise.

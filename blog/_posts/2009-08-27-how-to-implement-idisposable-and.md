@@ -2,6 +2,7 @@
 layout: post
 title: "How to Implement IDisposable and Finalizers: 3 Easy Rules"
 series: "IDisposable and Finalizers"
+seriesOrder: 1
 seriesTitle: "Three Rules"
 ---
 Microsoft's documentation on IDisposable is needlessly confusing. It really boils down to three simple rules.

@@ -2,6 +2,7 @@
 layout: post
 title: "Sample code: Length-prefix message framing for streams"
 series: "TCP/IP .NET Sockets FAQ"
+seriesOrder: 910
 seriesTitle: "Length-Prefix Example"
 ---
 The necessity of message framing is discussed at [https://blog.stephencleary.com/2009/04/message-framing.html]({% post_url 2009-04-30-message-framing %}).

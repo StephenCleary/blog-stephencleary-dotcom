@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Managed Windows Services - The Basics"
+seriesOrder: 2
 series: "Managed Services"
 seriesTitle: "Basics"
 ---

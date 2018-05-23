@@ -15,59 +15,12 @@ layout: default
   </article>
     
     <footer class="hidden-print">
-        {% strip %}
         {% if page.series %}
-            {% for orderedSeries in site.series %}
-                {% if orderedSeries.name == page.series %}
-                    {% assign ordered = orderedSeries %}
-                {% endif %}
-            {% endfor %}
-
-            {% assign sawSelf = false %}
-            {% assign takeNext = false %}
-            {% if ordered %}
-                {% for other in ordered.posts %}
-                    {% for sibling in site.posts %}
-                        {% if sibling.series == page.series and sibling.seriesTitle == other %}
-                            {% if takeNext %}
-                                {% assign nextSibling = sibling %}
-                                {% assign takeNext = false %}
-                            {% endif %}
-                            {% if sibling.id == page.id %}
-                                {% assign sawSelf = true %}
-                                {% assign takeNext = true %}
-                            {% endif %}
-                            {% unless sawSelf %}
-                                {% assign previousSibling = sibling %}
-                            {% endunless %}
-                        {% endif %}
-                    {% endfor %}
-                {% endfor %}
-            {% else %}
-                {% assign siblings = site.posts | sort 'date' %}
-                {% for sibling in siblings %}
-                    {% if sibling.series == page.series %}
-                        {% if takeNext %}
-                            {% assign nextSibling = sibling %}
-                            {% assign takeNext = false %}
-                        {% endif %}
-                        {% if sibling.id == page.id %}
-                            {% assign sawSelf = true %}
-                            {% assign takeNext = true %}
-                        {% endif %}
-                        {% unless sawSelf %}
-                            {% assign previousSibling = sibling %}
-                        {% endunless %}
-                    {% endif %}
-                {% endfor %}
-            {% endif %}
-
             <ul class="pager">
-                {% if previousSibling %}<li class="previous"><a href="{{ previousSibling.url }}" title="{{ previousSibling.title | escape }}">&larr; Previous in {{ page.series }}</a></li>{% endif %}
-                {% if nextSibling %}<li class="next"><a href="{{ nextSibling.url }}" title="{{ nextSibling.title | escape }}">Next in {{ page.series }} &rarr;</a></li>{% endif %}
+                {% if page.seriesPrevious %}<li class="previous"><a href="{{ page.seriesPrevious.url }}" title="{{ page.seriesPrevious.title | escape }}">&larr; Previous in {{ page.series }}</a></li>{% endif %}
+                {% if page.seriesNext %}<li class="next"><a href="{{ page.seriesNext.url }}" title="{{ page.seriesNext.title | escape }}">Next in {{ page.series }} &rarr;</a></li>{% endif %}
             </ul>
         {% endif %}
-        {% endstrip %}
         
         <ul class="pager">
             {% if page.previous %}<li class="previous"><a href="{{ page.previous.url }}" title="{{ page.previous.title | escape }}">&larr; Previous Post</a></li>{% endif %}

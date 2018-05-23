@@ -2,6 +2,7 @@
 layout: post
 title: "Q&A: Is a call to GC.KeepAlive(this) required in Dispose?"
 series: "IDisposable and Finalizers"
+seriesOrder: 6
 seriesTitle: "Q&A: Is KeepAlive Required in Dispose?"
 ---
 ## Question: Is a call to GC.KeepAlive(this) required in Dispose?

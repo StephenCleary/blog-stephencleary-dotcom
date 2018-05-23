@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Managed Services and UIs"
+seriesOrder: 4
 series: "Managed Services"
 seriesTitle: "User Interfaces"
 ---

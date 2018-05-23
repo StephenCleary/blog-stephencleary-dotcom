@@ -2,6 +2,7 @@
 layout: post
 title: "Getting the Local IP Address"
 series: "TCP/IP .NET Sockets FAQ"
+seriesOrder: 320
 seriesTitle: "The Local IP Address"
 ---
 One common FAQ is how to get the local IP address of the computer. In fact, the very question is wrong: a computer may easily have multiple IP addresses. In fact, a computer may have multiple network adapters, each of which has multiple addresses. A single network card may have multiple IP addresses as long as they are on separate logical networks; this is called "multihoning" and is sometimes done for security reasons. Of course, a computer may have multiple network cards as well, especially when one considers virtual networks.

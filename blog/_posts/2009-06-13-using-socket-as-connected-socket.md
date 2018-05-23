@@ -2,6 +2,7 @@
 layout: post
 title: "Using Socket as a Connected Socket"
 series: "TCP/IP .NET Sockets FAQ"
+seriesOrder: 250
 seriesTitle: "Connected Sockets"
 ---
 A connected socket is one which has a connection to the remote side. When a client socket connects to a listening server socket, the result is two connected sockets: the client socket becomes connected, and the listening server creates a new socket that is connected. For more details about establishing or listening for socket connections, see [Using Socket as a Client Socket]({% post_url 2009-05-23-using-socket-as-client-socket %}) and [Using Socket as a Server (Listening) Socket]({% post_url 2009-05-27-using-socket-as-server-listening-socket %}).

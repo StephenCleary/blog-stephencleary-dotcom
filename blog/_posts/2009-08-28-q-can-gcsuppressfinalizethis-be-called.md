@@ -2,6 +2,7 @@
 layout: post
 title: "Q&A: Can GC.SuppressFinalize(this) be called at any time?"
 series: "IDisposable and Finalizers"
+seriesOrder: 5
 seriesTitle: "Q&A: When to Call SuppressFinalize?"
 ---
 Today I was asked by a colleague about some of my blog posts yesterday regarding IDisposable and Finalize. So here's the first post in a series of Q&A regarding finalizers. Enjoy!

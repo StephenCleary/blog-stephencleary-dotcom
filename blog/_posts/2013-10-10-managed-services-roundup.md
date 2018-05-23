@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Managed Services Roundup"
+seriesOrder: 1
 series: "Managed Services"
 seriesTitle: "Intro"
 ---

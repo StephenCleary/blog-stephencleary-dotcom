@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Windows Services and the Network"
+seriesOrder: 3
 series: "Managed Services"
 seriesTitle: "Network Drives"
 ---

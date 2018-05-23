@@ -2,6 +2,7 @@
 layout: post
 title: "Using Socket as a Server (Listening) Socket"
 series: "TCP/IP .NET Sockets FAQ"
+seriesOrder: 240
 seriesTitle: "Server Sockets"
 ---
 Normally, server sockets may accept multiple client connections. Conceptually, a server socket listens on a known port. When an incoming connection arrives, the listening socket _creates a new socket_ (the "child" socket), and establishes the connection on the child socket. The listening socket is then free to resume listening on the same port, while the child socket has an established connection with the client that is independent from its parent.
