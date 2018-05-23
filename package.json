@@ -9,12 +9,12 @@
   "scripts": {
     "pull": "docker pull %npm_package_config_image%",
 
-    "jekyll:build": "docker run --rm --volume=%INIT_CWD%:/srv/jekyll -w /srv/jekyll/blog %npm_package_config_image% jekyll build",
+    "jekyll:build": "docker run --rm --volume=%INIT_CWD%:/srv/jekyll -w /srv/jekyll/blog %npm_package_config_image% jekyll build --incremental",
     "build:www": "npm run jekyll:build -- --config _config.www.yml",
     "build:blog": "npm run jekyll:build -- --config _config.blog.yml",
     "build": "npm run build:www && npm run build:blog",
 
-    "jekyll:serve": "docker run -it --rm --volume=%INIT_CWD%:/srv/jekyll -w /srv/jekyll/blog -p 127.0.0.1:%npm_package_config_port%:%npm_package_config_port% %npm_package_config_image% jekyll serve -w",
+    "jekyll:serve": "docker run -it --rm --volume=%INIT_CWD%:/srv/jekyll -w /srv/jekyll/blog -p 127.0.0.1:%npm_package_config_port%:%npm_package_config_port% %npm_package_config_image% jekyll serve --incremental --livereload --watch",
     "serve:www": "start npm run jekyll:serve --website:port=4001 -- --config _config.www.yml,_config.www.local.yml",
     "serve:blog": "start npm run jekyll:serve -- --config _config.blog.yml,_config.blog.local.yml",
     "serve": "npm run serve:blog && npm run serve:www"
