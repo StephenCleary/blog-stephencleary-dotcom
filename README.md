@@ -1,28 +1,4 @@
-# To build:
-
-- Install PortableJekyll from http://www.madhur.co.in/blog/2013/07/20/buildportablejekyll.html
-- Copy setpath.ps1 to the directory where you uninstalled that zip (e.g., D:\Programs\PortableJekyll)
-- Install Python 2.
-- Run "gem install jekyll"
-- Run "gem install pygments"
-- Run "python -m pip install -U pip setuptools"
-- Run "easy_install Pygments"
-
-To serve locally (with future posts):
-
-```
-D:\Programs\PortableJekyll\setpath.ps1
-.\serve.ps1
-```
-
-To build:
-
-```
-D:\Programs\PortableJekyll\setpath.ps1
-.\build.ps1
-```
-
-# Getting Started:
+# Getting Started
 
 You need a Windows machine with Git, Docker, and VSCode installed.
 
@@ -31,7 +7,13 @@ git clone --recurse-submodules https://github.com/StephenCleary/blog-stephenclea
 git submodule foreach 'git checkout gh-pages'
 ```
 
-# Patterns:
+## To Serve Locally
+
+```
+npm run serve
+```
+
+# Patterns
 
 Link to other posts: `[text to be highlighted]({% post_url 2016-01-01-post-file-name %})`
 
