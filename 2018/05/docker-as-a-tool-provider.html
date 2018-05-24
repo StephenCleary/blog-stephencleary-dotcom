@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Using VSCode with PEGJS</title>
+    <title>Docker as a Tool Provider</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Enabling VSCode's Problems window for PEGJS compilation by parsing its output." />
-    <link rel="canonical" href="https://blog.stephencleary.com/2018/05/vscode-for-pegjs.html" />
+    <meta name="description" content="Docker is more than a scalable backend technology; it can also be used to encapsulate and execute tools." />
+    <link rel="canonical" href="https://blog.stephencleary.com/2018/05/docker-as-a-tool-provider.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -220,71 +220,121 @@ code {
 
   <header>
       <div class="page-header">
-          <h1>Using VSCode with PEGJS</h1>
-          <small><time datetime="2018-05-18">May 18, 2018</time> &bull; <a data-disqus-identifier="/2018/05/vscode-for-pegjs" href="#disqus_thread">Comments</a></small>
+          <h1>Docker as a Tool Provider</h1>
+          <small><time datetime="2018-05-24">May 24, 2018</time> &bull; <a data-disqus-identifier="/2018/05/docker-as-a-tool-provider" href="#disqus_thread">Comments</a></small>
       </div>
   </header>
 
   <article>
-  <p>VSCode has a pretty decent extension system. This week I was playing around with <a href="https://pegjs.org/">PEG JS</a>, a <a href="https://en.wikipedia.org/wiki/Parsing_expression_grammar">PEG</a> parser generator for JavaScript. I found <a href="https://github.com/SrTobi/code-pegjs-language">an extension</a> for VSCode syntax highlighting of <code>pegjs</code> files. There are a couple of other options for extensions, but it looks like none of them support reporting errors in VSCode’s <code>Problems</code> window.</p>
+  <p>Docker is everywhere these days! Even with serverless technology growing more mature, Docker is still a giant in the cloud world. Everyone by now should be familiar with Docker as a way of scaling out your servers using containers.</p>
 
-<p>It’s pretty straightforward to run the pegjs executable from a <code>package.json</code> npm script. In this example, I’m compiling my <code>pegjs</code> file into a <code>js</code> output file:</p>
+<p>However, there’s another perfectly legitimate use case for Docker: building containers for tools.</p>
 
-<figure class="highlight"><pre><code class="language-json" data-lang="json"><span class="s2">&quot;peg&quot;</span><span class="err">:</span> <span class="s2">&quot;pegjs -o src/json-filter-expr.js src/json-filter-expr.pegjs&quot;</span></code></pre></figure>
+<p>This is particularly useful in a Windows environment. I’m an old curmudgeon who knows how to use Windows and hasn’t taken the time to learn Macs. Every time I get a new dev machine, I consider switching, but I just haven’t done it. So my dev machines - even in this modern day - are still all Windows machines.</p>
 
-<p>The problem is that if I run this task from VSCode and the compilation fails, there’s no indication in the VSCode Problems window.</p>
+<p>This is all good, until you want to make use of some nifty Linux tools. The thing is, Windows just doesn’t work so great with Ruby. Or Python. Or Perl. Some tools have Windows builds that bundle their own dependencies, and others require certain environment variables to find just the right version of whatever runtime they need. It works <em>ok</em>, but what usually ends up happening is that you have to tweak your dev machine until it is <em>just right</em> for all the dependencies of all the different tools you want to use… and then you can never get another machine into that exact same state ever again.</p>
 
-<h2 id="problem-matchers">Problem Matchers</h2>
+<p>I <em>could</em> use Ubuntu on Windows, which is awesome. But I’d still have to install the tools, and manage dependency conflicts and updates and all that. And I don’t want to shell out to a separate subsystem just to be able to build; I want my overall development environment to be Windows.</p>
 
-<p>The solution is to write a <a href="https://code.visualstudio.com/docs/editor/tasks#_defining-a-problem-matcher">problem matcher</a>. This will enable VSCode to parse the <code>pegjs</code> output and report it just like any other kind of compilation error.</p>
+<p>I <em>could</em> use a solution like <a href="https://boxstarter.org/">Boxstarter</a>, but some of this setup is so specific I’d have to write my own Chocolatey packages for some of them and tie it all together with some very custom scripts. I don’t want another project to maintain (the “Steve Cleary dev box setup script and Chocolately package collection”), especially because newer versions of the tools would require changes to those scripts, so I’d end up changing them every time I need to run them anyway! At the end of the day, it would just be way too complex and brittle.</p>
 
-<p>There’s one other bump in the road. <code>pegjs</code> writes out its error messages like this:</p>
+<p>What I want is to use Boxstarter for my common tools that I use <em>regularly</em> (Visual Studio, VSCode, Docker, Node, Git, etc); but for my more esoteric tools, I want to be able to encapsulate them and pull them in as a complete unit when I want to use them. And I don’t want to deal with conflicting dependencies for my different tools; I want them more… <em>contained</em>. (Heh, see what I did there?)</p>
 
-<figure class="highlight"><pre><code class="language-text" data-lang="text">40:3: Expected &quot;=&quot;, comment, end of line, or whitespace but &quot;/&quot; found.</code></pre></figure>
+<p>The answer? Docker, of course.</p>
 
-<p>However, problem matchers <em>must</em> be able to parse out at least a <code>file</code>, <code>line</code>, and <code>message</code>. <code>pegjs</code> is giving us <code>line</code>, <code>column</code>, and <code>message</code>, but not <code>file</code>.</p>
+<h2 id="docker-for-tools">Docker for Tools</h2>
 
-<p>VSCode requires the <code>file</code>, which makes sense since it deals with a whole workspace and needs to know which file the problem is in. On the other hand, <code>pegjs</code> does not include a filename in its output, which makes sense because it can be run on only one file at a time, and the user specified the file name right there in the command line.</p>
+<p>For this example, I’m going to run <a href="http://lilypond.org/">Lilypond</a> as a Dockerized tool. If you’re not familiar with it, Lilypond is pretty much <em>the</em> standard for free musical notation software.</p>
 
-<h2 id="the-solution">The Solution</h2>
+<p>I have <a href="https://github.com/StephenCleary/Hymnals">an old project</a> of Lilypond files that I wanted to hack on recently, but my current dev laptop doesn’t have Lilypond installed. At this point, it has been literally <em>years</em> since I’ve installed Lilypond, and I don’t remember the details. I do remember that I was using some kind of GUI frontend Lilypond runner (not part of the actual Lilypond project), and I <em>think</em> the frontend bundled Lilypond along with its dependencies. Maybe. And that GUI frontend project may not be maintained anymore, assuming I can even remember its name (GUI frontends are abandoned much more often than the “real” console applications they build on). I think there was also some weird stuff with PostScript printer drivers or something that may or may not have required tweaking since PostScript isn’t standard on Windows. And of course I didn’t write any of this down.</p>
 
-<p>The solution I ended up going with is quite simple: I echo the filename from my npm script and then use a multiline problem matcher to parse out the filename:</p>
+<p>Am I going to install Lilypond on my modern dev laptop? Um, no.</p>
 
-<figure class="highlight"><pre><code class="language-json" data-lang="json"><span class="s2">&quot;peg&quot;</span><span class="err">:</span> <span class="s2">&quot;echo src/json-filter-expr.pegjs &amp;&amp; pegjs -o src/json-filter-expr.js src/json-filter-expr.pegjs&quot;</span></code></pre></figure>
+<p>I’m going to Dockerize this tool. I’m going to run Lilypond on the platform it was designed for (Linux), and I’m going to run it on my Windows machine inside a Docker container. I’m going to get this set up <em>once</em> and then never, ever have to install this on any machine for the rest of my life.</p>
 
-<p>Now the output from <code>npm run peg</code> looks like this:</p>
+<h2 id="lilypond-on-docker">Lilypond on Docker</h2>
 
-<figure class="highlight"><pre><code class="language-text" data-lang="text">src/json-filter-expr.pegjs
-40:3: Expected &quot;=&quot;, comment, end of line, or whitespace but &quot;/&quot; found.</code></pre></figure>
+<p>I started out thinking that I’d have to write a <code>Dockerfile</code> and install Lilypond on it and everything. I went down that path a little ways before I remembered that <strong>duh</strong>, Docker has <a href="https://hub.docker.com/">a public repository of images</a>! And it turns out that I <a href="https://hub.docker.com/search/?isAutomated=0&amp;isOfficial=0&amp;page=1&amp;pullCount=0&amp;q=lilypond&amp;starCount=0">wasn’t the first one</a> to want Lilypad Dockerized.</p>
 
-<p>And this can be matched with a multiline problem matcher that looks like this:</p>
+<p>Well, <a href="https://hub.docker.com/r/iskaron/lilypond/">look at that</a> - here’s a nice little Docker image that has Lilypond installed. It’s kept up-to-date (automated build), and seems to have everything I want! Docker Hub FTW!</p>
 
-<figure class="highlight"><pre><code class="language-json" data-lang="json"><span class="s2">&quot;problemMatcher&quot;</span><span class="err">:</span> <span class="p">{</span>
-    <span class="nt">&quot;owner&quot;</span><span class="p">:</span> <span class="s2">&quot;pegjs&quot;</span><span class="p">,</span>
-    <span class="nt">&quot;fileLocation&quot;</span><span class="p">:</span> <span class="p">[</span>
-        <span class="s2">&quot;relative&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;${workspaceFolder}&quot;</span>
-    <span class="p">],</span>
-    <span class="nt">&quot;pattern&quot;</span><span class="p">:</span> <span class="p">[</span>
-        <span class="p">{</span>
-            <span class="nt">&quot;regexp&quot;</span><span class="p">:</span> <span class="s2">&quot;^([^\\s].*)$&quot;</span><span class="p">,</span>
-            <span class="nt">&quot;file&quot;</span><span class="p">:</span> <span class="mi">1</span>
-        <span class="p">},</span>
-        <span class="p">{</span>
-            <span class="nt">&quot;regexp&quot;</span><span class="p">:</span> <span class="s2">&quot;^(\\d+):(\\d+):\\s*(.*)$&quot;</span><span class="p">,</span>
-            <span class="nt">&quot;line&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
-            <span class="nt">&quot;column&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
-            <span class="nt">&quot;message&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
-            <span class="nt">&quot;loop&quot;</span><span class="p">:</span> <span class="kc">true</span>
-        <span class="p">}</span>
-    <span class="p">]</span>
+<p>With a little tinkering, I found that I could run this straight from the command line:</p>
+
+<figure class="highlight"><pre><code class="language-text" data-lang="text">docker run --rm --volume=C:\Work\Hymnals:/app -w /app iskaron/lilypond lilypond SeniorHymnal/Hymnal.ly</code></pre></figure>
+
+<p>This command will download the Lilypond Docker image automatically (if it’s not already downloaded on the local machine), create a new container, run Lilypond within that container on my local files, and clean up the container when Lilypond exits. Let’s tear apart this command, piece by piece.</p>
+
+<p><code>docker run</code> - This command is used to create a new Docker container from a template image, and run it. It also implicitly downloads the Docker image from Docker Hub if necessary.</p>
+
+<p><code>iskaron/lilypond</code> - The name of the template image that Docker uses to create the container.</p>
+
+<p><code>--volume=C:\Work\Hymnals:/app</code> - Create a volume that links to <code>C:\Work\Hymnals</code> and mount it as <code>/app</code> within the container.</p>
+
+<p><code>-w /app</code> - Set the working directory within the container to <code>/app</code>.</p>
+
+<p><code>lilypond SeniorHymnal/Hymnal.ly</code> - The actual command to run inside the container. On my local disk I have <code>C:\Work\Hymnals\SeniorHymnal\Hymnal.ly</code>, which is accessible inside the container as <code>/app/SeniorHymnal/Hymnal.ly</code>.</p>
+
+<p><code>--rm</code> - When our tool is done executing, clean up the Docker image and its resources.</p>
+
+<p>So now I have a single command that I can run, and it will automatically pull down a Dockerized tool and run it in a clean environment! There’s no interference with my local dev box at all; the Dockerized tool is <em>completely</em> independent. What’s more, it runs in a new “clean room” environment every time it’s executed; even if the tool messes up the container, the next time it’s run, it’ll have a brand new, clean container to run in.</p>
+
+<h2 id="npm-scripts">NPM Scripts</h2>
+
+<p>Since I apparently only hack on my Lilypond files every few years, I’m not expecting myself to remember this command. Also, there’s this annoying hardcoded <code>C:\Work\Hymnals</code> path that I want to get rid of. Time for <code>package.json</code>!</p>
+
+<figure class="highlight"><pre><code class="language-json" data-lang="json"><span class="s2">&quot;scripts&quot;</span><span class="err">:</span> <span class="p">{</span>
+  <span class="nt">&quot;build&quot;</span><span class="p">:</span> <span class="s2">&quot;docker run --rm --volume=%INIT_CWD%:/app -w /app/SeniorHymnal iskaron/lilypond lilypond Hymnal.ly&quot;</span>
 <span class="p">}</span><span class="err">,</span></code></pre></figure>
 
-<p>With this in place, I can get the nice output from VSCode whenever I have an error in my pegjs file:</p>
+<p>Inside the npm script, I have access to <code>%INIT_CWD%</code>, which is a Windows-specific way of getting the current working directory. To be honest, getting the current working directory was the hardest part of this whole setup!</p>
 
-<p class="center"><a href="/assets/vscode-pegjs.png"><img src="/assets/vscode-pegjs.png" alt="" /></a></p>
+<p>Now I can just do an <code>npm run build</code> to process my Lilypond files. What’s more, I can <a href="https://marketplace.visualstudio.com/items?itemName=truefire.lilypond">edit them in VSCode</a> and bind <code>npm run build</code> as the default build command. Now I have an actual development environment for Lilypond - no separate GUI frontend necessary!</p>
 
-<p>Full source code is <a href="https://github.com/StephenCleary/json-filter-expr/blob/8a5c0fa113fce6cb065a72d93d4ff0ff79a389e5/.vscode/tasks.json">available online</a>.</p>
+<h2 id="updating-images">Updating Images</h2>
+
+<p>There’s something else I’d like to do: currently, <code>docker run</code> will pull down the latest <code>iskaron/lilypond</code> image <em>the first time it is run</em>. After that, <a href="https://github.com/moby/moby/issues/34394">it never checks for updates</a>. So I’d like to easily do a <code>docker pull</code> as well.</p>
+
+<p>Here’s a setup that checks for a new version each time it’s run:</p>
+
+<figure class="highlight"><pre><code class="language-json" data-lang="json"><span class="s2">&quot;scripts&quot;</span><span class="err">:</span> <span class="p">{</span>
+  <span class="nt">&quot;prebuild&quot;</span><span class="p">:</span> <span class="s2">&quot;docker pull iskaron/lilypond&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;build&quot;</span><span class="p">:</span> <span class="s2">&quot;docker run --rm --volume=%INIT_CWD%:/app -w /app/SeniorHymnal iskaron/lilypond lilypond Hymnal.ly&quot;</span>
+<span class="p">}</span><span class="err">,</span></code></pre></figure>
+
+<p>Perhaps this is a little too much, though. I rarely run Lilypond, but when I do, I’ll run it a lot within a few days. So I think it makes more sense to have an explicit <code>npm run pull</code> command:</p>
+
+<figure class="highlight"><pre><code class="language-json" data-lang="json"><span class="s2">&quot;scripts&quot;</span><span class="err">:</span> <span class="p">{</span>
+  <span class="nt">&quot;pull&quot;</span><span class="p">:</span> <span class="s2">&quot;docker pull iskaron/lilypond&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;build&quot;</span><span class="p">:</span> <span class="s2">&quot;docker run --rm --volume=%INIT_CWD%:/app -w /app/SeniorHymnal iskaron/lilypond lilypond Hymnal.ly&quot;</span>
+<span class="p">}</span><span class="err">,</span></code></pre></figure>
+
+<p>The disadvantage to this approach is that I can easily forget to run <code>npm run pull</code> when I’ve been away from the project a long time.</p>
+
+<h2 id="npm-scripts-for-dockerized-tools">NPM Scripts for Dockerized Tools</h2>
+
+<p>What I have so far is good, but it’s pretty tied to Lilypond specifically. I want to make my NPM scripts a bit more copy-pastable by making the Docker commands more generic. After hacking around a bit, I ended up with this:</p>
+
+<figure class="highlight"><pre><code class="language-json" data-lang="json"><span class="s2">&quot;config&quot;</span> <span class="err">:</span> <span class="p">{</span> <span class="nt">&quot;image&quot;</span> <span class="p">:</span> <span class="s2">&quot;iskaron/lilypond&quot;</span> <span class="p">}</span><span class="err">,</span>
+<span class="s2">&quot;scripts&quot;</span><span class="err">:</span> <span class="p">{</span>
+  <span class="nt">&quot;pull&quot;</span><span class="p">:</span> <span class="s2">&quot;docker pull %npm_package_config_image%&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;docker-run&quot;</span><span class="p">:</span> <span class="s2">&quot;docker run --rm -v %INIT_CWD%:/app -w /app %npm_package_config_image%&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;lilypond&quot;</span><span class="p">:</span> <span class="s2">&quot;npm run docker-run lilypond&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;build&quot;</span><span class="p">:</span> <span class="s2">&quot;npm run lilypond -- SeniorHymnal/Hymnal.ly&quot;</span>
+<span class="p">}</span><span class="err">,</span></code></pre></figure>
+
+<p>Now I have a single <code>config</code> value that will be different for different <code>project.json</code> files. I can run <code>npm run pull</code> to update the latest Dockerized tool for this project, and I can run <code>npm run build</code> to execute that Dockerized tool. The <code>pull</code> and <code>docker-run</code> scripts can work with any Dockerized tool and can be copy-pased long with <code>config</code> from one project to the next. <code>docker-run</code> in particular has all the “magic” that Docker needs to run a tool in a throwaway container.</p>
+
+<p>If anyone has any recommendations to make this even better, I’m all ears!</p>
+
+<!--However, this approach does assume only one Dockerized tool per `project.json`. It's possible to override the `config` when calling one script from another, but that gets verbose pretty quickly. Well, none of my current projects need more than a single Dockerized tool, so I'll cross that bridge when I come to it.-->
+
+<p>The nice thing about using Docker from <code>project.json</code> is that my dev machine now only has a couple of common requirements (Docker and Node), which it should get from Boxstarter. That’s all it needs to be capable of building any Lilypond script project. No more tool installs!</p>
+
+<h2 id="next-target">Next Target</h2>
+
+<p>So, I never actually hacked on any of my Lilypond files; I just spent a bunch of time doing this instead. But now it’s done and I’ll never have to set up another machine with Lilypond (or its GUI wrapper) ever again.</p>
+
+<p>The next logical target for Dockerized tooling is this blog. It currently uses Jekyll with Pygments. That means Ruby <em>and</em> Python. Currently, to build this blog you have to <a href="https://github.com/StephenCleary/blog-stephencleary-dotcom/tree/3419602d09b161910bb31a2349dc80bc794bacd1#to-build">first build a Rube Goldberg machine</a> with a portable (self-contained) Ruby + Jekyll and a local (impacting your dev environment) Python + setuptools + pygments. It’s a mess of tooling, and it’s the next thing on my list to Dockerize!</p>
 
   </article>
     
@@ -292,8 +342,8 @@ code {
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2018/05/roslyn-unit-testing.html" title="Unit Testing with Roslyn">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2018/05/docker-as-a-tool-provider.html" title="Docker as a Tool Provider">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2018/05/vscode-for-pegjs.html" title="Using VSCode with PEGJS">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="disqus_thread"></div>
@@ -432,9 +482,9 @@ code {
 <!-- Disqus variables -->
 <script type="text/javascript">
     var disqus_shortname = 'stephencleary';
-    var disqus_identifier = "/2018/05/vscode-for-pegjs";
-    var disqus_title = "Using VSCode with PEGJS";
-    var disqus_url = "https://blog.stephencleary.com/2018/05/vscode-for-pegjs.html";
+    var disqus_identifier = "/2018/05/docker-as-a-tool-provider";
+    var disqus_title = "Docker as a Tool Provider";
+    var disqus_url = "https://blog.stephencleary.com/2018/05/docker-as-a-tool-provider.html";
 </script>
 
 <!-- Disqus comment counter -->
