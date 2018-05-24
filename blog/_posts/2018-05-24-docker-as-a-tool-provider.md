@@ -105,7 +105,7 @@ What I have so far is good, but it's pretty tied to Lilypond specifically. I wan
 "scripts": {
   "pull": "docker pull %npm_package_config_image%",
   "docker-run": "docker run --rm -v %INIT_CWD%:/app -w /app %npm_package_config_image%",
-  "lilypond": "npm run docker-run lilypond",
+  "lilypond": "npm run docker-run -- lilypond",
   "build": "npm run lilypond -- SeniorHymnal/Hymnal.ly"
 },
 {% endhighlight %}
