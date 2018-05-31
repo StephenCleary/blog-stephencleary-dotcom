@@ -8,6 +8,49 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>Microsoft.Extensions.Logging, Part 1: Introduction</title>
+        <description>&lt;h2 id=&quot;microsoftextensions&quot;&gt;Microsoft.Extensions.*&lt;/h2&gt;
+
+&lt;p&gt;As part of ASP.NET Core, Microsoft has released several libraries under the &lt;code&gt;Microsoft.Extensions&lt;/code&gt; banner. I’m not entirely sure why “extensions” is in the name, but these are generic libraries that are useful in all kinds of scenarios. They were developed as part of ASP.NET Core, but can be used in any kind of application.&lt;/p&gt;
+
+&lt;p&gt;For example, Azure Functions has first-class support for &lt;code&gt;Microsoft.Extensions.Logging&lt;/code&gt;; it will happily pass an &lt;code&gt;ILogger&lt;/code&gt; to your function, which you can then use for writing logs. I’ve also found the &lt;code&gt;Microsoft.Extensions&lt;/code&gt; abstractions useful for Console apps as well as shared code that may or may not run on .NET Core.&lt;/p&gt;
+
+&lt;h2 id=&quot;microsoftextensionslogging&quot;&gt;Microsoft.Extensions.Logging&lt;/h2&gt;
+
+&lt;p&gt;Recently, I found myself in a situation where I needed to work closely with &lt;code&gt;Microsoft.Extensions.Logging&lt;/code&gt;, both in a consuming and producing scenario. The documentation is still a bit lacking - particularly for implementing custom providers - so I figured I’d write up my lessons learned on this blog.&lt;/p&gt;
+
+&lt;h2 id=&quot;logging-for-libraries&quot;&gt;Logging for Libraries&lt;/h2&gt;
+
+&lt;p&gt;I write a &lt;em&gt;lot&lt;/em&gt; of libraries. “How should I log from my library?” is one question that the .NET ecosystem doesn’t have a good answer for. “How should I log from my application?” has about a hundred answers, but what about libraries?&lt;/p&gt;
+
+&lt;p&gt;There are three general approaches to library logging:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Use a specific logger.&lt;/li&gt;
+  &lt;li&gt;Use a common logging abstraction.&lt;/li&gt;
+  &lt;li&gt;Use a custom logging abstraction.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Option (1) isn’t great for most libraries. The problem is that a library author doesn’t want to push their preferred logger onto all their consumers. There are scenarios where you can get away with it - e.g., if logging is purely for diagnostic information and you’re using something very low-level like ETW, then that may work. But most of the time, tying your library to a specific logging framework will only limit your adoption.&lt;/p&gt;
+
+&lt;p&gt;Option (2) is to use a common logging abstraction like &lt;code&gt;Microsoft.Extensions.Logging.Abstractions&lt;/code&gt; or &lt;code&gt;Common.Logging&lt;/code&gt;. The advantage here is that you can work with abstract interfaces (e.g., &lt;code&gt;Microsoft.Extensions.Logging.ILogger&lt;/code&gt;), and the consumer of your library can plug in a common implementation for their logging framework of choice. The disadvantage is with versioning: over time, the abstraction itself will version (e.g., &lt;code&gt;Microsoft.Extensions.Logging.Abstractions&lt;/code&gt; is already at &lt;code&gt;2.1.0&lt;/code&gt;), and this may cause problems as multiple libraries using multiple versions of the common logging abstraction all need to coexist in a single application.&lt;/p&gt;
+
+&lt;p&gt;Option (3) is to use a custom logging abstraction defined by your own code. In this case, you have your own &lt;code&gt;IMyLibraryLogger&lt;/code&gt; that your consumers need to implement. The disadvantage to this approach is that since the abstraction is custom, there are no libraries of common implementations that your consumers can just “plug in”. You also run the risk of not supporting the abstractions needed by your consumers; e.g., consumers will not be pleased if your library only supports text logging rather than semantic logging, or if it does not support &lt;code&gt;async&lt;/code&gt;-compatible scopes. Logging abstractions are hard to get right, and doing this for each library you write just gets annoying. There is a project called &lt;a href=&quot;https://github.com/damianh/LibLog&quot;&gt;LibLog&lt;/a&gt; that attempts to provide a common way of defining custom logging abstractions, but it doesn’t seem to have gotten a lot of traction yet.&lt;/p&gt;
+
+&lt;p&gt;As of today, none of these options is really strong. Option (3) is sufficient for &lt;em&gt;frameworks&lt;/em&gt; (where users are willing to do extra work to get good logs), but there doesn’t seem to be a clear winner for your run-of-the-mill small libraries.&lt;/p&gt;
+
+&lt;h2 id=&quot;back-to-microsoftextensionslogging&quot;&gt;Back to Microsoft.Extensions.Logging&lt;/h2&gt;
+
+&lt;p&gt;This blog series is diving into the details and design of &lt;code&gt;Microsoft.Extensions.Logging&lt;/code&gt;. I think it’s a great choice for applications; whether it should be used in libraries is still up for debate. I have not (yet) adopted &lt;code&gt;Microsoft.Extensions.Logging&lt;/code&gt; in my own libraries, but it is my logging abstraction of choice when writing applications - even those that have absolutely nothing to do with ASP.NET Core.&lt;/p&gt;
+
+&lt;p&gt;Next time, we’ll dive into the main types and terminology used by &lt;code&gt;Microsoft.Extensions.Logging&lt;/code&gt;.&lt;/p&gt;
+</description>
+        <pubDate>Thu, 31 May 2018 00:00:00 +0000</pubDate>
+        <link>https://blog.stephencleary.com/2018/05/microsoft-extensions-logging-part-1-introduction.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2018/05/microsoft-extensions-logging-part-1-introduction.html</guid>
+      </item>
+    
+      <item>
         <title>Docker as a Tool Provider</title>
         <description>&lt;p&gt;Docker is everywhere these days! Even with serverless technology growing more mature, Docker is still a giant in the cloud world. Everyone by now should be familiar with Docker as a way of scaling out your servers using containers.&lt;/p&gt;
 
@@ -444,25 +487,6 @@
         <pubDate>Thu, 29 Jun 2017 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2017/06/happy-birthday-iphone.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2017/06/happy-birthday-iphone.html</guid>
-      </item>
-    
-      <item>
-        <title>Async JavaScript</title>
-        <description>&lt;p&gt;The &lt;code&gt;async&lt;/code&gt; and &lt;code&gt;await&lt;/code&gt; keywords first hit the scene way back in 2010, when it was introduced in F#. C# and VB followed fairly quickly in 2012, with Python and TypeScript adopting them in 2015.&lt;/p&gt;
-
-&lt;p&gt;Tuesday or Wednesday next week (the 27th and 28th of June), &lt;code&gt;async&lt;/code&gt; should officially become a part of JavaScript!&lt;/p&gt;
-
-&lt;p&gt;That is, the &lt;a href=&quot;https://github.com/tc39/ecmascript-asyncawait&quot;&gt;&lt;code&gt;async&lt;/code&gt; proposal&lt;/a&gt; &lt;a href=&quot;https://github.com/tc39/proposals/blob/master/finished-proposals.md&quot;&gt;has reached&lt;/a&gt; &lt;a href=&quot;https://tc39.github.io/process-document/&quot;&gt;Stage 4&lt;/a&gt;, is included in the &lt;a href=&quot;https://tc39.github.io/ecma262/2017/&quot;&gt;ES2017 language specification&lt;/a&gt;, and is expected to be ratified &lt;a href=&quot;https://www.ecma-international.org/memento/Ecma_meeting_calendar.htm&quot;&gt;next week&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;Of course, JavaScript being what it is, lots of people have been &lt;a href=&quot;https://babeljs.io/docs/plugins/transform-async-to-generator/&quot;&gt;using it for some time already&lt;/a&gt;. Chrome even has &lt;a href=&quot;https://developers.google.com/web/fundamentals/getting-started/primers/async-functions&quot;&gt;native support&lt;/a&gt;!&lt;/p&gt;
-
-&lt;p&gt;JavaScript is perhaps the most widely-used language today, and this marks a big step forward in the &lt;code&gt;async&lt;/code&gt; invasion. Stay tuned on this blog for JavaScript-related &lt;code&gt;async&lt;/code&gt; tips in addition to the regular .NET ones! :)&lt;/p&gt;
-
-&lt;p&gt;Way to go, &lt;code&gt;async&lt;/code&gt;!&lt;/p&gt;
-</description>
-        <pubDate>Thu, 22 Jun 2017 00:00:00 +0000</pubDate>
-        <link>https://blog.stephencleary.com/2017/06/async-javascript.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2017/06/async-javascript.html</guid>
       </item>
     
   </channel>
