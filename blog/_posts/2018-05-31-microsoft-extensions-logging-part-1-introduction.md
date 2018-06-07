@@ -34,6 +34,12 @@ Option (3) is to use a custom logging abstraction defined by your own code. In t
 
 As of today, none of these options is really strong. Option (3) is sufficient for *frameworks* (where users are willing to do extra work to get good logs), but there doesn't seem to be a clear winner for your run-of-the-mill small libraries.
 
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+Steven van Deursen, the creator of Simple Injector, has [gone on record](https://stackoverflow.com/a/41244169/263693){:.alert-link} saying the whole `Microsoft.Extensions.Logging` design is a violation of the Dependency Injection Principle, with the `ILogger<T>` specifically a violation of the Interface Segregation Principle. He strongly recommends option (3), but I have to counter that it's hard for every library author in the world to get right. The [example solution](https://stackoverflow.com/a/5646876/263693) he links to, for example, only supports text logging, not structured logging. That said, Steven is an incredibly smart person, and you should read his arguments carefully and understand them.
+</div>
+
 ## Back to Microsoft.Extensions.Logging
 
 This blog series is diving into the details and design of `Microsoft.Extensions.Logging`. I think it's a great choice for applications; whether it should be used in libraries is still up for debate. I have not (yet) adopted `Microsoft.Extensions.Logging` in my own libraries, but it is my logging abstraction of choice when writing applications - even those that have absolutely nothing to do with ASP.NET Core.
