@@ -9,7 +9,7 @@
   "scripts": {
     "pull": "docker pull %npm_package_config_image%",
 
-    "jekyll:build": "docker run --rm --volume=%INIT_CWD%:/srv/jekyll -w /srv/jekyll/blog %npm_package_config_image% jekyll build --incremental",
+    "jekyll:build": "docker run --rm --volume=%INIT_CWD%:/srv/jekyll -w /srv/jekyll/blog %npm_package_config_image% jekyll build",
     "build:www": "npm run jekyll:build -- --config _config.www.yml",
     "build:blog": "npm run jekyll:build -- --config _config.blog.yml",
     "build": "npm run build:www && npm run build:blog",
@@ -17,12 +17,7 @@
     "jekyll:serve": "docker run -it --rm --volume=%INIT_CWD%:/srv/jekyll -w /srv/jekyll/blog -p 127.0.0.1:%npm_package_config_port%:%npm_package_config_port% %npm_package_config_image% jekyll serve --incremental --livereload --watch",
     "serve:www": "start npm run jekyll:serve --website:port=4001 -- --config _config.www.yml,_config.www.local.yml",
     "serve:blog": "start npm run jekyll:serve -- --config _config.blog.yml,_config.blog.local.yml",
-    "serve": "npm run serve:blog && npm run serve:www",
-
-    "jekyll:publish": "docker run --rm --volume=%INIT_CWD%:/srv/jekyll -w /srv/jekyll/blog %npm_package_config_image% jekyll build",
-    "publish:www": "npm run jekyll:publish -- --config _config.www.yml",
-    "publish:blog": "npm run jekyll:publish -- --config _config.blog.yml",
-    "publish": "npm run publish:www && npm run publish:blog"
+    "serve": "npm run serve:blog && npm run serve:www"
   },
   "repository": {
     "type": "git",
