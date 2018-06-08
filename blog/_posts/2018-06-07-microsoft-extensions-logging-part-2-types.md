@@ -6,7 +6,7 @@ seriesTitle: "Types"
 description: "ILoggerFactory, ILoggerProvider, and ILogger."
 ---
 
-## Factory Provider Repository Creators
+## Factory Provider Repository Builders
 
 Yeah, naming is hard.
 
