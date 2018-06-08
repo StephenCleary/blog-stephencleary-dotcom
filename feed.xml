@@ -8,6 +8,104 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>Microsoft.Extensions.Logging, Part 2: Types</title>
+        <description>&lt;h2 id=&quot;factory-provider-repository-builders&quot;&gt;Factory Provider Repository Builders&lt;/h2&gt;
+
+&lt;p&gt;Yeah, naming is hard.&lt;/p&gt;
+
+&lt;p&gt;In &lt;code&gt;Microsoft.Extensions.Logging&lt;/code&gt;, there are two types in particular that I kept conflating: &lt;code&gt;ILoggerProvider&lt;/code&gt; and &lt;code&gt;ILoggerFactory&lt;/code&gt;. Even though they both can create instances of &lt;code&gt;ILogger&lt;/code&gt;, they are actually completely different!&lt;/p&gt;
+
+&lt;p&gt;In this post, I’m going to cover the main types of &lt;code&gt;Microsoft.Extensions.Logging&lt;/code&gt; and describe their intended use.&lt;/p&gt;
+
+&lt;h2 id=&quot;loglevel&quot;&gt;LogLevel&lt;/h2&gt;
+
+&lt;p&gt;Like all other logging frameworks, &lt;code&gt;Microsoft.Extensions.Logging&lt;/code&gt; defines a sequence of levels for its logs. In increasing order of severity, they are &lt;code&gt;Trace&lt;/code&gt;, &lt;code&gt;Debug&lt;/code&gt;, &lt;code&gt;Information&lt;/code&gt;, &lt;code&gt;Warning&lt;/code&gt;, &lt;code&gt;Error&lt;/code&gt;, and &lt;code&gt;Critical&lt;/code&gt;. The &lt;a href=&quot;https://docs.microsoft.com/en-us/dotnet/api/microsoft.extensions.logging.loglevel&quot;&gt;meanings of these values&lt;/a&gt; are well documented, along with &lt;a href=&quot;https://docs.microsoft.com/en-us/aspnet/core/fundamentals/logging/#log-level&quot;&gt;advice on when to use each&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;There is another “log level” which is not really a log level: &lt;code&gt;None&lt;/code&gt;. This is technically part of the enumeration, but is used during &lt;em&gt;configuration&lt;/em&gt; to indicate that no logs for that part of the system should be logged. The &lt;code&gt;None&lt;/code&gt; value is not used during logging.&lt;/p&gt;
+
+&lt;h2 id=&quot;ilogger&quot;&gt;ILogger&lt;/h2&gt;
+
+&lt;p&gt;&lt;code&gt;ILogger&lt;/code&gt; is a logger that your code can use to write log messages to. There are three core methods: &lt;code&gt;IsEnabled&lt;/code&gt; tests whether a log level is enabled on that logger; &lt;code&gt;Log&lt;/code&gt; is the core logging method that is used to write log messages; and &lt;code&gt;BeginScope&lt;/code&gt; defines a logging scope.&lt;/p&gt;
+
+&lt;p&gt;We’ll cover logging scopes later in this series. That leaves &lt;code&gt;IsEnabled&lt;/code&gt; and &lt;code&gt;Log&lt;/code&gt;, which are the core logging methods. There’s a bunch of logging extension methods that build on that core; the common methods like &lt;code&gt;LogInformation&lt;/code&gt; first call &lt;code&gt;IsEnabled&lt;/code&gt; and then &lt;code&gt;Log&lt;/code&gt;, with the appropriate arguments.&lt;/p&gt;
+
+&lt;p&gt;Internally, an &lt;code&gt;ILogger&lt;/code&gt; has a “name” (also called a “category”). The idea is that each &lt;code&gt;ILogger&lt;/code&gt; instance is used by a different component of the application.&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;ILogger&lt;/code&gt; is a base interface that provides the core logging functionality, but it is seldom used directly. There are some exceptions (e.g., Azure Functions will pass you an &lt;code&gt;ILogger&lt;/code&gt;), but most of the time your code will log to an &lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;iloggerlttgt&quot;&gt;ILogger&amp;lt;T&amp;gt;&lt;/h2&gt;
+
+&lt;p&gt;&lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt; is a logger that is named after a type &lt;code&gt;T&lt;/code&gt;. All logs sent to an &lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt; (with the default implementation) will have a logger name/category of &lt;code&gt;typeof(T).FullName&lt;/code&gt;. &lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt; is derived from &lt;code&gt;ILogger&lt;/code&gt; and adds no new functionality.&lt;/p&gt;
+
+&lt;p&gt;If you’re using dependency injection, an instance of &lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt; is usually injected into your type &lt;code&gt;T&lt;/code&gt;. So, each time you have a constructor that takes an &lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt;, you are defining a “component” for your application.&lt;/p&gt;
+
+&lt;p&gt;Personally, I’m not a &lt;em&gt;huge&lt;/em&gt; fan of this style of getting a logger, but it works. In my applications, the concept of a “component” seldomly has a 1:1 relationship with “types that log”. It tends to work out best for ASP.NET Controllers, but less so for utility types used by services (where I usually want the utility type to use the service’s component name). Of course, you can just pass an &lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt; (or &lt;code&gt;ILogger&lt;/code&gt;) to the utility type, and that’s the way this is generally resolved.&lt;/p&gt;
+
+&lt;p&gt;So, here’s a question that you may have: if &lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt; provides no benefit over &lt;code&gt;ILogger&lt;/code&gt; (other than being named after a type &lt;code&gt;T&lt;/code&gt;), why does this type exist at all? The answer is logging extension methods, which we’ll look at in more detail further in this series.&lt;/p&gt;
+
+&lt;h2 id=&quot;iloggerprovider&quot;&gt;ILoggerProvider&lt;/h2&gt;
+
+&lt;p&gt;The logger provider is a type that (drum roll…) provides &lt;code&gt;ILogger&lt;/code&gt; instances. But not just that; it provides &lt;code&gt;ILogger&lt;/code&gt; instances &lt;em&gt;for a specific logging system&lt;/em&gt;. Microsoft publishes &lt;a href=&quot;https://github.com/aspnet/Logging/tree/dev/src&quot;&gt;a few logger providers&lt;/a&gt; that support writing to &lt;a href=&quot;https://www.nuget.org/packages/Microsoft.Extensions.Logging.Debug/&quot;&gt;debugger output&lt;/a&gt;, the &lt;a href=&quot;https://www.nuget.org/packages/Microsoft.Extensions.Logging.Console/&quot;&gt;Console&lt;/a&gt;, the &lt;a href=&quot;https://www.nuget.org/packages/Microsoft.Extensions.Logging.EventLog/&quot;&gt;Windows Event Log&lt;/a&gt;, &lt;a href=&quot;https://www.nuget.org/packages/Microsoft.Extensions.Logging.EventSource/&quot;&gt;Event Tracing for Windows (ETW)&lt;/a&gt;, and others.&lt;/p&gt;
+
+&lt;p&gt;There are plenty of third-party logging providers, too. The primary purpose of a logging provider is to take log events and forward them to some logging backend. So there are logging providers for all kinds of logging backends: Serilog, Seq, log4net, etc. This allows you to write code that is independent of a logging framework (logging to an &lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt;), and the implementation at runtime hits a specific backend (or multiple ones!).&lt;/p&gt;
+
+&lt;p&gt;You can also create your own implementations of &lt;code&gt;ILoggerProvider&lt;/code&gt;. In my &lt;a href=&quot;https://github.com/StephenClearyApps/DotNetApis&quot;&gt;DotNetApis project&lt;/a&gt;, I have one provider that &lt;a href=&quot;https://github.com/StephenClearyApps/DotNetApis/blob/796f146e3027a0c470717befe33457c3dfeab50c/service/DotNetApis.Common/InMemoryLoggerProvider.cs&quot;&gt;stores logs in memory&lt;/a&gt; so they can be returned to the frontend as part of the HTTP response, another provider that &lt;a href=&quot;https://github.com/StephenClearyApps/DotNetApis/blob/796f146e3027a0c470717befe33457c3dfeab50c/service/DotNetApis.Common/JsonLoggerProvider.cs&quot;&gt;streams JSON logs to a GZIP-compressed Azure blob&lt;/a&gt;, and several others.&lt;/p&gt;
+
+&lt;p&gt;Creating reusable implementations of &lt;code&gt;ILoggerProvider&lt;/code&gt; is perhaps the most underdocumented part of &lt;code&gt;Microsoft.Extensions.Logging&lt;/code&gt;. The providers in my DotNetApis project at this point are incomplete; there is no way I would put them in a NuGet package or anything. A proper, reusable &lt;code&gt;ILoggerProvider&lt;/code&gt; is more involved; later in this series I’ll look specifically at implementing &lt;code&gt;ILoggerProvider&lt;/code&gt; properly, and cover all the necessary details.&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;ILoggerProvider&lt;/code&gt; is a way to extend &lt;code&gt;Microsoft.Extensions.Logging&lt;/code&gt; by &lt;em&gt;implementation&lt;/em&gt;. However, you don’t ever want to &lt;em&gt;consume&lt;/em&gt; a logger provider directly. Even though &lt;code&gt;ILoggerProvider.CreateLogger&lt;/code&gt; creates &lt;code&gt;ILogger&lt;/code&gt; instances, you never actually want to call that method to &lt;em&gt;get&lt;/em&gt; a logger. To get loggers, you want to use dependency injection or &lt;code&gt;ILoggerFactory&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;iloggerfactory&quot;&gt;ILoggerFactory&lt;/h2&gt;
+
+&lt;p&gt;&lt;code&gt;ILoggerFactory&lt;/code&gt; is the mastermind that brings together all the types above. Conceptually, an &lt;code&gt;ILoggerFactory&lt;/code&gt; has a collection of &lt;code&gt;ILoggerProvider&lt;/code&gt;s, and the &lt;code&gt;ILoggerFactory&lt;/code&gt; creates &lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt; instances for the application.&lt;/p&gt;
+
+&lt;h3 id=&quot;registering-iloggerproviders-with-iloggerfactory&quot;&gt;Registering ILoggerProviders with ILoggerFactory&lt;/h3&gt;
+
+&lt;p&gt;This is where the official documentation starts to fall short. In the ASP.NET Core world, ASP.NET Core itself takes care of creating an &lt;code&gt;ILoggerFactory&lt;/code&gt; instance, which it then passes to your application to configure. Your application can then call &lt;code&gt;AddProvider&lt;/code&gt; or a higher-level provider-specific method such as &lt;code&gt;AddDebug&lt;/code&gt;, &lt;code&gt;AddConsole&lt;/code&gt;, etc.&lt;/p&gt;
+
+&lt;p&gt;Fortunately, even without ASP.NET Core, it’s not too difficult to do this yourself using the &lt;code&gt;LoggerFactory&lt;/code&gt; type in &lt;code&gt;Microsoft.Extensions.Logging&lt;/code&gt;:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;loggerFactory&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;LoggerFactory&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AddDebug&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AddConsole&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h3 id=&quot;getting-iloggerlttgt-instances-from-iloggerfactory&quot;&gt;Getting ILogger&amp;lt;T&amp;gt; Instances from ILoggerFactory&lt;/h3&gt;
+
+&lt;p&gt;In the ASP.NET Core world, the &lt;code&gt;ILoggerFactory&lt;/code&gt; is included in your Dependency Injection container, and it already knows how to get &lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt; values out of it, and everything is magical rainbows.&lt;/p&gt;
+
+&lt;p&gt;When you’re outside of the ASP.NET Core world, you can still use &lt;code&gt;ILoggerFactory&lt;/code&gt; in this way. You just have to:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Provide the &lt;code&gt;ILoggerFactory&lt;/code&gt; instance to your DI container.&lt;/li&gt;
+  &lt;li&gt;Configure your DI container to resolve &lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt; instances by calling &lt;code&gt;ILoggerFactory.GetLogger&amp;lt;T&amp;gt;()&lt;/code&gt;.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;The exact instructions on how to do this depends on your DI container of choice.&lt;/p&gt;
+
+&lt;p&gt;Of course, there’s another option, too. You can just provide the &lt;code&gt;ILoggerFactory&lt;/code&gt; instance, and your consuming types can take the &lt;code&gt;ILoggerFactory&lt;/code&gt; and create their own &lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;what-are-the-iloggerfactorys-iloggers&quot;&gt;What Are the ILoggerFactory’s ILoggers?&lt;/h2&gt;
+
+&lt;p&gt;Before closing out this post, I just want to point out that the &lt;code&gt;ILogger&lt;/code&gt; instances provided by &lt;code&gt;ILoggerFactory&lt;/code&gt; are &lt;em&gt;not&lt;/em&gt; the same as the &lt;code&gt;ILogger&lt;/code&gt; instances provided by &lt;code&gt;ILoggerProvider&lt;/code&gt;. An &lt;code&gt;ILoggerProvider&lt;/code&gt; &lt;code&gt;ILogger&lt;/code&gt; is a logger that logs &lt;em&gt;to that specific provider&lt;/em&gt;. An &lt;code&gt;ILoggerFactory&lt;/code&gt; &lt;code&gt;ILogger&lt;/code&gt; is a logger that logs &lt;em&gt;to all registered providers&lt;/em&gt;.&lt;/p&gt;
+
+&lt;p&gt;In other words, the &lt;code&gt;ILoggerFactory&lt;/code&gt; &lt;code&gt;ILogger&lt;/code&gt;/&lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt; loggers are &lt;em&gt;composite&lt;/em&gt; loggers; they forward log messages to each provider’s &lt;code&gt;ILogger&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h1 id=&quot;review&quot;&gt;Review&lt;/h1&gt;
+
+&lt;p&gt;This post has described the various logging types from the component’s perspective (&lt;code&gt;ILogger&lt;/code&gt;) and working out towards the application’s perspective (&lt;code&gt;ILoggerFactory&lt;/code&gt;). Let’s briefly review, going the other way this time.&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;ILoggerFactory&lt;/code&gt; is a collection of &lt;code&gt;ILoggerProvider&lt;/code&gt;s that creates composite &lt;code&gt;ILogger&lt;/code&gt;/&lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt; loggers.&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;ILoggerProvider&lt;/code&gt; ia a provider for a &lt;em&gt;specific&lt;/em&gt; logging system. It provides &lt;code&gt;ILogger&lt;/code&gt; loggers to the &lt;code&gt;ILoggerFactory&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Each component gets an &lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt; (or &lt;code&gt;ILogger&lt;/code&gt;) from the &lt;code&gt;ILoggerFactory&lt;/code&gt; that it should use for logging.&lt;/p&gt;
+</description>
+        <pubDate>Thu, 07 Jun 2018 00:00:00 +0000</pubDate>
+        <link>https://blog.stephencleary.com/2018/06/microsoft-extensions-logging-part-2-types.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2018/06/microsoft-extensions-logging-part-2-types.html</guid>
+      </item>
+    
+      <item>
         <title>Microsoft.Extensions.Logging, Part 1: Introduction</title>
         <description>&lt;h2 id=&quot;microsoftextensions&quot;&gt;Microsoft.Extensions.*&lt;/h2&gt;
 
@@ -38,6 +136,12 @@
 &lt;p&gt;Option (3) is to use a custom logging abstraction defined by your own code. In this case, you have your own &lt;code&gt;IMyLibraryLogger&lt;/code&gt; that your consumers need to implement. The disadvantage to this approach is that since the abstraction is custom, there are no libraries of common implementations that your consumers can just “plug in”. You also run the risk of not supporting the abstractions needed by your consumers; e.g., consumers will not be pleased if your library only supports text logging rather than semantic logging, or if it does not support &lt;code&gt;async&lt;/code&gt;-compatible scopes. Logging abstractions are hard to get right, and doing this for each library you write just gets annoying. There is a project called &lt;a href=&quot;https://github.com/damianh/LibLog&quot;&gt;LibLog&lt;/a&gt; that attempts to provide a common way of defining custom logging abstractions, but it doesn’t seem to have gotten a lot of traction yet.&lt;/p&gt;
 
 &lt;p&gt;As of today, none of these options is really strong. Option (3) is sufficient for &lt;em&gt;frameworks&lt;/em&gt; (where users are willing to do extra work to get good logs), but there doesn’t seem to be a clear winner for your run-of-the-mill small libraries.&lt;/p&gt;
+
+&lt;div class=&quot;alert alert-info&quot;&gt;
+  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
+
+  &lt;p&gt;Steven van Deursen, the creator of Simple Injector, has &lt;a href=&quot;https://stackoverflow.com/a/41244169/263693&quot; class=&quot;alert-link&quot;&gt;gone on record&lt;/a&gt; saying the whole &lt;code&gt;Microsoft.Extensions.Logging&lt;/code&gt; design is a violation of the Dependency Injection Principle, with the &lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt; specifically a violation of the Interface Segregation Principle. He strongly recommends option (3), but I have to counter that it’s hard for every library author in the world to get right. The &lt;a href=&quot;https://stackoverflow.com/a/5646876/263693&quot;&gt;example solution&lt;/a&gt; he links to, for example, only supports text logging, not structured logging. That said, Steven is an incredibly smart person, and you should read his arguments carefully and understand them.&lt;/p&gt;
+&lt;/div&gt;
 
 &lt;h2 id=&quot;back-to-microsoftextensionslogging&quot;&gt;Back to Microsoft.Extensions.Logging&lt;/h2&gt;
 
@@ -462,31 +566,6 @@
         <pubDate>Fri, 14 Jul 2017 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2017/07/announcing-asynctime.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2017/07/announcing-asynctime.html</guid>
-      </item>
-    
-      <item>
-        <title>Happy birthday, iPhone!</title>
-        <description>&lt;p&gt;Today marks the 10th birthday of the iPhone! My, how much has changed in a single decade… This blog deals with all things &lt;code&gt;async&lt;/code&gt;, and the iPhone has been an important part of &lt;code&gt;async&lt;/code&gt; adoption.&lt;/p&gt;
-
-&lt;h2 id=&quot;what-does-the-iphone-have-to-do-with-async&quot;&gt;What does the iPhone have to do with async?&lt;/h2&gt;
-
-&lt;p&gt;Glad you asked!&lt;/p&gt;
-
-&lt;p&gt;The adoption of &lt;code&gt;async&lt;/code&gt; has accelerated considerably over the last few years, with no seeming end in sight. I’ve discussed this phenomenon several times in a couple of my talks, and I’m recording a more permanent discussion of it that will be released shortly.&lt;/p&gt;
-
-&lt;p&gt;To put it simply, &lt;code&gt;async&lt;/code&gt; is all about freeing up threads. This results in two major benefits: on the server side, &lt;code&gt;async&lt;/code&gt; frees up request threads so that the server can scale further (and faster) while requiring fewer resources; on the client side, &lt;code&gt;async&lt;/code&gt; frees up the UI thread so that it can remain responsive to the user.&lt;/p&gt;
-
-&lt;p&gt;Finally, there have been two broad changes in the types of software being written. The first is cloud computing, which gives direct financial benefits to servers that require fewer resources - an ideal scenario for &lt;code&gt;async&lt;/code&gt; adoption.&lt;/p&gt;
-
-&lt;p&gt;The second is mobile applications. Unlike traditional desktop apps, mobile apps &lt;em&gt;must&lt;/em&gt; be responsive to the user - an ideal scenario for &lt;code&gt;async&lt;/code&gt; adoption.&lt;/p&gt;
-
-&lt;p&gt;These two movements - cloud computing and mobile - have encouraged &lt;code&gt;async&lt;/code&gt; adoption to move at a faster rate than it could have otherwise.&lt;/p&gt;
-
-&lt;p&gt;So, happy birthday, iPhone, and thanks for all you’ve done!&lt;/p&gt;
-</description>
-        <pubDate>Thu, 29 Jun 2017 00:00:00 +0000</pubDate>
-        <link>https://blog.stephencleary.com/2017/06/happy-birthday-iphone.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2017/06/happy-birthday-iphone.html</guid>
       </item>
     
   </channel>

@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Microsoft.Extensions.Logging, Part 1: Introduction</title>
+    <title>Microsoft.Extensions.Logging, Part 2: Types</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Microsoft.Extensions.Logging: It's not just for ASP.NET Core." />
-    <link rel="canonical" href="https://blog.stephencleary.com/2018/05/microsoft-extensions-logging-part-1-introduction.html" />
+    <meta name="description" content="ILoggerFactory, ILoggerProvider, and ILogger." />
+    <link rel="canonical" href="https://blog.stephencleary.com/2018/06/microsoft-extensions-logging-part-2-types.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -220,67 +220,116 @@ code {
 
   <header>
       <div class="page-header">
-          <h1>Microsoft.Extensions.Logging, Part 1: Introduction</h1>
-          <small><time datetime="2018-05-31">May 31, 2018</time> &bull; <a data-disqus-identifier="/2018/05/microsoft-extensions-logging-part-1-introduction" href="#disqus_thread">Comments</a></small>
+          <h1>Microsoft.Extensions.Logging, Part 2: Types</h1>
+          <small><time datetime="2018-06-07">Jun 7, 2018</time> &bull; <a data-disqus-identifier="/2018/06/microsoft-extensions-logging-part-2-types" href="#disqus_thread">Comments</a></small>
       </div>
   </header>
 
   <article>
-  <h2 id="microsoftextensions">Microsoft.Extensions.*</h2>
+  <h2 id="factory-provider-repository-builders">Factory Provider Repository Builders</h2>
 
-<p>As part of ASP.NET Core, Microsoft has released several libraries under the <code>Microsoft.Extensions</code> banner. I’m not entirely sure why “extensions” is in the name, but these are generic libraries that are useful in all kinds of scenarios. They were developed as part of ASP.NET Core, but can be used in any kind of application.</p>
+<p>Yeah, naming is hard.</p>
 
-<p>For example, Azure Functions has first-class support for <code>Microsoft.Extensions.Logging</code>; it will happily pass an <code>ILogger</code> to your function, which you can then use for writing logs. I’ve also found the <code>Microsoft.Extensions</code> abstractions useful for Console apps as well as shared code that may or may not run on .NET Core.</p>
+<p>In <code>Microsoft.Extensions.Logging</code>, there are two types in particular that I kept conflating: <code>ILoggerProvider</code> and <code>ILoggerFactory</code>. Even though they both can create instances of <code>ILogger</code>, they are actually completely different!</p>
 
-<h2 id="microsoftextensionslogging">Microsoft.Extensions.Logging</h2>
+<p>In this post, I’m going to cover the main types of <code>Microsoft.Extensions.Logging</code> and describe their intended use.</p>
 
-<p>Recently, I found myself in a situation where I needed to work closely with <code>Microsoft.Extensions.Logging</code>, both in a consuming and producing scenario. The documentation is still a bit lacking - particularly for implementing custom providers - so I figured I’d write up my lessons learned on this blog.</p>
+<h2 id="loglevel">LogLevel</h2>
 
-<h2 id="logging-for-libraries">Logging for Libraries</h2>
+<p>Like all other logging frameworks, <code>Microsoft.Extensions.Logging</code> defines a sequence of levels for its logs. In increasing order of severity, they are <code>Trace</code>, <code>Debug</code>, <code>Information</code>, <code>Warning</code>, <code>Error</code>, and <code>Critical</code>. The <a href="https://docs.microsoft.com/en-us/dotnet/api/microsoft.extensions.logging.loglevel">meanings of these values</a> are well documented, along with <a href="https://docs.microsoft.com/en-us/aspnet/core/fundamentals/logging/#log-level">advice on when to use each</a>.</p>
 
-<p>I write a <em>lot</em> of libraries. “How should I log from my library?” is one question that the .NET ecosystem doesn’t have a good answer for. “How should I log from my application?” has about a hundred answers, but what about libraries?</p>
+<p>There is another “log level” which is not really a log level: <code>None</code>. This is technically part of the enumeration, but is used during <em>configuration</em> to indicate that no logs for that part of the system should be logged. The <code>None</code> value is not used during logging.</p>
 
-<p>There are three general approaches to library logging:</p>
+<h2 id="ilogger">ILogger</h2>
+
+<p><code>ILogger</code> is a logger that your code can use to write log messages to. There are three core methods: <code>IsEnabled</code> tests whether a log level is enabled on that logger; <code>Log</code> is the core logging method that is used to write log messages; and <code>BeginScope</code> defines a logging scope.</p>
+
+<p>We’ll cover logging scopes later in this series. That leaves <code>IsEnabled</code> and <code>Log</code>, which are the core logging methods. There’s a bunch of logging extension methods that build on that core; the common methods like <code>LogInformation</code> first call <code>IsEnabled</code> and then <code>Log</code>, with the appropriate arguments.</p>
+
+<p>Internally, an <code>ILogger</code> has a “name” (also called a “category”). The idea is that each <code>ILogger</code> instance is used by a different component of the application.</p>
+
+<p><code>ILogger</code> is a base interface that provides the core logging functionality, but it is seldom used directly. There are some exceptions (e.g., Azure Functions will pass you an <code>ILogger</code>), but most of the time your code will log to an <code>ILogger&lt;T&gt;</code>.</p>
+
+<h2 id="iloggerlttgt">ILogger&lt;T&gt;</h2>
+
+<p><code>ILogger&lt;T&gt;</code> is a logger that is named after a type <code>T</code>. All logs sent to an <code>ILogger&lt;T&gt;</code> (with the default implementation) will have a logger name/category of <code>typeof(T).FullName</code>. <code>ILogger&lt;T&gt;</code> is derived from <code>ILogger</code> and adds no new functionality.</p>
+
+<p>If you’re using dependency injection, an instance of <code>ILogger&lt;T&gt;</code> is usually injected into your type <code>T</code>. So, each time you have a constructor that takes an <code>ILogger&lt;T&gt;</code>, you are defining a “component” for your application.</p>
+
+<p>Personally, I’m not a <em>huge</em> fan of this style of getting a logger, but it works. In my applications, the concept of a “component” seldomly has a 1:1 relationship with “types that log”. It tends to work out best for ASP.NET Controllers, but less so for utility types used by services (where I usually want the utility type to use the service’s component name). Of course, you can just pass an <code>ILogger&lt;T&gt;</code> (or <code>ILogger</code>) to the utility type, and that’s the way this is generally resolved.</p>
+
+<p>So, here’s a question that you may have: if <code>ILogger&lt;T&gt;</code> provides no benefit over <code>ILogger</code> (other than being named after a type <code>T</code>), why does this type exist at all? The answer is logging extension methods, which we’ll look at in more detail further in this series.</p>
+
+<h2 id="iloggerprovider">ILoggerProvider</h2>
+
+<p>The logger provider is a type that (drum roll…) provides <code>ILogger</code> instances. But not just that; it provides <code>ILogger</code> instances <em>for a specific logging system</em>. Microsoft publishes <a href="https://github.com/aspnet/Logging/tree/dev/src">a few logger providers</a> that support writing to <a href="https://www.nuget.org/packages/Microsoft.Extensions.Logging.Debug/">debugger output</a>, the <a href="https://www.nuget.org/packages/Microsoft.Extensions.Logging.Console/">Console</a>, the <a href="https://www.nuget.org/packages/Microsoft.Extensions.Logging.EventLog/">Windows Event Log</a>, <a href="https://www.nuget.org/packages/Microsoft.Extensions.Logging.EventSource/">Event Tracing for Windows (ETW)</a>, and others.</p>
+
+<p>There are plenty of third-party logging providers, too. The primary purpose of a logging provider is to take log events and forward them to some logging backend. So there are logging providers for all kinds of logging backends: Serilog, Seq, log4net, etc. This allows you to write code that is independent of a logging framework (logging to an <code>ILogger&lt;T&gt;</code>), and the implementation at runtime hits a specific backend (or multiple ones!).</p>
+
+<p>You can also create your own implementations of <code>ILoggerProvider</code>. In my <a href="https://github.com/StephenClearyApps/DotNetApis">DotNetApis project</a>, I have one provider that <a href="https://github.com/StephenClearyApps/DotNetApis/blob/796f146e3027a0c470717befe33457c3dfeab50c/service/DotNetApis.Common/InMemoryLoggerProvider.cs">stores logs in memory</a> so they can be returned to the frontend as part of the HTTP response, another provider that <a href="https://github.com/StephenClearyApps/DotNetApis/blob/796f146e3027a0c470717befe33457c3dfeab50c/service/DotNetApis.Common/JsonLoggerProvider.cs">streams JSON logs to a GZIP-compressed Azure blob</a>, and several others.</p>
+
+<p>Creating reusable implementations of <code>ILoggerProvider</code> is perhaps the most underdocumented part of <code>Microsoft.Extensions.Logging</code>. The providers in my DotNetApis project at this point are incomplete; there is no way I would put them in a NuGet package or anything. A proper, reusable <code>ILoggerProvider</code> is more involved; later in this series I’ll look specifically at implementing <code>ILoggerProvider</code> properly, and cover all the necessary details.</p>
+
+<p><code>ILoggerProvider</code> is a way to extend <code>Microsoft.Extensions.Logging</code> by <em>implementation</em>. However, you don’t ever want to <em>consume</em> a logger provider directly. Even though <code>ILoggerProvider.CreateLogger</code> creates <code>ILogger</code> instances, you never actually want to call that method to <em>get</em> a logger. To get loggers, you want to use dependency injection or <code>ILoggerFactory</code>.</p>
+
+<h2 id="iloggerfactory">ILoggerFactory</h2>
+
+<p><code>ILoggerFactory</code> is the mastermind that brings together all the types above. Conceptually, an <code>ILoggerFactory</code> has a collection of <code>ILoggerProvider</code>s, and the <code>ILoggerFactory</code> creates <code>ILogger&lt;T&gt;</code> instances for the application.</p>
+
+<h3 id="registering-iloggerproviders-with-iloggerfactory">Registering ILoggerProviders with ILoggerFactory</h3>
+
+<p>This is where the official documentation starts to fall short. In the ASP.NET Core world, ASP.NET Core itself takes care of creating an <code>ILoggerFactory</code> instance, which it then passes to your application to configure. Your application can then call <code>AddProvider</code> or a higher-level provider-specific method such as <code>AddDebug</code>, <code>AddConsole</code>, etc.</p>
+
+<p>Fortunately, even without ASP.NET Core, it’s not too difficult to do this yourself using the <code>LoggerFactory</code> type in <code>Microsoft.Extensions.Logging</code>:</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="kt">var</span> <span class="n">loggerFactory</span> <span class="p">=</span> <span class="k">new</span> <span class="n">LoggerFactory</span><span class="p">()</span>
+    <span class="p">.</span><span class="n">AddDebug</span><span class="p">()</span>
+    <span class="p">.</span><span class="n">AddConsole</span><span class="p">();</span></code></pre></figure>
+
+<h3 id="getting-iloggerlttgt-instances-from-iloggerfactory">Getting ILogger&lt;T&gt; Instances from ILoggerFactory</h3>
+
+<p>In the ASP.NET Core world, the <code>ILoggerFactory</code> is included in your Dependency Injection container, and it already knows how to get <code>ILogger&lt;T&gt;</code> values out of it, and everything is magical rainbows.</p>
+
+<p>When you’re outside of the ASP.NET Core world, you can still use <code>ILoggerFactory</code> in this way. You just have to:</p>
 
 <ol>
-  <li>Use a specific logger.</li>
-  <li>Use a common logging abstraction.</li>
-  <li>Use a custom logging abstraction.</li>
+  <li>Provide the <code>ILoggerFactory</code> instance to your DI container.</li>
+  <li>Configure your DI container to resolve <code>ILogger&lt;T&gt;</code> instances by calling <code>ILoggerFactory.GetLogger&lt;T&gt;()</code>.</li>
 </ol>
 
-<p>Option (1) isn’t great for most libraries. The problem is that a library author doesn’t want to push their preferred logger onto all their consumers. There are scenarios where you can get away with it - e.g., if logging is purely for diagnostic information and you’re using something very low-level like ETW, then that may work. But most of the time, tying your library to a specific logging framework will only limit your adoption.</p>
+<p>The exact instructions on how to do this depends on your DI container of choice.</p>
 
-<p>Option (2) is to use a common logging abstraction like <code>Microsoft.Extensions.Logging.Abstractions</code> or <code>Common.Logging</code>. The advantage here is that you can work with abstract interfaces (e.g., <code>Microsoft.Extensions.Logging.ILogger</code>), and the consumer of your library can plug in a common implementation for their logging framework of choice. The disadvantage is with versioning: over time, the abstraction itself will version (e.g., <code>Microsoft.Extensions.Logging.Abstractions</code> is already at <code>2.1.0</code>), and this may cause problems as multiple libraries using multiple versions of the common logging abstraction all need to coexist in a single application.</p>
+<p>Of course, there’s another option, too. You can just provide the <code>ILoggerFactory</code> instance, and your consuming types can take the <code>ILoggerFactory</code> and create their own <code>ILogger&lt;T&gt;</code>.</p>
 
-<p>Option (3) is to use a custom logging abstraction defined by your own code. In this case, you have your own <code>IMyLibraryLogger</code> that your consumers need to implement. The disadvantage to this approach is that since the abstraction is custom, there are no libraries of common implementations that your consumers can just “plug in”. You also run the risk of not supporting the abstractions needed by your consumers; e.g., consumers will not be pleased if your library only supports text logging rather than semantic logging, or if it does not support <code>async</code>-compatible scopes. Logging abstractions are hard to get right, and doing this for each library you write just gets annoying. There is a project called <a href="https://github.com/damianh/LibLog">LibLog</a> that attempts to provide a common way of defining custom logging abstractions, but it doesn’t seem to have gotten a lot of traction yet.</p>
+<h2 id="what-are-the-iloggerfactorys-iloggers">What Are the ILoggerFactory’s ILoggers?</h2>
 
-<p>As of today, none of these options is really strong. Option (3) is sufficient for <em>frameworks</em> (where users are willing to do extra work to get good logs), but there doesn’t seem to be a clear winner for your run-of-the-mill small libraries.</p>
+<p>Before closing out this post, I just want to point out that the <code>ILogger</code> instances provided by <code>ILoggerFactory</code> are <em>not</em> the same as the <code>ILogger</code> instances provided by <code>ILoggerProvider</code>. An <code>ILoggerProvider</code> <code>ILogger</code> is a logger that logs <em>to that specific provider</em>. An <code>ILoggerFactory</code> <code>ILogger</code> is a logger that logs <em>to all registered providers</em>.</p>
 
-<div class="alert alert-info">
-  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+<p>In other words, the <code>ILoggerFactory</code> <code>ILogger</code>/<code>ILogger&lt;T&gt;</code> loggers are <em>composite</em> loggers; they forward log messages to each provider’s <code>ILogger</code>.</p>
 
-  <p>Steven van Deursen, the creator of Simple Injector, has <a href="https://stackoverflow.com/a/41244169/263693" class="alert-link">gone on record</a> saying the whole <code>Microsoft.Extensions.Logging</code> design is a violation of the Dependency Injection Principle, with the <code>ILogger&lt;T&gt;</code> specifically a violation of the Interface Segregation Principle. He strongly recommends option (3), but I have to counter that it’s hard for every library author in the world to get right. The <a href="https://stackoverflow.com/a/5646876/263693">example solution</a> he links to, for example, only supports text logging, not structured logging. That said, Steven is an incredibly smart person, and you should read his arguments carefully and understand them.</p>
-</div>
+<h1 id="review">Review</h1>
 
-<h2 id="back-to-microsoftextensionslogging">Back to Microsoft.Extensions.Logging</h2>
+<p>This post has described the various logging types from the component’s perspective (<code>ILogger</code>) and working out towards the application’s perspective (<code>ILoggerFactory</code>). Let’s briefly review, going the other way this time.</p>
 
-<p>This blog series is diving into the details and design of <code>Microsoft.Extensions.Logging</code>. I think it’s a great choice for applications; whether it should be used in libraries is still up for debate. I have not (yet) adopted <code>Microsoft.Extensions.Logging</code> in my own libraries, but it is my logging abstraction of choice when writing applications - even those that have absolutely nothing to do with ASP.NET Core.</p>
+<p><code>ILoggerFactory</code> is a collection of <code>ILoggerProvider</code>s that creates composite <code>ILogger</code>/<code>ILogger&lt;T&gt;</code> loggers.</p>
 
-<p>Next time, we’ll dive into the main types and terminology used by <code>Microsoft.Extensions.Logging</code>.</p>
+<p><code>ILoggerProvider</code> ia a provider for a <em>specific</em> logging system. It provides <code>ILogger</code> loggers to the <code>ILoggerFactory</code>.</p>
+
+<p>Each component gets an <code>ILogger&lt;T&gt;</code> (or <code>ILogger</code>) from the <code>ILoggerFactory</code> that it should use for logging.</p>
 
   </article>
     
     <footer class="hidden-print">
         
             <ul class="pager">
+                <li class="previous"><a href="/2018/05/microsoft-extensions-logging-part-1-introduction.html" title="Microsoft.Extensions.Logging, Part 1: Introduction">&larr; Previous in Microsoft.Extensions.Logging</a></li>
                 
-                <li class="next"><a href="/2018/06/microsoft-extensions-logging-part-2-types.html" title="Microsoft.Extensions.Logging, Part 2: Types">Next in Microsoft.Extensions.Logging &rarr;</a></li>
             </ul>
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2018/05/docker-as-a-tool-provider.html" title="Docker as a Tool Provider">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2018/06/microsoft-extensions-logging-part-2-types.html" title="Microsoft.Extensions.Logging, Part 2: Types">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2018/05/microsoft-extensions-logging-part-1-introduction.html" title="Microsoft.Extensions.Logging, Part 1: Introduction">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="disqus_thread"></div>
@@ -295,8 +344,8 @@ code {
                     <div class="panel-heading">Microsoft.Extensions.Logging</div>
                     <div class="panel-body sidenav">
                         <ul class="nav nav-pills nav-stacked">
-                                    <li class="active sidenavitem"><a href="/2018/05/microsoft-extensions-logging-part-1-introduction.html">Introduction</a></li>
-                                    <li class="sidenavitem"><a href="/2018/06/microsoft-extensions-logging-part-2-types.html">Types</a></li>
+                                    <li class="sidenavitem"><a href="/2018/05/microsoft-extensions-logging-part-1-introduction.html">Introduction</a></li>
+                                    <li class="active sidenavitem"><a href="/2018/06/microsoft-extensions-logging-part-2-types.html">Types</a></li>
                         </ul>
                     </div>
                 </div>
@@ -439,9 +488,9 @@ code {
 <!-- Disqus variables -->
 <script type="text/javascript">
     var disqus_shortname = 'stephencleary';
-    var disqus_identifier = "/2018/05/microsoft-extensions-logging-part-1-introduction";
-    var disqus_title = "Microsoft.Extensions.Logging, Part 1: Introduction";
-    var disqus_url = "https://blog.stephencleary.com/2018/05/microsoft-extensions-logging-part-1-introduction.html";
+    var disqus_identifier = "/2018/06/microsoft-extensions-logging-part-2-types";
+    var disqus_title = "Microsoft.Extensions.Logging, Part 2: Types";
+    var disqus_url = "https://blog.stephencleary.com/2018/06/microsoft-extensions-logging-part-2-types.html";
 </script>
 
 <!-- Disqus comment counter -->
