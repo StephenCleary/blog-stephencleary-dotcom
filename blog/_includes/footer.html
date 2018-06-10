@@ -104,7 +104,8 @@
 
 {% if site.url == site.url_blog %}
 
-<script src="/lib/uuid-v3-3.2.1.js"></script>
+<script src="/lib/uuid-v3-3.2.1.min.js"></script>
+<script src="/lib/showdown-1.8.6.min.js"></script>
 
 <script type="text/javascript">
 
@@ -143,9 +144,10 @@ req.addEventListener("load", function () {
     var commentCounter = document.getElementById('comment-counter');
     commentCounter.innerText = comments.length + " " + commentCounter.innerText;
     var $commentDiv = $('#comments');
+    var markdownConverter = new showdown.Converter();
     for (var i = 0; i != comments.length; ++i) {
-        /* authorEmailEncrypted, authorEmailMD5, authorName, date:"2009-06-25T19:00:36Z", message (MD), replyTo:"", timestamp:1245956436, _id */
-        $commentDiv.append($('<div/>').text(comments[i].message));
+        /* authorEmailMD5, authorName, date:"2009-06-25T19:00:36Z", message (MD), replyTo:"", timestamp:1245956436, _id */
+        $commentDiv.append($('<div/>').html("<div>" + comments[i].authorName + " " + comments[i].date + " " + markdownConverter.makeHtml(comments[i].message) + "</div>"));
     }
 });
 req.open('GET', "https://comments.stephencleary.com/" + postId + ".json");
