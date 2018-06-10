@@ -24,7 +24,7 @@ There is another "log level" which is not really a log level: `None`. This is te
 
 `ILogger` is a logger that your code can use to write log messages to. There are three core methods: `IsEnabled` tests whether a log level is enabled on that logger; `Log` is the core logging method that is used to write log messages; and `BeginScope` defines a logging scope.
 
-We'll cover logging scopes later in this series. That leaves `IsEnabled` and `Log`, which are the core logging methods. There's a bunch of logging extension methods that build on that core; the common methods like `LogInformation` first call `IsEnabled` and then `Log`, with the appropriate arguments.
+We'll cover logging scopes later in this series. That leaves `IsEnabled` and `Log`, which are the core logging methods. There's a bunch of logging extension methods that build on that core; the common methods like `LogInformation` are just wrappers around `Log`, with the appropriate arguments.
 
 Internally, an `ILogger` has a "name" (also called a "category"). The idea is that each `ILogger` instance is used by a different component of the application.
 
