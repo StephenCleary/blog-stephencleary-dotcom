@@ -160,8 +160,18 @@ var sanitizeOptions = {
 function $comment(comment) {
     /* authorEmailMD5, authorName, date:"2009-06-25T19:00:36Z", message (MD), replyTo:"", timestamp:1245956436, _id */
     var message = sanitizeHtml(markdownConverter.makeHtml(comment.message), sanitizeOptions);
+    var gravatarUrl = "https://www.gravatar.com/avatar/" + (comment.authorEmailMD5 === "" ? "?d=mp&f=y" : (comment.authorEmailMD5 + "?d=retro"));
+    var $commentDiv = $('<div class="comment"/>');
+    var $headerDiv = $('<div class="comment-header"/>').append(
+        $('<div class="comment-profile" style="float:left;"/>').append($('<img class="comment-profile-image" src="' + gravatarUrl + '"/>')),
+        $('<div class="comment-author-name" />').text(comment.authorName),
+        $('<div class="comment-date />').text(comment.date)
+    );
+    $commentDiv.append($headerDiv,
+        $('<div class="comment-message" style="clear:both;"/>').html(message)
+    );
     // TODO child comments
-    return $('<div/>').html("<div>" + comment.authorName + " " + comment.date + " " + message + "</div>");
+    return $commentDiv;
 }
 
 var req = new XMLHttpRequest();
