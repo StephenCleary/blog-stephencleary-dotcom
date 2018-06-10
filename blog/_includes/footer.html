@@ -138,7 +138,17 @@ var guid = uuidv3(pageUrl, uuidv3.URL);
 var postId = path + "-" + guid;
 
 var comments;
-var markdownConverter = new showdown.Converter();
+var markdownConverter = new showdown.Converter({
+    omitExtraWLInCodeBlocks: true,
+    noHeaderId: true,
+    headerLevelStart: 3,
+    simplifiedAutoLink: true,
+    excludeTrailingPunctuationFromURLs: true,
+    literalMidWordUnderscores: true,
+    strikethrough: true,
+    smoothLivePreview: true,
+    disableForced4SpacesIndentedSublists: true
+});
 var sanitizeOptions = {
     allowedTags: [ 'blockquote', 'p', 'a', 'ul', 'ol', 'nl', 'li', 'b', 'i', 'strong', 'em', 'strike', 'code', 'br', 'div', 'pre', 'img' ],
     allowedAttributes: {
