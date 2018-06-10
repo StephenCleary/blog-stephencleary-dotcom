@@ -244,7 +244,7 @@ code {
 
 <p><code>ILogger</code> is a logger that your code can use to write log messages to. There are three core methods: <code>IsEnabled</code> tests whether a log level is enabled on that logger; <code>Log</code> is the core logging method that is used to write log messages; and <code>BeginScope</code> defines a logging scope.</p>
 
-<p>We’ll cover logging scopes later in this series. That leaves <code>IsEnabled</code> and <code>Log</code>, which are the core logging methods. There’s a bunch of logging extension methods that build on that core; the common methods like <code>LogInformation</code> first call <code>IsEnabled</code> and then <code>Log</code>, with the appropriate arguments.</p>
+<p>We’ll cover logging scopes later in this series. That leaves <code>IsEnabled</code> and <code>Log</code>, which are the core logging methods. There’s a bunch of logging extension methods that build on that core; the common methods like <code>LogInformation</code> are just wrappers around <code>Log</code>, with the appropriate arguments.</p>
 
 <p>Internally, an <code>ILogger</code> has a “name” (also called a “category”). The idea is that each <code>ILogger</code> instance is used by a different component of the application.</p>
 
