@@ -105,7 +105,8 @@
 {% if site.url == site.url_blog %}
 
 <script src="/lib/uuid-v3-3.2.1.min.js"></script>
-<script src="/lib/showdown-1.8.6.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/showdown@1.8.6/dist/showdown.min.js" integrity="sha256-dwhppIrxD8qC6lNulndZgtIm4XBU9zoMd9OUoXzIDAE=" crossorigin="anonymous"></script>
+<script src="/lib/sanitize-html-1.18.2.min.js"></script>
 
 <script type="text/javascript">
 
@@ -136,18 +137,33 @@ var guid = uuidv3(pageUrl, uuidv3.URL);
 // 7) Combine the path and lowercase-hyphenated GUID, separated by '-'.
 var postId = path + "-" + guid;
 
-console.log(postId);
+var comments;
+var markdownConverter = new showdown.Converter();
+var sanitizeOptions = {
+    allowedTags: [ 'blockquote', 'p', 'a', 'ul', 'ol', 'nl', 'li', 'b', 'i', 'strong', 'em', 'strike', 'code', 'br', 'div', 'pre', 'img' ],
+    allowedAttributes: {
+        a: [ 'href' ],
+        img: [ 'src' ]
+    },
+    allowedIframeHostnames: []
+};
+function $comment(comment) {
+    /* authorEmailMD5, authorName, date:"2009-06-25T19:00:36Z", message (MD), replyTo:"", timestamp:1245956436, _id */
+    var message = sanitizeHtml(markdownConverter.makeHtml(comment.message), sanitizeOptions);
+    // TODO child comments
+    return $('<div/>').html("<div>" + comment.authorName + " " + comment.date + " " + message + "</div>");
+}
 
 var req = new XMLHttpRequest();
 req.addEventListener("load", function () {
-    var comments = JSON.parse(req.responseText);
+    comments = JSON.parse(req.responseText);
     var commentCounter = document.getElementById('comment-counter');
     commentCounter.innerText = comments.length + " " + commentCounter.innerText;
     var $commentDiv = $('#comments');
-    var markdownConverter = new showdown.Converter();
-    for (var i = 0; i != comments.length; ++i) {
-        /* authorEmailMD5, authorName, date:"2009-06-25T19:00:36Z", message (MD), replyTo:"", timestamp:1245956436, _id */
-        $commentDiv.append($('<div/>').html("<div>" + comments[i].authorName + " " + comments[i].date + " " + markdownConverter.makeHtml(comments[i].message) + "</div>"));
+    var toplevelComments = comments.filter(function (x) { return x.replyTo === ""; });
+    for (var i = 0; i != toplevelComments.length; ++i) {
+        var comment = toplevelComments[i];
+        $commentDiv.append($comment(comment));
     }
 });
 req.open('GET', "https://comments.stephencleary.com/" + postId + ".json");
