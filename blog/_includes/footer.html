@@ -161,20 +161,50 @@ var sanitizeOptions = {
     },
     allowedIframeHostnames: []
 };
+
+function fixedEncodeURIComponent(str) {
+  return encodeURIComponent(str).replace(/[!'()*]/g, function(c) {
+    return '%' + c.charCodeAt(0).toString(16);
+  });
+}
+
+function filterComments(replyTo) {
+    return comments
+        .filter(function (x) { return x.replyTo === replyTo; })
+        .sort(function (a, b) { return a.timestamp - b.timestamp; });
+}
+
+var now = moment();
 function $comment(comment) {
     /* authorEmailMD5, authorName, date:"2009-06-25T19:00:36Z", message (MD), replyTo:"", timestamp:1245956436, _id */
     var message = sanitizeHtml(markdownConverter.makeHtml(comment.message), sanitizeOptions);
-    var gravatarUrl = "https://www.gravatar.com/avatar/" + (comment.authorEmailMD5 === "" ? "?d=mp&f=y" : (comment.authorEmailMD5 + "?d=retro"));
+    var gravatarUrl = "https://www.gravatar.com/avatar/" + (comment.authorEmailMD5 === "" ? "?d=mp&f=y" : (fixedEncodeURIComponent(comment.authorEmailMD5) + "?d=retro"));
     var $commentDiv = $('<div class="comment"/>');
+    var publicationDate = moment(comment.date);
+    var commentAnchor = 'comment-' + comment._id;
     var $headerDiv = $('<div class="comment-header"/>').append(
         $('<div class="comment-profile" style="float:left;"/>').append($('<img class="comment-profile-image" src="' + gravatarUrl + '"/>')),
-        $('<div class="comment-author-name" id="' + comment._id + '"/>').text(comment.authorName),
-        $('<div class="comment-date" />').append($('<time datetime="' + comment.date + '" />').text(comment.date))
+        $('<div class="comment-author-name"/>').text(comment.authorName),
+        $('<div class="comment-date" />').append(
+            $('<a/>').attr('href', '#' + commentAnchor).attr('title', 'permalink').text(publicationDate.from(now) + ' (' + publicationDate.format('YYYY-MM-DD hh:mm:ss a') + ')')
+        )
     );
-    $commentDiv.append($headerDiv,
+    if (comment.replyTo !== "") {
+        var parent = comments.filter(function (x) { return x._id === comment.replyTo })[0];
+        $headerDiv.append($('<div/>').append($('<a/>').attr('href', '#comment-' + comment.replyTo).text('In reply to ' + parent.authorName)));
+    }
+
+    $commentDiv.append($('<div class="comment-anchor"/>').attr('id', commentAnchor),
+        $headerDiv,
         $('<div class="comment-message" style="clear:both;"/>').html(message)
     );
-    // TODO child comments
+
+    var childComments = filterComments(comment._id);
+    for (var i = 0; i != childComments.length; ++i) {
+        var child = childComments[i];
+        $commentDiv.append($comment(child));
+    }
+
     return $commentDiv;
 }
 
@@ -184,7 +214,7 @@ req.addEventListener("load", function () {
     var commentCounter = document.getElementById('comment-counter');
     commentCounter.innerText = comments.length + " " + commentCounter.innerText;
     var $commentDiv = $('#comments');
-    var toplevelComments = comments.filter(function (x) { return x.replyTo === ""; });
+    var toplevelComments = filterComments("");
     for (var i = 0; i != toplevelComments.length; ++i) {
         var comment = toplevelComments[i];
         $commentDiv.append($comment(comment));
