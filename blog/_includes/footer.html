@@ -141,6 +141,16 @@ var guid = uuidv3(pageUrl, uuidv3.URL);
 // 7) Combine the path and lowercase-hyphenated GUID, separated by '-'.
 var postId = path + "-" + guid;
 
+var nofollowLinkExtension = {
+    type: 'output',
+    regex: /(<a[^<]+<\/a>)/g,
+    replace: (match, $1, $2) => {
+        var result = $('<div/>').append($($1).attr('rel', 'nofollow noopener')).html();
+        return result;
+    }
+};
+showdown.extension('nofollowLink', nofollowLinkExtension);
+
 var comments;
 var markdownConverter = new showdown.Converter({
     omitExtraWLInCodeBlocks: true,
@@ -151,12 +161,20 @@ var markdownConverter = new showdown.Converter({
     literalMidWordUnderscores: true,
     strikethrough: true,
     smoothLivePreview: true,
-    disableForced4SpacesIndentedSublists: true
+    disableForced4SpacesIndentedSublists: true,
+    extensions: ['nofollowLink']
 });
 var sanitizeOptions = {
     allowedTags: [ 'blockquote', 'p', 'a', 'ul', 'ol', 'nl', 'li', 'b', 'i', 'strong', 'em', 'strike', 'code', 'br', 'div', 'pre', 'img' ],
     allowedAttributes: {
-        a: [ 'href' ],
+        a: [
+            'href',
+            {
+                name: 'rel',
+                multiple: true,
+                values: ['nofollow', 'noopener']
+            }
+        ],
         img: [ 'src' ]
     },
     allowedIframeHostnames: []
@@ -174,27 +192,43 @@ function filterComments(replyTo) {
         .sort(function (a, b) { return a.timestamp - b.timestamp; });
 }
 
+function avatarUri(comment) {
+    if (comment.authorEmailMD5 === "")
+        if (comment.authorFallbackAvatar === "")
+            return "https://www.gravatar.com/avatar/?d=mp&f=y";
+        else
+            return comment.authorFallbackAvatar;
+    else
+        if (comment.authorFallbackAvatar === "")
+            return "https://www.gravatar.com/avatar/" + comment.authorEmailMD5 + "?d=retro";
+        else
+            return "https://www.gravatar.com/avatar/" + comment.authorEmailMD5 + "?d=" + encodeURIComponent(comment.authorFallbackAvatar);
+}
+
+function commentId(id) { return "comment-" + id; }
+
 var now = moment();
 function $comment(comment) {
     /* authorEmailMD5, authorName, date:"2009-06-25T19:00:36Z", message (MD), replyTo:"", timestamp:1245956436, _id */
     var message = sanitizeHtml(markdownConverter.makeHtml(comment.message), sanitizeOptions);
-    var gravatarUrl = "https://www.gravatar.com/avatar/" + (comment.authorEmailMD5 === "" ? "?d=mp&f=y" : (fixedEncodeURIComponent(comment.authorEmailMD5) + "?d=retro"));
     var $commentDiv = $('<div class="comment"/>');
     var publicationDate = moment(comment.date);
-    var commentAnchor = 'comment-' + comment._id;
+    var $author = $('<div class="comment-author"/>').append($('<span class="comment-author-name"/>').text(comment.authorName));
+    if (comment.authorUri !== "")
+        $author.append($('<span> • </span>'), $('<a class="comment-author-uri" rel="nofollow noopener"/>').attr('href', comment.authorUri).text(comment.authorUri));
     var $headerDiv = $('<div class="comment-header"/>').append(
-        $('<div class="comment-profile" style="float:left;"/>').append($('<img class="comment-profile-image" src="' + gravatarUrl + '"/>')),
-        $('<div class="comment-author-name"/>').text(comment.authorName),
+        $('<div class="comment-author-profile" style="float:left;"/>').append($('<img class="comment-author-profile-image" src="' + avatarUri(comment) + '"/>')),
+        $author,
         $('<div class="comment-date" />').append(
-            $('<a/>').attr('href', '#' + commentAnchor).attr('title', 'permalink').text(publicationDate.from(now) + ' (' + publicationDate.format('YYYY-MM-DD hh:mm:ss a') + ')')
+            $('<a/>').attr('href', '#' + commentId(comment._id)).attr('title', 'permalink').text(publicationDate.from(now) + ' (' + publicationDate.format('YYYY-MM-DD hh:mm:ss a') + ')')
         )
     );
     if (comment.replyTo !== "") {
         var parent = comments.filter(function (x) { return x._id === comment.replyTo })[0];
-        $headerDiv.append($('<div/>').append($('<a/>').attr('href', '#comment-' + comment.replyTo).text('In reply to ' + parent.authorName)));
+        $headerDiv.append($('<div/>').append($('<a/>').attr('href', '#' + commentId(comment.replyTo)).text('In reply to ' + parent.authorName)));
     }
 
-    $commentDiv.append($('<div class="comment-anchor"/>').attr('id', commentAnchor),
+    $commentDiv.append($('<div class="comment-anchor"/>').attr('id', commentId(comment._id)),
         $headerDiv,
         $('<div class="comment-message" style="clear:both;"/>').html(message)
     );
