@@ -266,15 +266,19 @@ function $comment(comment) {
 
 var req = new XMLHttpRequest();
 req.addEventListener("load", function () {
-    comments = JSON.parse(req.responseText);
-    var commentCounter = document.getElementById('comment-counter');
-    commentCounter.innerText = comments.length + " " + commentCounter.innerText;
     var $commentDiv = $('#comments');
-    var toplevelComments = filterComments("");
-    for (var i = 0; i != toplevelComments.length; ++i) {
-        var comment = toplevelComments[i];
-        $commentDiv.append($comment(comment));
+    if (req.status === 200)
+    {
+        comments = JSON.parse(req.responseText);
+        var commentCounter = document.getElementById('comment-counter');
+        commentCounter.innerText = comments.length + " " + commentCounter.innerText;
+        var toplevelComments = filterComments("");
+        for (var i = 0; i != toplevelComments.length; ++i) {
+            var comment = toplevelComments[i];
+            $commentDiv.append($comment(comment));
+        }
     }
+
     $commentDiv.append($commentForm());
 });
 req.open('GET', "https://comments.stephencleary.com/" + postId + ".json");
