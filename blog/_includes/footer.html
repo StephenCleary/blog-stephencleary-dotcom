@@ -201,6 +201,34 @@ function avatarUri(comment) {
 
 function commentId(id) { return "comment-" + id; }
 
+function $commentForm(comment) {
+    // TODO: figure out timestamp/date? Can staticman generate timestamp?
+    // TODO: add captcha
+    // TODO: add Gravatar preview
+    // TODO: add message formatting preview
+    var $authorEmailEncrypted = $('<input type="hidden" name="fields[authorEmailEncrypted]">');
+    var $authorEmailMD5 = $('<input type="hidden" name="fields[authorEmailMD5]">');
+    var $email = $('<input type="email" name="email" class="form-control" placeholder="Email">');
+    var $form = $('<form method="POST" action="https://api.staticman.net/v2/entry/StephenCleary/comments.stephencleary.com/master"/>')
+        .append($('<input type="hidden" name="fields[postId]">').val(postId))
+        .append($authorEmailEncrypted)
+        .append($authorEmailMD5)
+        .append($('<div class="form-group"><label>Name</label><input type="text" name="fields[authorName]" class="form-control" placeholder="Name"></div>'))
+        .append($('<div class="form-group"><label>Email (optional)</label></div>').append($email))
+        .append($('<div class="form-group"><label>Url (optional)</label><input type="url" name="fields[authorUri]" class="form-control" placeholder="Url"></div>'))
+        .append($('<div class="form-group"><label>Message</label><textarea name="fields[message]" class="form-control" placeholder="Message"/></textarea></div>'))
+        .append($('<button type="submit">Submit</button>'));
+    if (comment) {
+        $form.prepend($('<input type="hidden" name="fields[replyTo]">').val(comment._id))
+    }
+    $email.blur(function() {
+        // TODO: authorEmailEncrypted, authorEmailMD5
+        $authorEmailEncrypted.val($email.val());
+        $authorEmailMD5.val($email.val());
+    });
+    return $form;
+}
+
 var now = moment();
 function $comment(comment) {
     var message = sanitizeHtml(markdownConverter.makeHtml(comment.message), sanitizeOptions);
@@ -247,6 +275,7 @@ req.addEventListener("load", function () {
         var comment = toplevelComments[i];
         $commentDiv.append($comment(comment));
     }
+    $commentDiv.append($commentForm());
 });
 req.open('GET', "https://comments.stephencleary.com/" + postId + ".json");
 req.send();
