@@ -194,15 +194,9 @@ function filterComments(replyTo) {
 
 function avatarUri(comment) {
     if (comment.authorEmailMD5 === "")
-        if (comment.authorFallbackAvatar === "")
-            return "https://www.gravatar.com/avatar/?d=mp&f=y";
-        else
-            return comment.authorFallbackAvatar;
+        return "https://www.gravatar.com/avatar/?d=mp&f=y";
     else
-        if (comment.authorFallbackAvatar === "")
-            return "https://www.gravatar.com/avatar/" + comment.authorEmailMD5 + "?d=retro";
-        else
-            return "https://www.gravatar.com/avatar/" + comment.authorEmailMD5 + "?d=" + encodeURIComponent(comment.authorFallbackAvatar);
+        return "https://www.gravatar.com/avatar/" + comment.authorEmailMD5 + "?d=retro";
 }
 
 function commentId(id) { return "comment-" + id; }
