@@ -209,7 +209,6 @@ function commentId(id) { return "comment-" + id; }
 
 var now = moment();
 function $comment(comment) {
-    /* authorEmailMD5, authorName, date:"2009-06-25T19:00:36Z", message (MD), replyTo:"", timestamp:1245956436, _id */
     var message = sanitizeHtml(markdownConverter.makeHtml(comment.message), sanitizeOptions);
     var $commentDiv = $('<div class="comment"/>');
     var publicationDate = moment(comment.date);
@@ -233,13 +232,14 @@ function $comment(comment) {
         $('<div class="comment-message" style="clear:both;"/>').html(message)
     );
 
+    var $commentContainer = $('<div class="comment-container"/>').append($commentDiv);
     var childComments = filterComments(comment._id);
     for (var i = 0; i != childComments.length; ++i) {
         var child = childComments[i];
-        $commentDiv.append($comment(child));
+        $commentContainer.append($comment(child));
     }
 
-    return $commentDiv;
+    return $commentContainer;
 }
 
 var req = new XMLHttpRequest();
