@@ -167,6 +167,35 @@ code {
 .highlight .sr { color: #a31515 } /* Literal.String.Regex */
 .highlight .s1 { color: #a31515 } /* Literal.String.Single */
 .highlight .ss { color: #a31515 } /* Literal.String.Symbol */
+
+/* Comments */
+/* ----------------------------------------------------------*/
+
+.comment-container {
+    margin-top: 10px;
+}
+
+.comment-container > .comment-container {
+    margin-left: 2em;
+}
+
+.comment-container > .comment-container > .comment-container > .comment-container > .comment-container {
+    margin-left: 0;
+}
+
+/* Correct anchor links in comments (they are offset by the height of the fixed header) */
+.comment-anchor {
+    display: block;
+    position: relative;
+    top: -60px;
+    visibility: hidden;
+}
+
+.comment-author-profile-image {
+    height: 80px;
+    width: 80px;
+    margin-right: 10px;
+}
 </style>
     
     <meta name="application-name" content="Stephen Cleary" />
@@ -221,7 +250,7 @@ code {
   <header>
       <div class="page-header">
           <h1>Implementing GCC's Builtin Functions</h1>
-          <small><time datetime="2010-10-18">Oct 18, 2010</time> <!-- TODO-COMMENTS &bull; <a data-disqus-identifier="/2010/10/implementing-gccs-builtin-functions" href="#disqus_thread">Comments</a> --></small>
+          <small><time datetime="2010-10-18">Oct 18, 2010</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
       </div>
   </header>
 
@@ -286,8 +315,8 @@ int __ffsdi2 (unsigned x)
             <li class="next"><a href="/2010/10/grand-rapids-day-of-dotnet-slides.html" title="Grand Rapids Day of DotNET Slides Available">Next Post &rarr;</a></li>
         </ul>
 
-        <!-- TODO-COMMENTS div id="disqus_thread"></div -->
-        <div>Comments are temporarily unavailable. Feel free to email them to me until I get the new system working.</div>
+        <div>Note: Comments are temporarily read-only. If you wish to make a comment, please email me directly.</div>
+        <div id="comments"></div>
     </footer>
 </div>
         </div>
@@ -385,6 +414,10 @@ int __ffsdi2 (unsigned x)
 <!-- Scroll the sidebar into view (if necessary) -->
 
 
+<!-- Moment -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.6.0/moment.min.js"></script>
+<script type="text/javascript">window.moment || document.write('<script src="/lib/moment.min.js"><\/script>')</script>
+
 <!-- Google analytics -->
 <script type="text/javascript">
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -417,6 +450,150 @@ int __ffsdi2 (unsigned x)
 
 
 
+
+<script src="/lib/uuid-v3-3.2.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/showdown@1.8.6/dist/showdown.min.js" integrity="sha256-dwhppIrxD8qC6lNulndZgtIm4XBU9zoMd9OUoXzIDAE=" crossorigin="anonymous"></script>
+<script src="/lib/sanitize-html-1.18.2.min.js"></script>
+
+<script type="text/javascript">
+
+var pageUrl = "https://blog.stephencleary.com" + "/2010/10/implementing-gccs-builtin-functions.html";
+
+// (unnecessary) 1) If the URL starts with http://, replace with https://
+
+// 2) Take the URL path (not including scheme and domain).
+var url = document.createElement('a');
+url.href = pageUrl; //'https://developer.mozilla.org:8080/en-US/search?q=URL#search-results-close-container';
+var path = url.pathname;
+
+// 3) Path: If the path ends with .html or any two- to six-character [A-Za-z0-9] extension, strip it.
+if (path.endsWith(".html"))
+    path = path.substr(0, path.length - 5);
+else
+    path = path.replace(/\.[A-Za-z0-9]{2,6}$/, "");
+
+// 4) Path: For each UTF-16 code unit, if it's not in the whitelist [A-Za-z0-9-_;.~()], then replace it with _.
+path = path.replace(/[^-A-Za-z0-9_;.~()]/g, "_");
+
+// 5) Path: Trim leading and trailing _ characters.
+path = path.replace(/^_+|_+$/g, "");
+
+// 6) Calculate the V3 URL GUID for the URL.
+var guid = uuidv3(pageUrl, uuidv3.URL);
+
+// 7) Combine the path and lowercase-hyphenated GUID, separated by '-'.
+var postId = path + "-" + guid;
+
+var nofollowLinkExtension = {
+    type: 'output',
+    regex: /(<a[^<]+<\/a>)/g,
+    replace: (match, $1, $2) => {
+        var result = $('<div/>').append($($1).attr('rel', 'nofollow noopener')).html();
+        return result;
+    }
+};
+showdown.extension('nofollowLink', nofollowLinkExtension);
+
+var comments;
+var markdownConverter = new showdown.Converter({
+    omitExtraWLInCodeBlocks: true,
+    noHeaderId: true,
+    headerLevelStart: 3,
+    simplifiedAutoLink: true,
+    excludeTrailingPunctuationFromURLs: true,
+    literalMidWordUnderscores: true,
+    strikethrough: true,
+    smoothLivePreview: true,
+    disableForced4SpacesIndentedSublists: true,
+    extensions: ['nofollowLink']
+});
+var sanitizeOptions = {
+    allowedTags: [ 'blockquote', 'p', 'a', 'ul', 'ol', 'nl', 'li', 'b', 'i', 'strong', 'em', 'strike', 'code', 'br', 'div', 'pre', 'img' ],
+    allowedAttributes: {
+        a: [
+            'href',
+            {
+                name: 'rel',
+                multiple: true,
+                values: ['nofollow', 'noopener']
+            }
+        ],
+        img: [ 'src' ]
+    },
+    allowedIframeHostnames: []
+};
+
+function fixedEncodeURIComponent(str) {
+  return encodeURIComponent(str).replace(/[!'()*]/g, function(c) {
+    return '%' + c.charCodeAt(0).toString(16);
+  });
+}
+
+function filterComments(replyTo) {
+    return comments
+        .filter(function (x) { return x.replyTo === replyTo; })
+        .sort(function (a, b) { return a.timestamp - b.timestamp; });
+}
+
+function avatarUri(comment) {
+    if (comment.authorEmailMD5 === "")
+        return "https://www.gravatar.com/avatar/?d=mp&f=y";
+    else
+        return "https://www.gravatar.com/avatar/" + comment.authorEmailMD5 + "?d=retro";
+}
+
+function commentId(id) { return "comment-" + id; }
+
+var now = moment();
+function $comment(comment) {
+    var message = sanitizeHtml(markdownConverter.makeHtml(comment.message), sanitizeOptions);
+    var $commentDiv = $('<div class="comment"/>');
+    var publicationDate = moment(comment.date);
+    var $author = $('<div class="comment-author"/>').append($('<span class="comment-author-name"/>').text(comment.authorName));
+    if (comment.authorUri !== "")
+        $author.append($('<span> • </span>'), $('<a class="comment-author-uri" rel="nofollow noopener"/>').attr('href', comment.authorUri).text(comment.authorUri));
+    var $headerDiv = $('<div class="comment-header"/>').append(
+        $('<div class="comment-author-profile" style="float:left;"/>').append($('<img class="comment-author-profile-image" src="' + avatarUri(comment) + '"/>')),
+        $author,
+        $('<div class="comment-date" />').append(
+            $('<a/>').attr('href', '#' + commentId(comment._id)).attr('title', 'permalink').text(publicationDate.from(now) + ' (' + publicationDate.format('YYYY-MM-DD hh:mm:ss a') + ')')
+        )
+    );
+    if (comment.replyTo !== "") {
+        var parent = comments.filter(function (x) { return x._id === comment.replyTo })[0];
+        $headerDiv.append($('<div/>').append($('<a/>').attr('href', '#' + commentId(comment.replyTo)).text('In reply to ' + parent.authorName)));
+    }
+
+    $commentDiv.append($('<div class="comment-anchor"/>').attr('id', commentId(comment._id)),
+        $headerDiv,
+        $('<div class="comment-message" style="clear:both;"/>').html(message)
+    );
+
+    var $commentContainer = $('<div class="comment-container"/>').append($commentDiv);
+    var childComments = filterComments(comment._id);
+    for (var i = 0; i != childComments.length; ++i) {
+        var child = childComments[i];
+        $commentContainer.append($comment(child));
+    }
+
+    return $commentContainer;
+}
+
+var req = new XMLHttpRequest();
+req.addEventListener("load", function () {
+    comments = JSON.parse(req.responseText);
+    var commentCounter = document.getElementById('comment-counter');
+    commentCounter.innerText = comments.length + " " + commentCounter.innerText;
+    var $commentDiv = $('#comments');
+    var toplevelComments = filterComments("");
+    for (var i = 0; i != toplevelComments.length; ++i) {
+        var comment = toplevelComments[i];
+        $commentDiv.append($comment(comment));
+    }
+});
+req.open('GET', "https://comments.stephencleary.com/" + postId + ".json");
+req.send();
+</script>
 
 <!-- TODO-COMMENTS -->
 
@@ -458,8 +635,6 @@ int __ffsdi2 (unsigned x)
 </script>
 
 <!-- Moment -->
-<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.6.0/moment.min.js"></script>
-<script type="text/javascript">window.moment || document.write('<script src="/lib/moment.min.js"><\/script>')</script>
 <script type="text/javascript">
     (function($) {
         $(function () {
