@@ -222,10 +222,10 @@ function $commentForm(comment) {
         .append($replyTo)
         .append($authorEmailEncrypted)
         .append($authorEmailMD5)
-        .append($('<div class="form-group"><label>Name</label></div>').append($name))
+        .append($('<div class="form-group"><label>Name (optional)</label></div>').append($name))
         .append($('<div class="form-group"><label>Email (optional)</label></div>').append($email))
         .append($('<div class="form-group"><label>Url (optional)</label></div>').append($url))
-        .append($('<div class="form-group"><label>Message</label></div>').append($message))
+        .append($('<div class="form-group"><label>Message (supports Markdown)</label></div>').append($message))
         .append($('<button type="submit">Submit</button>'));
     if (comment) {
         $replyTo.val(comment._id);
@@ -304,11 +304,14 @@ function $comment(comment) {
 }
 
 function normalizeComment(x) {
+    var uri = x.authorUri;
+    if (!uri || (!uri.startsWith("http://") && !uri.startsWith("https://")))
+        uri = "";
     return {
             _id: x._id,
-            authorName: x.authorName || "",
+            authorName: x.authorName || "Anonymous",
             authorEmailMD5: x.authorEmailMD5 || "",
-            authorUri: x.authorUri || "",
+            authorUri: uri,
             message: x.message || "",
             replyTo: x.replyTo || "",
             date: x.date,
