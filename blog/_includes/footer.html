@@ -111,6 +111,7 @@
 <script src="/lib/uuid-v3-3.2.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/showdown@1.8.6/dist/showdown.min.js" integrity="sha256-dwhppIrxD8qC6lNulndZgtIm4XBU9zoMd9OUoXzIDAE=" crossorigin="anonymous"></script>
 <script src="/lib/sanitize-html-1.18.2.min.js"></script>
+<script src="/lib/autosize.min.js"></script>
 
 <script type="text/javascript">
 
@@ -192,41 +193,78 @@ function filterComments(replyTo) {
         .sort(function (a, b) { return a.timestamp - b.timestamp; });
 }
 
-function avatarUri(comment) {
-    if (comment.authorEmailMD5 === "")
+function avatarUri(authorEmailMD5) {
+    if (authorEmailMD5 === "")
         return "https://www.gravatar.com/avatar/?d=mp&f=y";
     else
-        return "https://www.gravatar.com/avatar/" + comment.authorEmailMD5 + "?d=retro";
+        return "https://www.gravatar.com/avatar/" + authorEmailMD5 + "?d=retro";
 }
 
 function commentId(id) { return "comment-" + id; }
 
 function $commentForm(comment) {
-    // TODO: figure out timestamp/date? Can staticman generate timestamp?
+    // TODO: add redirect to "successful post" page that also has a "go back" button. Or just build the POST by hand.
     // TODO: add captcha
     // TODO: add Gravatar preview
     // TODO: add message formatting preview
+    var $formDiv = $('<div class="col-md-6"/>');
+    var $previewDiv = $('<div class="col-md-6"/>');
     var $authorEmailEncrypted = $('<input type="hidden" name="fields[authorEmailEncrypted]">');
     var $authorEmailMD5 = $('<input type="hidden" name="fields[authorEmailMD5]">');
     var $email = $('<input type="email" name="email" class="form-control" placeholder="Email">');
+    var $name = $('<input type="text" name="fields[authorName]" class="form-control" placeholder="Name">');
+    var $url = $('<input type="url" name="fields[authorUri]" class="form-control" placeholder="Url">');
+    var $message = $('<textarea name="fields[message]" class="form-control" placeholder="Message"/></textarea>');
+    autosize($message);
+    var $replyTo = $('<input type="hidden" name="fields[replyTo]">').val("");
     var $form = $('<form method="POST" action="https://api.staticman.net/v2/entry/StephenCleary/comments.stephencleary.com/master"/>')
         .append($('<input type="hidden" name="fields[postId]">').val(postId))
+        .append($replyTo)
         .append($authorEmailEncrypted)
         .append($authorEmailMD5)
-        .append($('<div class="form-group"><label>Name</label><input type="text" name="fields[authorName]" class="form-control" placeholder="Name"></div>'))
+        .append($('<div class="form-group"><label>Name</label></div>').append($name))
         .append($('<div class="form-group"><label>Email (optional)</label></div>').append($email))
-        .append($('<div class="form-group"><label>Url (optional)</label><input type="url" name="fields[authorUri]" class="form-control" placeholder="Url"></div>'))
-        .append($('<div class="form-group"><label>Message</label><textarea name="fields[message]" class="form-control" placeholder="Message"/></textarea></div>'))
+        .append($('<div class="form-group"><label>Url (optional)</label></div>').append($url))
+        .append($('<div class="form-group"><label>Message</label></div>').append($message))
         .append($('<button type="submit">Submit</button>'));
     if (comment) {
-        $form.prepend($('<input type="hidden" name="fields[replyTo]">').val(comment._id))
+        $replyTo.val(comment._id);
     }
     $email.blur(function() {
         // TODO: authorEmailEncrypted, authorEmailMD5
         $authorEmailEncrypted.val($email.val());
         $authorEmailMD5.val($email.val());
     });
-    return $form;
+    $formDiv.append($form);
+
+    function createComment() {
+        return normalizeComment({
+            date: moment().format(),
+            _id: "_",
+            replyTo: comment ? comment._id : undefined,
+            authorName: $name.val(),
+            authorEmailMD5: $authorEmailMD5.val(),
+            authorUri: $url.val(),
+            message: $message.val()
+        });
+    };
+
+    function recreatePreview() {
+        var $newPreview = $comment(createComment());
+        // Turn off permalink and anchor
+        $previewDiv.find('.comment-date a').attr('href', '#');
+        $previewDiv.find('.comment-anchor').remove();
+        $previewDiv.empty();
+        $previewDiv.append($newPreview);
+    };
+
+    recreatePreview();
+    $name.on('change keyup input paste', recreatePreview);
+    $authorEmailMD5.on('change keyup input paste', recreatePreview);
+    $url.on('change keyup input paste', recreatePreview);
+    $message.on('change keyup input paste', recreatePreview);
+
+    return $('<div class="container-fluid"/>').append($('<div class="row"/>').append($formDiv, $previewDiv));
 }
 
 var now = moment();
@@ -238,7 +276,7 @@ function $comment(comment) {
     if (comment.authorUri !== "")
         $author.append($('<span> • </span>'), $('<a class="comment-author-uri" rel="nofollow noopener"/>').attr('href', comment.authorUri).text(comment.authorUri));
     var $headerDiv = $('<div class="comment-header"/>').append(
-        $('<div class="comment-author-profile" style="float:left;"/>').append($('<img class="comment-author-profile-image" src="' + avatarUri(comment) + '"/>')),
+        $('<div class="comment-author-profile" style="float:left;"/>').append($('<img class="comment-author-profile-image" src="' + avatarUri(comment.authorEmailMD5) + '"/>')),
         $author,
         $('<div class="comment-date" />').append(
             $('<a/>').attr('href', '#' + commentId(comment._id)).attr('title', 'permalink').text(publicationDate.from(now) + ' (' + publicationDate.format('YYYY-MM-DD hh:mm:ss a') + ')')
@@ -264,12 +302,25 @@ function $comment(comment) {
     return $commentContainer;
 }
 
+function normalizeComment(x) {
+    return {
+            _id: x._id,
+            authorName: x.authorName || "",
+            authorEmailMD5: x.authorEmailMD5 || "",
+            authorUri: x.authorUri || "",
+            message: x.message || "",
+            replyTo: x.replyTo || "",
+            date: x.date,
+            timestamp: moment(x.date).valueOf()
+    };
+}
+
 var req = new XMLHttpRequest();
 req.addEventListener("load", function () {
     var $commentDiv = $('#comments');
     if (req.status === 200)
     {
-        comments = JSON.parse(req.responseText);
+        comments = JSON.parse(req.responseText).map(normalizeComment);
         var commentCounter = document.getElementById('comment-counter');
         commentCounter.innerText = comments.length + " " + commentCounter.innerText;
         var toplevelComments = filterComments("");
