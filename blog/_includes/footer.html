@@ -208,8 +208,6 @@ function commentId(id) { return "comment-" + id; }
 function $commentForm(comment) {
     // TODO: add redirect to "successful post" page that also has a "go back" button. Or just build the POST by hand.
     // TODO: add captcha
-    // TODO: add Gravatar preview
-    // TODO: add message formatting preview
     var $formDiv = $('<div class="col-md-6"/>');
     var $previewDiv = $('<div class="col-md-6"/>');
     var $authorEmailEncrypted = $('<input type="hidden" name="fields[authorEmailEncrypted]">');
@@ -244,7 +242,7 @@ function $commentForm(comment) {
                     return text;
                 });
         });
-        // TODO: authorEmailEncrypted, authorEmailMD5
+        // TODO: authorEmailMD5
         $authorEmailMD5.val($email.val());
     });
     $formDiv.append($form);
