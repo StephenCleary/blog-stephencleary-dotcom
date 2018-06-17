@@ -252,8 +252,9 @@ function $commentForm(comment) {
     function recreatePreview() {
         var $newPreview = $comment(createComment());
         // Turn off permalink and anchor
-        $previewDiv.find('.comment-date a').attr('href', '#');
-        $previewDiv.find('.comment-anchor').remove();
+        var $anchor = $newPreview.find('.comment-date a');
+        $anchor.replaceWith($('<span/>').text($anchor.text()));
+        $newPreview.find('.comment-anchor').remove();
         $previewDiv.empty();
         $previewDiv.append($newPreview);
     };
