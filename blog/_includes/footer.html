@@ -112,6 +112,7 @@
 <script src="https://cdn.jsdelivr.net/npm/showdown@1.8.6/dist/showdown.min.js" integrity="sha256-dwhppIrxD8qC6lNulndZgtIm4XBU9zoMd9OUoXzIDAE=" crossorigin="anonymous"></script>
 <script src="/lib/sanitize-html-1.18.2.min.js"></script>
 <script src="/lib/autosize.min.js"></script>
+<script src="/lib/base64js.min.js"></script>
 
 <script type="text/javascript">
 
@@ -200,6 +201,8 @@ function avatarUri(authorEmailMD5) {
         return "https://www.gravatar.com/avatar/" + authorEmailMD5 + "?d=retro";
 }
 
+var jwk = {"kty":"RSA","alg":"RSA-OAEP","n":"wviXqUJGtV8hZrvJMcTbyzm7MmiJSqsAfWI_7pCyAhXXzz5C9F3NtXp79CCUMqkOck6IbNKUntPtGNOGwtoc5LTJNKLhx3TPi4TJyKUSfNr3pAdLpMRNeeRXCHFyyVsDb6z8ueixlKzdbDpZhV05bam49PurMHfeexJ3EJy2NpdFviykRJxtrERi6ckBe96VMlT_pHHIWLN5EwOK54DvNn1DYjiFK5ux5WRCFatZByzytrFvIllZRctNXZ8oTuMjQwKLY2bUrURblbIvLfX-9Yd7uVgdUSFE7-vSel9-DMyp_NQ-NRXrQbJG7IAYhSGSx-TPepCDPbFpMq3yC0iET7wF7-OQOb-Kwej_TKVJv-z4SbN-cpCqaMr5Q9scyGih7xr1YrOhe3TMs_cbgjtxsZbzkOqcuRreON_sGb9nlDpSIFCo6aH47GeMkA23Hk3HXAPyYQ7AfWhU9daiPcySiAFnfkrg2QvFNJmMSZ-bo4Co-JkjiqKw-LEpOw6Ed9LK4walxWUAqPGcT4_Uys3TH9XVex9_rEmigHXiJY3_Lwi6mTSkW10-zen5UXxqnyHpMxlmumohT96OyLyhEPeaaq8FrTYMCX8TiMOst3jF5QCNP-LFz21yeUEAr5_3-FKV2mjWEU9iW0dOOVTII2rlD0WtCkqkDwZtakQ1ynGdW1E","e":"AQAB"};
+
 function commentId(id) { return "comment-" + id; }
 
 function $commentForm(comment) {
@@ -231,8 +234,17 @@ function $commentForm(comment) {
         $replyTo.val(comment._id);
     }
     $email.blur(function() {
+        var data = new TextEncoder().encode($email.val());
+        window.crypto.subtle.importKey("jwk", jwk, { name: "RSA-OAEP", hash: { name: "SHA-1" } }, false, ["encrypt"]).then(function (encryptionKey) {
+            return window.crypto.subtle.encrypt({ name: "RSA-OAEP" }, encryptionKey, data)
+                .then(function (encrypted) {
+                    var array = new Uint8Array(encrypted);
+                    var text = base64js.fromByteArray(array);
+                    $authorEmailEncrypted.val(text);
+                    return text;
+                });
+        });
         // TODO: authorEmailEncrypted, authorEmailMD5
-        $authorEmailEncrypted.val($email.val());
         $authorEmailMD5.val($email.val());
     });
     $formDiv.append($form);
