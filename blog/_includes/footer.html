@@ -113,6 +113,7 @@
 <script src="/lib/sanitize-html-1.18.2.min.js"></script>
 <script src="/lib/autosize.min.js"></script>
 <script src="/lib/base64js.min.js"></script>
+<script src="/lib/md5.min.js"></script>
 
 <script type="text/javascript">
 
@@ -231,20 +232,6 @@ function $commentForm(comment) {
     if (comment) {
         $replyTo.val(comment._id);
     }
-    $email.blur(function() {
-        var data = new TextEncoder().encode($email.val());
-        window.crypto.subtle.importKey("jwk", jwk, { name: "RSA-OAEP", hash: { name: "SHA-1" } }, false, ["encrypt"]).then(function (encryptionKey) {
-            return window.crypto.subtle.encrypt({ name: "RSA-OAEP" }, encryptionKey, data)
-                .then(function (encrypted) {
-                    var array = new Uint8Array(encrypted);
-                    var text = base64js.fromByteArray(array);
-                    $authorEmailEncrypted.val(text);
-                    return text;
-                });
-        });
-        // TODO: authorEmailMD5
-        $authorEmailMD5.val($email.val());
-    });
     $formDiv.append($form);
 
     function createComment() {
@@ -260,6 +247,24 @@ function $commentForm(comment) {
     };
 
     function recreatePreview() {
+        var email = $email.val();
+        if (email && email.indexOf("@") !== -1) {
+            var data = new TextEncoder().encode($email.val());
+            window.crypto.subtle.importKey("jwk", jwk, { name: "RSA-OAEP", hash: { name: "SHA-1" } }, false, ["encrypt"]).then(function (encryptionKey) {
+                return window.crypto.subtle.encrypt({ name: "RSA-OAEP" }, encryptionKey, data)
+                    .then(function (encrypted) {
+                        var array = new Uint8Array(encrypted);
+                        var text = base64js.fromByteArray(array);
+                        $authorEmailEncrypted.val(text);
+                        return text;
+                    });
+            });
+            $authorEmailMD5.val(md5($email.val().replace(/^ +| +$/g, '').toLowerCase()));
+        } else {
+            $authorEmailMD5.val("");
+            $authorEmailEncrypted.val("");
+        }
+
         var $newPreview = $comment(createComment());
         // Turn off permalink and anchor
         var $anchor = $newPreview.find('.comment-date a');
@@ -271,7 +276,7 @@ function $commentForm(comment) {
 
     recreatePreview();
     $name.on('change keyup input paste', recreatePreview);
-    $authorEmailMD5.on('change keyup input paste', recreatePreview);
+    $email.on('change keyup input paste', recreatePreview);
     $url.on('change keyup input paste', recreatePreview);
     $message.on('change keyup input paste', recreatePreview);
 
