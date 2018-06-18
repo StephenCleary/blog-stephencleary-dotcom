@@ -220,6 +220,7 @@ function $commentForm(comment) {
     var $recaptcha = $('<div class="g-recaptcha" data-sitekey="6LfSaV8UAAAAAEFq-7HeUDiSQCkCtLtO_yc_SOi_"></div>');
     var $form = $('<form method="POST" action="https://api.staticman.net/v2/entry/StephenCleary/comments.stephencleary.com/master"/>')
         .append($('<input type="hidden" name="fields[postId]">').val(postId))
+        .append($('<input type="hidden" name="fields[postUri]">').val(location.href.replace(/#.*/, '')))
         .append($('<input type="hidden" name="options[reCaptcha][siteKey]" value="6LfSaV8UAAAAAEFq-7HeUDiSQCkCtLtO_yc_SOi_">'))
         .append($('<input type="hidden" name="options[reCaptcha][secret]" value="m+3RnHyrnk8L/SgOmrOjOwD92MLGNdbJvHUm7Ml6EyrIKOWGNffdxqKK9AtKcInmiUGaqMrM6W6jInER4Jy+gn/rf4Hai0TmhaxhukqLibAUl1UWhWUaZK1nn/yecE0y9wXOW8JaHtxODjVei0+bNgHl5JITjL/qaNszf+OCTEw=">'))
         .append($replyTo)
@@ -244,6 +245,8 @@ function $commentForm(comment) {
             var message = "Failed to post comment";
             if (post.responseJSON && post.responseJSON.message)
                 message += ": " + post.responseJSON.message;
+            else if (post.responseJSON)
+                message += ": " + post.responseJSON;
             alert(message);
         });
     });
