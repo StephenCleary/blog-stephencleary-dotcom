@@ -114,7 +114,6 @@
 <script src="/lib/autosize.min.js"></script>
 <script src="/lib/base64js.min.js"></script>
 <script src="/lib/md5.min.js"></script>
-<script src="https://www.google.com/recaptcha/api.js?render=explicit"></script>
 
 <script type="text/javascript">
 
@@ -208,8 +207,6 @@ var jwk = {"kty":"RSA","alg":"RSA-OAEP","n":"wviXqUJGtV8hZrvJMcTbyzm7MmiJSqsAfWI
 function commentId(id) { return "comment-" + id; }
 
 function $commentForm(comment) {
-    // TODO: add redirect to "successful post" page that also has a "go back" button. Or just build the POST by hand.
-    // TODO: add captcha
     var $formDiv = $('<div class="col-md-6"/>');
     var $previewDiv = $('<div class="col-md-6"/>');
     var $authorEmailEncrypted = $('<input type="hidden" name="fields[authorEmailEncrypted]">');
@@ -237,6 +234,19 @@ function $commentForm(comment) {
     if (comment) {
         $replyTo.val(comment._id);
     }
+    $form.submit(function (e) {
+        e.preventDefault();
+        var post = $.post($form.attr('action'), $form.serialize(), "json");
+        post.done(function () {
+            alert("Comment successfully posted. It should appear on this page in a minute or so.");
+        });
+        post.error(function () {
+            var message = "Failed to post comment";
+            if (post.responseJSON && post.responseJSON.message)
+                message += ": " + post.responseJSON.message;
+            alert(message);
+        });
+    });
     $formDiv.append($form);
     grecaptcha.render($recaptcha[0]);
 
@@ -340,26 +350,30 @@ function normalizeComment(x) {
     };
 }
 
-var req = new XMLHttpRequest();
-req.addEventListener("load", function () {
-    var $commentDiv = $('#comments');
-    if (req.status === 200)
-    {
-        comments = JSON.parse(req.responseText).map(normalizeComment);
-        var commentCounter = document.getElementById('comment-counter');
-        commentCounter.innerText = comments.length + " " + commentCounter.innerText;
-        var toplevelComments = filterComments("");
-        for (var i = 0; i != toplevelComments.length; ++i) {
-            var comment = toplevelComments[i];
-            $commentDiv.append($comment(comment));
+function recaptchaLoaded() {
+    var req = new XMLHttpRequest();
+    req.addEventListener("load", function () {
+        var $commentDiv = $('#comments');
+        if (req.status === 200)
+        {
+            comments = JSON.parse(req.responseText).map(normalizeComment);
+            var commentCounter = document.getElementById('comment-counter');
+            commentCounter.innerText = comments.length + " " + commentCounter.innerText;
+            var toplevelComments = filterComments("");
+            for (var i = 0; i != toplevelComments.length; ++i) {
+                var comment = toplevelComments[i];
+                $commentDiv.append($comment(comment));
+            }
         }
-    }
 
-    $commentDiv.append($commentForm());
-});
-req.open('GET', "https://comments.stephencleary.com/" + postId + ".json");
-req.send();
+        $commentDiv.append($commentForm());
+    });
+    req.open('GET', "https://comments.stephencleary.com/" + postId + ".json");
+    req.send();
+}
 </script>
+
+<script src="https://www.google.com/recaptcha/api.js?onload=recaptchaLoaded&amp;render=explicit"></script>
 
 <!-- TODO-COMMENTS -->
 
