@@ -206,9 +206,8 @@ var jwk = {"kty":"RSA","alg":"RSA-OAEP","n":"wviXqUJGtV8hZrvJMcTbyzm7MmiJSqsAfWI
 
 function commentId(id) { return "comment-" + id; }
 
-function $commentForm(comment) {
-    var $formDiv = $('<div class="col-md-6"/>');
-    var $previewDiv = $('<div class="col-md-6"/>');
+function $commentForm(hideForm, comment) {
+    var $previewDiv = $('<div/>');
     var $authorEmailEncrypted = $('<input type="hidden" name="fields[authorEmailEncrypted]">');
     var $authorEmailMD5 = $('<input type="hidden" name="fields[authorEmailMD5]">');
     var $email = $('<input type="email" name="email" class="form-control" placeholder="Email">');
@@ -218,6 +217,7 @@ function $commentForm(comment) {
     autosize($message);
     var $replyTo = $('<input type="hidden" name="fields[replyTo]">').val("");
     var $recaptcha = $('<div class="g-recaptcha" data-sitekey="6LfSaV8UAAAAAEFq-7HeUDiSQCkCtLtO_yc_SOi_"></div>');
+    var $buttonBar = $('<div class="comment-form-buttonbar"/>').append($('<button type="submit" class="btn btn-primary pull-right">Submit</button>'), $recaptcha);
     var $form = $('<form method="POST" action="https://api.staticman.net/v2/entry/StephenCleary/comments.stephencleary.com/master"/>')
         .append($('<input type="hidden" name="fields[postId]">').val(postId))
         .append($('<input type="hidden" name="fields[postUri]">').val(location.href.replace(/#.*/, '')))
@@ -229,14 +229,13 @@ function $commentForm(comment) {
         .append($('<div class="form-group"><label>Name (optional)</label></div>').append($name))
         .append($('<div class="form-group"><label>Email (optional; always encrypted, never shared)</label></div>').append($email))
         .append($('<div class="form-group"><label>Url (optional; must start with "http://" or "https://")</label></div>').append($url))
-        .append($('<div class="form-group"><label>Message (supports some Markdown/HTML)</label></div>').append($message))
-        .append($('<button type="submit" class="btn btn-primary pull-right">Submit</button>'))
-        .append($recaptcha);
+        .append($('<div class="form-group"><label>Message (supports some Markdown/HTML)</label></div>').append($message));
     if (comment) {
         $replyTo.val(comment._id);
     }
     $form.submit(function (e) {
         e.preventDefault();
+        hideForm();
         var post = $.post($form.attr('action'), $form.serialize(), "json");
         post.done(function () {
             alert("Comment successfully posted. It should appear on this page in a minute or so.");
@@ -250,8 +249,6 @@ function $commentForm(comment) {
             alert(message);
         });
     });
-    $formDiv.append($form);
-    grecaptcha.render($recaptcha[0]);
 
     function createComment() {
         return normalizeComment({
@@ -284,7 +281,7 @@ function $commentForm(comment) {
             $authorEmailEncrypted.val("");
         }
 
-        var $newPreview = $comment(createComment());
+        var $newPreview = $comment(false, createComment());
         // Turn off permalink and anchor
         var $anchor = $newPreview.find('.comment-date a');
         $anchor.replaceWith($('<span/>').text($anchor.text()));
@@ -299,11 +296,22 @@ function $commentForm(comment) {
     $url.on('change keyup input paste', recreatePreview);
     $message.on('change keyup input paste', recreatePreview);
 
-    return $('<div class="container-fluid"/>').append($('<div class="row"/>').append($formDiv, $previewDiv));
+    $form.append($('<h3>Preview:</h3>'), $previewDiv, $buttonBar);
+    grecaptcha.render($recaptcha[0]);
+    return $('<div class="comment-form"/>').append($form);
+}
+
+function $replyButton(comment) {
+    var $button;
+    if (comment)
+        $button = $('<button class="btn btn-primary comment-reply"><i class="fa fa-reply"></i> Reply</button>');
+    else
+        $button = $('<button class="btn btn-primary comment-new"><i class="fa fa-plus-square"></i> New Comment</button>');
+    return $button;
 }
 
 var now = moment();
-function $comment(comment) {
+function $comment(includeForm, comment) {
     var message = sanitizeHtml(markdownConverter.makeHtml(comment.message), sanitizeOptions);
     var $commentDiv = $('<div class="comment"/>');
     var publicationDate = moment(comment.date);
@@ -328,10 +336,12 @@ function $comment(comment) {
     );
 
     var $commentContainer = $('<div class="comment-container"/>').append($commentDiv);
+    if (includeForm)
+        $commentContainer.append($expandCollapseForm(comment));
     var childComments = filterComments(comment._id);
     for (var i = 0; i != childComments.length; ++i) {
         var child = childComments[i];
-        $commentContainer.append($comment(child));
+        $commentContainer.append($comment(includeForm, child));
     }
 
     return $commentContainer;
@@ -353,6 +363,22 @@ function normalizeComment(x) {
     };
 }
 
+function $expandCollapseForm(comment) {
+    var $button = $replyButton(comment);
+    var $form;
+    function showForm() {
+        $button.addClass("comment-hidden");
+        $form.removeClass("comment-hidden");
+    }
+    function hideForm() {
+        $form.addClass("comment-hidden");
+        $button.removeClass("comment-hidden");
+    }
+    $form = $commentForm(hideForm, comment).addClass("comment-hidden");
+    $button.click(showForm);
+    return $('<div/>').append($button, $form);
+}
+
 function recaptchaLoaded() {
     var req = new XMLHttpRequest();
     req.addEventListener("load", function () {
@@ -365,11 +391,11 @@ function recaptchaLoaded() {
             var toplevelComments = filterComments("");
             for (var i = 0; i != toplevelComments.length; ++i) {
                 var comment = toplevelComments[i];
-                $commentDiv.append($comment(comment));
+                $commentDiv.append($comment(true, comment));
             }
+            $commentDiv.append($expandCollapseForm());
         }
-
-        $commentDiv.append($commentForm());
+        $commentDiv.prepend($expandCollapseForm());
     });
     req.open('GET', "https://comments.stephencleary.com/" + postId + ".json");
     req.send();
