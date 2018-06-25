@@ -172,7 +172,7 @@ code {
 /* ----------------------------------------------------------*/
 
 .comment-container {
-    margin-top: 10px;
+    margin-top: 1em;
 }
 
 .comment-container > .comment-container {
@@ -191,10 +191,36 @@ code {
     visibility: hidden;
 }
 
-.comment-author-profile-image {
+img.comment-author-profile-image {
     height: 80px;
     width: 80px;
     margin-right: 10px;
+}
+
+.comment-message {
+    overflow-x: auto;
+}
+
+.comment-form {
+    border: 1px solid black;
+    padding: 1em;
+}
+
+.comment-new {
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+
+.comment-new, .comment-reply {
+    margin-left: 1em;
+}
+
+.comment-hidden {
+    display: none;
+}
+
+.comment-form-buttonbar {
+    margin-top: 1em;
 }
 </style>
     
@@ -269,7 +295,6 @@ code {
             <li class="next"><a href="/2014/03/a-cross-domain-singleton.html" title="A Cross-Domain Singleton">Next Post &rarr;</a></li>
         </ul>
 
-        <div>Note: Comments are temporarily read-only. If you wish to make a comment, please email me directly.</div>
         <div id="comments"></div>
     </footer>
 </div>
@@ -408,6 +433,9 @@ code {
 <script src="/lib/uuid-v3-3.2.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/showdown@1.8.6/dist/showdown.min.js" integrity="sha256-dwhppIrxD8qC6lNulndZgtIm4XBU9zoMd9OUoXzIDAE=" crossorigin="anonymous"></script>
 <script src="/lib/sanitize-html-1.18.2.min.js"></script>
+<script src="/lib/autosize.min.js"></script>
+<script src="/lib/base64js.min.js"></script>
+<script src="/lib/md5.min.js"></script>
 
 <script type="text/javascript">
 
@@ -489,17 +517,123 @@ function filterComments(replyTo) {
         .sort(function (a, b) { return a.timestamp - b.timestamp; });
 }
 
-function avatarUri(comment) {
-    if (comment.authorEmailMD5 === "")
+function avatarUri(authorEmailMD5) {
+    if (authorEmailMD5 === "")
         return "https://www.gravatar.com/avatar/?d=mp&f=y";
     else
-        return "https://www.gravatar.com/avatar/" + comment.authorEmailMD5 + "?d=retro";
+        return "https://www.gravatar.com/avatar/" + authorEmailMD5 + "?d=retro";
 }
+
+var jwk = {"kty":"RSA","alg":"RSA-OAEP","n":"wviXqUJGtV8hZrvJMcTbyzm7MmiJSqsAfWI_7pCyAhXXzz5C9F3NtXp79CCUMqkOck6IbNKUntPtGNOGwtoc5LTJNKLhx3TPi4TJyKUSfNr3pAdLpMRNeeRXCHFyyVsDb6z8ueixlKzdbDpZhV05bam49PurMHfeexJ3EJy2NpdFviykRJxtrERi6ckBe96VMlT_pHHIWLN5EwOK54DvNn1DYjiFK5ux5WRCFatZByzytrFvIllZRctNXZ8oTuMjQwKLY2bUrURblbIvLfX-9Yd7uVgdUSFE7-vSel9-DMyp_NQ-NRXrQbJG7IAYhSGSx-TPepCDPbFpMq3yC0iET7wF7-OQOb-Kwej_TKVJv-z4SbN-cpCqaMr5Q9scyGih7xr1YrOhe3TMs_cbgjtxsZbzkOqcuRreON_sGb9nlDpSIFCo6aH47GeMkA23Hk3HXAPyYQ7AfWhU9daiPcySiAFnfkrg2QvFNJmMSZ-bo4Co-JkjiqKw-LEpOw6Ed9LK4walxWUAqPGcT4_Uys3TH9XVex9_rEmigHXiJY3_Lwi6mTSkW10-zen5UXxqnyHpMxlmumohT96OyLyhEPeaaq8FrTYMCX8TiMOst3jF5QCNP-LFz21yeUEAr5_3-FKV2mjWEU9iW0dOOVTII2rlD0WtCkqkDwZtakQ1ynGdW1E","e":"AQAB"};
 
 function commentId(id) { return "comment-" + id; }
 
+function $commentForm(hideForm, comment) {
+    var $previewDiv = $('<div/>');
+    var $authorEmailEncrypted = $('<input type="hidden" name="fields[authorEmailEncrypted]">');
+    var $authorEmailMD5 = $('<input type="hidden" name="fields[authorEmailMD5]">');
+    var $email = $('<input type="email" name="email" class="form-control" placeholder="Email">');
+    var $name = $('<input type="text" name="fields[authorName]" class="form-control" placeholder="Name">');
+    var $url = $('<input type="url" name="fields[authorUri]" class="form-control" placeholder="Url">');
+    var $message = $('<textarea name="fields[message]" class="form-control" placeholder="Message"/></textarea>');
+    autosize($message);
+    var $replyTo = $('<input type="hidden" name="fields[replyTo]">').val("");
+    var $recaptcha = $('<div class="g-recaptcha" data-sitekey="6LfSaV8UAAAAAEFq-7HeUDiSQCkCtLtO_yc_SOi_"></div>');
+    var $buttonBar = $('<div class="comment-form-buttonbar"/>').append($('<button type="submit" class="btn btn-primary pull-right">Submit</button>'), $recaptcha);
+    var $form = $('<form method="POST" action="https://api.staticman.net/v2/entry/StephenCleary/comments.stephencleary.com/master"/>')
+        .append($('<input type="hidden" name="fields[postId]">').val(postId))
+        .append($('<input type="hidden" name="fields[postUri]">').val(location.href.replace(/#.*/, '')))
+        .append($('<input type="hidden" name="options[reCaptcha][siteKey]" value="6LfSaV8UAAAAAEFq-7HeUDiSQCkCtLtO_yc_SOi_">'))
+        .append($('<input type="hidden" name="options[reCaptcha][secret]" value="m+3RnHyrnk8L/SgOmrOjOwD92MLGNdbJvHUm7Ml6EyrIKOWGNffdxqKK9AtKcInmiUGaqMrM6W6jInER4Jy+gn/rf4Hai0TmhaxhukqLibAUl1UWhWUaZK1nn/yecE0y9wXOW8JaHtxODjVei0+bNgHl5JITjL/qaNszf+OCTEw=">'))
+        .append($replyTo)
+        .append($authorEmailEncrypted)
+        .append($authorEmailMD5)
+        .append($('<div class="form-group"><label>Name (optional)</label></div>').append($name))
+        .append($('<div class="form-group"><label>Email (optional; always encrypted, never shared)</label></div>').append($email))
+        .append($('<div class="form-group"><label>Url (optional; must start with "http://" or "https://")</label></div>').append($url))
+        .append($('<div class="form-group"><label>Message (supports some Markdown/HTML)</label></div>').append($message));
+    if (comment) {
+        $replyTo.val(comment._id);
+    }
+    $form.submit(function (e) {
+        e.preventDefault();
+        hideForm();
+        var post = $.post($form.attr('action'), $form.serialize(), "json");
+        post.done(function () {
+            alert("Comment successfully posted. It should appear on this page in a minute or so.");
+        });
+        post.error(function () {
+            var message = "Failed to post comment";
+            if (post.responseJSON && post.responseJSON.message)
+                message += ": " + post.responseJSON.message;
+            else if (post.responseJSON)
+                message += ": " + post.responseJSON;
+            alert(message);
+        });
+    });
+
+    function createComment() {
+        return normalizeComment({
+            date: moment().format(),
+            _id: "_",
+            replyTo: comment ? comment._id : undefined,
+            authorName: $name.val(),
+            authorEmailMD5: $authorEmailMD5.val(),
+            authorUri: $url.val(),
+            message: $message.val()
+        });
+    };
+
+    function recreatePreview() {
+        var email = $email.val();
+        if (email && email.indexOf("@") !== -1) {
+            var data = new TextEncoder().encode($email.val());
+            window.crypto.subtle.importKey("jwk", jwk, { name: "RSA-OAEP", hash: { name: "SHA-1" } }, false, ["encrypt"]).then(function (encryptionKey) {
+                return window.crypto.subtle.encrypt({ name: "RSA-OAEP" }, encryptionKey, data)
+                    .then(function (encrypted) {
+                        var array = new Uint8Array(encrypted);
+                        var text = base64js.fromByteArray(array);
+                        $authorEmailEncrypted.val(text);
+                        return text;
+                    });
+            });
+            $authorEmailMD5.val(md5($email.val().replace(/^ +| +$/g, '').toLowerCase()));
+        } else {
+            $authorEmailMD5.val("");
+            $authorEmailEncrypted.val("");
+        }
+
+        var $newPreview = $comment(false, createComment());
+        // Turn off permalink and anchor
+        var $anchor = $newPreview.find('.comment-date a');
+        $anchor.replaceWith($('<span/>').text($anchor.text()));
+        $newPreview.find('.comment-anchor').remove();
+        $previewDiv.empty();
+        $previewDiv.append($newPreview);
+    };
+
+    recreatePreview();
+    $name.on('change keyup input paste', recreatePreview);
+    $email.on('change keyup input paste', recreatePreview);
+    $url.on('change keyup input paste', recreatePreview);
+    $message.on('change keyup input paste', recreatePreview);
+
+    $form.append($('<h3>Preview:</h3>'), $previewDiv, $buttonBar);
+    grecaptcha.render($recaptcha[0]);
+    return $('<div class="comment-form"/>').append($form);
+}
+
+function $replyButton(comment) {
+    var $button;
+    if (comment)
+        $button = $('<button class="btn btn-primary comment-reply"><i class="fa fa-reply"></i> Reply</button>');
+    else
+        $button = $('<button class="btn btn-primary comment-new"><i class="fa fa-plus-square"></i> New Comment</button>');
+    return $button;
+}
+
 var now = moment();
-function $comment(comment) {
+function $comment(includeForm, comment) {
     var message = sanitizeHtml(markdownConverter.makeHtml(comment.message), sanitizeOptions);
     var $commentDiv = $('<div class="comment"/>');
     var publicationDate = moment(comment.date);
@@ -507,7 +641,7 @@ function $comment(comment) {
     if (comment.authorUri !== "")
         $author.append($('<span> • </span>'), $('<a class="comment-author-uri" rel="nofollow noopener"/>').attr('href', comment.authorUri).text(comment.authorUri));
     var $headerDiv = $('<div class="comment-header"/>').append(
-        $('<div class="comment-author-profile" style="float:left;"/>').append($('<img class="comment-author-profile-image" src="' + avatarUri(comment) + '"/>')),
+        $('<div class="comment-author-profile" style="float:left;"/>').append($('<img class="comment-author-profile-image" src="' + avatarUri(comment.authorEmailMD5) + '"/>')),
         $author,
         $('<div class="comment-date" />').append(
             $('<a/>').attr('href', '#' + commentId(comment._id)).attr('title', 'permalink').text(publicationDate.from(now) + ' (' + publicationDate.format('YYYY-MM-DD hh:mm:ss a') + ')')
@@ -524,61 +658,73 @@ function $comment(comment) {
     );
 
     var $commentContainer = $('<div class="comment-container"/>').append($commentDiv);
+    if (includeForm)
+        $commentContainer.append($expandCollapseForm(comment));
     var childComments = filterComments(comment._id);
     for (var i = 0; i != childComments.length; ++i) {
         var child = childComments[i];
-        $commentContainer.append($comment(child));
+        $commentContainer.append($comment(includeForm, child));
     }
 
     return $commentContainer;
 }
 
-var req = new XMLHttpRequest();
-req.addEventListener("load", function () {
-    comments = JSON.parse(req.responseText);
-    var commentCounter = document.getElementById('comment-counter');
-    commentCounter.innerText = comments.length + " " + commentCounter.innerText;
-    var $commentDiv = $('#comments');
-    var toplevelComments = filterComments("");
-    for (var i = 0; i != toplevelComments.length; ++i) {
-        var comment = toplevelComments[i];
-        $commentDiv.append($comment(comment));
+function normalizeComment(x) {
+    var uri = x.authorUri;
+    if (!uri || (!uri.startsWith("http://") && !uri.startsWith("https://")))
+        uri = "";
+    return {
+            _id: x._id,
+            authorName: x.authorName || "Anonymous",
+            authorEmailMD5: x.authorEmailMD5 || "",
+            authorUri: uri,
+            message: x.message || "",
+            replyTo: x.replyTo || "",
+            date: x.date,
+            timestamp: moment(x.date).valueOf()
+    };
+}
+
+function $expandCollapseForm(comment) {
+    var $button = $replyButton(comment);
+    var $form;
+    function showForm() {
+        $button.addClass("comment-hidden");
+        $form.removeClass("comment-hidden");
     }
-});
-req.open('GET', "https://comments.stephencleary.com/" + postId + ".json");
-req.send();
+    function hideForm() {
+        $form.addClass("comment-hidden");
+        $button.removeClass("comment-hidden");
+    }
+    $form = $commentForm(hideForm, comment).addClass("comment-hidden");
+    $button.click(showForm);
+    return $('<div/>').append($button, $form);
+}
+
+function recaptchaLoaded() {
+    var req = new XMLHttpRequest();
+    req.addEventListener("load", function () {
+        var $commentDiv = $('#comments');
+        if (req.status === 200)
+        {
+            comments = JSON.parse(req.responseText).map(normalizeComment);
+            var commentCounter = document.getElementById('comment-counter');
+            commentCounter.innerText = comments.length + " " + commentCounter.innerText;
+            var toplevelComments = filterComments("");
+            for (var i = 0; i != toplevelComments.length; ++i) {
+                var comment = toplevelComments[i];
+                $commentDiv.append($comment(true, comment));
+            }
+            $commentDiv.append($expandCollapseForm());
+        }
+        $commentDiv.prepend($expandCollapseForm());
+    });
+    req.open('GET', "https://comments.stephencleary.com/" + postId + ".json");
+    req.send();
+}
 </script>
 
-<!-- TODO-COMMENTS -->
-
-<!-- Disqus variables -->
-<!-- script type="text/javascript">
-    var disqus_shortname = 'stephencleary';
-    var disqus_identifier = "/2014/02/guidelines-for-lock-free-programming";
-    var disqus_title = "Guidelines for Lock-free Programming";
-    var disqus_url = "https://blog.stephencleary.com/2014/02/guidelines-for-lock-free-programming.html";
-</script -->
-
-<!-- Disqus comment counter -->
-<!-- script type="text/javascript">
-    (function () {
-        var s = document.createElement('script'); s.async = true;
-        s.type = 'text/javascript';
-        s.src = '//' + disqus_shortname + '.disqus.com/count.js';
-        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(s);
-    }());
-</script -->
-
-<!-- Disqus comment section -->
-<!-- script type="text/javascript">
-    (function() {
-        var dsq = document.createElement('script');
-        dsq.type = 'text/javascript';
-        dsq.async = true;
-        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-    })();
-</script -->
+<script src="https://www.google.com/recaptcha/api.js?onload=recaptchaLoaded&amp;render=explicit"></script>
 
 
 

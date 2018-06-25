@@ -27,7 +27,7 @@
 
 &lt;p&gt;&lt;code&gt;ILogger&lt;/code&gt; is a logger that your code can use to write log messages to. There are three core methods: &lt;code&gt;IsEnabled&lt;/code&gt; tests whether a log level is enabled on that logger; &lt;code&gt;Log&lt;/code&gt; is the core logging method that is used to write log messages; and &lt;code&gt;BeginScope&lt;/code&gt; defines a logging scope.&lt;/p&gt;
 
-&lt;p&gt;We’ll cover logging scopes later in this series. That leaves &lt;code&gt;IsEnabled&lt;/code&gt; and &lt;code&gt;Log&lt;/code&gt;, which are the core logging methods. There’s a bunch of logging extension methods that build on that core; the common methods like &lt;code&gt;LogInformation&lt;/code&gt; first call &lt;code&gt;IsEnabled&lt;/code&gt; and then &lt;code&gt;Log&lt;/code&gt;, with the appropriate arguments.&lt;/p&gt;
+&lt;p&gt;We’ll cover logging scopes later in this series. That leaves &lt;code&gt;IsEnabled&lt;/code&gt; and &lt;code&gt;Log&lt;/code&gt;, which are the core logging methods. There’s a bunch of logging extension methods that build on that core; the common methods like &lt;code&gt;LogInformation&lt;/code&gt; are just wrappers around &lt;code&gt;Log&lt;/code&gt;, with the appropriate arguments.&lt;/p&gt;
 
 &lt;p&gt;Internally, an &lt;code&gt;ILogger&lt;/code&gt; has a “name” (also called a “category”). The idea is that each &lt;code&gt;ILogger&lt;/code&gt; instance is used by a different component of the application.&lt;/p&gt;
 
