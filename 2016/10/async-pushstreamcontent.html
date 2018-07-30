@@ -761,8 +761,10 @@ function $commentForm(hideForm, comment) {
     $message.on('change keyup input paste', recreatePreview);
 
     $form.append($('<h3>Preview:</h3>'), $previewDiv, $buttonBar);
-    grecaptcha.render($recaptcha[0]);
-    return $('<div class="comment-form"/>').append($form);
+    return {
+        $form: $('<div class="comment-form"/>').append($form),
+        onShow: function() { grecaptcha.render($recaptcha[0]); }
+    };
 }
 
 function $replyButton(comment) {
@@ -829,16 +831,21 @@ function normalizeComment(x) {
 
 function $expandCollapseForm(comment) {
     var $button = $replyButton(comment);
-    var $form;
+    var formObj = $commentForm(hideForm, comment);
+    var $form = formObj.$form.addClass("comment-hidden");
+    var onShow = formObj.onShow;
     function showForm() {
         $button.addClass("comment-hidden");
+        if (onShow) {
+            onShow();
+            onShow = null;
+        }
         $form.removeClass("comment-hidden");
     }
     function hideForm() {
         $form.addClass("comment-hidden");
         $button.removeClass("comment-hidden");
     }
-    $form = $commentForm(hideForm, comment).addClass("comment-hidden");
     $button.click(showForm);
     return $('<div/>').append($button, $form);
 }
