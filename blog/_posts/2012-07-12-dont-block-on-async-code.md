@@ -13,6 +13,7 @@ Consider the example below. A button click will initiate a REST call and display
 // My "library" method.
 public static async Task<JObject> GetJsonAsync(Uri uri)
 {
+  // (real-world code shouldn't use HttpClient in a using block; this is just example code)
   using (var client = new HttpClient())
   {
     var jsonString = await client.GetStringAsync(uri);
@@ -41,6 +42,7 @@ This example is very similar; we have a library method that performs a REST call
 // My "library" method.
 public static async Task<JObject> GetJsonAsync(Uri uri)
 {
+  // (real-world code shouldn't use HttpClient in a using block; this is just example code)
   using (var client = new HttpClient())
   {
     var jsonString = await client.GetStringAsync(uri);
@@ -95,6 +97,7 @@ Consider the first best practice. The new "library" method looks like this:
 
 public static async Task<JObject> GetJsonAsync(Uri uri)
 {
+  // (real-world code shouldn't use HttpClient in a using block; this is just example code)
   using (var client = new HttpClient())
   {
     var jsonString = await client.GetStringAsync(uri).ConfigureAwait(false);
