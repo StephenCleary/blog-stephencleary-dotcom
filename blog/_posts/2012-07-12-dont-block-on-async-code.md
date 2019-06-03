@@ -106,7 +106,7 @@ public static async Task<JObject> GetJsonAsync(Uri uri)
 }
 {% endhighlight %}
 
-This changes the continuation behavior of GetJsonAsync so that it does _not_ resume on the context. Instead, GetJsonAsync will resume on a thread pool thread. This enables GetJsonAsync to complete the Task it returned without having to re-enter the context.
+This changes the continuation behavior of GetJsonAsync so that it does _not_ resume on the context. Instead, GetJsonAsync will resume on a thread pool thread. This enables GetJsonAsync to complete the Task it returned without having to re-enter the context. The top-level methods, meanwhile, do require the context, so they cannot use `ConfigureAwait(false)`.
 
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
