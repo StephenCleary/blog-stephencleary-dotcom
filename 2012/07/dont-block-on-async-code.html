@@ -380,7 +380,7 @@ img.comment-author-profile-image {
   <span class="p">}</span>
 <span class="p">}</span></code></pre></figure>
 
-<p>This changes the continuation behavior of GetJsonAsync so that it does <em>not</em> resume on the context. Instead, GetJsonAsync will resume on a thread pool thread. This enables GetJsonAsync to complete the Task it returned without having to re-enter the context.</p>
+<p>This changes the continuation behavior of GetJsonAsync so that it does <em>not</em> resume on the context. Instead, GetJsonAsync will resume on a thread pool thread. This enables GetJsonAsync to complete the Task it returned without having to re-enter the context. The top-level methods, meanwhile, do require the context, so they cannot use <code>ConfigureAwait(false)</code>.</p>
 
 <div class="alert alert-info">
   <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
@@ -786,18 +786,30 @@ function $commentForm(hideForm, comment) {
     $form.submit(function (e) {
         e.preventDefault();
         hideForm();
-        var post = $.post($form.attr('action'), $form.serialize(), "json");
-        post.done(function () {
-            alert("Comment successfully posted. It should appear on this page in a minute or so.");
-        });
-        post.error(function () {
-            var message = "Failed to post comment";
-            if (post.responseJSON && post.responseJSON.message)
-                message += ": " + post.responseJSON.message;
-            else if (post.responseJSON)
-                message += ": " + post.responseJSON;
-            alert(message);
-        });
+        var postAction = $form.attr('action');
+        var postBody = $form.serialize();
+        var retries = 5;
+
+        function postIt() {
+            var post = $.post(postAction, postBody, "json");
+            post.done(function () {
+                alert("Comment successfully posted. It should appear on this page in a minute or so.");
+            });
+            post.error(function () {
+                var message = "Failed to post comment";
+                if (post.responseText)
+                    message += ": " + post.responseText;
+                
+                if (--retries > 0) {
+                    console.log(message);
+                    postIt();
+                } else {
+                    alert(message);
+                }
+            });
+        }
+
+        postIt();
     });
 
     function createComment() {
