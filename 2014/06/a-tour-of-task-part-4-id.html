@@ -598,11 +598,11 @@ function $commentForm(hideForm, comment) {
     var $replyTo = $('<input type="hidden" name="fields[replyTo]">').val("");
     var $recaptcha = $('<div class="g-recaptcha" data-sitekey="6LfSaV8UAAAAAEFq-7HeUDiSQCkCtLtO_yc_SOi_"></div>');
     var $buttonBar = $('<div class="comment-form-buttonbar"/>').append($('<button type="submit" class="btn btn-primary pull-right">Submit</button>'), $recaptcha);
-    var $form = $('<form method="POST" action="https://api.staticman.net/v2/entry/StephenCleary/comments.stephencleary.com/master"/>')
+    var $form = $('<form method="POST" action="https://stephencleary-comments.herokuapp.com/v2/entry/StephenCleary/comments.stephencleary.com/master"/>')
         .append($('<input type="hidden" name="fields[postId]">').val(postId))
         .append($('<input type="hidden" name="fields[postUri]">').val(location.href.replace(/#.*/, '')))
         .append($('<input type="hidden" name="options[reCaptcha][siteKey]" value="6LfSaV8UAAAAAEFq-7HeUDiSQCkCtLtO_yc_SOi_">'))
-        .append($('<input type="hidden" name="options[reCaptcha][secret]" value="m+3RnHyrnk8L/SgOmrOjOwD92MLGNdbJvHUm7Ml6EyrIKOWGNffdxqKK9AtKcInmiUGaqMrM6W6jInER4Jy+gn/rf4Hai0TmhaxhukqLibAUl1UWhWUaZK1nn/yecE0y9wXOW8JaHtxODjVei0+bNgHl5JITjL/qaNszf+OCTEw=">'))
+        .append($('<input type="hidden" name="options[reCaptcha][secret]" value="rlAivB9udiXQ8MQx3HNJ2Cw/qA2OJI1noljbySzRpNLKmdaS7LtDRT4T3hZcQswRl5sajt5dr+Txj46K2oEGH2HiStNdMMxCchBg0T6YcbZoAP7Zvax+6/C293ClnzMYq8Ozk4bMDbXEHC11FvHR2eaBKqTgAmQSQ3+N2NU5Aaw4Cqfgsj55Br+lKyK0Ydll6SF9+IjQnGJ6S9QV7rHopROdV3RCaeSsSrhsqyGjhvPRgSdl23npJbZt8R0e4oGd6ogH+VDhkj+S3LFPL+R7h6BiHuUDNuJheaJKYTJtjWt80esZgFYywTyTWnqkNBHxOXyH8+AN4PGI0trvlXzdsGvNYRP+dlV6AQyShI3zimSmB4mqcAnuNhGNvLIsfgTKRT1gmxgG1uxUMPjRq1L3R2wQMSQ1/cEuX2wiLI3UrtT8N+QUEptMQ1jsR7rg28OxqIVhbd2+LeAS90PxbxJ9h3mKAxQ493TmCIxRLbh9RNLl+jy8NsRwz2RikzKLJDZsfB7n/Z30nSDZkOTtT7fMzS3g4eJzT0sZStFQsW7Gis6MVs8hXUYgiuIseALKvAzmobnlycD/rqlCpZ5rYC2xQToc4ZDczfZ0bCP8/R5Op4J8LhI4l0JfR1pZSD9V9xTyQ6MTuTT63Ra72ANxn/0idxveWPJS7WMKbKoGmuTNji4=">'))
         .append($replyTo)
         .append($authorEmailEncrypted)
         .append($authorEmailMD5)
@@ -782,9 +782,12 @@ function recaptchaLoaded() {
     var req = new XMLHttpRequest();
     req.addEventListener("load", function () {
         var $commentDiv = $('#comments');
-        if (req.status === 200)
-        {
-            comments = JSON.parse(req.responseText).map(normalizeComment);
+        if (req.status === 404 || req.status === 200) {
+            if (req.status === 404) {
+                comments = [];
+            } else {
+                comments = JSON.parse(req.responseText).map(normalizeComment);
+            }
             var commentCounter = document.getElementById('comment-counter');
             commentCounter.innerText = comments.length + " " + commentCounter.innerText;
             var toplevelComments = filterComments("");
