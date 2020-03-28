@@ -8,6 +8,62 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>ValueTask Restrictions</title>
+        <description>&lt;h2 id=&quot;valuetask-restrictions&quot;&gt;ValueTask Restrictions&lt;/h2&gt;
+
+&lt;p&gt;&lt;code&gt;ValueTask&amp;lt;T&amp;gt;&lt;/code&gt; is a type that was introduced waaaay back in .NET Core 1.0, almost four years ago (which is pretty much forever in Internet time). However, value tasks are just now becoming more commonly used. Language features including asynchronous disposal and asynchronous enumerables (a.k.a. asynchronous streams) are thrusting value tasks in front of many more developers.&lt;/p&gt;
+
+&lt;h2 id=&quot;valuetask-a-simple-description&quot;&gt;ValueTask: A Simple Description&lt;/h2&gt;
+
+&lt;p&gt;Here’s value tasks in a single sentence: a value task (&lt;code&gt;ValueTask&amp;lt;T&amp;gt;&lt;/code&gt;) is a more efficient task than a reference task (&lt;code&gt;Task&amp;lt;T&amp;gt;&lt;/code&gt;).&lt;/p&gt;
+
+&lt;p&gt;As the name implies, a &lt;em&gt;value&lt;/em&gt; task is a value type rather than a reference type (like ordinary tasks). When using the reference type of task (e.g., &lt;code&gt;Task&amp;lt;T&amp;gt;&lt;/code&gt;), even if the value is known synchronously (e.g., using &lt;code&gt;Task.FromResult&lt;/code&gt;), the &lt;code&gt;Task&amp;lt;T&amp;gt;&lt;/code&gt; wrapper object still needs to be allocated. Value tasks avoid this allocation because they are value types; when a value is known synchronously, code can create and return a value task without having to do any allocation. In addition to a clear performance win in the synchronous case, value tasks often produce more efficient code even in many common asynchronous cases.&lt;/p&gt;
+
+&lt;p&gt;However, value tasks come with two important restrictions. Before adopting value tasks everywhere as a replacement for reference tasks, your team needs to understand these restrictions - and if you’re writing a library, you should make sure your consumers understand these restrictions, too.&lt;/p&gt;
+
+&lt;h2 id=&quot;valuetask-restriction-1-only-consume-once-or-yoco-you-only-consume-once&quot;&gt;ValueTask Restriction #1: Only Consume Once (or “YOCO: You Only Consume Once”)&lt;/h2&gt;
+
+&lt;p&gt;Each value task can only be consumed once. This is because value tasks can be reused, so once a value task is consumed, that value task can then &lt;em&gt;change what it represents&lt;/em&gt; so it now represents some other, unrelated operation. This is unusual for value types, so it can be surprising.&lt;/p&gt;
+
+&lt;p&gt;To clarify, by “consume”, I mean use &lt;code&gt;await&lt;/code&gt; to asynchronously wait for the value task to compete, &lt;em&gt;or&lt;/em&gt; use &lt;code&gt;AsTask&lt;/code&gt; to convert the value task into a regular task.&lt;/p&gt;
+
+&lt;p&gt;Most of the time, the calling code just calls &lt;code&gt;await&lt;/code&gt; immediately after calling the function (like &lt;code&gt;await FuncAsync();&lt;/code&gt;), and value tasks work perfectly fine with code like this. But if your code does an &lt;code&gt;await&lt;/code&gt; more than once, or wants to use &lt;code&gt;Task.WhenAll&lt;/code&gt; or &lt;code&gt;Task.WhenAny&lt;/code&gt;, then it should &lt;em&gt;not&lt;/em&gt; &lt;code&gt;await&lt;/code&gt; the value task - it should convert the value task to a reference task (by calling &lt;code&gt;AsTask&lt;/code&gt;) exactly once, and then only use that reference task from then on. Reference tasks may be safely &lt;code&gt;await&lt;/code&gt;ed multiple times; a &lt;code&gt;Task&amp;lt;T&amp;gt;&lt;/code&gt; never changes what it represents.&lt;/p&gt;
+
+&lt;p&gt;Code consuming a &lt;code&gt;ValueTask&amp;lt;T&amp;gt;&lt;/code&gt; should only consume it once, and after that the &lt;code&gt;ValueTask&amp;lt;T&amp;gt;&lt;/code&gt; should be completely ignored.&lt;/p&gt;
+
+&lt;h2 id=&quot;valuetask-restriction-2-only-consume-asynchronously-or-no-more-blocking-now-i-mean-it&quot;&gt;ValueTask Restriction #2: Only Consume Asynchronously (or “No More Blocking Now, I Mean It!”)&lt;/h2&gt;
+
+&lt;p&gt;Blocking on asynchronous code has &lt;a href=&quot;https://msdn.microsoft.com/en-us/magazine/jj991977.aspx&quot;&gt;never been the ideal solution&lt;/a&gt;, but in some cases it is necessary. It is &lt;em&gt;possible&lt;/em&gt; to block on reference tasks using &lt;code&gt;GetAwaiter().GetResult()&lt;/code&gt; (or &lt;code&gt;Result&lt;/code&gt; or &lt;code&gt;Wait()&lt;/code&gt;).&lt;/p&gt;
+
+&lt;p&gt;However, this will not work for value tasks. You simply &lt;strong&gt;cannot&lt;/strong&gt; block on value tasks. If you &lt;em&gt;must&lt;/em&gt; block (again, this is never ideal), then you’ll need to convert the value task to a reference task by calling &lt;code&gt;AsTask&lt;/code&gt;, and then block on that reference task.&lt;/p&gt;
+
+&lt;p&gt;Unfortunately, value task does contain a &lt;code&gt;Result&lt;/code&gt; property, and the code &lt;code&gt;GetAwaiter().GetResult()&lt;/code&gt; will compile. So code that &lt;em&gt;attempts&lt;/em&gt; to block on a value task will compile just fine. The problem is that these code patterns &lt;em&gt;do not always block&lt;/em&gt; when used on a value task. The resulting code has undefined behavior. Just don’t go there.&lt;/p&gt;
+
+&lt;h2 id=&quot;valuetask-restrictions-and-the-pitfall-of-library-upgrades&quot;&gt;ValueTask Restrictions and the Pitfall of Library Upgrades&lt;/h2&gt;
+
+&lt;p&gt;With &lt;em&gt;both&lt;/em&gt; of the restrictions mentioned above, there is an additional value task pitfall when it comes to library upgrades. To understand why, you need to understand a bit more about how value tasks are implemented.&lt;/p&gt;
+
+&lt;p&gt;There are actually three different kinds of value tasks (as of this writing): result value wrappers, reference task wrappers, and the more complex (and more efficient) value task source wrappers. If consuming code violates either of the restrictions above, it will have undefined behavior that can be different depending on what kind of value task is returned.&lt;/p&gt;
+
+&lt;p&gt;So one problem is this: consider a library that returns value tasks. For version 1.0.0, this library just uses simple reference task wrappers for its value tasks. If users of the library write code that consumes the value tasks multiple times &lt;em&gt;or&lt;/em&gt; blocks on the value tasks, then (as of this writing) that code will just happen to work as the consumers expect it to. The undefined behavior &lt;em&gt;just happens&lt;/em&gt; to be the desired behavior. However, if version 1.0.1 of that library switches to the more efficient value task source wrappers, then those consumers would suddenly break. Not at compile time, mind you - because the compiler will still happily compile this code - but at runtime. If the user code blocks, that could throw exceptions where there were none before. If the user code consumes the value task multiple times, that could cause very strange behavior that can be extremely difficult to debug (since it could be &lt;code&gt;await&lt;/code&gt;ing operations it didn’t even start).&lt;/p&gt;
+
+&lt;p&gt;I say all that to say this: before adopting value tasks, you need to be sure your consumers internalize these restrictions! Once value task restrictions are widely understood, then we can start to use value tasks as a more general and widespread replacement for reference tasks.&lt;/p&gt;
+
+&lt;h2 id=&quot;tldr&quot;&gt;TL;DR:&lt;/h2&gt;
+
+&lt;p&gt;When adopting value tasks:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Only Consume Once (or “YOCO: You Only Consume Once”)&lt;/li&gt;
+  &lt;li&gt;Only Consume Asynchronously (or &lt;a href=&quot;https://www.youtube.com/watch?v=ury9eoLnb-0&quot;&gt;“No More Blocking Now, I Mean It!”&lt;/a&gt;)&lt;/li&gt;
+&lt;/ol&gt;
+</description>
+        <pubDate>Sat, 28 Mar 2020 00:00:00 +0000</pubDate>
+        <link>https://blog.stephencleary.com/2020/03/valuetask.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2020/03/valuetask.html</guid>
+      </item>
+    
+      <item>
         <title>Microsoft.Extensions.Logging, Part 2: Types</title>
         <description>&lt;h2 id=&quot;factory-provider-repository-builders&quot;&gt;Factory Provider Repository Builders&lt;/h2&gt;
 
@@ -553,19 +609,6 @@
         <pubDate>Fri, 25 Aug 2017 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2017/08/azure-functions-github-subfolder.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2017/08/azure-functions-github-subfolder.html</guid>
-      </item>
-    
-      <item>
-        <title>Announcing AsyncTime</title>
-        <description>&lt;p&gt;A short post today just to announce a new project of mine: &lt;a href=&quot;https://vimeo.com/ondemand/asynctime&quot;&gt;AsyncTime!&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://vimeo.com/ondemand/asynctime&quot;&gt;AsyncTime&lt;/a&gt; is a series of short videos covering subjects that work better in a video format rather than a blog post format. Some of the videos will be only for subscribers, but I’m kicking off the channel with several big-picture videos that are free for everyone!&lt;/p&gt;
-
-&lt;p&gt;I hope this is a benefit for you; I’m certainly looking forward to it!&lt;/p&gt;
-</description>
-        <pubDate>Fri, 14 Jul 2017 00:00:00 +0000</pubDate>
-        <link>https://blog.stephencleary.com/2017/07/announcing-asynctime.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2017/07/announcing-asynctime.html</guid>
       </item>
     
   </channel>
