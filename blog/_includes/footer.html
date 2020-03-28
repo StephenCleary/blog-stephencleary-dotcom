@@ -402,9 +402,12 @@ function recaptchaLoaded() {
     var req = new XMLHttpRequest();
     req.addEventListener("load", function () {
         var $commentDiv = $('#comments');
-        if (req.status === 200)
-        {
-            comments = JSON.parse(req.responseText).map(normalizeComment);
+        if (req.status === 404 || req.status === 200) {
+            if (req.status === 404) {
+                comments = [];
+            } else {
+                comments = JSON.parse(req.responseText).map(normalizeComment);
+            }
             var commentCounter = document.getElementById('comment-counter');
             commentCounter.innerText = comments.length + " " + commentCounter.innerText;
             var toplevelComments = filterComments("");
