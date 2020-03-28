@@ -852,7 +852,9 @@ function recaptchaLoaded() {
                 var comment = toplevelComments[i];
                 $commentDiv.append($comment(true, comment));
             }
-            $commentDiv.append($expandCollapseForm());
+            if (comments.length !== 0) {
+                $commentDiv.append($expandCollapseForm());
+            }
         }
         $commentDiv.prepend($expandCollapseForm());
     });
