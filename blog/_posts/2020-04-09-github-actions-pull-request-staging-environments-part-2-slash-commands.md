@@ -60,7 +60,7 @@ On a more serious note, right now the world of GitHub Actions (and its Marketpla
 
 ## Security Concerns
 
-At the very least, take a look at the code that's receiving the token. I'm using [`peter-evans/slash-command-dispatch`](https://github.com/marketplace/actions/slash-command-dispatch) in the example above. Does it look like an upstanding project? Good documentation, high(ish) number of stars? Not forked from a different project? Who is this "Peter Evans" and does he seem like a trustworthy person? Go ahead and open the action's repository; does the code look OK?
+At the very least, take a look at the code that's receiving the token. I'm using [`peter-evans/slash-command-dispatch`](https://github.com/marketplace/actions/slash-command-dispatch) in the example above. Does it look like an upstanding project? Good documentation? High(ish) number of stars? Not forked from a different project? Who is this "Peter Evans" and does he seem like a trustworthy person? Go ahead and open the action's repository; does the code look OK?
 
 Any time you're passing a token to an action, you should do this kind of research, if not more. If you're not comfortable with pasting a personal access token, there are a few alternative approaches.
 
@@ -74,11 +74,12 @@ Alternative approaches include:
 - Writing your own GitHub Action that does essentially the same thing.
 - Creating a separate GitHub account, inviting that account to your repository (in a `write` role), accepting that invitation, and using a `public_repo`/`repo` token from *that* account instead of your personal account.
   - This ensures that the token can only be used to disrupt this *one* repository, instead of *all* your repositories.
+  - It does still allow write access to this repository, though.
 - Handling all slash commands directly instead of dispatching.
-  - This combines all slash command handling into a single file.
+  - You have to either combine all slash command handling into a single file (which makes your workflow file messy), or have multiple slash command handler actions (which makes your PR "checks" section messy).
   - At the time of this writing, there isn't a great GitHub Action for parsing multiple slash commands and setting [step outputs](https://help.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions#steps-context) that can be used by future steps.
   - Even if such an action did exist, the resulting `slash-command.yml` file would get rather long and ugly with `if:` conditionals throughout.
-  - This is the only alternative that is fully safe, since you would no longer require a personal access token *at all*.
+  - However, this is the only alternative that is fully safe, since you would no longer require a personal access token *at all*. Because it doesn't do dispatching.
 
 I've tried out a few alternatives, and I tend to prefer either just doing it the easy way (as done in this post), or creating a separate GitHub account (to limit the scope of a breached token to this single repository). I don't like handling all slash commands directly instead of dispatching, for reasons that will become more clear when we extend this solution to automate deploy and teardown commands (in a future post).
 

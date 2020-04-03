@@ -26,9 +26,7 @@ on:
 
 # Set environment variables available to all action steps.
 env:
-  DOMAIN: ${{ format('YOUR-NAME-pull-request-staging-example-pr{0}.surge.sh', github.event.client_payload.pull_request.number) }}
-  SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
-  SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+  DOMAIN: ${{ format('{0}-{1}-pr{2}.surge.sh', github.event.repository.owner.login, github.event.repository.name, github.event.client_payload.pull_request.number) }}
 
 jobs:
   deploy:
@@ -47,6 +45,9 @@ jobs:
 
       - name: Publish to surge.sh
         run: npx surge ./public ${{ env.DOMAIN }}
+        env:
+          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
 
       - name: Add comment to PR
         uses: peter-evans/create-or-update-comment@v1
@@ -75,18 +76,18 @@ The first step checks out the repository. Note that it specifically checks out t
 
 The next couple steps build the site by running `npm ci` and `npx gatsby build`. Just like building locally, the output is placed in the `public` folder.
 
-The publish step runs `npx surge ./public ${{ env.DOMAIN }}`. This time we're running `surge` and giving it the name of the domain we want to publish to. The `DOMAIN` environment was defined earlier in the file, along with other environment variables:
+The publish step runs `npx surge ./public ${{ env.DOMAIN }}`. This time we're running `surge` and giving it the name of the domain we want to publish to. The `DOMAIN` environment was defined earlier in the file:
 
 {% raw %}
 ```yaml
 env:
-  DOMAIN: ${{ format('YOUR-NAME-pull-request-staging-example-pr{0}.surge.sh', github.event.client_payload.pull_request.number) }}
-  SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
-  SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+  DOMAIN: ${{ format('{0}-{1}-pr{2}.surge.sh', github.event.repository.owner.login, github.event.repository.name, github.event.client_payload.pull_request.number) }}
 ```
 {% endraw %}
 
-What's really nice about this setup is that every pull request gets a different domain - and thus a different staging environment. `SURGE_LOGIN` and `SURGE_TOKEN` are used by the `surge` command line so it authenticates under your account while deploying.
+What's really nice about this setup is that every pull request gets a different domain - and thus a different staging environment.
+
+`SURGE_LOGIN` and `SURGE_TOKEN` are additional environment variables used by the `surge` command line so it authenticates under your account while deploying.
 
 The last step adds a comment to the pull request with a clickable link for the deployed staging environment:
 
@@ -137,9 +138,7 @@ on:
     types: [teardown-command]
 
 env:
-  DOMAIN: ${{ format('YOUR-NAME-pull-request-staging-example-pr{0}.surge.sh', github.event.client_payload.pull_request.number) }}
-  SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
-  SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+  DOMAIN: ${{ format('{0}-{1}-pr{2}.surge.sh', github.event.repository.owner.login, github.event.repository.name, github.event.client_payload.pull_request.number) }}
 
 jobs:
   deploy:
@@ -147,6 +146,9 @@ jobs:
     steps:
       - name: Teardown surge.sh
         run: npx surge teardown ${{ env.DOMAIN }}
+        env:
+          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
 
       - name: Add comment to PR
         uses: peter-evans/create-or-update-comment@v1

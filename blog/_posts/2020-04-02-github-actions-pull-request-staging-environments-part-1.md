@@ -24,7 +24,7 @@ I'll be using [Surge](https://surge.sh/) as a deployment engine. I never heard o
 
 It's best if you follow along right on GitHub.
 
-First, create a test repository (mine is [here](https://github.com/StephenClearyExamples/SurgePullRequestStaging)); the following steps give you a repository with a tiny Gatsby site on it:
+First, create a test repository (mine is [here](https://github.com/StephenClearyExamples/PullRequestStaging)); the following steps give you a repository with a tiny Gatsby site on it:
 - Create a new repository on GitHub and clone it to your local machine.
 - Create a new "hello, world" Gatsby project in the `my-hello-world` folder by running `npx gatsby new my-hello-world https://github.com/gatsbyjs/gatsby-starter-hello-world`
 - Copy the files in the `my-hello-world` folder to the root of your repository.
@@ -37,8 +37,8 @@ Next, sign up for a Surge account:
 Optionally, you can deploy what's currently on your master branch:
 - Build the Gatsby site by running `npx gatsby build`
   - Gatsby output is placed in the `public` folder.
-- Choose a domain name that should be unique; I use `stephen-cleary-pull-request-staging-example.surge.sh`
-- Deploy the Gatsby output to your domain name by running `surge ./public YOUR-NAME-pull-request-staging-example.surge.sh`
+- Choose a domain name that should be unique.
+- Deploy the Gatsby output to your domain name by running `surge ./public MY-UNIQUE-DOMAIN.surge.sh`
 
 ## Quick Surge Primer
 
