@@ -8,6 +8,66 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>Using GitHub Actions for Pull Request Staging Environments, Part 1: Introduction</title>
+        <description>&lt;h2 id=&quot;the-goal&quot;&gt;The Goal&lt;/h2&gt;
+
+&lt;p&gt;This is a short series of posts on how to use GitHub Actions to deploy and teardown staging environments for your pull requests.&lt;/p&gt;
+
+&lt;p&gt;The idea is that each pull request on GitHub represents some change (feature, bug fix, etc) that you want to test out before merging it into master. This series looks at using GitHub Actions to deploy the PR code into an isolated staging environment, and then tearing down that environment when you’re done testing.&lt;/p&gt;
+
+&lt;h2 id=&quot;example-services&quot;&gt;Example Services&lt;/h2&gt;
+
+&lt;p&gt;Since this series is focusing on using GitHub Actions, our environments will be deliberately simple.&lt;/p&gt;
+
+&lt;p&gt;I’ll be using &lt;a href=&quot;https://www.gatsbyjs.org/&quot;&gt;Gatsby&lt;/a&gt; as the framework for the example project. I have not used Gatsby yet, but I’m considering moving this blog to it. Gatsby is a React-based front-end development system that produces static files as its output.&lt;/p&gt;
+
+&lt;p&gt;I’ll be using &lt;a href=&quot;https://surge.sh/&quot;&gt;Surge&lt;/a&gt; as a deployment engine. I never heard of Surge until I was reading the docs for Gatsby, but I must say I’m impressed with it! Surge allows you to quickly publish any folder to a domain name, and just as quickly tear it down again.&lt;/p&gt;
+
+&lt;h2 id=&quot;getting-started&quot;&gt;Getting Started&lt;/h2&gt;
+
+&lt;p&gt;It’s best if you follow along right on GitHub.&lt;/p&gt;
+
+&lt;p&gt;First, create a test repository (mine is &lt;a href=&quot;https://github.com/StephenClearyExamples/PullRequestStaging&quot;&gt;here&lt;/a&gt;); the following steps give you a repository with a tiny Gatsby site on it:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Create a new repository on GitHub and clone it to your local machine.&lt;/li&gt;
+  &lt;li&gt;Create a new “hello, world” Gatsby project in the &lt;code&gt;my-hello-world&lt;/code&gt; folder by running &lt;code&gt;npx gatsby new my-hello-world https://github.com/gatsbyjs/gatsby-starter-hello-world&lt;/code&gt;&lt;/li&gt;
+  &lt;li&gt;Copy the files in the &lt;code&gt;my-hello-world&lt;/code&gt; folder to the root of your repository.&lt;/li&gt;
+  &lt;li&gt;Commit and push.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Next, sign up for a Surge account:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Install Surge by running &lt;code&gt;npm install --global surge&lt;/code&gt;&lt;/li&gt;
+  &lt;li&gt;Sign up for a Surge account by running &lt;code&gt;surge login&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Optionally, you can deploy what’s currently on your master branch:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Build the Gatsby site by running &lt;code&gt;npx gatsby build&lt;/code&gt;
+    &lt;ul&gt;
+      &lt;li&gt;Gatsby output is placed in the &lt;code&gt;public&lt;/code&gt; folder.&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;Choose a domain name that should be unique.&lt;/li&gt;
+  &lt;li&gt;Deploy the Gatsby output to your domain name by running &lt;code&gt;surge ./public MY-UNIQUE-DOMAIN.surge.sh&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;quick-surge-primer&quot;&gt;Quick Surge Primer&lt;/h2&gt;
+
+&lt;p&gt;Be aware that running Surge without any arguments will attempt to deploy the current folder. If you need help, you have to pass a &lt;code&gt;--help&lt;/code&gt; argument.&lt;/p&gt;
+
+&lt;p&gt;At any time, you can check the status of your Surge deployments by running &lt;code&gt;surge list&lt;/code&gt;, and you can tear down any Surge deployment by running &lt;code&gt;surge teardown&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;next-steps&quot;&gt;Next Steps&lt;/h2&gt;
+
+&lt;p&gt;That’s it for the command line; the rest of the repository updates can be done entirely on GitHub.&lt;/p&gt;
+</description>
+        <pubDate>Thu, 02 Apr 2020 00:00:00 +0000</pubDate>
+        <link>https://blog.stephencleary.com/2020/04/github-actions-pull-request-staging-environments-part-1.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2020/04/github-actions-pull-request-staging-environments-part-1.html</guid>
+      </item>
+    
+      <item>
         <title>ValueTask Restrictions</title>
         <description>&lt;h2 id=&quot;valuetask-restrictions&quot;&gt;ValueTask Restrictions&lt;/h2&gt;
 
@@ -593,22 +653,6 @@
         <pubDate>Thu, 31 Aug 2017 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2017/08/azure-functions-spa.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2017/08/azure-functions-spa.html</guid>
-      </item>
-    
-      <item>
-        <title>Continuously Deploy Azure Functions from a GitHub Subfolder</title>
-        <description>&lt;p&gt;&lt;a href=&quot;https://docs.microsoft.com/en-us/azure/azure-functions/functions-continuous-deployment&quot;&gt;You can set up continuous deployment for Azure Functions from any branch of a GitHub repository&lt;/a&gt;. Unfortunately, the deployment system will either just deploy your files (&lt;code&gt;Found solution 'D:\home\site\repository\src\Sample.sln' with no deployable projects. Deploying files instead.&lt;/code&gt;) or may try to deploy the wrong project (e.g., if you have a console app in your solution).&lt;/p&gt;
-
-&lt;p&gt;You can use a different branch in GitHub for the output of your solution, but this is awkward. The solution I chose is to deploy the Azure Functions App from a &lt;em&gt;specific subfolder&lt;/em&gt; of a GitHub repository. You can do this by &lt;a href=&quot;https://github.com/projectkudu/kudu/wiki/Customizing-deployments&quot;&gt;adding a &lt;code&gt;.deployment&lt;/code&gt; file in the root of your repository that tells the deployment system where your Azure Functions App is&lt;/a&gt;. E.g.:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ini&quot; data-lang=&quot;ini&quot;&gt;&lt;span class=&quot;k&quot;&gt;[config]&lt;/span&gt;
-&lt;span class=&quot;na&quot;&gt;project&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;src/FunctionApp1&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;If you run into deployment errors like &lt;code&gt;The &quot;Move&quot; task failed unexpectedly. (System.Runtime.InteropServices.COMException (0x800700A1): The specified path is invalid.)&lt;/code&gt; when the &lt;code&gt;_GenerateFunctionsPostBuild&lt;/code&gt; target tries to copy your project output, then &lt;a href=&quot;https://stackoverflow.com/questions/45743877/azure-function-ci-build-error-cannot-create-a-file-when-that-file-already-exis&quot;&gt;ensure you’re using v1.0.1 or later of &lt;code&gt;Microsoft.NET.Sdk.Functions&lt;/code&gt;&lt;/a&gt;.&lt;/p&gt;
-</description>
-        <pubDate>Fri, 25 Aug 2017 00:00:00 +0000</pubDate>
-        <link>https://blog.stephencleary.com/2017/08/azure-functions-github-subfolder.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2017/08/azure-functions-github-subfolder.html</guid>
       </item>
     
   </channel>
