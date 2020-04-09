@@ -8,7 +8,7 @@ description: "Using GitHub Actions to dispatch ChatOps slash commands on pull re
 
 ## Slash Commands
 
-I'm not very familiar with the term "ChatOps", but I've seen ChatOps around a lot. The idea is that you can set up chat bots to listen to your team's chat and take actions based on commands you can type in the chat.
+I'm not very familiar with the *term* "ChatOps", but I've seen ChatOps actually *used* a lot. The idea is that you can set up chat bots to listen to your team's chat and take actions based on commands you can type in the chat.
 
 What we'll be setting up here is pretty close to that; we want to be able to add a comment to a PR with a "slash command" that will do our deploy (or teardown) for us. Specifically, we'll be using:
 
