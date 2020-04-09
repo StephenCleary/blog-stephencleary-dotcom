@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Using GitHub Actions for Pull Request Staging Environments, Part 1: Introduction</title>
+    <title>Using GitHub Actions for Pull Request Staging Environments, Part 2: Slash Commands</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Using GitHub Actions to automatically deploy and teardown staging environments for pull requests." />
-    <link rel="canonical" href="https://blog.stephencleary.com/2020/04/github-actions-pull-request-staging-environments-part-1.html" />
+    <meta name="description" content="Using GitHub Actions to dispatch ChatOps slash commands on pull requests." />
+    <link rel="canonical" href="https://blog.stephencleary.com/2020/04/github-actions-pull-request-staging-environments-part-2-slash-commands.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -276,78 +276,123 @@ img.comment-author-profile-image {
 
   <header>
       <div class="page-header">
-          <h1>Using GitHub Actions for Pull Request Staging Environments, Part 1: Introduction</h1>
-          <small><time datetime="2020-04-02">Apr 2, 2020</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
+          <h1>Using GitHub Actions for Pull Request Staging Environments, Part 2: Slash Commands</h1>
+          <small><time datetime="2020-04-09">Apr 9, 2020</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
       </div>
   </header>
 
   <article>
-  <h2 id="the-goal">The Goal</h2>
+  <h2 id="slash-commands">Slash Commands</h2>
 
-<p>This is a short series of posts on how to use GitHub Actions to deploy and teardown staging environments for your pull requests.</p>
+<p>I’m not very familiar with the term “ChatOps”, but I’ve seen ChatOps around a lot. The idea is that you can set up chat bots to listen to your team’s chat and take actions based on commands you can type in the chat.</p>
 
-<p>The idea is that each pull request on GitHub represents some change (feature, bug fix, etc) that you want to test out before merging it into master. This series looks at using GitHub Actions to deploy the PR code into an isolated staging environment, and then tearing down that environment when you’re done testing.</p>
+<p>What we’ll be setting up here is pretty close to that; we want to be able to add a comment to a PR with a “slash command” that will do our deploy (or teardown) for us. Specifically, we’ll be using:</p>
 
-<h2 id="example-services">Example Services</h2>
-
-<p>Since this series is focusing on using GitHub Actions, our environments will be deliberately simple.</p>
-
-<p>I’ll be using <a href="https://www.gatsbyjs.org/">Gatsby</a> as the framework for the example project. I have not used Gatsby yet, but I’m considering moving this blog to it. Gatsby is a React-based front-end development system that produces static files as its output.</p>
-
-<p>I’ll be using <a href="https://surge.sh/">Surge</a> as a deployment engine. I never heard of Surge until I was reading the docs for Gatsby, but I must say I’m impressed with it! Surge allows you to quickly publish any folder to a domain name, and just as quickly tear it down again.</p>
-
-<h2 id="getting-started">Getting Started</h2>
-
-<p>It’s best if you follow along right on GitHub.</p>
-
-<p>First, create a test repository (mine is <a href="https://github.com/StephenClearyExamples/PullRequestStaging">here</a>); the following steps give you a repository with a tiny Gatsby site on it:</p>
 <ul>
-  <li>Create a new repository on GitHub and clone it to your local machine.</li>
-  <li>Create a new “hello, world” Gatsby project in the <code>my-hello-world</code> folder by running <code>npx gatsby new my-hello-world https://github.com/gatsbyjs/gatsby-starter-hello-world</code></li>
-  <li>Copy the files in the <code>my-hello-world</code> folder to the root of your repository.</li>
-  <li>Commit and push.</li>
+  <li><code>/deploy</code> to deploy a PR to its staging environment.</li>
+  <li><code>/teardown</code> to tear down a PR staging environment when we’re done with the PR.</li>
 </ul>
 
-<p>Next, sign up for a Surge account:</p>
-<ul>
-  <li>Install Surge by running <code>npm install --global surge</code></li>
-  <li>Sign up for a Surge account by running <code>surge login</code></li>
-</ul>
+<h2 id="dispatching-slash-commands">Dispatching Slash Commands</h2>
 
-<p>Optionally, you can deploy what’s currently on your master branch:</p>
+<p>The way we’ll be setting this up is to have one GitHub Action that listens for PR comments and decides if they have any slash commands. For any slash commands, we want to dispatch an event to our repository.</p>
+
+<p>In your GitHub repository, open up the Actions tab and choose “Set up a workflow yourself”. Name the file <code>slash-commands.yml</code> and paste this in:</p>
+
+<pre><code class="language-yaml"># Translates slash-commands in issue comments to repository-dispatch events.
+
+# Name of the action (displayed in the Actions tab)
+name: Slash command dispatch
+
+# Triggers for this action.
+#  This one only runs when a comment is added to an issue.
+#  (on GitHub, pull requests are one kind of "issue")
+on:
+  issue_comment:
+    types: [ created ]
+
+# When the trigger fires, we run these jobs.
+jobs:
+  dispatch: #  We just have one job, called "dispatch"
+    runs-on: ubuntu-latest # The OS we run on. Doesn't really matter for this simple action.
+    steps: # This job only has one step, called "Dispatch slash command"
+      - name: Dispatch slash command
+        uses: peter-evans/slash-command-dispatch@v1 # Uses a pre-built action from the Marketplace
+        with: # These are the parameters passed to the action
+          token: ${{ secrets.DISPATCH_TOKEN }} # This action needs a personal access token in order to dispatch
+          reactions: false # By default, this action will add reactions to the slash command comment; this turns those off
+          issue-type: pull-request # We only want to look for slash commands in pull requests, not other issues
+          commands: deploy, teardown # The slash commands we look for: /deploy and /teardown
+</code></pre>
+
+<p>In this case, our GitHub Action is simple; <a href="https://github.com/marketplace/actions/slash-command-dispatch"><code>slash-command-dispatch</code></a> is specifically designed for matching slash commands in issue and/or PR comments, and dispatching a command to the repository.</p>
+
+<p>Note that we’re passing a <code>token</code> to this GitHub Action, and we’re taking the value from <code>secrets.DISPATCH_TOKEN</code>. We don’t have that secret yet, so let’s set that up now. In order to dispatch, <code>slash-command-dispatch</code> needs a token with write access to the repository. You can get one by <a href="https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line">following the GitHub directions</a>; when creating your token, you’ll want <code>public_repo</code> scope if your repository is public - otherwise, you’ll want <code>repo</code> scope. Copy that access token value once it’s created.</p>
+
+<p>Next, create a <a href="https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets">repository secret</a> named <code>DISPATCH_TOKEN</code> and paste that value in… and if you did that without doing any verification, then you just failed Security 101.</p>
+
+<p>On a more serious note, right now the world of GitHub Actions (and its Marketplace) are in the “just trying to get it to work” stage. And in that stage of technology adoption, security is often overlooked. So when you’re reading some blog on the Internet and it tells you to make a personal access token and paste it somewhere, you should take a step back and really think about what’s going on.</p>
+
+<h2 id="security-concerns">Security Concerns</h2>
+
+<p>At the very least, take a look at the code that’s receiving the token. I’m using <a href="https://github.com/marketplace/actions/slash-command-dispatch"><code>peter-evans/slash-command-dispatch</code></a> in the example above. Does it look like an upstanding project? Good documentation? High(ish) number of stars? Not forked from a different project? Who is this “Peter Evans” and does he seem like a trustworthy person? Go ahead and open the action’s repository; does the code look OK?</p>
+
+<p>Any time you’re passing a token to an action, you should do this kind of research, if not more. If you’re not comfortable with pasting a personal access token, there are a few alternative approaches.</p>
+
+<h3 id="alternative-approaches">Alternative Approaches</h3>
+
+<p>The security concerns above are due to the choice to <em>dispatch</em> the repository events rather than handling them directly, so we end up handing a token to a third-party GitHub Action.</p>
+
+<p>Alternative approaches include:</p>
 <ul>
-  <li>Build the Gatsby site by running <code>npx gatsby build</code>
+  <li>Performing a security audit of the GitHub Action and then SHA-locking to that specific version. I.e., instead of <code>peter-evans/slash-command-dispatch@v1</code>, use <code>peter-evans/slash-command-dispatch@8a61cc727ff2d87afea4c46b11145543bef0c02f</code>.</li>
+  <li>Performing a security audit of the GitHub Action, cloning it to your own personal GitHub Action, and using that one instead.</li>
+  <li>Writing your own GitHub Action that does essentially the same thing.</li>
+  <li>Creating a separate GitHub account, inviting that account to your repository (in a <code>write</code> role), accepting that invitation, and using a <code>public_repo</code>/<code>repo</code> token from <em>that</em> account instead of your personal account.
     <ul>
-      <li>Gatsby output is placed in the <code>public</code> folder.</li>
+      <li>This ensures that the token can only be used to disrupt this <em>one</em> repository, instead of <em>all</em> your repositories.</li>
+      <li>It does still allow write access to this repository, though.</li>
     </ul>
   </li>
-  <li>Choose a domain name that should be unique.</li>
-  <li>Deploy the Gatsby output to your domain name by running <code>surge ./public MY-UNIQUE-DOMAIN.surge.sh</code></li>
+  <li>Handling all slash commands directly instead of dispatching.
+    <ul>
+      <li>You have to either combine all slash command handling into a single file (which makes your workflow file messy), or have multiple slash command handler actions (which makes your PR “checks” section messy).</li>
+      <li>At the time of this writing, there isn’t a great GitHub Action for parsing multiple slash commands and setting <a href="https://help.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions#steps-context">step outputs</a> that can be used by future steps.</li>
+      <li>Even if such an action did exist, the resulting <code>slash-command.yml</code> file would get rather long and ugly with <code>if:</code> conditionals throughout.</li>
+      <li>However, this is the only alternative that is fully safe, since you would no longer require a personal access token <em>at all</em>. Because it doesn’t do dispatching.</li>
+    </ul>
+  </li>
 </ul>
 
-<h2 id="quick-surge-primer">Quick Surge Primer</h2>
+<p>I’ve tried out a few alternatives, and I tend to prefer either just doing it the easy way (as done in this post), or creating a separate GitHub account (to limit the scope of a breached token to this single repository). I don’t like handling all slash commands directly instead of dispatching, for reasons that will become more clear when we extend this solution to automate deploy and teardown commands (in a future post).</p>
 
-<p>Be aware that running Surge without any arguments will attempt to deploy the current folder. If you need help, you have to pass a <code>--help</code> argument.</p>
+<h2 id="back-to-the-goal">Back to The Goal</h2>
 
-<p>At any time, you can check the status of your Surge deployments by running <code>surge list</code>, and you can tear down any Surge deployment by running <code>surge teardown</code>.</p>
+<p>The rest of this blog series assumes that you have done a sufficient security check and have stored a token in the repository secrets, named <code>DISPATCH_TOKEN</code>.</p>
+
+<h2 id="dispatch">Dispatch</h2>
+
+<p>The <code>slash-command-dispatch</code> action recognizes slash commands and then sends a <a href="https://help.github.com/en/actions/reference/events-that-trigger-workflows#external-events-repository_dispatch">repository dispatch event</a> to the repository. <code>repository_dispatch</code> is a special event that you can listen for (with another GitHub Action) and respond to.</p>
+
+<p><code>slash-command-dispatch</code> follows a convention where the commands it listens to (<code>deploy</code> and <code>teardown</code> in our case) are sent with the <code>repository_dispatch</code> event, with a <code>-command</code> suffix. So, just like today’s GitHub Action listened for an <code>issue_comment</code> event of type <code>created</code>, next time we’ll write GitHub Actions that listen for a <code>repository_dispatch</code> event of type <code>deploy-command</code> or <code>teardown-command</code>.</p>
 
 <h2 id="next-steps">Next Steps</h2>
 
-<p>That’s it for the command line; the rest of the repository updates can be done entirely on GitHub.</p>
+<p>At this point, you should have a “ChatOps bot” of sorts that listens for <code>/deploy</code> and <code>/teardown</code> comments on your pull requests, and then translates those into <code>repository_dispatch</code> events. Next time we’ll add handlers for those events.</p>
 
   </article>
     
     <footer class="hidden-print">
         
             <ul class="pager">
+                <li class="previous"><a href="/2020/04/github-actions-pull-request-staging-environments-part-1.html" title="Using GitHub Actions for Pull Request Staging Environments, Part 1: Introduction">&larr; Previous in Using GitHub Actions for Pull Request Staging Environments</a></li>
                 
-                <li class="next"><a href="/2020/04/github-actions-pull-request-staging-environments-part-2-slash-commands.html" title="Using GitHub Actions for Pull Request Staging Environments, Part 2: Slash Commands">Next in Using GitHub Actions for Pull Request Staging Environments &rarr;</a></li>
             </ul>
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2020/03/valuetask.html" title="ValueTask Restrictions">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2020/04/github-actions-pull-request-staging-environments-part-2-slash-commands.html" title="Using GitHub Actions for Pull Request Staging Environments, Part 2: Slash Commands">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2020/04/github-actions-pull-request-staging-environments-part-1.html" title="Using GitHub Actions for Pull Request Staging Environments, Part 1: Introduction">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="comments"></div>
@@ -360,8 +405,8 @@ img.comment-author-profile-image {
                     <div class="panel-heading">Using GitHub Actions for Pull Request Staging Environments</div>
                     <div class="panel-body sidenav">
                         <ul class="nav nav-pills nav-stacked">
-                                    <li class="active sidenavitem"><a href="/2020/04/github-actions-pull-request-staging-environments-part-1.html">Introduction</a></li>
-                                    <li class="sidenavitem"><a href="/2020/04/github-actions-pull-request-staging-environments-part-2-slash-commands.html">Slash Commands</a></li>
+                                    <li class="sidenavitem"><a href="/2020/04/github-actions-pull-request-staging-environments-part-1.html">Introduction</a></li>
+                                    <li class="active sidenavitem"><a href="/2020/04/github-actions-pull-request-staging-environments-part-2-slash-commands.html">Slash Commands</a></li>
                         </ul>
                     </div>
                 </div>
@@ -514,7 +559,7 @@ img.comment-author-profile-image {
 
 <script type="text/javascript">
 
-var pageUrl = "https://blog.stephencleary.com" + "/2020/04/github-actions-pull-request-staging-environments-part-1.html";
+var pageUrl = "https://blog.stephencleary.com" + "/2020/04/github-actions-pull-request-staging-environments-part-2-slash-commands.html";
 
 // (unnecessary) 1) If the URL starts with http://, replace with https://
 

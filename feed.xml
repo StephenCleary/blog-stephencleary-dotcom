@@ -8,6 +8,111 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>Using GitHub Actions for Pull Request Staging Environments, Part 2: Slash Commands</title>
+        <description>&lt;h2 id=&quot;slash-commands&quot;&gt;Slash Commands&lt;/h2&gt;
+
+&lt;p&gt;I’m not very familiar with the term “ChatOps”, but I’ve seen ChatOps around a lot. The idea is that you can set up chat bots to listen to your team’s chat and take actions based on commands you can type in the chat.&lt;/p&gt;
+
+&lt;p&gt;What we’ll be setting up here is pretty close to that; we want to be able to add a comment to a PR with a “slash command” that will do our deploy (or teardown) for us. Specifically, we’ll be using:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;code&gt;/deploy&lt;/code&gt; to deploy a PR to its staging environment.&lt;/li&gt;
+  &lt;li&gt;&lt;code&gt;/teardown&lt;/code&gt; to tear down a PR staging environment when we’re done with the PR.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;dispatching-slash-commands&quot;&gt;Dispatching Slash Commands&lt;/h2&gt;
+
+&lt;p&gt;The way we’ll be setting this up is to have one GitHub Action that listens for PR comments and decides if they have any slash commands. For any slash commands, we want to dispatch an event to our repository.&lt;/p&gt;
+
+&lt;p&gt;In your GitHub repository, open up the Actions tab and choose “Set up a workflow yourself”. Name the file &lt;code&gt;slash-commands.yml&lt;/code&gt; and paste this in:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&quot;language-yaml&quot;&gt;# Translates slash-commands in issue comments to repository-dispatch events.
+
+# Name of the action (displayed in the Actions tab)
+name: Slash command dispatch
+
+# Triggers for this action.
+#  This one only runs when a comment is added to an issue.
+#  (on GitHub, pull requests are one kind of &quot;issue&quot;)
+on:
+  issue_comment:
+    types: [ created ]
+
+# When the trigger fires, we run these jobs.
+jobs:
+  dispatch: #  We just have one job, called &quot;dispatch&quot;
+    runs-on: ubuntu-latest # The OS we run on. Doesn't really matter for this simple action.
+    steps: # This job only has one step, called &quot;Dispatch slash command&quot;
+      - name: Dispatch slash command
+        uses: peter-evans/slash-command-dispatch@v1 # Uses a pre-built action from the Marketplace
+        with: # These are the parameters passed to the action
+          token: ${{ secrets.DISPATCH_TOKEN }} # This action needs a personal access token in order to dispatch
+          reactions: false # By default, this action will add reactions to the slash command comment; this turns those off
+          issue-type: pull-request # We only want to look for slash commands in pull requests, not other issues
+          commands: deploy, teardown # The slash commands we look for: /deploy and /teardown
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;In this case, our GitHub Action is simple; &lt;a href=&quot;https://github.com/marketplace/actions/slash-command-dispatch&quot;&gt;&lt;code&gt;slash-command-dispatch&lt;/code&gt;&lt;/a&gt; is specifically designed for matching slash commands in issue and/or PR comments, and dispatching a command to the repository.&lt;/p&gt;
+
+&lt;p&gt;Note that we’re passing a &lt;code&gt;token&lt;/code&gt; to this GitHub Action, and we’re taking the value from &lt;code&gt;secrets.DISPATCH_TOKEN&lt;/code&gt;. We don’t have that secret yet, so let’s set that up now. In order to dispatch, &lt;code&gt;slash-command-dispatch&lt;/code&gt; needs a token with write access to the repository. You can get one by &lt;a href=&quot;https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line&quot;&gt;following the GitHub directions&lt;/a&gt;; when creating your token, you’ll want &lt;code&gt;public_repo&lt;/code&gt; scope if your repository is public - otherwise, you’ll want &lt;code&gt;repo&lt;/code&gt; scope. Copy that access token value once it’s created.&lt;/p&gt;
+
+&lt;p&gt;Next, create a &lt;a href=&quot;https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets&quot;&gt;repository secret&lt;/a&gt; named &lt;code&gt;DISPATCH_TOKEN&lt;/code&gt; and paste that value in… and if you did that without doing any verification, then you just failed Security 101.&lt;/p&gt;
+
+&lt;p&gt;On a more serious note, right now the world of GitHub Actions (and its Marketplace) are in the “just trying to get it to work” stage. And in that stage of technology adoption, security is often overlooked. So when you’re reading some blog on the Internet and it tells you to make a personal access token and paste it somewhere, you should take a step back and really think about what’s going on.&lt;/p&gt;
+
+&lt;h2 id=&quot;security-concerns&quot;&gt;Security Concerns&lt;/h2&gt;
+
+&lt;p&gt;At the very least, take a look at the code that’s receiving the token. I’m using &lt;a href=&quot;https://github.com/marketplace/actions/slash-command-dispatch&quot;&gt;&lt;code&gt;peter-evans/slash-command-dispatch&lt;/code&gt;&lt;/a&gt; in the example above. Does it look like an upstanding project? Good documentation? High(ish) number of stars? Not forked from a different project? Who is this “Peter Evans” and does he seem like a trustworthy person? Go ahead and open the action’s repository; does the code look OK?&lt;/p&gt;
+
+&lt;p&gt;Any time you’re passing a token to an action, you should do this kind of research, if not more. If you’re not comfortable with pasting a personal access token, there are a few alternative approaches.&lt;/p&gt;
+
+&lt;h3 id=&quot;alternative-approaches&quot;&gt;Alternative Approaches&lt;/h3&gt;
+
+&lt;p&gt;The security concerns above are due to the choice to &lt;em&gt;dispatch&lt;/em&gt; the repository events rather than handling them directly, so we end up handing a token to a third-party GitHub Action.&lt;/p&gt;
+
+&lt;p&gt;Alternative approaches include:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Performing a security audit of the GitHub Action and then SHA-locking to that specific version. I.e., instead of &lt;code&gt;peter-evans/slash-command-dispatch@v1&lt;/code&gt;, use &lt;code&gt;peter-evans/slash-command-dispatch@8a61cc727ff2d87afea4c46b11145543bef0c02f&lt;/code&gt;.&lt;/li&gt;
+  &lt;li&gt;Performing a security audit of the GitHub Action, cloning it to your own personal GitHub Action, and using that one instead.&lt;/li&gt;
+  &lt;li&gt;Writing your own GitHub Action that does essentially the same thing.&lt;/li&gt;
+  &lt;li&gt;Creating a separate GitHub account, inviting that account to your repository (in a &lt;code&gt;write&lt;/code&gt; role), accepting that invitation, and using a &lt;code&gt;public_repo&lt;/code&gt;/&lt;code&gt;repo&lt;/code&gt; token from &lt;em&gt;that&lt;/em&gt; account instead of your personal account.
+    &lt;ul&gt;
+      &lt;li&gt;This ensures that the token can only be used to disrupt this &lt;em&gt;one&lt;/em&gt; repository, instead of &lt;em&gt;all&lt;/em&gt; your repositories.&lt;/li&gt;
+      &lt;li&gt;It does still allow write access to this repository, though.&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;Handling all slash commands directly instead of dispatching.
+    &lt;ul&gt;
+      &lt;li&gt;You have to either combine all slash command handling into a single file (which makes your workflow file messy), or have multiple slash command handler actions (which makes your PR “checks” section messy).&lt;/li&gt;
+      &lt;li&gt;At the time of this writing, there isn’t a great GitHub Action for parsing multiple slash commands and setting &lt;a href=&quot;https://help.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions#steps-context&quot;&gt;step outputs&lt;/a&gt; that can be used by future steps.&lt;/li&gt;
+      &lt;li&gt;Even if such an action did exist, the resulting &lt;code&gt;slash-command.yml&lt;/code&gt; file would get rather long and ugly with &lt;code&gt;if:&lt;/code&gt; conditionals throughout.&lt;/li&gt;
+      &lt;li&gt;However, this is the only alternative that is fully safe, since you would no longer require a personal access token &lt;em&gt;at all&lt;/em&gt;. Because it doesn’t do dispatching.&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;I’ve tried out a few alternatives, and I tend to prefer either just doing it the easy way (as done in this post), or creating a separate GitHub account (to limit the scope of a breached token to this single repository). I don’t like handling all slash commands directly instead of dispatching, for reasons that will become more clear when we extend this solution to automate deploy and teardown commands (in a future post).&lt;/p&gt;
+
+&lt;h2 id=&quot;back-to-the-goal&quot;&gt;Back to The Goal&lt;/h2&gt;
+
+&lt;p&gt;The rest of this blog series assumes that you have done a sufficient security check and have stored a token in the repository secrets, named &lt;code&gt;DISPATCH_TOKEN&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;dispatch&quot;&gt;Dispatch&lt;/h2&gt;
+
+&lt;p&gt;The &lt;code&gt;slash-command-dispatch&lt;/code&gt; action recognizes slash commands and then sends a &lt;a href=&quot;https://help.github.com/en/actions/reference/events-that-trigger-workflows#external-events-repository_dispatch&quot;&gt;repository dispatch event&lt;/a&gt; to the repository. &lt;code&gt;repository_dispatch&lt;/code&gt; is a special event that you can listen for (with another GitHub Action) and respond to.&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;slash-command-dispatch&lt;/code&gt; follows a convention where the commands it listens to (&lt;code&gt;deploy&lt;/code&gt; and &lt;code&gt;teardown&lt;/code&gt; in our case) are sent with the &lt;code&gt;repository_dispatch&lt;/code&gt; event, with a &lt;code&gt;-command&lt;/code&gt; suffix. So, just like today’s GitHub Action listened for an &lt;code&gt;issue_comment&lt;/code&gt; event of type &lt;code&gt;created&lt;/code&gt;, next time we’ll write GitHub Actions that listen for a &lt;code&gt;repository_dispatch&lt;/code&gt; event of type &lt;code&gt;deploy-command&lt;/code&gt; or &lt;code&gt;teardown-command&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;next-steps&quot;&gt;Next Steps&lt;/h2&gt;
+
+&lt;p&gt;At this point, you should have a “ChatOps bot” of sorts that listens for &lt;code&gt;/deploy&lt;/code&gt; and &lt;code&gt;/teardown&lt;/code&gt; comments on your pull requests, and then translates those into &lt;code&gt;repository_dispatch&lt;/code&gt; events. Next time we’ll add handlers for those events.&lt;/p&gt;
+</description>
+        <pubDate>Thu, 09 Apr 2020 00:00:00 +0000</pubDate>
+        <link>https://blog.stephencleary.com/2020/04/github-actions-pull-request-staging-environments-part-2-slash-commands.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2020/04/github-actions-pull-request-staging-environments-part-2-slash-commands.html</guid>
+      </item>
+    
+      <item>
         <title>Using GitHub Actions for Pull Request Staging Environments, Part 1: Introduction</title>
         <description>&lt;h2 id=&quot;the-goal&quot;&gt;The Goal&lt;/h2&gt;
 
@@ -580,79 +685,6 @@
         <pubDate>Tue, 12 Sep 2017 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2017/09/happy-birthday-async.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2017/09/happy-birthday-async.html</guid>
-      </item>
-    
-      <item>
-        <title>Azure Functions SPA</title>
-        <description>&lt;p&gt;It seems to me that Azure Functions are a perfect match for single-page applications. I believe SPAs are going to be a natural and common use case for Azure Functions in the near future.&lt;/p&gt;
-
-&lt;p&gt;I had to set up a SPA with an API running on Azure Functions recently, and it took me a bit to figure out all the pieces. Without further ado…&lt;/p&gt;
-
-&lt;h2 id=&quot;host-the-api&quot;&gt;Host the API&lt;/h2&gt;
-
-&lt;p&gt;The first step is to define your API and host it in Azure Functions. &lt;a href=&quot;https://blogs.msdn.microsoft.com/appserviceteam/2017/08/14/azure-functions-tools-released-for-visual-studio-2017-update-3/&quot;&gt;The Visual Studio tooling is out of preview now&lt;/a&gt;, and setting up a C# API is straightforward. Personally, I set up automated deployment from GitHub to my Azure Functions app.&lt;/p&gt;
-
-&lt;div class=&quot;alert alert-info&quot;&gt;
-  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
-
-  &lt;p&gt;Tip: If you want to deploy from a &lt;em&gt;subdirectory&lt;/em&gt; of a GitHub repository, &lt;a href=&quot;/2017/08/azure-functions-github-subfolder.html&quot;&gt;see this post&lt;/a&gt;.&lt;/p&gt;
-&lt;/div&gt;
-
-&lt;h2 id=&quot;host-the-spa&quot;&gt;Host the SPA&lt;/h2&gt;
-
-&lt;p&gt;The second step is to host the SPA. I’m hosting mine on a static file server, which is easily done for free. With static file hosting, I can keep assets in external files without having to handle all of that in my Azure Functions. Or you can use Azure Blob Storage / Amazon S3 for a really cheap hosting solution, too.&lt;/p&gt;
-
-&lt;h2 id=&quot;serve-through-azure-functions-proxies&quot;&gt;Serve through Azure Functions Proxies&lt;/h2&gt;
-
-&lt;p&gt;The final step is to set up proxies that will forward API calls to the actual Azure Functions API or to the SPA. In your Azure Functions App, turn on Proxies (currently in preview). Then, in your Functions App project in Visual Studio, make a copy of the &lt;code&gt;host.json&lt;/code&gt; file, rename it to &lt;code&gt;proxies.json&lt;/code&gt;, and replace its contents with:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;nt&quot;&gt;&amp;quot;$schema&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;http://json.schemastore.org/proxies&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-    &lt;span class=&quot;nt&quot;&gt;&amp;quot;proxies&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;nt&quot;&gt;&amp;quot;api&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-            &lt;span class=&quot;nt&quot;&gt;&amp;quot;matchCondition&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-                &lt;span class=&quot;nt&quot;&gt;&amp;quot;route&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;/api/{*url}&amp;quot;&lt;/span&gt;
-            &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-            &lt;span class=&quot;nt&quot;&gt;&amp;quot;backendUri&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;https://%WEBSITE_HOSTNAME%/api/{url}&amp;quot;&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-        &lt;span class=&quot;nt&quot;&gt;&amp;quot;app&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-            &lt;span class=&quot;nt&quot;&gt;&amp;quot;matchCondition&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-                &lt;span class=&quot;nt&quot;&gt;&amp;quot;route&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;{*url}&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-                &lt;span class=&quot;nt&quot;&gt;&amp;quot;methods&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;GET&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;HEAD&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;OPTIONS&amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
-            &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-            &lt;span class=&quot;nt&quot;&gt;&amp;quot;backendUri&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;https://%SPA_HOST%/&amp;quot;&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-        &lt;span class=&quot;nt&quot;&gt;&amp;quot;appResources&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-            &lt;span class=&quot;nt&quot;&gt;&amp;quot;matchCondition&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-                &lt;span class=&quot;nt&quot;&gt;&amp;quot;route&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;/static/{*url}&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-                &lt;span class=&quot;nt&quot;&gt;&amp;quot;methods&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;GET&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;HEAD&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;OPTIONS&amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
-            &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-            &lt;span class=&quot;nt&quot;&gt;&amp;quot;backendUri&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;https://%SPA_HOST%/static/{url}&amp;quot;&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;The only part you need to change is &lt;code&gt;%SPA_HOST%&lt;/code&gt; - you can change this to where your SPA is hosted, or just keep the file as-is and add an application setting &lt;code&gt;SPA_HOST&lt;/code&gt; that points to your SPA.&lt;/p&gt;
-
-&lt;p&gt;This will set up three proxies: one for your API calls, one to serve up the SPA HTML, and one to serve up SPA static resources (JavaScript bundle, images, etc).&lt;/p&gt;
-
-&lt;p&gt;The &lt;code&gt;api&lt;/code&gt; proxy will forward all requests starting with &lt;code&gt;/api&lt;/code&gt; to the actual Azure Function implementations (using &lt;a href=&quot;https://github.com/projectkudu/kudu/wiki/Azure-runtime-environment&quot;&gt;the predefined &lt;code&gt;WEBSITE_HOSTNAME&lt;/code&gt; setting&lt;/a&gt;).&lt;/p&gt;
-
-&lt;p&gt;The &lt;code&gt;appResources&lt;/code&gt; proxy will forward all requests starting with &lt;code&gt;/static&lt;/code&gt; to your SPA host, preserving the remainder of your url.&lt;/p&gt;
-
-&lt;p&gt;The &lt;code&gt;app&lt;/code&gt; proxy will forward all remaining requests to the SPA.&lt;/p&gt;
-
-&lt;p&gt;A brief note on priorities: Azure Functions Proxies use the same &lt;a href=&quot;https://docs.microsoft.com/en-us/aspnet/web-api/overview/web-api-routing-and-actions/attribute-routing-in-web-api-2#route-order&quot;&gt;route ordering rules as WebAPI 2 attribute routing&lt;/a&gt;. So the &lt;code&gt;api&lt;/code&gt; and &lt;code&gt;appResources&lt;/code&gt; proxies are always evaluated before the &lt;code&gt;app&lt;/code&gt; proxy because they start with constant path segment prefixes (the &lt;code&gt;api&lt;/code&gt; proxy starts with an &lt;code&gt;/api/&lt;/code&gt; path segment, and the &lt;code&gt;appResources&lt;/code&gt; proxy starts with a &lt;code&gt;/static/&lt;/code&gt; path segment). This way, the &lt;code&gt;app&lt;/code&gt; proxy doesn’t intercept &lt;code&gt;/api&lt;/code&gt; and &lt;code&gt;/static&lt;/code&gt; requests.&lt;/p&gt;
-
-&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
-
-&lt;p&gt;Now you have a single Azure Functions App instance that serves both a SPA and its API! Since both your SPA app and your Azure Functions API exist on the same domain, you don’t need to open up CORS for your API.&lt;/p&gt;
-
-&lt;p&gt;Requests such as &lt;code&gt;/api/bob&lt;/code&gt; will be forwarded to your Azure Function &lt;code&gt;bob&lt;/code&gt;, and requests such as &lt;code&gt;/&lt;/code&gt; will be forwarded to your main SPA HTML page. Requests such as &lt;code&gt;/some/long/path&lt;/code&gt; will &lt;em&gt;also&lt;/em&gt; be forwarded to your SPA HTML page, so you can easily use HTML5 history routing instead of hash routing in your SPA, and your app will be served properly when users refresh the page.&lt;/p&gt;
-</description>
-        <pubDate>Thu, 31 Aug 2017 00:00:00 +0000</pubDate>
-        <link>https://blog.stephencleary.com/2017/08/azure-functions-spa.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2017/08/azure-functions-spa.html</guid>
       </item>
     
   </channel>

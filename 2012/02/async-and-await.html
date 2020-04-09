@@ -345,7 +345,7 @@ img.comment-author-profile-image {
 <div class="alert alert-info">
   <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
 
-  <p>Tip: If you have a very simple asynchronous method, you may be able to write it without using the await keyword (e.g., using Task.FromResult). If you <em>can</em> write it without await, then you <em>should</em> write it without await, and remove the async keyword from the method. A non-async method returning Task.FromResult is more efficient than an async method returning a value.</p>
+  <p>Tip: If you have a very simple asynchronous method, you may be able to write it without using the await keyword (e.g., returning a task from another method). However, be aware that there are <a href="/2016/12/eliding-async-await.html">pitfalls when eliding <code>async</code> and <code>await</code></a>.</p>
 </div>
 
 <h2 id="return-types">Return Types</h2>
