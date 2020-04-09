@@ -71,7 +71,7 @@ public async Task ComposeAsync()
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
-Tip: If you have a very simple asynchronous method, you may be able to write it without using the await keyword (e.g., using Task.FromResult). If you _can_ write it without await, then you _should_ write it without await, and remove the async keyword from the method. A non-async method returning Task.FromResult is more efficient than an async method returning a value.
+Tip: If you have a very simple asynchronous method, you may be able to write it without using the await keyword (e.g., returning a task from another method). However, be aware that there are [pitfalls when eliding `async` and `await`]({% post_url 2016-12-01-eliding-async-await %}).
 </div>
 
 ## Return Types
