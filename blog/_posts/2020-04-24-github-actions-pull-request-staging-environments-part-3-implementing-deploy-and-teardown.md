@@ -76,7 +76,7 @@ The first step checks out the repository. Note that it specifically checks out t
 
 The next couple steps build the site by running `npm ci` and `npx gatsby build`. Just like building locally, the output is placed in the `public` folder.
 
-The publish step runs `npx surge ./public ${{ env.DOMAIN }}`. This time we're running `surge` and giving it the name of the domain we want to publish to. The `DOMAIN` environment was defined earlier in the file:
+The publish step runs {% raw %}`npx surge ./public ${{ env.DOMAIN }}`{% endraw %}. This time we're running `surge` and giving it the name of the domain we want to publish to. The `DOMAIN` environment variable was defined earlier in the file:
 
 {% raw %}
 ```yaml
@@ -159,7 +159,7 @@ jobs:
 ```
 {% endraw %}
 
-This one is pretty simple; we use a similar pattern to `/deploy` but there are fewer steps since there's no build (or even a checkout). We use the same pattern for defining `DOMAIN` and the Surge secrets, and then we run `npx surge teardown ${{ env.DOMAIN }}` to tear down the environment for this pull request. The last step adds a comment to the PR indicating that its staging environment has been torn down.
+This one is pretty simple; we use a similar pattern to `/deploy` but there are fewer steps since there's no build (or even a checkout). We use the same pattern for defining `DOMAIN` and the Surge secrets, and then we run {% raw %}`npx surge teardown ${{ env.DOMAIN }}`{% endraw %} to tear down the environment for this pull request. The last step adds a comment to the PR indicating that its staging environment has been torn down.
 
 ## Who Can Issue Commands?
 
