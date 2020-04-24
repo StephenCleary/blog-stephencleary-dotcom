@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Using GitHub Actions for Pull Request Staging Environments, Part 1: Introduction</title>
+    <title>Using GitHub Actions for Pull Request Staging Environments, Part 3: Implementing Deploy and Teardown</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Using GitHub Actions to automatically deploy and teardown staging environments for pull requests." />
-    <link rel="canonical" href="https://blog.stephencleary.com/2020/04/github-actions-pull-request-staging-environments-part-1.html" />
+    <meta name="description" content="Using Surge.sh from a GitHub Action Workflow to create and tear down staging environments for pull requests." />
+    <link rel="canonical" href="https://blog.stephencleary.com/2020/04/github-actions-pull-request-staging-environments-part-3-implementing-deploy-and-teardown.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -276,78 +276,172 @@ img.comment-author-profile-image {
 
   <header>
       <div class="page-header">
-          <h1>Using GitHub Actions for Pull Request Staging Environments, Part 1: Introduction</h1>
-          <small><time datetime="2020-04-02">Apr 2, 2020</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
+          <h1>Using GitHub Actions for Pull Request Staging Environments, Part 3: Implementing Deploy and Teardown</h1>
+          <small><time datetime="2020-04-24">Apr 24, 2020</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
       </div>
   </header>
 
   <article>
-  <h2 id="the-goal">The Goal</h2>
+  <h2 id="implementing-deploy">Implementing Deploy</h2>
 
-<p>This is a short series of posts on how to use GitHub Actions to deploy and teardown staging environments for your pull requests.</p>
+<p>So far, we have a <code>slash-commands</code> GitHub Action that translates <code>/deploy</code> and <code>/teardown</code> ChatOps commands into <code>repository_dispatch</code> events.</p>
 
-<p>The idea is that each pull request on GitHub represents some change (feature, bug fix, etc) that you want to test out before merging it into master. This series looks at using GitHub Actions to deploy the PR code into an isolated staging environment, and then tearing down that environment when you’re done testing.</p>
+<p>To handle the <code>/deploy</code> slash command, we’ll need to handle a <code>repository_dispatch</code> event of type <code>deploy-command</code>. In your GitHub repository, open up the Actions tab and choose “New workflow” and then “Set up a workflow yourself”. Name the file <code>deploy-command.yml</code> and paste this in:</p>
 
-<h2 id="example-services">Example Services</h2>
+<pre><code class="language-yaml"># Inputs:
+#  client_payload.pull_request.number - PR number
+#  client_payload.pull_request.head.sha - PR SHA
 
-<p>Since this series is focusing on using GitHub Actions, our environments will be deliberately simple.</p>
+name: Create PR Staging Environment
 
-<p>I’ll be using <a href="https://www.gatsbyjs.org/">Gatsby</a> as the framework for the example project. I have not used Gatsby yet, but I’m considering moving this blog to it. Gatsby is a React-based front-end development system that produces static files as its output.</p>
+on:
+  repository_dispatch:
+    types: [deploy-command]
 
-<p>I’ll be using <a href="https://surge.sh/">Surge</a> as a deployment engine. I never heard of Surge until I was reading the docs for Gatsby, but I must say I’m impressed with it! Surge allows you to quickly publish any folder to a domain name, and just as quickly tear it down again.</p>
+# Set environment variables available to all action steps.
+env:
+  DOMAIN: ${{ format('{0}-{1}-pr{2}.surge.sh', github.event.repository.owner.login, github.event.repository.name, github.event.client_payload.pull_request.number) }}
 
-<h2 id="getting-started">Getting Started</h2>
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.client_payload.pull_request.head.sha }}
 
-<p>It’s best if you follow along right on GitHub.</p>
+      - name: Install dependencies
+        run: npm ci
 
-<p>First, create a test repository (mine is <a href="https://github.com/StephenClearyExamples/PullRequestStaging">here</a>); the following steps give you a repository with a tiny Gatsby site on it:</p>
-<ul>
-  <li>Create a new repository on GitHub and clone it to your local machine.</li>
-  <li>Create a new “hello, world” Gatsby project in the <code>my-hello-world</code> folder by running <code>npx gatsby new my-hello-world https://github.com/gatsbyjs/gatsby-starter-hello-world</code></li>
-  <li>Copy the files in the <code>my-hello-world</code> folder to the root of your repository.</li>
-  <li>Commit and push.</li>
-</ul>
+      - name: Build static site
+        run: npx gatsby build
 
-<p>Next, sign up for a Surge account:</p>
-<ul>
-  <li>Install Surge by running <code>npm install --global surge</code></li>
-  <li>Sign up for a Surge account by running <code>surge login</code></li>
-</ul>
+      - name: Publish to surge.sh
+        run: npx surge ./public ${{ env.DOMAIN }}
+        env:
+          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
 
-<p>Optionally, you can deploy what’s currently on your master branch:</p>
-<ul>
-  <li>Build the Gatsby site by running <code>npx gatsby build</code>
-    <ul>
-      <li>Gatsby output is placed in the <code>public</code> folder.</li>
-    </ul>
-  </li>
-  <li>Choose a domain name that should be unique.</li>
-  <li>Deploy the Gatsby output to your domain name by running <code>surge ./public MY-UNIQUE-DOMAIN.surge.sh</code></li>
-</ul>
+      - name: Add comment to PR
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.client_payload.pull_request.number }}
+          body: |
+            ${{ format('Published to [staging environment](https://{0})', env.DOMAIN) }}
 
-<h2 id="quick-surge-primer">Quick Surge Primer</h2>
+            To teardown, comment with the `/teardown` command.
+</code></pre>
 
-<p>Be aware that running Surge without any arguments will attempt to deploy the current folder. If you need help, you have to pass a <code>--help</code> argument.</p>
+<p>This one’s a bit longer, so let’s walk through the steps.</p>
 
-<p>At any time, you can check the status of your Surge deployments by running <code>surge list</code>, and you can tear down any Surge deployment by running <code>surge teardown</code>.</p>
+<p>The first step checks out the repository. Note that it specifically checks out the SHA of the pull request (<code>client_payload.pull_request</code> is provided by <code>slash-command-dispatch</code>). So we’re checking out the code <em>for that PR</em>.</p>
 
-<h2 id="next-steps">Next Steps</h2>
+<pre><code class="language-yaml">      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.client_payload.pull_request.head.sha }}
+</code></pre>
 
-<p>That’s it for the command line; the rest of the repository updates can be done entirely on GitHub.</p>
+<p>The next couple steps build the site by running <code>npm ci</code> and <code>npx gatsby build</code>. Just like building locally, the output is placed in the <code>public</code> folder.</p>
+
+<p>The publish step runs <code>npx surge ./public ${{ env.DOMAIN }}</code>. This time we’re running <code>surge</code> and giving it the name of the domain we want to publish to. The <code>DOMAIN</code> environment variable was defined earlier in the file:</p>
+
+<pre><code class="language-yaml">env:
+  DOMAIN: ${{ format('{0}-{1}-pr{2}.surge.sh', github.event.repository.owner.login, github.event.repository.name, github.event.client_payload.pull_request.number) }}
+</code></pre>
+
+<p>What’s really nice about this setup is that every pull request gets a different domain - and thus a different staging environment.</p>
+
+<p><code>SURGE_LOGIN</code> and <code>SURGE_TOKEN</code> are additional environment variables used by the <code>surge</code> command line so it authenticates under your account while deploying.</p>
+
+<p>The last step adds a comment to the pull request with a clickable link for the deployed staging environment:</p>
+
+<pre><code class="language-yaml">      - name: Add comment to PR
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.client_payload.pull_request.number }}
+          body: |
+            ${{ format('Published to [staging environment](https://{0})', env.DOMAIN) }}
+
+            To teardown, comment with the `/teardown` command.
+</code></pre>
+
+<p>This ends up looking like this:</p>
+
+<p class="center"><a href="/assets/github-actions-deploy.png"><img src="/assets/github-actions-deploy.png" alt="" /></a></p>
+
+<h3 id="set-up-surge-secrets">Set Up Surge Secrets</h3>
+
+<p>There are a couple of new secrets used by the deploy action: <code>SURGE_LOGIN</code> and <code>SURGE_TOKEN</code>. These can be added as <a href="https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets">repository secrets</a> just like last time.</p>
+
+<p>Set <code>SURGE_LOGIN</code> to the email address <a href="2020-04-02-github-actions-pull-request-staging-environments-part-1">you used to sign up with Surge</a>.</p>
+
+<p>To get <code>SURGE_TOKEN</code>, run <code>surge token</code> from your own computer. This will give you a token that you can save in the <code>SURGE_TOKEN</code> secret, so your deployments are associated with your Surge account.</p>
+
+<h2 id="try-it-out">Try It Out!</h2>
+
+<p>At this point, you should be able to create a pull request and then add a <code>/deploy</code> comment on it. Check out the Actions tab of the repository to watch your actions run or see the logs for old action runs.</p>
+
+<h2 id="implementing-teardown">Implementing Teardown</h2>
+
+<p>The next step is to implement teardown. In your GitHub repository, open up the Actions tab and choose “New workflow” and then “Set up a workflow yourself”. Name the file <code>teardown-command.yml</code> and paste this in:</p>
+
+<pre><code class="language-yaml"># Inputs:
+#  client_payload.pull_request.number - PR number
+
+name: Delete PR Staging Environment
+
+on:
+  repository_dispatch:
+    types: [teardown-command]
+
+env:
+  DOMAIN: ${{ format('{0}-{1}-pr{2}.surge.sh', github.event.repository.owner.login, github.event.repository.name, github.event.client_payload.pull_request.number) }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Teardown surge.sh
+        run: npx surge teardown ${{ env.DOMAIN }}
+        env:
+          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+
+      - name: Add comment to PR
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.client_payload.pull_request.number }}
+          body: ${{ format('Tore down {0}', env.DOMAIN) }}
+</code></pre>
+
+<p>This one is pretty simple; we use a similar pattern to <code>/deploy</code> but there are fewer steps since there’s no build (or even a checkout). We use the same pattern for defining <code>DOMAIN</code> and the Surge secrets, and then we run <code>npx surge teardown ${{ env.DOMAIN }}</code> to tear down the environment for this pull request. The last step adds a comment to the PR indicating that its staging environment has been torn down.</p>
+
+<h2 id="who-can-issue-commands">Who Can Issue Commands?</h2>
+
+<p>By default, only developers with write access to your repository can issue slash commands. This is the default behavior of <code>slash-command-dispatch</code>. So if this is just your project, then only you can create or tear down staging environments. If you have an open-source project - and if creating staging environments is cheap for you - you can edit the <code>slash-commands.yml</code> file and add a <code>permission</code> argument to <code>slash-command-dispatch</code> with the value <code>none</code>. That way, <em>anyone</em> would be able to create and tear down staging environments.</p>
+
+<h2 id="next-time">Next Time</h2>
+
+<p>ChatOps are cool. But can we automate this further?</p>
 
   </article>
     
     <footer class="hidden-print">
         
             <ul class="pager">
+                <li class="previous"><a href="/2020/04/github-actions-pull-request-staging-environments-part-2-slash-commands.html" title="Using GitHub Actions for Pull Request Staging Environments, Part 2: Slash Commands">&larr; Previous in Using GitHub Actions for Pull Request Staging Environments</a></li>
                 
-                <li class="next"><a href="/2020/04/github-actions-pull-request-staging-environments-part-2-slash-commands.html" title="Using GitHub Actions for Pull Request Staging Environments, Part 2: Slash Commands">Next in Using GitHub Actions for Pull Request Staging Environments &rarr;</a></li>
             </ul>
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2020/03/valuetask.html" title="ValueTask Restrictions">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2020/04/github-actions-pull-request-staging-environments-part-2-slash-commands.html" title="Using GitHub Actions for Pull Request Staging Environments, Part 2: Slash Commands">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2020/04/github-actions-pull-request-staging-environments-part-2-slash-commands.html" title="Using GitHub Actions for Pull Request Staging Environments, Part 2: Slash Commands">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="comments"></div>
@@ -360,9 +454,9 @@ img.comment-author-profile-image {
                     <div class="panel-heading">Using GitHub Actions for Pull Request Staging Environments</div>
                     <div class="panel-body sidenav">
                         <ul class="nav nav-pills nav-stacked">
-                                    <li class="active sidenavitem"><a href="/2020/04/github-actions-pull-request-staging-environments-part-1.html">Introduction</a></li>
+                                    <li class="sidenavitem"><a href="/2020/04/github-actions-pull-request-staging-environments-part-1.html">Introduction</a></li>
                                     <li class="sidenavitem"><a href="/2020/04/github-actions-pull-request-staging-environments-part-2-slash-commands.html">Slash Commands</a></li>
-                                    <li class="sidenavitem"><a href="/2020/04/github-actions-pull-request-staging-environments-part-3-implementing-deploy-and-teardown.html">Implementing Deploy and Teardown</a></li>
+                                    <li class="active sidenavitem"><a href="/2020/04/github-actions-pull-request-staging-environments-part-3-implementing-deploy-and-teardown.html">Implementing Deploy and Teardown</a></li>
                         </ul>
                     </div>
                 </div>
@@ -515,7 +609,7 @@ img.comment-author-profile-image {
 
 <script type="text/javascript">
 
-var pageUrl = "https://blog.stephencleary.com" + "/2020/04/github-actions-pull-request-staging-environments-part-1.html";
+var pageUrl = "https://blog.stephencleary.com" + "/2020/04/github-actions-pull-request-staging-environments-part-3-implementing-deploy-and-teardown.html";
 
 // (unnecessary) 1) If the URL starts with http://, replace with https://
 

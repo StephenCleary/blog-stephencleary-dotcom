@@ -8,6 +8,160 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>Using GitHub Actions for Pull Request Staging Environments, Part 3: Implementing Deploy and Teardown</title>
+        <description>&lt;h2 id=&quot;implementing-deploy&quot;&gt;Implementing Deploy&lt;/h2&gt;
+
+&lt;p&gt;So far, we have a &lt;code&gt;slash-commands&lt;/code&gt; GitHub Action that translates &lt;code&gt;/deploy&lt;/code&gt; and &lt;code&gt;/teardown&lt;/code&gt; ChatOps commands into &lt;code&gt;repository_dispatch&lt;/code&gt; events.&lt;/p&gt;
+
+&lt;p&gt;To handle the &lt;code&gt;/deploy&lt;/code&gt; slash command, we’ll need to handle a &lt;code&gt;repository_dispatch&lt;/code&gt; event of type &lt;code&gt;deploy-command&lt;/code&gt;. In your GitHub repository, open up the Actions tab and choose “New workflow” and then “Set up a workflow yourself”. Name the file &lt;code&gt;deploy-command.yml&lt;/code&gt; and paste this in:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&quot;language-yaml&quot;&gt;# Inputs:
+#  client_payload.pull_request.number - PR number
+#  client_payload.pull_request.head.sha - PR SHA
+
+name: Create PR Staging Environment
+
+on:
+  repository_dispatch:
+    types: [deploy-command]
+
+# Set environment variables available to all action steps.
+env:
+  DOMAIN: ${{ format('{0}-{1}-pr{2}.surge.sh', github.event.repository.owner.login, github.event.repository.name, github.event.client_payload.pull_request.number) }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.client_payload.pull_request.head.sha }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build static site
+        run: npx gatsby build
+
+      - name: Publish to surge.sh
+        run: npx surge ./public ${{ env.DOMAIN }}
+        env:
+          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+
+      - name: Add comment to PR
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.client_payload.pull_request.number }}
+          body: |
+            ${{ format('Published to [staging environment](https://{0})', env.DOMAIN) }}
+
+            To teardown, comment with the `/teardown` command.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This one’s a bit longer, so let’s walk through the steps.&lt;/p&gt;
+
+&lt;p&gt;The first step checks out the repository. Note that it specifically checks out the SHA of the pull request (&lt;code&gt;client_payload.pull_request&lt;/code&gt; is provided by &lt;code&gt;slash-command-dispatch&lt;/code&gt;). So we’re checking out the code &lt;em&gt;for that PR&lt;/em&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&quot;language-yaml&quot;&gt;      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.client_payload.pull_request.head.sha }}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The next couple steps build the site by running &lt;code&gt;npm ci&lt;/code&gt; and &lt;code&gt;npx gatsby build&lt;/code&gt;. Just like building locally, the output is placed in the &lt;code&gt;public&lt;/code&gt; folder.&lt;/p&gt;
+
+&lt;p&gt;The publish step runs &lt;code&gt;npx surge ./public ${{ env.DOMAIN }}&lt;/code&gt;. This time we’re running &lt;code&gt;surge&lt;/code&gt; and giving it the name of the domain we want to publish to. The &lt;code&gt;DOMAIN&lt;/code&gt; environment variable was defined earlier in the file:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&quot;language-yaml&quot;&gt;env:
+  DOMAIN: ${{ format('{0}-{1}-pr{2}.surge.sh', github.event.repository.owner.login, github.event.repository.name, github.event.client_payload.pull_request.number) }}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;What’s really nice about this setup is that every pull request gets a different domain - and thus a different staging environment.&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;SURGE_LOGIN&lt;/code&gt; and &lt;code&gt;SURGE_TOKEN&lt;/code&gt; are additional environment variables used by the &lt;code&gt;surge&lt;/code&gt; command line so it authenticates under your account while deploying.&lt;/p&gt;
+
+&lt;p&gt;The last step adds a comment to the pull request with a clickable link for the deployed staging environment:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&quot;language-yaml&quot;&gt;      - name: Add comment to PR
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.client_payload.pull_request.number }}
+          body: |
+            ${{ format('Published to [staging environment](https://{0})', env.DOMAIN) }}
+
+            To teardown, comment with the `/teardown` command.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This ends up looking like this:&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/github-actions-deploy.png&quot;&gt;&lt;img src=&quot;/assets/github-actions-deploy.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;set-up-surge-secrets&quot;&gt;Set Up Surge Secrets&lt;/h3&gt;
+
+&lt;p&gt;There are a couple of new secrets used by the deploy action: &lt;code&gt;SURGE_LOGIN&lt;/code&gt; and &lt;code&gt;SURGE_TOKEN&lt;/code&gt;. These can be added as &lt;a href=&quot;https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets&quot;&gt;repository secrets&lt;/a&gt; just like last time.&lt;/p&gt;
+
+&lt;p&gt;Set &lt;code&gt;SURGE_LOGIN&lt;/code&gt; to the email address &lt;a href=&quot;2020-04-02-github-actions-pull-request-staging-environments-part-1&quot;&gt;you used to sign up with Surge&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;To get &lt;code&gt;SURGE_TOKEN&lt;/code&gt;, run &lt;code&gt;surge token&lt;/code&gt; from your own computer. This will give you a token that you can save in the &lt;code&gt;SURGE_TOKEN&lt;/code&gt; secret, so your deployments are associated with your Surge account.&lt;/p&gt;
+
+&lt;h2 id=&quot;try-it-out&quot;&gt;Try It Out!&lt;/h2&gt;
+
+&lt;p&gt;At this point, you should be able to create a pull request and then add a &lt;code&gt;/deploy&lt;/code&gt; comment on it. Check out the Actions tab of the repository to watch your actions run or see the logs for old action runs.&lt;/p&gt;
+
+&lt;h2 id=&quot;implementing-teardown&quot;&gt;Implementing Teardown&lt;/h2&gt;
+
+&lt;p&gt;The next step is to implement teardown. In your GitHub repository, open up the Actions tab and choose “New workflow” and then “Set up a workflow yourself”. Name the file &lt;code&gt;teardown-command.yml&lt;/code&gt; and paste this in:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&quot;language-yaml&quot;&gt;# Inputs:
+#  client_payload.pull_request.number - PR number
+
+name: Delete PR Staging Environment
+
+on:
+  repository_dispatch:
+    types: [teardown-command]
+
+env:
+  DOMAIN: ${{ format('{0}-{1}-pr{2}.surge.sh', github.event.repository.owner.login, github.event.repository.name, github.event.client_payload.pull_request.number) }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Teardown surge.sh
+        run: npx surge teardown ${{ env.DOMAIN }}
+        env:
+          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+
+      - name: Add comment to PR
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.client_payload.pull_request.number }}
+          body: ${{ format('Tore down {0}', env.DOMAIN) }}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This one is pretty simple; we use a similar pattern to &lt;code&gt;/deploy&lt;/code&gt; but there are fewer steps since there’s no build (or even a checkout). We use the same pattern for defining &lt;code&gt;DOMAIN&lt;/code&gt; and the Surge secrets, and then we run &lt;code&gt;npx surge teardown ${{ env.DOMAIN }}&lt;/code&gt; to tear down the environment for this pull request. The last step adds a comment to the PR indicating that its staging environment has been torn down.&lt;/p&gt;
+
+&lt;h2 id=&quot;who-can-issue-commands&quot;&gt;Who Can Issue Commands?&lt;/h2&gt;
+
+&lt;p&gt;By default, only developers with write access to your repository can issue slash commands. This is the default behavior of &lt;code&gt;slash-command-dispatch&lt;/code&gt;. So if this is just your project, then only you can create or tear down staging environments. If you have an open-source project - and if creating staging environments is cheap for you - you can edit the &lt;code&gt;slash-commands.yml&lt;/code&gt; file and add a &lt;code&gt;permission&lt;/code&gt; argument to &lt;code&gt;slash-command-dispatch&lt;/code&gt; with the value &lt;code&gt;none&lt;/code&gt;. That way, &lt;em&gt;anyone&lt;/em&gt; would be able to create and tear down staging environments.&lt;/p&gt;
+
+&lt;h2 id=&quot;next-time&quot;&gt;Next Time&lt;/h2&gt;
+
+&lt;p&gt;ChatOps are cool. But can we automate this further?&lt;/p&gt;
+</description>
+        <pubDate>Fri, 24 Apr 2020 00:00:00 +0000</pubDate>
+        <link>https://blog.stephencleary.com/2020/04/github-actions-pull-request-staging-environments-part-3-implementing-deploy-and-teardown.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2020/04/github-actions-pull-request-staging-environments-part-3-implementing-deploy-and-teardown.html</guid>
+      </item>
+    
+      <item>
         <title>Using GitHub Actions for Pull Request Staging Environments, Part 2: Slash Commands</title>
         <description>&lt;h2 id=&quot;slash-commands&quot;&gt;Slash Commands&lt;/h2&gt;
 
@@ -660,31 +814,6 @@ jobs:
         <pubDate>Thu, 12 Apr 2018 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2018/04/slides-available-codepalousa-2018.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2018/04/slides-available-codepalousa-2018.html</guid>
-      </item>
-    
-      <item>
-        <title>Happy Birthday Async</title>
-        <description>&lt;p&gt;Today I’d like to say happy birthday to the C# &lt;code&gt;async&lt;/code&gt; and &lt;code&gt;await&lt;/code&gt; keywords! They officially turn five years old today! C# and VB both officially adopted them on September 12, 2012.&lt;/p&gt;
-
-&lt;p&gt;The &lt;code&gt;async&lt;/code&gt; and &lt;code&gt;await&lt;/code&gt; keywords themselves have a slightly longer history; they were originally introduced in F# on April 12th, 2010. &lt;code&gt;async&lt;/code&gt; slowly moved into C#/VB, and from there they spread to Python, TypeScript, Hack, Dart, and (recently) JavaScript. Python was a huge win for &lt;code&gt;async&lt;/code&gt;; the Python community is quick to pick up (or invent) the best language features, and they have one of the best language-improvement processes out there. Also, I find the Hack adoption particularly amusing - I mean, even &lt;em&gt;PHP&lt;/em&gt; has &lt;code&gt;async&lt;/code&gt; these days!&lt;/p&gt;
-
-&lt;p&gt;The jury is still out on whether C++ will pick up &lt;code&gt;async&lt;/code&gt;, and Java just seems to move at a snail’s pace these days.&lt;/p&gt;
-
-&lt;h2 id=&quot;remembering-ye-olde-async-days&quot;&gt;Remembering Ye Olde Async Days&lt;/h2&gt;
-
-&lt;p&gt;My original &lt;a href=&quot;/2012/02/async-and-await.html&quot;&gt;intro to &lt;code&gt;async&lt;/code&gt;/&lt;code&gt;await&lt;/code&gt; post&lt;/a&gt; went live on my blog about five and a half years ago! It’s still fully relevant, which is unusual for a five-year-old blog post. And even today, it brings more traffic to my blog than any other post (about 15% of all my blog traffic is just for that one post).&lt;/p&gt;
-
-&lt;p&gt;My, how much has changed since that blog post was published! At that time, &lt;code&gt;async&lt;/code&gt; was an experimental language modification that required you to install a Community Technology Preview (read: unsupported) package that changed the compilers and language features used by Visual Studio 2010. That is, unless you already installed updates to VS2010, in which case the Async CTP installation would just not work. Until they fixed it, and then it worked. Until the next VS2010 update, when it broke again. No, seriously, it was that bad! :)&lt;/p&gt;
-
-&lt;p&gt;Oh, and once (if) you managed to get the Async CTP &lt;em&gt;installed&lt;/em&gt;, there were still &lt;a href=&quot;https://blogs.msdn.microsoft.com/lucian/2011/04/17/async-ctp-refresh-what-bugs-remain-in-it/&quot;&gt;a number of bugs&lt;/a&gt;. And if you encountered them, there wasn’t much you could do about it: the resolution was essentially “don’t do that.” Of particular note was &lt;em&gt;using multiple &lt;code&gt;await&lt;/code&gt;s in expressions&lt;/em&gt;, like Lucian’s example &lt;code&gt;var x = await f() + await g();&lt;/code&gt; Yeah, that didn’t even work. Your rule-of-thumb was one &lt;code&gt;await&lt;/code&gt; per statement, and it was best if that statement did nothing else. &lt;code&gt;var fx = await f(); var gx = await g(); var x = fx + gx;&lt;/code&gt; FTW!&lt;/p&gt;
-
-&lt;p&gt;Also, overload resolution wasn’t quite right, especially for asynchronous delegate types. But there were no &lt;code&gt;async&lt;/code&gt; lambdas anyway. And there was no &lt;code&gt;dynamic&lt;/code&gt; compatibility with &lt;code&gt;await&lt;/code&gt; at all. And a lot of compiler safeguards were missing (e.g., &lt;code&gt;async void Main&lt;/code&gt; was allowed). And the debugger support was &lt;em&gt;horrible&lt;/em&gt; - really, there was no debugging support &lt;em&gt;at all&lt;/em&gt; back then.&lt;/p&gt;
-
-&lt;p&gt;Today, &lt;code&gt;async&lt;/code&gt; is truly a first-class citizen of C# and VB. With every release of Visual Studio, the debugger support for &lt;code&gt;async&lt;/code&gt; code gets better and better. Tracing systems like Application Insights “just work” coordinating traces across asynchronous code. We recently got &lt;a href=&quot;https://github.com/ljw1004/roslyn/blob/features/async-return/docs/specs/feature%20-%20arbitrary%20async%20returns.md&quot;&gt;value-type &lt;code&gt;Task&amp;lt;T&amp;gt;&lt;/code&gt; equivalents&lt;/a&gt;, and new enhancements are on the horizon: better code generation around the &lt;code&gt;async&lt;/code&gt; state machine, &lt;a href=&quot;https://github.com/dotnet/roslyn/issues/261&quot;&gt;&lt;code&gt;async&lt;/code&gt; enumerators&lt;/a&gt;, … the future is bright!&lt;/p&gt;
-</description>
-        <pubDate>Tue, 12 Sep 2017 00:00:00 +0000</pubDate>
-        <link>https://blog.stephencleary.com/2017/09/happy-birthday-async.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2017/09/happy-birthday-async.html</guid>
       </item>
     
   </channel>
