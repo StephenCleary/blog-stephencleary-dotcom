@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Using GitHub Actions for Pull Request Staging Environments, Part 4: Automated Deploy and Teardown</title>
+    <title>BackgroundService Gotcha: Startup</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Automatically create and tear down staging environments for pull requests." />
-    <link rel="canonical" href="https://blog.stephencleary.com/2020/05/github-actions-pull-request-staging-environments-part-4-automated-deploy-and-teardown.html" />
+    <meta name="description" content="BackgroundService (and IHostedService) are started synchronously." />
+    <link rel="canonical" href="https://blog.stephencleary.com/2020/05/backgroundservice-gotcha-startup.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -276,110 +276,58 @@ img.comment-author-profile-image {
 
   <header>
       <div class="page-header">
-          <h1>Using GitHub Actions for Pull Request Staging Environments, Part 4: Automated Deploy and Teardown</h1>
-          <small><time datetime="2020-05-06">May 6, 2020</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
+          <h1>BackgroundService Gotcha: Startup</h1>
+          <small><time datetime="2020-05-21">May 21, 2020</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
       </div>
   </header>
 
   <article>
-  <h2 id="automating-deploy">Automating Deploy</h2>
+  <h2 id="backgroundservice-gotcha-synchronous-starts">BackgroundService Gotcha: Synchronous Starts</h2>
 
-<p>We currently have slash commands <code>/deploy</code> and <code>/teardown</code> that are converted into <code>repository_dispatch</code> (<code>deploy-command</code> / <code>teardown-command</code>) events, and those <code>repository_dispatch</code> events deploy or tear down a staging environment specific to a pull request. That’s pretty cool.</p>
+<p>This is some behavior that I’ve found surprising (and others have as well): ASP.NET Core background services are started with a synchronous call.</p>
 
-<p>But what I’d <em>really</em> like is to deploy a PR’s staging environment as soon as the PR is created, and automatically tear it down when the PR is closed. That would be <em>really</em> cool.</p>
+<p>Specifically, the host will invoke <code>IHostedService.StartAsync</code> for all its hosted services, and <code>BackgroundService</code> <a href="https://github.com/dotnet/runtime/blob/e3ffd343ad5bd3a999cb9515f59e6e7a777b2c34/src/libraries/Microsoft.Extensions.Hosting.Abstractions/src/BackgroundService.cs#L37">directly invokes <code>ExecuteAsync</code> before returning from <code>StartAsync</code></a>. So <code>BackgroundService</code> <em>assumes</em> that its derived classes will have an asynchronous <code>ExecuteAsync</code>. If the <code>ExecuteAsync</code> implementation is synchronous (or starts executing with a blocking call), then problems will ensue.</p>
 
-<h2 id="security-again">Security (Again)</h2>
+<h2 id="problem-description">Problem Description</h2>
 
-<p>First, though, I do have to talk about security. Yes, again.</p>
+<p>The resulting behavior is that the background service will start executing, but the host will be unable to finish starting up. This will block other background services from starting.</p>
 
-<p>For security reasons, <em>all secrets are unavailable</em> when automating a pull request from a <em>fork</em> of a repository. This makes sense; you don’t want someone to create a fork, change the actions, and be able to retrieve your secrets by opening a PR against your repository.</p>
+<p>Depending on the background service implementation, this may manifest as a delay of startup or a complete block of startup. If <code>ExecuteAsync</code> is synchronous, then the host cannot continue starting up until that background service has <em>completed</em>. If <code>ExecuteAsync</code> is asynchronous but takes a long time before it yields, then the host has its startup delayed.</p>
 
-<p>Currently, this is a hard and fast rule. But there are discussions about loosening up these rules a bit:</p>
-<ul>
-  <li><a href="https://github.community/t5/GitHub-Actions/Make-secrets-available-to-builds-of-forks/td-p/30678">Opt-in to secret sharing to forks</a></li>
-  <li><a href="https://github.community/t5/GitHub-Actions/Allow-secrets-to-be-shared-with-trusted-Actions/td-p/34278">Mark certain actions as “trusted”</a></li>
-</ul>
+<h2 id="common-scenarios">Common Scenarios</h2>
 
-<p>Personally, I think it makes sense to always have pull request events run using the actions of the <em>base</em> branch, not the <em>head</em> branch. So cross-repository pull requests will always run the actions in the origin repository, not the fork repository.</p>
+<p>This problem is common in any of these conditions:</p>
 
-<p>However, for now, the result of this security restriction is that we can only automate <em>local</em> pull requests (from one branch to another in the same repository). The solution we’re using here will not work for cross-repository PRs (i.e., a PR from a forked repository).</p>
+<ol>
+  <li>The hosted service has a synchronous <code>ExecuteAsync</code>. In this case, the host is prevented from starting until <code>ExecuteAsync</code> completes.</li>
+  <li>The hosted service reads from a queue to process messages, but the queue reading is blocking. Even if the processing is asynchronous, the host startup is blocked until the first message arrives for this service and is (asynchronously) processed.</li>
+  <li>The hosted service is properly asynchronous, but the asynchrony is completing immediately. E.g., if it is asynchronously reading from a queue but there are many messages immediately received, then the host startup is blocked until the background service actually yields.</li>
+</ol>
 
-<h2 id="dispatch-when-a-pull-request-is-opened">Dispatch when a Pull Request is Opened</h2>
+<h2 id="solution">Solution</h2>
 
-<p>We already have an action that handles <code>repository_dispatch</code> events of type <code>deploy-command</code>, so we can just use a pull request event as a “trigger”, dispatching the same kind of command:</p>
+<p>Since the problem is synchronous <code>ExecuteAsync</code> methods (or at least <code>ExecuteAsync</code> methods that do non-trivial work before they become asynchronous), the simplest solution is to ensure <code>ExecuteAsync</code> is asynchronous.</p>
 
-<pre><code class="language-yaml"># Queues a deploy command for every local PR.
+<p>I’m <a href="/2013/11/taskrun-etiquette-examples-dont-use.html">not a fan of using <code>Task.Run</code> to wrap the body of a method</a> (i.e., “fake asynchrony”), but since the caller <em>requires</em> an asynchronous implementation, I think that’s an acceptable approach in this case:</p>
 
-name: Local PR Opened/Updated
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">MyBackgroundService</span> <span class="p">:</span> <span class="n">BackgroundService</span>
+<span class="p">{</span>
+    <span class="k">protected</span> <span class="k">override</span> <span class="n">Task</span> <span class="nf">ExecuteAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">stoppingToken</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(</span><span class="k">async</span> <span class="p">()</span> <span class="p">=&gt;</span>
+    <span class="p">{</span>
+        <span class="c1">// Implementation</span>
+    <span class="p">});</span>
+<span class="p">}</span></code></pre></figure>
 
-# By default, this is run when a PR is opened or synchronized.
-on:
-  pull_request:
-
-jobs:
-  dispatch-deploy-command:
-    if: github.repository == github.event.pull_request.head.repo.full_name # Only try to deploy local PRs
-    runs-on: ubuntu-latest
-    steps:
-    - name: Dispatch /deploy Command
-      uses: peter-evans/repository-dispatch@v1
-      with:
-        token: ${{ secrets.DISPATCH_TOKEN }} # Same security issues as before, unfortunately
-        event-type: deploy-command # Send the deploy-command type for the repository_dispatch event
-        client-payload: '{"pull_request": ${{ toJson(github.event.pull_request) }}}' # Pass along the pull request details
-</code></pre>
-
-<p>The only tricky part here is the last line: our <code>deploy-command.yml</code> handler expects to be able to use <code>client_payload.pull_request.number</code> and <code>client_payload.pull_request.head.sha</code>. <code>client_payload.pull_request</code> is populated automatically by <code>slash-command-dispatch</code>, but here we need to fill it out ourselves. Fortunately, the <code>pull_request</code> data is already provided to us as part of the <code>pull_request</code> event, so we just need to copy it over.</p>
-
-<h2 id="dispatch-when-a-pull-request-is-closed">Dispatch when a Pull Request is Closed</h2>
-
-<p>Similarly, we have an action that handles <code>repository_dispatch</code> events of type <code>teardown-command</code>, so we can use a pull request close event to dispatch the same command:</p>
-
-<pre><code class="language-yaml"># Queues a teardown command for every local PR closed.
-
-name: Local PR Closed
-
-# Only listen for close events.
-on:
-  pull_request:
-    types: [ closed ]
-
-jobs:
-  dispatch-teardown-command:
-    if: github.repository == github.event.pull_request.head.repo.full_name # Only try to tear down local PRs
-    runs-on: ubuntu-latest
-    steps:
-    - name: Dispatch /teardown Command
-      uses: peter-evans/repository-dispatch@v1
-      with:
-        token: ${{ secrets.DISPATCH_TOKEN }} # Same security issues as before, unfortunately
-        event-type: teardown-command # Send the deploy-command type for the repository_dispatch event
-        client-payload: '{"pull_request": ${{ toJson(github.event.pull_request) }}}' # Pass along the pull request details
-</code></pre>
-
-<h2 id="done">Done</h2>
-
-<p>At this point, we’re as automated as we can be (safely). All PRs support <code>/deploy</code> and <code>/teardown</code> commands, managing a per-PR staging environment. In addition, local PRs get their environments deployed and torn down automatically.</p>
-
-<p>Hopefully in the future, we can fully automate PRs from forks. That would be especially helpful for open-source projects. In the meantime, <code>/deploy</code> and <code>/teardown</code> are still pretty cool.</p>
-
-<p>As a final reminder, the staging environments in this example were deliberately simple: building a static site and deploying that static site. This simple example is fine for a lot of front-end projects. But staging environments can also include back-end code. There’s no reason you can’t define “deploy” to mean “deploy the front end to Surge <em>and</em> deploy the backend to a new Azure resource group” or something like that. So dream big!</p>
-
-<p>Enjoy GitHub Actions!</p>
+<p>That way, any slow or blocking code early in <code>ExecuteAsync</code> will not prevent the host from starting up.</p>
 
   </article>
     
     <footer class="hidden-print">
         
-            <ul class="pager">
-                <li class="previous"><a href="/2020/04/github-actions-pull-request-staging-environments-part-3-implementing-deploy-and-teardown.html" title="Using GitHub Actions for Pull Request Staging Environments, Part 3: Implementing Deploy and Teardown">&larr; Previous in Using GitHub Actions for Pull Request Staging Environments</a></li>
-                
-            </ul>
-        
         
         <ul class="pager">
-            <li class="previous"><a href="/2020/04/github-actions-pull-request-staging-environments-part-3-implementing-deploy-and-teardown.html" title="Using GitHub Actions for Pull Request Staging Environments, Part 3: Implementing Deploy and Teardown">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2020/05/backgroundservice-gotcha-startup.html" title="BackgroundService Gotcha: Startup">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2020/05/github-actions-pull-request-staging-environments-part-4-automated-deploy-and-teardown.html" title="Using GitHub Actions for Pull Request Staging Environments, Part 4: Automated Deploy and Teardown">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="comments"></div>
@@ -388,17 +336,6 @@ jobs:
         </div>
         <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
-                <div class="panel panel-primary">
-                    <div class="panel-heading">Using GitHub Actions for Pull Request Staging Environments</div>
-                    <div class="panel-body sidenav">
-                        <ul class="nav nav-pills nav-stacked">
-                                    <li class="sidenavitem"><a href="/2020/04/github-actions-pull-request-staging-environments-part-1.html">Introduction</a></li>
-                                    <li class="sidenavitem"><a href="/2020/04/github-actions-pull-request-staging-environments-part-2-slash-commands.html">Slash Commands</a></li>
-                                    <li class="sidenavitem"><a href="/2020/04/github-actions-pull-request-staging-environments-part-3-implementing-deploy-and-teardown.html">Implementing Deploy and Teardown</a></li>
-                                    <li class="active sidenavitem"><a href="/2020/05/github-actions-pull-request-staging-environments-part-4-automated-deploy-and-teardown.html">Automated Deploy and Teardown</a></li>
-                        </ul>
-                    </div>
-                </div>
             
         </div>
         <div class="col-sm-2 sidebar hidden-print">
@@ -490,17 +427,6 @@ jobs:
 
 <!-- Scroll the sidebar into view (if necessary) -->
 
-<script src="/lib/jquery.scrollTo.min.js"></script>
-<script type="text/javascript">
-    (function ($) {
-        $(function () {
-            var container = $('.affix').filter(function() { return $(this).css('position') == 'fixed'; });
-            var target = container.find('.active');
-            container.scrollTo(target, { offset: - (container.height() / 2 - target.height() / 2) });
-        });
-    })(window.jQuery);
-</script>
-
 
 <!-- Moment -->
 <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.6.0/moment.min.js"></script>
@@ -548,7 +474,7 @@ jobs:
 
 <script type="text/javascript">
 
-var pageUrl = "https://blog.stephencleary.com" + "/2020/05/github-actions-pull-request-staging-environments-part-4-automated-deploy-and-teardown.html";
+var pageUrl = "https://blog.stephencleary.com" + "/2020/05/backgroundservice-gotcha-startup.html";
 
 // (unnecessary) 1) If the URL starts with http://, replace with https://
 
