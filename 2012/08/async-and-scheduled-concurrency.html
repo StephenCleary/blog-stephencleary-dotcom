@@ -281,6 +281,14 @@ img.comment-author-profile-image {
       </div>
   </header>
 
+  <header>
+    <div class="alert alert-info" markdown="1">
+        <i class="fa fa-hand-o-right fa-2x pull-left"></i>
+        
+        This blog (and my open-source libraries) <a href="https://github.com/sponsors/StephenCleary" class="alert-link">are currently accepting sponsors!</a>
+    </div>
+  </header>
+
   <article>
   <p>Async doesn’t play well with traditional synchronization primitives. For example, <a href="http://stackoverflow.com/questions/7612602/why-cant-i-use-the-await-operator-within-the-body-of-a-lock-statement">think about what happens when you await while holding a lock</a>: the async method will <em>return</em> to its caller, allowing other code to run on that thread while the lock is held. If the method later resumes on the same thread (e.g., a UI context), and the “other code” attempts to take the lock, then you have a deadlock. Another case is if the method resumes on a different thread (e.g.,  ConfigureAwait(false)); in that case the new thread will attempt to release a lock it doesn’t have.</p>
 

@@ -281,6 +281,14 @@ img.comment-author-profile-image {
       </div>
   </header>
 
+  <header>
+    <div class="alert alert-info" markdown="1">
+        <i class="fa fa-hand-o-right fa-2x pull-left"></i>
+        
+        This blog (and my open-source libraries) <a href="https://github.com/sponsors/StephenCleary" class="alert-link">are currently accepting sponsors!</a>
+    </div>
+  </header>
+
   <article>
   <p>The other day, I was working on a project that had several layers of abstraction, each one exposing a purely asynchronous API (using <a href="http://msdn.microsoft.com/en-us/library/system.iasyncresult.aspx">IAsyncResult</a>) to the next higher layer. At one point, I wanted to add an “additional handler” to an <a href="http://msdn.microsoft.com/en-us/library/system.iasyncresult.asyncwaithandle.aspx">IAsyncResult.AsyncWaitHandle</a> from a lower layer. The regular handler would take care of getting the results (calling <em>End*</em>), and the additional handler would perform an additional action when the operation completed.</p>
 
