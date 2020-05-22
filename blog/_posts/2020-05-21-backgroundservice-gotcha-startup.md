@@ -41,3 +41,9 @@ public class MyBackgroundService : BackgroundService
 {% endhighlight %}
 
 That way, any slow or blocking code early in `ExecuteAsync` will not prevent the host from starting up.
+
+## Update (2020-05-22)
+
+<div class="alert alert-info" markdown="1">
+**Update (2020-05-22):** I've [been informed](https://twitter.com/klettier/status/1263727450502152194){:.alert-link} that the .NET Core team is [considering changing this behavior](https://github.com/dotnet/runtime/issues/36063#issuecomment-518913079){:.alert-link}.
+</div>
