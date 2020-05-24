@@ -6,7 +6,7 @@ description: "BackgroundService (and IHostedService) do not shut down the applic
 
 ## BackgroundService Gotcha: Service Lifetime is Independent from Application Lifetime
 
-OK, I guess I have a series on my hands. This is the last one, though!
+OK, I guess I do have a series on my hands. This is the last one, though!
 
 This one isn't so much a "gotcha" as it is a common mistake. Hosted services (including `BackgroundService`s) have a lifetime that is *independent* from their host. This means that if a `BackgroundService` exits, its host will not exit. And a host will happily continue running even if all its services have exited.
 
