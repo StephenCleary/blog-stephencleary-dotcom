@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>BarCampGR4 Slides Available</title>
+    <title>BackgroundService Gotcha: Silent Failures</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="The slides for my talk, “Designing Application Protocols for TCP/IP” are now available. I’ll be giving this talk either Friday night or Saturday sometime." />
-    <link rel="canonical" href="https://blog.stephencleary.com/2009/08/barcampgr4-slides-available.html" />
+    <meta name="description" content="BackgroundService will ignore exceptions thrown from ExecuteAsync." />
+    <link rel="canonical" href="https://blog.stephencleary.com/2020/05/backgroundservice-gotcha-silent-failure.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -276,8 +276,8 @@ img.comment-author-profile-image {
 
   <header>
       <div class="page-header">
-          <h1>BarCampGR4 Slides Available</h1>
-          <small><time datetime="2009-08-20">Aug 20, 2009</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
+          <h1>BackgroundService Gotcha: Silent Failures</h1>
+          <small><time datetime="2020-05-28">May 28, 2020</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
       </div>
   </header>
 
@@ -290,9 +290,63 @@ img.comment-author-profile-image {
   </header>
 
   <article>
-  <p>The slides for my talk, “Designing Application Protocols for TCP/IP” are now <a href="https://github.com/StephenCleary/Presentations/tree/master/Designing%20Application%20Protocols%20for%20TCPIP">available</a>. I’ll be giving this talk either Friday night or Saturday sometime.</p>
+  <h2 id="backgroundservice-gotcha-silent-failures">BackgroundService Gotcha: Silent Failures</h2>
 
-<p>If you’re from Northern Michigan, <a href="http://barcampgr.org/wiki/BarCampGrandRapids4">stop on by</a>!</p>
+<p>I know <a href="/2020/05/backgroundservice-gotcha-startup.html">last time</a> I talked about <code>BackgroundService</code>… I don’t want to make this a series or anything, but there is another common “gotcha” when it comes to <code>BackgroundService</code>: exceptions are silently ignored.</p>
+
+<p>If the <code>ExecuteAsync</code> implementation throws an exception, that exception is silently swallowed and ignored. This is because <code>BackgroundService</code> captures the task from <code>ExecuteAsync</code> but never <code>await</code>s it - i.e., <a href="https://github.com/dotnet/runtime/blob/e3ffd343ad5bd3a999cb9515f59e6e7a777b2c34/src/libraries/Microsoft.Extensions.Hosting.Abstractions/src/BackgroundService.cs"><code>BackgroundService</code> uses fire-and-forget</a>.</p>
+
+<h2 id="problem-description">Problem Description</h2>
+
+<p>This problem will surface as <code>BackgroundService</code> instances just stopping, without any indication of a problem. What actually happens if <code>ExecuteAsync</code> throws an exception is that the exception is captured and placed on the <code>Task</code> that was returned from <code>ExecuteAsync</code>. The problem is that <code>BackgroundService</code> doesn’t observe that task, so there’s no logging and no process crash - the <code>BackgroundService</code> has completed executing but it just sits there doing nothing.</p>
+
+<p>This is not <em>necessarily</em> a problem with <code>BackgroundService</code>; fire-and-forget can be appropriate for “top-level” loops such as a background worker task. However, it would be nice to have logging at least, so this “gotcha” is detectable.</p>
+
+<h2 id="solution">Solution</h2>
+
+<p>All top-level loops should have a <code>try</code>/<code>catch</code> with some kind of reporting if something goes wrong. <code>ExecuteAsync</code> implementations are top-level loops, so they should have a top-level <code>try</code> that catches all exceptions:</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">MyBackgroundService</span> <span class="p">:</span> <span class="n">BackgroundService</span>
+<span class="p">{</span>
+    <span class="k">private</span> <span class="k">readonly</span> <span class="n">ILogger</span><span class="p">&lt;</span><span class="n">MyBackgroundService</span><span class="p">&gt;</span> <span class="n">_logger</span><span class="p">;</span>
+    <span class="k">public</span> <span class="nf">MyBackgroundService</span><span class="p">(</span><span class="n">ILogger</span><span class="p">&lt;</span><span class="n">MyBackgroundService</span><span class="p">&gt;</span> <span class="n">logger</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="n">_logger</span> <span class="p">=</span> <span class="n">logger</span><span class="p">;</span>
+
+    <span class="k">protected</span> <span class="k">override</span> <span class="n">Task</span> <span class="nf">ExecuteAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">stoppingToken</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">try</span>
+        <span class="p">{</span>
+            <span class="c1">// Implementation</span>
+        <span class="p">}</span>
+        <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span> <span class="n">when</span> <span class="n">False</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">_logger</span><span class="p">.</span><span class="n">LogCritical</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="s">&quot;Fatal error&quot;</span><span class="p">))</span>
+        <span class="p">{</span>
+            <span class="k">throw</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">private</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">False</span><span class="p">(</span><span class="n">Action</span> <span class="n">action</span><span class="p">)</span> <span class="p">{</span> <span class="n">action</span><span class="p">();</span> <span class="k">return</span> <span class="k">false</span><span class="p">;</span> <span class="p">}</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>I recommend you combine this solution with the solution from last time that <a href="/2020/05/backgroundservice-gotcha-startup.html">uses <code>Task.Run</code> to avoid startup problems</a>:</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">MyBackgroundService</span> <span class="p">:</span> <span class="n">BackgroundService</span>
+<span class="p">{</span>
+    <span class="k">private</span> <span class="k">readonly</span> <span class="n">ILogger</span><span class="p">&lt;</span><span class="n">MyBackgroundService</span><span class="p">&gt;</span> <span class="n">_logger</span><span class="p">;</span>
+    <span class="k">public</span> <span class="nf">MyBackgroundService</span><span class="p">(</span><span class="n">ILogger</span><span class="p">&lt;</span><span class="n">MyBackgroundService</span><span class="p">&gt;</span> <span class="n">logger</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="n">_logger</span> <span class="p">=</span> <span class="n">logger</span><span class="p">;</span>
+
+    <span class="k">protected</span> <span class="k">override</span> <span class="n">Task</span> <span class="nf">ExecuteAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">stoppingToken</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(</span><span class="k">async</span> <span class="p">()</span> <span class="p">=&gt;</span>
+    <span class="p">{</span>
+        <span class="k">try</span>
+        <span class="p">{</span>
+            <span class="c1">// Implementation</span>
+        <span class="p">}</span>
+        <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span> <span class="n">when</span> <span class="n">False</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">_logger</span><span class="p">.</span><span class="n">LogCritical</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="s">&quot;Fatal error&quot;</span><span class="p">))</span>
+        <span class="p">{</span>
+            <span class="k">throw</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">});</span>
+
+    <span class="k">private</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">False</span><span class="p">(</span><span class="n">Action</span> <span class="n">action</span><span class="p">)</span> <span class="p">{</span> <span class="n">action</span><span class="p">();</span> <span class="k">return</span> <span class="k">false</span><span class="p">;</span> <span class="p">}</span>
+<span class="p">}</span></code></pre></figure>
 
 
   </article>
@@ -301,8 +355,8 @@ img.comment-author-profile-image {
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2009/08/alternative-guids-for-mobile-devices.html" title="Alternative GUIDs for mobile devices using SQL Server Compact">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2009/08/where-has-steve-been.html" title="Where Has Steve Been?">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2020/05/backgroundservice-gotcha-startup.html" title="BackgroundService Gotcha: Startup">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="comments"></div>
@@ -449,7 +503,7 @@ img.comment-author-profile-image {
 
 <script type="text/javascript">
 
-var pageUrl = "https://blog.stephencleary.com" + "/2009/08/barcampgr4-slides-available.html";
+var pageUrl = "https://blog.stephencleary.com" + "/2020/05/backgroundservice-gotcha-silent-failure.html";
 
 // (unnecessary) 1) If the URL starts with http://, replace with https://
 
