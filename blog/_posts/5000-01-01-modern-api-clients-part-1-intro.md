@@ -30,6 +30,8 @@ There's almost always a feature lag between the API and its client libraries. Th
 
 Some teams try to use tools like Swagger to auto-generate client libraries and thus avoid the feature lag; however, the resulting client library suffers from an impedance mismatch (see next section) as well as documentation problems (see previous section) since the auto-generated docs are written for the HTTP API rather than a C# API.
 
+This problem is particularly common if you want to use *prerelease* features. API-first services often support prerelease features only at the API level, and only spend the time to add them to their clients after the features are officially released. If you need a prerelease API feature, the client libraries are less likely to support it.
+
 ### Impedance Mismatch
 
 This kind of problem is common in auto-generated client libraries, or libraries that strongly follow a pattern set by the HTTP API. The problem is that HTTP is one kind of API, and C# class libraries are another kind of API; when using a C# client with an impedance mismatch, the code just doesn't feel "right". It doesn't have the same structure and naming and typing that a C# developer would use if writing a general-purpose library; it has the structure and naming and typing of an HTTP API. That kind of impedance mismatch just makes the API more awkward to use.
@@ -71,6 +73,12 @@ Logging support is also all over the map. Some C# client libraries simply have n
 Authentication is another issue. It's pretty easy if the API is authenticated with a key - usually there's one place to set the key (e.g., in the constructor of the main client type). But if the API requires an authorization token which can expire (or be rotated) and requires renewal, does the C# client library handle all these details? With retries?
 
 It can take a long time to determine the actual behavior of any given C# client library.
+
+### Version Conflicts
+
+C# client libraries - like all C# libraries - can suffer from the "diamond problem". This is where one project/library in your code depends on an old version of the C# client, and another project/library in your code depends on a newer version of the C# client. In this case, the default build behavior is to only include the newer version in your build output and substitute it for the older version. And usually this works fine, but sometimes it does not.
+
+Different parts of the code using different library versions may work fine, or it may fail with odd errors like "Could not load type" or the especially confusing "Cannot convert X to X".
 
 ### Abandonware
 
