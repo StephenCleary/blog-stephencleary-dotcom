@@ -1,6 +1,8 @@
 ---
 layout: post
 title: "BackgroundService Gotcha: Startup"
+series: "BackgroundService Gotchas"
+seriesTitle: "Synchronous Starts"
 description: "BackgroundService (and IHostedService) are started synchronously."
 ---
 

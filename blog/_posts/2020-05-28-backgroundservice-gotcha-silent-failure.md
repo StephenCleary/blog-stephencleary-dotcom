@@ -1,6 +1,8 @@
 ---
 layout: post
 title: "BackgroundService Gotcha: Silent Failures"
+series: "BackgroundService Gotchas"
+seriesTitle: "Silent Failures"
 description: "BackgroundService will ignore exceptions thrown from ExecuteAsync."
 ---
 
