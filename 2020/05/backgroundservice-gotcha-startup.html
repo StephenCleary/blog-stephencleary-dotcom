@@ -339,6 +339,11 @@ img.comment-author-profile-image {
     
     <footer class="hidden-print">
         
+            <ul class="pager">
+                
+                <li class="next"><a href="/2020/05/backgroundservice-gotcha-silent-failure.html" title="BackgroundService Gotcha: Silent Failures">Next in BackgroundService Gotchas &rarr;</a></li>
+            </ul>
+        
         
         <ul class="pager">
             <li class="previous"><a href="/2020/05/github-actions-pull-request-staging-environments-part-4-automated-deploy-and-teardown.html" title="Using GitHub Actions for Pull Request Staging Environments, Part 4: Automated Deploy and Teardown">&larr; Previous Post</a></li>
@@ -351,6 +356,16 @@ img.comment-author-profile-image {
         </div>
         <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
+                <div class="panel panel-primary">
+                    <div class="panel-heading">BackgroundService Gotchas</div>
+                    <div class="panel-body sidenav">
+                        <ul class="nav nav-pills nav-stacked">
+                                    <li class="active sidenavitem"><a href="/2020/05/backgroundservice-gotcha-startup.html">Synchronous Starts</a></li>
+                                    <li class="sidenavitem"><a href="/2020/05/backgroundservice-gotcha-silent-failure.html">Silent Failures</a></li>
+                                    <li class="sidenavitem"><a href="/2020/06/backgroundservice-gotcha-application-lifetime.html">Application Lifetime</a></li>
+                        </ul>
+                    </div>
+                </div>
             
         </div>
         <div class="col-sm-2 sidebar hidden-print">
@@ -441,6 +456,17 @@ img.comment-author-profile-image {
 </script>
 
 <!-- Scroll the sidebar into view (if necessary) -->
+
+<script src="/lib/jquery.scrollTo.min.js"></script>
+<script type="text/javascript">
+    (function ($) {
+        $(function () {
+            var container = $('.affix').filter(function() { return $(this).css('position') == 'fixed'; });
+            var target = container.find('.active');
+            container.scrollTo(target, { offset: - (container.height() / 2 - target.height() / 2) });
+        });
+    })(window.jQuery);
+</script>
 
 
 <!-- Moment -->

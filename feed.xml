@@ -8,6 +8,77 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>BackgroundService Gotcha: Application Lifetime</title>
+        <description>&lt;h2 id=&quot;backgroundservice-gotcha-service-lifetime-is-independent-from-application-lifetime&quot;&gt;BackgroundService Gotcha: Service Lifetime is Independent from Application Lifetime&lt;/h2&gt;
+
+&lt;p&gt;OK, I guess I &lt;em&gt;do&lt;/em&gt; have a series on my hands.&lt;/p&gt;
+
+&lt;p&gt;This one isn’t so much a “gotcha” as it is a common mistake. Hosted services (including &lt;code&gt;BackgroundService&lt;/code&gt;s) have a lifetime that is &lt;em&gt;independent&lt;/em&gt; from their host. This means that if a &lt;code&gt;BackgroundService&lt;/code&gt; exits, its host will not exit. And a host will happily continue running even if &lt;em&gt;all&lt;/em&gt; its services have exited.&lt;/p&gt;
+
+&lt;p&gt;This mistake is most common when writing a kind of “subscriber” or “backend processor” application - something that listens to a queue and processes messages on that queue. For these kinds of applications, it’s common to have a .NET Core host with only a single hosted service, and the service has a loop which processes messages from the queue. This is essentially the “ASP.NET Core Worker Process” template project in Visual Studio. When writing this kind of application, it’s easy to forget about the host, and treat the hosted service &lt;em&gt;as&lt;/em&gt; the application. But when there are no more messages (or some other shutdown signal is delivered to the hosted service) and the service exits, then the host application stays around.&lt;/p&gt;
+
+&lt;h2 id=&quot;solution&quot;&gt;Solution&lt;/h2&gt;
+
+&lt;p&gt;This behavior is by design. If a &lt;code&gt;BackgroundService&lt;/code&gt; implementation wants the application to exit when it stops (or &lt;a href=&quot;/2020/05/backgroundservice-gotcha-silent-failure.html&quot;&gt;has a fatal error&lt;/a&gt;), it needs to do that itself by injecting an &lt;code&gt;IHostApplicationLifetime&lt;/code&gt; and calling &lt;code&gt;StopApplication&lt;/code&gt;:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;MyBackgroundService&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;BackgroundService&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;readonly&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IHostApplicationLifetime&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;MyBackgroundService&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IHostApplicationLifetime&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;_hostApplicationLifetime&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;protected&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ExecuteAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;stoppingToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;c1&quot;&gt;// Implementation&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;finally&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;_hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;StopApplication&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;I recommend also &lt;a href=&quot;/2020/05/backgroundservice-gotcha-startup.html&quot;&gt;using &lt;code&gt;Task.Run&lt;/code&gt; to avoid startup problems&lt;/a&gt; and &lt;a href=&quot;/2020/05/backgroundservice-gotcha-silent-failure.html&quot;&gt;logging all exceptions in this top-level loop&lt;/a&gt;:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;MyBackgroundService&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;BackgroundService&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;readonly&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IHostApplicationLifetime&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;readonly&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ILogger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;MyBackgroundService&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_logger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;MyBackgroundService&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IHostApplicationLifetime&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ILogger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;MyBackgroundService&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;logger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;_hostApplicationLifetime&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;_logger&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;logger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;protected&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ExecuteAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;stoppingToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Run&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;c1&quot;&gt;// Implementation&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Exception&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;when&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;False&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_logger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;LogCritical&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;Fatal error&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;throw&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;finally&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;_hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;StopApplication&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;});&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;False&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Action&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;At this point, this is a fair amount of boilerplate code to go into each background service. Production code bases should probably define a “critical background service” base type that handles all the wrapper code so background services only need to define the &lt;code&gt;// Implementation&lt;/code&gt; part.&lt;/p&gt;
+</description>
+        <pubDate>Thu, 04 Jun 2020 00:00:00 +0000</pubDate>
+        <link>https://blog.stephencleary.com/2020/06/backgroundservice-gotcha-application-lifetime.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2020/06/backgroundservice-gotcha-application-lifetime.html</guid>
+      </item>
+    
+      <item>
         <title>BackgroundService Gotcha: Silent Failures</title>
         <description>&lt;h2 id=&quot;backgroundservice-gotcha-silent-failures&quot;&gt;BackgroundService Gotcha: Silent Failures&lt;/h2&gt;
 
@@ -736,123 +807,6 @@ jobs:
         <pubDate>Thu, 31 May 2018 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2018/05/microsoft-extensions-logging-part-1-introduction.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2018/05/microsoft-extensions-logging-part-1-introduction.html</guid>
-      </item>
-    
-      <item>
-        <title>Docker as a Tool Provider</title>
-        <description>&lt;p&gt;Docker is everywhere these days! Even with serverless technology growing more mature, Docker is still a giant in the cloud world. Everyone by now should be familiar with Docker as a way of scaling out your servers using containers.&lt;/p&gt;
-
-&lt;p&gt;However, there’s another perfectly legitimate use case for Docker: building containers for tools.&lt;/p&gt;
-
-&lt;p&gt;This is particularly useful in a Windows environment. I’m an old curmudgeon who knows how to use Windows and hasn’t taken the time to learn Macs. Every time I get a new dev machine, I consider switching, but I just haven’t done it. So my dev machines - even in this modern day - are still all Windows machines.&lt;/p&gt;
-
-&lt;p&gt;This is all good, until you want to make use of some nifty Linux tools. The thing is, Windows just doesn’t work so great with Ruby. Or Python. Or Perl. Some tools have Windows builds that bundle their own dependencies, and others require certain environment variables to find just the right version of whatever runtime they need. It works &lt;em&gt;ok&lt;/em&gt;, but what usually ends up happening is that you have to tweak your dev machine until it is &lt;em&gt;just right&lt;/em&gt; for all the dependencies of all the different tools you want to use… and then you can never get another machine into that exact same state ever again.&lt;/p&gt;
-
-&lt;p&gt;I &lt;em&gt;could&lt;/em&gt; use Ubuntu on Windows, which is awesome. But I’d still have to install the tools, and manage dependency conflicts and updates and all that. And I don’t want to shell out to a separate subsystem just to be able to build; I want my overall development environment to be Windows.&lt;/p&gt;
-
-&lt;p&gt;I &lt;em&gt;could&lt;/em&gt; use a solution like &lt;a href=&quot;https://boxstarter.org/&quot;&gt;Boxstarter&lt;/a&gt;, but some of this setup is so specific I’d have to write my own Chocolatey packages for some of them and tie it all together with some very custom scripts. I don’t want another project to maintain (the “Steve Cleary dev box setup script and Chocolately package collection”), especially because newer versions of the tools would require changes to those scripts, so I’d end up changing them every time I need to run them anyway! At the end of the day, it would just be way too complex and brittle.&lt;/p&gt;
-
-&lt;p&gt;What I want is to use Boxstarter for my common tools that I use &lt;em&gt;regularly&lt;/em&gt; (Visual Studio, VSCode, Docker, Node, Git, etc); but for my more esoteric tools, I want to be able to encapsulate them and pull them in as a complete unit when I want to use them. And I don’t want to deal with conflicting dependencies for my different tools; I want them more… &lt;em&gt;contained&lt;/em&gt;. (Heh, see what I did there?)&lt;/p&gt;
-
-&lt;p&gt;The answer? Docker, of course.&lt;/p&gt;
-
-&lt;h2 id=&quot;docker-for-tools&quot;&gt;Docker for Tools&lt;/h2&gt;
-
-&lt;p&gt;For this example, I’m going to run &lt;a href=&quot;http://lilypond.org/&quot;&gt;Lilypond&lt;/a&gt; as a Dockerized tool. If you’re not familiar with it, Lilypond is pretty much &lt;em&gt;the&lt;/em&gt; standard for free musical notation software.&lt;/p&gt;
-
-&lt;p&gt;I have &lt;a href=&quot;https://github.com/StephenCleary/Hymnals&quot;&gt;an old project&lt;/a&gt; of Lilypond files that I wanted to hack on recently, but my current dev laptop doesn’t have Lilypond installed. At this point, it has been literally &lt;em&gt;years&lt;/em&gt; since I’ve installed Lilypond, and I don’t remember the details. I do remember that I was using some kind of GUI frontend Lilypond runner (not part of the actual Lilypond project), and I &lt;em&gt;think&lt;/em&gt; the frontend bundled Lilypond along with its dependencies. Maybe. And that GUI frontend project may not be maintained anymore, assuming I can even remember its name (GUI frontends are abandoned much more often than the “real” console applications they build on). I think there was also some weird stuff with PostScript printer drivers or something that may or may not have required tweaking since PostScript isn’t standard on Windows. And of course I didn’t write any of this down.&lt;/p&gt;
-
-&lt;p&gt;Am I going to install Lilypond on my modern dev laptop? Um, no.&lt;/p&gt;
-
-&lt;p&gt;I’m going to Dockerize this tool. I’m going to run Lilypond on the platform it was designed for (Linux), and I’m going to run it on my Windows machine inside a Docker container. I’m going to get this set up &lt;em&gt;once&lt;/em&gt; and then never, ever have to install this on any machine for the rest of my life.&lt;/p&gt;
-
-&lt;h2 id=&quot;lilypond-on-docker&quot;&gt;Lilypond on Docker&lt;/h2&gt;
-
-&lt;p&gt;I started out thinking that I’d have to write a &lt;code&gt;Dockerfile&lt;/code&gt; and install Lilypond on it and everything. I went down that path a little ways before I remembered that &lt;strong&gt;duh&lt;/strong&gt;, Docker has &lt;a href=&quot;https://hub.docker.com/&quot;&gt;a public repository of images&lt;/a&gt;! And it turns out that I &lt;a href=&quot;https://hub.docker.com/search/?isAutomated=0&amp;amp;isOfficial=0&amp;amp;page=1&amp;amp;pullCount=0&amp;amp;q=lilypond&amp;amp;starCount=0&quot;&gt;wasn’t the first one&lt;/a&gt; to want Lilypad Dockerized.&lt;/p&gt;
-
-&lt;p&gt;Well, &lt;a href=&quot;https://hub.docker.com/r/iskaron/lilypond/&quot;&gt;look at that&lt;/a&gt; - here’s a nice little Docker image that has Lilypond installed. It’s kept up-to-date (automated build), and seems to have everything I want! Docker Hub FTW!&lt;/p&gt;
-
-&lt;p&gt;With a little tinkering, I found that I could run this straight from the command line:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;docker run --rm --volume=C:\Work\Hymnals:/app -w /app iskaron/lilypond lilypond SeniorHymnal/Hymnal.ly&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;This command will download the Lilypond Docker image automatically (if it’s not already downloaded on the local machine), create a new container, run Lilypond within that container on my local files, and clean up the container when Lilypond exits. Let’s tear apart this command, piece by piece.&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;docker run&lt;/code&gt; - This command is used to create a new Docker container from a template image, and run it. It also implicitly downloads the Docker image from Docker Hub if necessary.&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;iskaron/lilypond&lt;/code&gt; - The name of the template image that Docker uses to create the container.&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;--volume=C:\Work\Hymnals:/app&lt;/code&gt; - Create a volume that links to &lt;code&gt;C:\Work\Hymnals&lt;/code&gt; and mount it as &lt;code&gt;/app&lt;/code&gt; within the container.&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;-w /app&lt;/code&gt; - Set the working directory within the container to &lt;code&gt;/app&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;lilypond SeniorHymnal/Hymnal.ly&lt;/code&gt; - The actual command to run inside the container. On my local disk I have &lt;code&gt;C:\Work\Hymnals\SeniorHymnal\Hymnal.ly&lt;/code&gt;, which is accessible inside the container as &lt;code&gt;/app/SeniorHymnal/Hymnal.ly&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;--rm&lt;/code&gt; - When our tool is done executing, clean up the Docker image and its resources.&lt;/p&gt;
-
-&lt;p&gt;So now I have a single command that I can run, and it will automatically pull down a Dockerized tool and run it in a clean environment! There’s no interference with my local dev box at all; the Dockerized tool is &lt;em&gt;completely&lt;/em&gt; independent. What’s more, it runs in a new “clean room” environment every time it’s executed; even if the tool messes up the container, the next time it’s run, it’ll have a brand new, clean container to run in.&lt;/p&gt;
-
-&lt;h2 id=&quot;npm-scripts&quot;&gt;NPM Scripts&lt;/h2&gt;
-
-&lt;p&gt;Since I apparently only hack on my Lilypond files every few years, I’m not expecting myself to remember this command. Also, there’s this annoying hardcoded &lt;code&gt;C:\Work\Hymnals&lt;/code&gt; path that I want to get rid of. Time for &lt;code&gt;package.json&lt;/code&gt;!&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;scripts&amp;quot;&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;nt&quot;&gt;&amp;quot;build&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;docker run --rm --volume=%INIT_CWD%:/app -w /app/SeniorHymnal iskaron/lilypond lilypond Hymnal.ly&amp;quot;&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;,&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;Inside the npm script, I have access to &lt;code&gt;%INIT_CWD%&lt;/code&gt;, which is a Windows-specific way of getting the current working directory. To be honest, getting the current working directory was the hardest part of this whole setup!&lt;/p&gt;
-
-&lt;p&gt;Now I can just do an &lt;code&gt;npm run build&lt;/code&gt; to process my Lilypond files. What’s more, I can &lt;a href=&quot;https://marketplace.visualstudio.com/items?itemName=truefire.lilypond&quot;&gt;edit them in VSCode&lt;/a&gt; and bind &lt;code&gt;npm run build&lt;/code&gt; as the default build command. Now I have an actual development environment for Lilypond - no separate GUI frontend necessary!&lt;/p&gt;
-
-&lt;h2 id=&quot;updating-images&quot;&gt;Updating Images&lt;/h2&gt;
-
-&lt;p&gt;There’s something else I’d like to do: currently, &lt;code&gt;docker run&lt;/code&gt; will pull down the latest &lt;code&gt;iskaron/lilypond&lt;/code&gt; image &lt;em&gt;the first time it is run&lt;/em&gt;. After that, &lt;a href=&quot;https://github.com/moby/moby/issues/34394&quot;&gt;it never checks for updates&lt;/a&gt;. So I’d like to easily do a &lt;code&gt;docker pull&lt;/code&gt; as well.&lt;/p&gt;
-
-&lt;p&gt;Here’s a setup that checks for a new version each time it’s run:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;scripts&amp;quot;&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;nt&quot;&gt;&amp;quot;prebuild&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;docker pull iskaron/lilypond&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;nt&quot;&gt;&amp;quot;build&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;docker run --rm --volume=%INIT_CWD%:/app -w /app/SeniorHymnal iskaron/lilypond lilypond Hymnal.ly&amp;quot;&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;,&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;Perhaps this is a little too much, though. I rarely run Lilypond, but when I do, I’ll run it a lot within a few days. So I think it makes more sense to have an explicit &lt;code&gt;npm run pull&lt;/code&gt; command:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;scripts&amp;quot;&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;nt&quot;&gt;&amp;quot;pull&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;docker pull iskaron/lilypond&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;nt&quot;&gt;&amp;quot;build&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;docker run --rm --volume=%INIT_CWD%:/app -w /app/SeniorHymnal iskaron/lilypond lilypond Hymnal.ly&amp;quot;&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;,&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;The disadvantage to this approach is that I can easily forget to run &lt;code&gt;npm run pull&lt;/code&gt; when I’ve been away from the project a long time.&lt;/p&gt;
-
-&lt;h2 id=&quot;npm-scripts-for-dockerized-tools&quot;&gt;NPM Scripts for Dockerized Tools&lt;/h2&gt;
-
-&lt;p&gt;What I have so far is good, but it’s pretty tied to Lilypond specifically. I want to make my NPM scripts a bit more copy-pastable by making the Docker commands more generic. After hacking around a bit, I ended up with this:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;config&amp;quot;&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;&amp;quot;image&amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;iskaron/lilypond&amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;,&lt;/span&gt;
-&lt;span class=&quot;s2&quot;&gt;&amp;quot;scripts&amp;quot;&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;nt&quot;&gt;&amp;quot;pull&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;docker pull %npm_package_config_image%&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;nt&quot;&gt;&amp;quot;docker-run&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;docker run --rm -v %INIT_CWD%:/app -w /app %npm_package_config_image%&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;nt&quot;&gt;&amp;quot;lilypond&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;npm run docker-run -- lilypond&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;nt&quot;&gt;&amp;quot;build&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;npm run lilypond -- SeniorHymnal/Hymnal.ly&amp;quot;&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;,&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;Now I have a single &lt;code&gt;config&lt;/code&gt; value that will be different for different &lt;code&gt;project.json&lt;/code&gt; files. I can run &lt;code&gt;npm run pull&lt;/code&gt; to update the latest Dockerized tool for this project, and I can run &lt;code&gt;npm run build&lt;/code&gt; to execute that Dockerized tool. The &lt;code&gt;pull&lt;/code&gt; and &lt;code&gt;docker-run&lt;/code&gt; scripts can work with any Dockerized tool and can be copy-pased long with &lt;code&gt;config&lt;/code&gt; from one project to the next. &lt;code&gt;docker-run&lt;/code&gt; in particular has all the “magic” that Docker needs to run a tool in a throwaway container.&lt;/p&gt;
-
-&lt;p&gt;If anyone has any recommendations to make this even better, I’m all ears!&lt;/p&gt;
-
-&lt;!--However, this approach does assume only one Dockerized tool per `project.json`. It's possible to override the `config` when calling one script from another, but that gets verbose pretty quickly. Well, none of my current projects need more than a single Dockerized tool, so I'll cross that bridge when I come to it.--&gt;
-
-&lt;p&gt;The nice thing about using Docker from &lt;code&gt;project.json&lt;/code&gt; is that my dev machine now only has a couple of common requirements (Docker and Node), which it should get from Boxstarter. That’s all it needs to be capable of building any Lilypond script project. No more tool installs!&lt;/p&gt;
-
-&lt;h2 id=&quot;next-target&quot;&gt;Next Target&lt;/h2&gt;
-
-&lt;p&gt;So, I never actually hacked on any of my Lilypond files; I just spent a bunch of time doing this instead. But now it’s done and I’ll never have to set up another machine with Lilypond (or its GUI wrapper) ever again.&lt;/p&gt;
-
-&lt;p&gt;The next logical target for Dockerized tooling is this blog. It currently uses Jekyll with Pygments. That means Ruby &lt;em&gt;and&lt;/em&gt; Python. Currently, to build this blog you have to &lt;a href=&quot;https://github.com/StephenCleary/blog-stephencleary-dotcom/tree/3419602d09b161910bb31a2349dc80bc794bacd1#to-build&quot;&gt;first build a Rube Goldberg machine&lt;/a&gt; with a portable (self-contained) Ruby + Jekyll and a local (impacting your dev environment) Python + setuptools + pygments. It’s a mess of tooling, and it’s the next thing on my list to Dockerize!&lt;/p&gt;
-</description>
-        <pubDate>Thu, 24 May 2018 00:00:00 +0000</pubDate>
-        <link>https://blog.stephencleary.com/2018/05/docker-as-a-tool-provider.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2018/05/docker-as-a-tool-provider.html</guid>
       </item>
     
   </channel>

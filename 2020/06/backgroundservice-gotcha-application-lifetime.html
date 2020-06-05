@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>BackgroundService Gotcha: Silent Failures</title>
+    <title>BackgroundService Gotcha: Application Lifetime</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="BackgroundService will ignore exceptions thrown from ExecuteAsync." />
-    <link rel="canonical" href="https://blog.stephencleary.com/2020/05/backgroundservice-gotcha-silent-failure.html" />
+    <meta name="description" content="BackgroundService (and IHostedService) do not shut down the application when they complete." />
+    <link rel="canonical" href="https://blog.stephencleary.com/2020/06/backgroundservice-gotcha-application-lifetime.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -276,8 +276,8 @@ img.comment-author-profile-image {
 
   <header>
       <div class="page-header">
-          <h1>BackgroundService Gotcha: Silent Failures</h1>
-          <small><time datetime="2020-05-28">May 28, 2020</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
+          <h1>BackgroundService Gotcha: Application Lifetime</h1>
+          <small><time datetime="2020-06-04">Jun 4, 2020</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
       </div>
   </header>
 
@@ -291,26 +291,23 @@ img.comment-author-profile-image {
   </header>
 
   <article>
-  <h2 id="backgroundservice-gotcha-silent-failures">BackgroundService Gotcha: Silent Failures</h2>
+  <h2 id="backgroundservice-gotcha-service-lifetime-is-independent-from-application-lifetime">BackgroundService Gotcha: Service Lifetime is Independent from Application Lifetime</h2>
 
-<p>I know <a href="/2020/05/backgroundservice-gotcha-startup.html">last time</a> I talked about <code>BackgroundService</code>… I don’t want to make this a series or anything, but there is another common “gotcha” when it comes to <code>BackgroundService</code>: exceptions are silently ignored.</p>
+<p>OK, I guess I <em>do</em> have a series on my hands.</p>
 
-<p>If the <code>ExecuteAsync</code> implementation throws an exception, that exception is silently swallowed and ignored. This is because <code>BackgroundService</code> captures the task from <code>ExecuteAsync</code> but never <code>await</code>s it - i.e., <a href="https://github.com/dotnet/runtime/blob/e3ffd343ad5bd3a999cb9515f59e6e7a777b2c34/src/libraries/Microsoft.Extensions.Hosting.Abstractions/src/BackgroundService.cs"><code>BackgroundService</code> uses fire-and-forget</a>.</p>
+<p>This one isn’t so much a “gotcha” as it is a common mistake. Hosted services (including <code>BackgroundService</code>s) have a lifetime that is <em>independent</em> from their host. This means that if a <code>BackgroundService</code> exits, its host will not exit. And a host will happily continue running even if <em>all</em> its services have exited.</p>
 
-<h2 id="problem-description">Problem Description</h2>
-
-<p>This problem will surface as <code>BackgroundService</code> instances just stopping, without any indication of a problem. What actually happens if <code>ExecuteAsync</code> throws an exception is that the exception is captured and placed on the <code>Task</code> that was returned from <code>ExecuteAsync</code>. The problem is that <code>BackgroundService</code> doesn’t observe that task, so there’s no logging and no process crash - the <code>BackgroundService</code> has completed executing but it just sits there doing nothing.</p>
-
-<p>This is not <em>necessarily</em> a problem with <code>BackgroundService</code>; fire-and-forget can be appropriate for “top-level” loops such as a background worker task. However, it would be nice to have logging at least, so this “gotcha” is detectable.</p>
+<p>This mistake is most common when writing a kind of “subscriber” or “backend processor” application - something that listens to a queue and processes messages on that queue. For these kinds of applications, it’s common to have a .NET Core host with only a single hosted service, and the service has a loop which processes messages from the queue. This is essentially the “ASP.NET Core Worker Process” template project in Visual Studio. When writing this kind of application, it’s easy to forget about the host, and treat the hosted service <em>as</em> the application. But when there are no more messages (or some other shutdown signal is delivered to the hosted service) and the service exits, then the host application stays around.</p>
 
 <h2 id="solution">Solution</h2>
 
-<p>All top-level loops should have a <code>try</code>/<code>catch</code> with some kind of reporting if something goes wrong. <code>ExecuteAsync</code> implementations are top-level loops, so they should have a top-level <code>try</code> that catches all exceptions:</p>
+<p>This behavior is by design. If a <code>BackgroundService</code> implementation wants the application to exit when it stops (or <a href="/2020/05/backgroundservice-gotcha-silent-failure.html">has a fatal error</a>), it needs to do that itself by injecting an <code>IHostApplicationLifetime</code> and calling <code>StopApplication</code>:</p>
 
 <figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">MyBackgroundService</span> <span class="p">:</span> <span class="n">BackgroundService</span>
 <span class="p">{</span>
-    <span class="k">private</span> <span class="k">readonly</span> <span class="n">ILogger</span><span class="p">&lt;</span><span class="n">MyBackgroundService</span><span class="p">&gt;</span> <span class="n">_logger</span><span class="p">;</span>
-    <span class="k">public</span> <span class="nf">MyBackgroundService</span><span class="p">(</span><span class="n">ILogger</span><span class="p">&lt;</span><span class="n">MyBackgroundService</span><span class="p">&gt;</span> <span class="n">logger</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="n">_logger</span> <span class="p">=</span> <span class="n">logger</span><span class="p">;</span>
+    <span class="k">private</span> <span class="k">readonly</span> <span class="n">IHostApplicationLifetime</span> <span class="n">_hostApplicationLifetime</span><span class="p">;</span>
+    <span class="k">public</span> <span class="nf">MyBackgroundService</span><span class="p">(</span><span class="n">IHostApplicationLifetime</span> <span class="n">hostApplicationLifetime</span><span class="p">)</span> <span class="p">=&gt;</span>
+        <span class="n">_hostApplicationLifetime</span> <span class="p">=</span> <span class="n">hostApplicationLifetime</span><span class="p">;</span>
 
     <span class="k">protected</span> <span class="k">override</span> <span class="n">Task</span> <span class="nf">ExecuteAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">stoppingToken</span><span class="p">)</span>
     <span class="p">{</span>
@@ -318,21 +315,24 @@ img.comment-author-profile-image {
         <span class="p">{</span>
             <span class="c1">// Implementation</span>
         <span class="p">}</span>
-        <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span> <span class="n">when</span> <span class="n">False</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">_logger</span><span class="p">.</span><span class="n">LogCritical</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="s">&quot;Fatal error&quot;</span><span class="p">))</span>
+        <span class="k">finally</span>
         <span class="p">{</span>
-            <span class="k">throw</span><span class="p">;</span>
+            <span class="n">_hostApplicationLifetime</span><span class="p">.</span><span class="n">StopApplication</span><span class="p">();</span>
         <span class="p">}</span>
     <span class="p">}</span>
-
-    <span class="k">private</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">False</span><span class="p">(</span><span class="n">Action</span> <span class="n">action</span><span class="p">)</span> <span class="p">{</span> <span class="n">action</span><span class="p">();</span> <span class="k">return</span> <span class="k">false</span><span class="p">;</span> <span class="p">}</span>
 <span class="p">}</span></code></pre></figure>
 
-<p>I recommend you combine this solution with the solution from last time that <a href="/2020/05/backgroundservice-gotcha-startup.html">uses <code>Task.Run</code> to avoid startup problems</a>:</p>
+<p>I recommend also <a href="/2020/05/backgroundservice-gotcha-startup.html">using <code>Task.Run</code> to avoid startup problems</a> and <a href="/2020/05/backgroundservice-gotcha-silent-failure.html">logging all exceptions in this top-level loop</a>:</p>
 
 <figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">MyBackgroundService</span> <span class="p">:</span> <span class="n">BackgroundService</span>
 <span class="p">{</span>
+    <span class="k">private</span> <span class="k">readonly</span> <span class="n">IHostApplicationLifetime</span> <span class="n">_hostApplicationLifetime</span><span class="p">;</span>
     <span class="k">private</span> <span class="k">readonly</span> <span class="n">ILogger</span><span class="p">&lt;</span><span class="n">MyBackgroundService</span><span class="p">&gt;</span> <span class="n">_logger</span><span class="p">;</span>
-    <span class="k">public</span> <span class="nf">MyBackgroundService</span><span class="p">(</span><span class="n">ILogger</span><span class="p">&lt;</span><span class="n">MyBackgroundService</span><span class="p">&gt;</span> <span class="n">logger</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="n">_logger</span> <span class="p">=</span> <span class="n">logger</span><span class="p">;</span>
+    <span class="k">public</span> <span class="nf">MyBackgroundService</span><span class="p">(</span><span class="n">IHostApplicationLifetime</span> <span class="n">hostApplicationLifetime</span><span class="p">,</span> <span class="n">ILogger</span><span class="p">&lt;</span><span class="n">MyBackgroundService</span><span class="p">&gt;</span> <span class="n">logger</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">_hostApplicationLifetime</span> <span class="p">=</span> <span class="n">hostApplicationLifetime</span><span class="p">;</span>
+        <span class="n">_logger</span> <span class="p">=</span> <span class="n">logger</span><span class="p">;</span>
+    <span class="p">}</span>
 
     <span class="k">protected</span> <span class="k">override</span> <span class="n">Task</span> <span class="nf">ExecuteAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">stoppingToken</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(</span><span class="k">async</span> <span class="p">()</span> <span class="p">=&gt;</span>
     <span class="p">{</span>
@@ -344,25 +344,30 @@ img.comment-author-profile-image {
         <span class="p">{</span>
             <span class="k">throw</span><span class="p">;</span>
         <span class="p">}</span>
+        <span class="k">finally</span>
+        <span class="p">{</span>
+            <span class="n">_hostApplicationLifetime</span><span class="p">.</span><span class="n">StopApplication</span><span class="p">();</span>
+        <span class="p">}</span>
     <span class="p">});</span>
 
     <span class="k">private</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">False</span><span class="p">(</span><span class="n">Action</span> <span class="n">action</span><span class="p">)</span> <span class="p">{</span> <span class="n">action</span><span class="p">();</span> <span class="k">return</span> <span class="k">false</span><span class="p">;</span> <span class="p">}</span>
 <span class="p">}</span></code></pre></figure>
 
+<p>At this point, this is a fair amount of boilerplate code to go into each background service. Production code bases should probably define a “critical background service” base type that handles all the wrapper code so background services only need to define the <code>// Implementation</code> part.</p>
 
   </article>
     
     <footer class="hidden-print">
         
             <ul class="pager">
-                <li class="previous"><a href="/2020/05/backgroundservice-gotcha-startup.html" title="BackgroundService Gotcha: Startup">&larr; Previous in BackgroundService Gotchas</a></li>
-                <li class="next"><a href="/2020/06/backgroundservice-gotcha-application-lifetime.html" title="BackgroundService Gotcha: Application Lifetime">Next in BackgroundService Gotchas &rarr;</a></li>
+                <li class="previous"><a href="/2020/05/backgroundservice-gotcha-silent-failure.html" title="BackgroundService Gotcha: Silent Failures">&larr; Previous in BackgroundService Gotchas</a></li>
+                
             </ul>
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2020/05/backgroundservice-gotcha-startup.html" title="BackgroundService Gotcha: Startup">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2020/06/backgroundservice-gotcha-application-lifetime.html" title="BackgroundService Gotcha: Application Lifetime">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2020/05/backgroundservice-gotcha-silent-failure.html" title="BackgroundService Gotcha: Silent Failures">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="comments"></div>
@@ -376,8 +381,8 @@ img.comment-author-profile-image {
                     <div class="panel-body sidenav">
                         <ul class="nav nav-pills nav-stacked">
                                     <li class="sidenavitem"><a href="/2020/05/backgroundservice-gotcha-startup.html">Synchronous Starts</a></li>
-                                    <li class="active sidenavitem"><a href="/2020/05/backgroundservice-gotcha-silent-failure.html">Silent Failures</a></li>
-                                    <li class="sidenavitem"><a href="/2020/06/backgroundservice-gotcha-application-lifetime.html">Application Lifetime</a></li>
+                                    <li class="sidenavitem"><a href="/2020/05/backgroundservice-gotcha-silent-failure.html">Silent Failures</a></li>
+                                    <li class="active sidenavitem"><a href="/2020/06/backgroundservice-gotcha-application-lifetime.html">Application Lifetime</a></li>
                         </ul>
                     </div>
                 </div>
@@ -530,7 +535,7 @@ img.comment-author-profile-image {
 
 <script type="text/javascript">
 
-var pageUrl = "https://blog.stephencleary.com" + "/2020/05/backgroundservice-gotcha-silent-failure.html";
+var pageUrl = "https://blog.stephencleary.com" + "/2020/06/backgroundservice-gotcha-application-lifetime.html";
 
 // (unnecessary) 1) If the URL starts with http://, replace with https://
 
