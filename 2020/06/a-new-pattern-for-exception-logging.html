@@ -535,6 +535,10 @@ System.DivideByZeroException: Attempted to divide by zero.
 
 <p>Both helpers are useful in different scenarios.</p>
 
+<h2 id="caveat">Caveat</h2>
+
+<p>The solution here unfortunately does not work well with <code>async</code> code. This is because <code>async</code> will cause exceptions to be caught and then re-thrown at the point of the <code>await</code>. So, the exception filter runs at the point of the <code>await</code> instead of where the exception was <em>originally</em> thrown.</p>
+
 <h2 id="conclusion">Conclusion</h2>
 
 <p>Modern exception-logging code should do its logging from within an exception filter. As logging data scopes become more and more common, this pattern will enable much more helpful logs for your system.</p>
