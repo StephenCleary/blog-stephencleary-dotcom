@@ -280,6 +280,10 @@ Another scenario is if the `catch` block actually handles the exception. Say, if
 
 Both helpers are useful in different scenarios.
 
+## Caveat
+
+The solution here unfortunately does not work well with `async` code. This is because `async` will cause exceptions to be caught and then re-thrown at the point of the `await`. So, the exception filter runs at the point of the `await` instead of where the exception was *originally* thrown.
+
 ## Conclusion
 
 Modern exception-logging code should do its logging from within an exception filter. As logging data scopes become more and more common, this pattern will enable much more helpful logs for your system.
