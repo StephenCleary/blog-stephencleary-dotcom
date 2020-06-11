@@ -8,6 +8,261 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>A New Pattern for Exception Logging</title>
+        <description>&lt;h2 id=&quot;tldr&quot;&gt;TL;DR&lt;/h2&gt;
+
+&lt;p&gt;Your code should log exceptions from within an exception filter, not a &lt;code&gt;catch&lt;/code&gt; block.&lt;/p&gt;
+
+&lt;h3 id=&quot;quick-examples&quot;&gt;Quick Examples&lt;/h3&gt;
+
+&lt;p&gt;The old pattern of “log-and-propagate” looks like this:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;c1&quot;&gt;// Log-and-propagate, old pattern:&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Exception&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;e&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;_logger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;LogError&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;e&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;Unexpected error.&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;throw&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;The logging should be moved into an exception filter like this:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;c1&quot;&gt;// Log-and-propagate, new pattern:&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Exception&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;e&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;when&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;False&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_logger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;LogError&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;e&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;Unexpected error.&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)))&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;throw&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Similarly, the old pattern of “log-and-handle” looks something like this:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;c1&quot;&gt;// Log-and-handle, old pattern:&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Exception&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;e&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;_logger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;LogError&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;e&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;Unexpected error.&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// or some other handling code&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;The logging should be moved into an exception filter like this:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;c1&quot;&gt;// Log-and-handle, old pattern:&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Exception&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;e&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;when&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;True&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_logger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;LogError&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;e&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;Unexpected error.&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)))&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// or some other handling code&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Both of these examples assume the presence of a couple simple utility methods:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;c1&quot;&gt;// Use when you want to handle the exception&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;True&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Action&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;// Use when you want to propagate the exception&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;False&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Action&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h3 id=&quot;why&quot;&gt;Why?&lt;/h3&gt;
+
+&lt;p&gt;The remainder of this blog post goes into the “why” behind the new pattern.&lt;/p&gt;
+
+&lt;h2 id=&quot;semantic-logging--structured-logging&quot;&gt;Semantic Logging / Structured Logging&lt;/h2&gt;
+
+&lt;p&gt;Long gone are the days of text file logging; modern logging systems support rich, contextual logs. This means you can add data fields to your log messages, and then use those additional pieces of data when debugging an issue. It’s very satisfying to be able to filter by an HTTP status code range, or take the top three servers where user &lt;code&gt;Steve&lt;/code&gt; had a &lt;code&gt;FileNotFound&lt;/code&gt; exception.&lt;/p&gt;
+
+&lt;p&gt;Structured logging is so important that every modern logging system supports it. For example, .NET Core style logging uses &lt;a href=&quot;https://messagetemplates.org/&quot;&gt;message templates&lt;/a&gt;, which looks something like this:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Divide&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;numerator&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;denominator&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;numerator&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;/&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;denominator&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;_logger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;LogInformation&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;Result: {result}&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;The code above will create a log message like &lt;code&gt;&quot;Result: 4&quot;&lt;/code&gt;. What’s not immediately obvious is that the log message &lt;em&gt;also&lt;/em&gt; has structured data attached to it: a data field called &lt;code&gt;result&lt;/code&gt; has the (integer) value &lt;code&gt;4&lt;/code&gt;. When this is consumed by a logging provider that understands structured data, the &lt;code&gt;result&lt;/code&gt; field is stored &lt;em&gt;along with&lt;/em&gt; the log message, and can be used for searching or filtering.&lt;/p&gt;
+
+&lt;p&gt;If you would like to follow along at home, create an ASP.NET Worker Service (which is really just a Console app with ASP.NET-style logging and dependency injection all set up for you). Then replace &lt;code&gt;Worker.ExecuteAsync&lt;/code&gt; with this:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;Divide&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;13&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;When you run it, you should see this in the output:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;info: MyApp.Worker[0]
+      Result: 4&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h3 id=&quot;logging-scopes&quot;&gt;Logging Scopes&lt;/h3&gt;
+
+&lt;p&gt;So far, so good, and hopefully that’s nothing new.&lt;/p&gt;
+
+&lt;p&gt;In addition to adding structured data to a single log message, most modern logging frameworks also support logging &lt;em&gt;scopes&lt;/em&gt; of structured data. So you can create a logging scope that attaches structured data to &lt;em&gt;every&lt;/em&gt; log message within that scope:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Divide&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;numerator&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;denominator&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_logger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;BeginScope&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;Dividing {numerator} by {denominator}&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;numerator&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;denominator&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;numerator&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;/&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;denominator&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;_logger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;LogInformation&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;Result: {result}&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Now, when the &lt;code&gt;Result: 4&lt;/code&gt; message is logged, it will capture additional structured data items: &lt;code&gt;result&lt;/code&gt; is &lt;code&gt;4&lt;/code&gt;, &lt;code&gt;numerator&lt;/code&gt; is &lt;code&gt;13&lt;/code&gt;, and &lt;code&gt;denominator&lt;/code&gt; is &lt;code&gt;3&lt;/code&gt;. It should be clear that strategically placing data items in logging scopes can greatly assist debugging. Any time you’ve stared at an error message or unexpected result and wondered “what was the input that caused this?”, that’s the perfect place to add a logging scope.&lt;/p&gt;
+
+&lt;div class=&quot;alert alert-info&quot;&gt;
+  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
+
+  &lt;p&gt;Tip: The Console logger ignores logging scopes by default; they have to be manually enabled.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;p&gt;If you’re following along at home, enable logging scopes for the Console logger by updating &lt;code&gt;CreateHostBuilder&lt;/code&gt; in your &lt;code&gt;Program.cs&lt;/code&gt;, adding a call to &lt;code&gt;ConfigureLogging&lt;/code&gt; that removes the existing Console logger and adds a new one that sets &lt;code&gt;IncludeScopes&lt;/code&gt; to &lt;code&gt;true&lt;/code&gt;:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IHostBuilder&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;CreateHostBuilder&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;args&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;Host&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CreateDefaultBuilder&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;args&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// (begin code changes)&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ConfigureLogging&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;logging&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;logging&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ClearProviders&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;logging&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AddConsole&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;console&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;n&quot;&gt;console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IncludeScopes&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;});&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;})&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// (end code changes)&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ConfigureServices&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;hostContext&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;services&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;services&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AddHostedService&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Worker&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;();&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;});&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Now, when you run the code, you’ll see the logging scope written to the Console as a part of the information message:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;info: MyApp.Worker[0]
+      =&amp;gt; Dividing 13 by 3
+      Result: 4&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Now the logs have a clear context.&lt;/p&gt;
+
+&lt;h2 id=&quot;exception-logging&quot;&gt;Exception Logging&lt;/h2&gt;
+
+&lt;p&gt;So, let’s talk about logging exceptions. Most methods do not log their own exceptions; any exceptions are propagated out of the method, possibly through many other methods, and eventually logged at a much higher level in the code.&lt;/p&gt;
+
+&lt;p&gt;The problem with this approach is that the logging scope is lost once the stack is unwound.&lt;/p&gt;
+
+&lt;p&gt;Here’s the kind of situation that causes this problem. &lt;code&gt;Worker.ExecuteAsync&lt;/code&gt; is going to wrap its call in a &lt;code&gt;try&lt;/code&gt;/&lt;code&gt;catch&lt;/code&gt; and log the exception. This is a very common pattern in most code bases today:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;Divide&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;13&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Exception&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;e&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;_logger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;LogError&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;e&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;Unexpected error.&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;throw&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;The problem, as stated above, is that the logging scope is already gone by the time &lt;code&gt;LogError&lt;/code&gt; is called. So our logging output looks like this:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;fail: MyApp.Worker[0]
+      Unexpected error.
+System.DivideByZeroException: Attempted to divide by zero.
+   at MyApp.Worker.Divide(Int32 numerator, Int32 denominator) in ...
+   at MyApp.Worker.&amp;lt;ExecuteAsync&amp;gt;b__2_0() in ...&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;The logs have the exception details, including the stack trace, but they do not have the structured data from the logging scope. When sent to a logging backend, there is no &lt;code&gt;numerator&lt;/code&gt; or &lt;code&gt;denominator&lt;/code&gt; data that is attached to this log message. Losing that logging scope data is a problem.&lt;/p&gt;
+
+&lt;p&gt;To fix this, we first need a minor segway into how exceptions work.&lt;/p&gt;
+
+&lt;h2 id=&quot;how-exceptions-work&quot;&gt;How Exceptions Work&lt;/h2&gt;
+
+&lt;p&gt;When an exception is thrown, the runtime will search the stack for a matching handler. So the runtime walks up the stack looking at each &lt;code&gt;catch&lt;/code&gt; block and evaluating whether it matches the exception (e.g., the exception type matches). When a matching handler is found, then the stack is unwound to that point and the &lt;code&gt;catch&lt;/code&gt; block is executed.&lt;/p&gt;
+
+&lt;p&gt;The important part of this behavior is that there are two distinct steps: &lt;em&gt;find, then unwind&lt;/em&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;exception-filters&quot;&gt;Exception Filters&lt;/h2&gt;
+
+&lt;p&gt;Exception filters have been around for a very long time; .NET 1.0 (2002) supported them, and &lt;a href=&quot;https://docs.microsoft.com/en-us/windows/win32/debug/structured-exception-handling&quot;&gt;Structured Exception Handling&lt;/a&gt; existed even way before that. C# only got exception filter capabilities in C# 6.0 (2015), and so far they haven’t really become common in most codebases. That may change now, though.&lt;/p&gt;
+
+&lt;p&gt;Exception filters allow you to hook into the “find” part of “find, then unwind”. By providing an exception filter, you can control whether a specific &lt;code&gt;catch&lt;/code&gt; block matches the exception.&lt;/p&gt;
+
+&lt;p&gt;The key thing to keep in mind about exception filters is that because they hook into the “find” part of the process, this means &lt;em&gt;they run where the exception is thrown, not where the exception is caught&lt;/em&gt;. This is a little mind-bendy at first, but it makes sense: exception filters are run &lt;em&gt;before&lt;/em&gt; the stack is unwound.&lt;/p&gt;
+
+&lt;h2 id=&quot;solution-move-exception-logging-into-an-exception-filter&quot;&gt;Solution: Move Exception Logging into an Exception Filter&lt;/h2&gt;
+
+&lt;p&gt;So, now we have the pieces necessary for fixing the problem. We just need to log exceptions from within an exception filter. Since the exception filter runs where there exception was thrown, the logging data scope is still present. The stack hasn’t been unwound yet, so all that rich semantic data is still available.&lt;/p&gt;
+
+&lt;p&gt;There’s just one quirk: the exception filter must return a boolean value, indicating whether or not the &lt;code&gt;catch&lt;/code&gt; block matches. In our case, the logging is just a side effect; logging the exception has no effect on whether the &lt;code&gt;catch&lt;/code&gt; block matches. So, I use a type like this that just provides methods to “execute this side effect and then return a boolean”:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ExceptionFilterUtility&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;True&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Action&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;False&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Action&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Once you do a &lt;code&gt;using static ExceptionFilterUtility;&lt;/code&gt;, you can use it like this:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;Divide&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;13&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Exception&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;e&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;when&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;False&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_logger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;LogError&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;e&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;Unexpected error.&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)))&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;throw&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;And there you go! Our error log message now has the full data context of where the exception was &lt;em&gt;thrown&lt;/em&gt;, instead of where it was &lt;em&gt;caught&lt;/em&gt;:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;fail: MyApp.Worker[0]
+      =&amp;gt; Dividing 13 by 0
+      Unexpected error.
+System.DivideByZeroException: Attempted to divide by zero.
+   at MyApp.Worker.Divide(Int32 numerator, Int32 denominator) in ...
+   at MyApp.Worker.&amp;lt;ExecuteAsync&amp;gt;b__2_0() in ...&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;The full data logging scope is now preserved.&lt;/p&gt;
+
+&lt;h2 id=&quot;true-or-false&quot;&gt;True or False?&lt;/h2&gt;
+
+&lt;p&gt;I’ve defined two helper methods - &lt;code&gt;True&lt;/code&gt; and &lt;code&gt;False&lt;/code&gt; - to apply side effects and then return a boolean. I recommend using &lt;code&gt;False&lt;/code&gt; if the body of your &lt;code&gt;catch&lt;/code&gt; is nothing more than &lt;code&gt;throw;&lt;/code&gt;. When an exception is thrown, the exception filter is run and the exception is logged, and then the &lt;code&gt;false&lt;/code&gt; result means that the exception filter does not match the exception, and the runtime continues searching for a matching handler.&lt;/p&gt;
+
+&lt;p&gt;Another scenario is if the &lt;code&gt;catch&lt;/code&gt; block actually handles the exception. Say, if we know there is an exception that is safe to ignore. In that case, use the &lt;code&gt;True&lt;/code&gt; helper method so that the exception matches the &lt;code&gt;catch&lt;/code&gt; block and the stack is unwound and the exception is handled there.&lt;/p&gt;
+
+&lt;p&gt;Both helpers are useful in different scenarios.&lt;/p&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;Modern exception-logging code should do its logging from within an exception filter. As logging data scopes become more and more common, this pattern will enable much more helpful logs for your system.&lt;/p&gt;
+</description>
+        <pubDate>Thu, 11 Jun 2020 00:00:00 +0000</pubDate>
+        <link>https://blog.stephencleary.com/2020/06/a-new-pattern-for-exception-logging.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2020/06/a-new-pattern-for-exception-logging.html</guid>
+      </item>
+    
+      <item>
         <title>BackgroundService Gotcha: Application Lifetime</title>
         <description>&lt;h2 id=&quot;backgroundservice-gotcha-service-lifetime-is-independent-from-application-lifetime&quot;&gt;BackgroundService Gotcha: Service Lifetime is Independent from Application Lifetime&lt;/h2&gt;
 
@@ -758,55 +1013,6 @@ jobs:
         <pubDate>Thu, 07 Jun 2018 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2018/06/microsoft-extensions-logging-part-2-types.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2018/06/microsoft-extensions-logging-part-2-types.html</guid>
-      </item>
-    
-      <item>
-        <title>Microsoft.Extensions.Logging, Part 1: Introduction</title>
-        <description>&lt;h2 id=&quot;microsoftextensions&quot;&gt;Microsoft.Extensions.*&lt;/h2&gt;
-
-&lt;p&gt;As part of ASP.NET Core, Microsoft has released several libraries under the &lt;code&gt;Microsoft.Extensions&lt;/code&gt; banner. I’m not entirely sure why “extensions” is in the name, but these are generic libraries that are useful in all kinds of scenarios. They were developed as part of ASP.NET Core, but can be used in any kind of application.&lt;/p&gt;
-
-&lt;p&gt;For example, Azure Functions has first-class support for &lt;code&gt;Microsoft.Extensions.Logging&lt;/code&gt;; it will happily pass an &lt;code&gt;ILogger&lt;/code&gt; to your function, which you can then use for writing logs. I’ve also found the &lt;code&gt;Microsoft.Extensions&lt;/code&gt; abstractions useful for Console apps as well as shared code that may or may not run on .NET Core.&lt;/p&gt;
-
-&lt;h2 id=&quot;microsoftextensionslogging&quot;&gt;Microsoft.Extensions.Logging&lt;/h2&gt;
-
-&lt;p&gt;Recently, I found myself in a situation where I needed to work closely with &lt;code&gt;Microsoft.Extensions.Logging&lt;/code&gt;, both in a consuming and producing scenario. The documentation is still a bit lacking - particularly for implementing custom providers - so I figured I’d write up my lessons learned on this blog.&lt;/p&gt;
-
-&lt;h2 id=&quot;logging-for-libraries&quot;&gt;Logging for Libraries&lt;/h2&gt;
-
-&lt;p&gt;I write a &lt;em&gt;lot&lt;/em&gt; of libraries. “How should I log from my library?” is one question that the .NET ecosystem doesn’t have a good answer for. “How should I log from my application?” has about a hundred answers, but what about libraries?&lt;/p&gt;
-
-&lt;p&gt;There are three general approaches to library logging:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;Use a specific logger.&lt;/li&gt;
-  &lt;li&gt;Use a common logging abstraction.&lt;/li&gt;
-  &lt;li&gt;Use a custom logging abstraction.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;Option (1) isn’t great for most libraries. The problem is that a library author doesn’t want to push their preferred logger onto all their consumers. There are scenarios where you can get away with it - e.g., if logging is purely for diagnostic information and you’re using something very low-level like ETW, then that may work. But most of the time, tying your library to a specific logging framework will only limit your adoption.&lt;/p&gt;
-
-&lt;p&gt;Option (2) is to use a common logging abstraction like &lt;code&gt;Microsoft.Extensions.Logging.Abstractions&lt;/code&gt; or &lt;code&gt;Common.Logging&lt;/code&gt;. The advantage here is that you can work with abstract interfaces (e.g., &lt;code&gt;Microsoft.Extensions.Logging.ILogger&lt;/code&gt;), and the consumer of your library can plug in a common implementation for their logging framework of choice. The disadvantage is with versioning: over time, the abstraction itself will version (e.g., &lt;code&gt;Microsoft.Extensions.Logging.Abstractions&lt;/code&gt; is already at &lt;code&gt;2.1.0&lt;/code&gt;), and this may cause problems as multiple libraries using multiple versions of the common logging abstraction all need to coexist in a single application.&lt;/p&gt;
-
-&lt;p&gt;Option (3) is to use a custom logging abstraction defined by your own code. In this case, you have your own &lt;code&gt;IMyLibraryLogger&lt;/code&gt; that your consumers need to implement. The disadvantage to this approach is that since the abstraction is custom, there are no libraries of common implementations that your consumers can just “plug in”. You also run the risk of not supporting the abstractions needed by your consumers; e.g., consumers will not be pleased if your library only supports text logging rather than semantic logging, or if it does not support &lt;code&gt;async&lt;/code&gt;-compatible scopes. Logging abstractions are hard to get right, and doing this for each library you write just gets annoying. There is a project called &lt;a href=&quot;https://github.com/damianh/LibLog&quot;&gt;LibLog&lt;/a&gt; that attempts to provide a common way of defining custom logging abstractions, but it doesn’t seem to have gotten a lot of traction yet.&lt;/p&gt;
-
-&lt;p&gt;As of today, none of these options is really strong. Option (3) is sufficient for &lt;em&gt;frameworks&lt;/em&gt; (where users are willing to do extra work to get good logs), but there doesn’t seem to be a clear winner for your run-of-the-mill small libraries.&lt;/p&gt;
-
-&lt;div class=&quot;alert alert-info&quot;&gt;
-  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
-
-  &lt;p&gt;Steven van Deursen, the creator of Simple Injector, has &lt;a href=&quot;https://stackoverflow.com/a/41244169/263693&quot; class=&quot;alert-link&quot;&gt;gone on record&lt;/a&gt; saying the whole &lt;code&gt;Microsoft.Extensions.Logging&lt;/code&gt; design is a violation of the Dependency Injection Principle, with the &lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt; specifically a violation of the Interface Segregation Principle. He strongly recommends option (3), but I have to counter that it’s hard for every library author in the world to get right. The &lt;a href=&quot;https://stackoverflow.com/a/5646876/263693&quot;&gt;example solution&lt;/a&gt; he links to, for example, only supports text logging, not structured logging. That said, Steven is an incredibly smart person, and you should read his arguments carefully and understand them.&lt;/p&gt;
-&lt;/div&gt;
-
-&lt;h2 id=&quot;back-to-microsoftextensionslogging&quot;&gt;Back to Microsoft.Extensions.Logging&lt;/h2&gt;
-
-&lt;p&gt;This blog series is diving into the details and design of &lt;code&gt;Microsoft.Extensions.Logging&lt;/code&gt;. I think it’s a great choice for applications; whether it should be used in libraries is still up for debate. I have not (yet) adopted &lt;code&gt;Microsoft.Extensions.Logging&lt;/code&gt; in my own libraries, but it is my logging abstraction of choice when writing applications - even those that have absolutely nothing to do with ASP.NET Core.&lt;/p&gt;
-
-&lt;p&gt;Next time, we’ll dive into the main types and terminology used by &lt;code&gt;Microsoft.Extensions.Logging&lt;/code&gt;.&lt;/p&gt;
-</description>
-        <pubDate>Thu, 31 May 2018 00:00:00 +0000</pubDate>
-        <link>https://blog.stephencleary.com/2018/05/microsoft-extensions-logging-part-1-introduction.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2018/05/microsoft-extensions-logging-part-1-introduction.html</guid>
       </item>
     
   </channel>
