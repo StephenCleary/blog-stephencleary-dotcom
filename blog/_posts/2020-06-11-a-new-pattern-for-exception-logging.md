@@ -207,7 +207,7 @@ System.DivideByZeroException: Attempted to divide by zero.
 
 The logs have the exception details, including the stack trace, but they do not have the structured data from the logging scope. When sent to a logging backend, there is no `numerator` or `denominator` data that is attached to this log message. Losing that logging scope data is a problem.
 
-To fix this, we first need a minor segway into how exceptions work.
+To fix this, we first need a minor segue into how exceptions work.
 
 ## How Exceptions Work
 
