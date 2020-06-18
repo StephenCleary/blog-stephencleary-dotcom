@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>A New Pattern for Exception Logging</title>
+    <title>Win32 Service Gotcha: Recovery Actions</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Logging from within an exception filter will preserve implicit log context." />
-    <link rel="canonical" href="https://blog.stephencleary.com/2020/06/a-new-pattern-for-exception-logging.html" />
+    <meta name="description" content="ServiceBase will not allow Service Control Manager (SCM) recovery actions by default." />
+    <link rel="canonical" href="https://blog.stephencleary.com/2020/06/servicebase-gotcha-recovery-actions.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -276,8 +276,8 @@ img.comment-author-profile-image {
 
   <header>
       <div class="page-header">
-          <h1>A New Pattern for Exception Logging</h1>
-          <small><time datetime="2020-06-11">Jun 11, 2020</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
+          <h1>Win32 Service Gotcha: Recovery Actions</h1>
+          <small><time datetime="2020-06-18">Jun 18, 2020</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
       </div>
   </header>
 
@@ -291,266 +291,166 @@ img.comment-author-profile-image {
   </header>
 
   <article>
-  <h2 id="tldr">TL;DR</h2>
+  <h2 id="win32-services-and-recovery-actions">Win32 Services and Recovery Actions</h2>
 
-<p>Your code should log exceptions from within an exception filter, not a <code>catch</code> block.</p>
+<p>This blog post doesn’t have to do with <code>BackgroundService</code> specifically, but it is an issue that can come up with .NET Core workers that are run as Win32 Services. In some ways, this blog post has more to do with <a href="/2013/10/managed-services-roundup.html">managed services</a>, but I decided to put it with the <code>BackgroundService</code> series because it is a problem with <code>BackgroundService</code>s run as Win32 services.</p>
 
-<h3 id="quick-examples">Quick Examples</h3>
+<h2 id="background-recovery-actions">Background: Recovery Actions</h2>
 
-<p>The old pattern of “log-and-propagate” looks like this:</p>
+<p>The Win32 Service Control Manager (SCM) is responsible for starting and stopping services on Windows machines. It’s also responsible for restarting Win32 services when they fail:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Log-and-propagate, old pattern:</span>
-<span class="k">try</span>
+<p class="center"><a href="/assets/win32-service-recovery.png"><img src="/assets/win32-service-recovery.png" alt="Win32 Service Recovery Action Settings" /></a></p>
+
+<p>However, it can be a bit confusing to think about what “fail” actually <em>means</em>.</p>
+
+<h2 id="background-win32-service-failure">Background: Win32 Service Failure</h2>
+
+<p>It’s pretty clear that if a Win32 application crashes, that indicates “failure”. Normally, Win32 services communicate with the SCM and let it know what their state is. The most common states are “stopped” and “started”, along with transitional states like “stopping” and “starting”. So, if a Win32 application exits (or crashes) without telling the SCM it is “stopped”, then the SCM treats that as a failure.</p>
+
+<p>What’s much less clear is how exit codes are handled.</p>
+
+<p>The first thing to keep in mind is that each Win32 service has its own exit code. A single Win32 process can contain <em>multiple</em> different Win32 services within that single process, and each of those Win32 services has its <em>own</em> exit code. As far as I can tell, the exit code of the process itself is completely ignored.</p>
+
+<p>What’s more, if the Win32 service does report that it is “stopped” to the SCM, the SCM will ignore the Win32 service exit code, too! The SCM assumes that if the service has reported it is “stopped”, then the service has stopped successfully, and there is no need to restart the service.</p>
+
+<p>This means that if you have a Win32 service and it reports a non-zero exit code (either for the process exit code or the Win32 service exit code), and if that Win32 service exits cleanly after setting its non-zero exit code, then that exit code will be ignored and the service will not be restarted.</p>
+
+<h2 id="tip-honoring-win32-service-exit-codes">Tip: Honoring Win32 Service Exit Codes</h2>
+
+<p>There is <a href="https://docs.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_failure_actions_flag">a flag</a> you can set that will cause SCM to honor the Win32 service exit code, treating a non-zero code as a “failure” and running its recovery actions. You can turn this flag on at the command line as such:</p>
+
+<figure class="highlight"><pre><code class="language-text" data-lang="text">sc failureflag &quot;My Service&quot; 1</code></pre></figure>
+
+<p>Setting that flag checks this checkbox, which has the rather difficult-to-understand wording of “Enable actions for stops with errors.”:</p>
+
+<p class="center"><a href="/assets/win32-service-recovery-highlight.png"><img src="/assets/win32-service-recovery-highlight.png" alt="Win32 Service Recovery Action Settings" /></a></p>
+
+<h2 id="win32-service-exit-codes-and-servicebase">Win32 Service Exit Codes and ServiceBase</h2>
+
+<p>For .NET applications, the <code>Environment.ExitCode</code> property manages the exit code for the <em>process</em>. As far as I know, this value is always ignored when the process is run as a service. The Win32 service exit code is managed by the <code>ServiceBase.ExitCode</code> property. Remember, there can be multiple Win32 services in a single process.</p>
+
+<h2 id="win32-service-exit-codes-and-windowsservicelifetime">Win32 Service Exit Codes and WindowsServiceLifetime</h2>
+
+<p>In <a href="https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/windows-service">.NET Core applications that are run as Win32 services</a>, it’s normal to call <code>IHostBuilder.UseWindowsService()</code>, which installs a <code>WindowsServiceLifetime</code> as the <code>IHostLifetime</code>, instead of the default <code>ConsoleLifetime</code>.</p>
+
+<p><code>WindowsServiceLifetime</code> lets the SCM control the starting and stopping of the .NET Core application. It <a href="https://github.com/dotnet/extensions/blob/4becf241089932aa1f1e7f3ab4155a437fd3dba1/src/Hosting/WindowsServices/src/WindowsServiceLifetime.cs#L14">derives from <code>ServiceBase</code></a>. Since <a href="https://github.com/aspnet/Hosting/issues/1401">multiple <code>IHostLifetime</code> instances aren’t supported</a>, this means that .NET Core workers do not naturally support multiple Win32 services in a single process. It may be possible to support that by creating a new type that derives from <code>ServiceBase</code> and <code>IHostedService</code>, along with some kind of coordinating <code>IHostLifetime</code> implementation, but I’m not aware of anyone doing that yet. For now, all the .NET Core Win32 services I know of use <code>WindowsServiceLifetime</code>.</p>
+
+<p>One important note is that <code>WindowsServiceLifetime</code> stops cleanly. If the .NET Core application is shutdown, then <code>WindowsServiceLifetime</code> reports to the SCM that the service is “stopped”, and this means that the SCM will not restart the service.</p>
+
+<p>You can write code that will set the Win32 service exit code on failure by accessing <code>ServiceBase.ExitCode</code> as such:</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">MyBackgroundService</span> <span class="p">:</span> <span class="n">BackgroundService</span>
 <span class="p">{</span>
-    <span class="p">...</span>
-<span class="p">}</span>
-<span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">e</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="n">_logger</span><span class="p">.</span><span class="n">LogError</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s">&quot;Unexpected error.&quot;</span><span class="p">);</span>
-    <span class="k">throw</span><span class="p">;</span>
-<span class="p">}</span></code></pre></figure>
+  <span class="k">private</span> <span class="k">readonly</span> <span class="n">IHostLifetime</span> <span class="n">_hostLifetime</span><span class="p">;</span>
+  <span class="k">public</span> <span class="nf">MyBackgroundService</span><span class="p">(</span><span class="n">IHostLifetime</span> <span class="n">hostLifetime</span><span class="p">)</span> <span class="p">=&gt;</span>
+      <span class="n">_hostLifetime</span> <span class="p">=</span> <span class="n">hostLifetime</span><span class="p">;</span>
 
-<p>The logging should be moved into an exception filter like this:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Log-and-propagate, new pattern:</span>
-<span class="k">try</span>
-<span class="p">{</span>
-    <span class="p">...</span>
-<span class="p">}</span>
-<span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">e</span><span class="p">)</span> <span class="n">when</span> <span class="p">(</span><span class="n">False</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">_logger</span><span class="p">.</span><span class="n">LogError</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s">&quot;Unexpected error.&quot;</span><span class="p">)))</span>
-<span class="p">{</span>
-    <span class="k">throw</span><span class="p">;</span>
-<span class="p">}</span></code></pre></figure>
-
-<p>Similarly, the old pattern of “log-and-handle” looks something like this:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Log-and-handle, old pattern:</span>
-<span class="k">try</span>
-<span class="p">{</span>
-    <span class="p">...</span>
-<span class="p">}</span>
-<span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">e</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="n">_logger</span><span class="p">.</span><span class="n">LogError</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s">&quot;Unexpected error.&quot;</span><span class="p">);</span>
-    <span class="k">return</span> <span class="k">null</span><span class="p">;</span> <span class="c1">// or some other handling code</span>
-<span class="p">}</span></code></pre></figure>
-
-<p>The logging should be moved into an exception filter like this:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Log-and-handle, old pattern:</span>
-<span class="k">try</span>
-<span class="p">{</span>
-    <span class="p">...</span>
-<span class="p">}</span>
-<span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">e</span><span class="p">)</span> <span class="n">when</span> <span class="p">(</span><span class="n">True</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">_logger</span><span class="p">.</span><span class="n">LogError</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s">&quot;Unexpected error.&quot;</span><span class="p">)))</span>
-<span class="p">{</span>
-    <span class="k">return</span> <span class="k">null</span><span class="p">;</span> <span class="c1">// or some other handling code</span>
-<span class="p">}</span></code></pre></figure>
-
-<p>Both of these examples assume the presence of a couple simple utility methods:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Use when you want to handle the exception</span>
-<span class="k">public</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">True</span><span class="p">(</span><span class="n">Action</span> <span class="n">action</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="n">action</span><span class="p">();</span>
-    <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
-<span class="p">}</span>
-
-<span class="c1">// Use when you want to propagate the exception</span>
-<span class="k">public</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">False</span><span class="p">(</span><span class="n">Action</span> <span class="n">action</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="n">action</span><span class="p">();</span>
-    <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
-<span class="p">}</span></code></pre></figure>
-
-<h3 id="why">Why?</h3>
-
-<p>The remainder of this blog post goes into the “why” behind the new pattern.</p>
-
-<h2 id="semantic-logging--structured-logging">Semantic Logging / Structured Logging</h2>
-
-<p>Long gone are the days of text file logging; modern logging systems support rich, contextual logs. This means you can add data fields to your log messages, and then use those additional pieces of data when debugging an issue. It’s very satisfying to be able to filter by an HTTP status code range, or take the top three servers where user <code>Steve</code> had a <code>FileNotFound</code> exception.</p>
-
-<p>Structured logging is so important that every modern logging system supports it. For example, .NET Core style logging uses <a href="https://messagetemplates.org/">message templates</a>, which looks something like this:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="kt">int</span> <span class="nf">Divide</span><span class="p">(</span><span class="kt">int</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">int</span> <span class="n">denominator</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="n">numerator</span> <span class="p">/</span> <span class="n">denominator</span><span class="p">;</span>
-    <span class="n">_logger</span><span class="p">.</span><span class="n">LogInformation</span><span class="p">(</span><span class="s">&quot;Result: {result}&quot;</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
-    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
-<span class="p">}</span></code></pre></figure>
-
-<p>The code above will create a log message like <code>"Result: 4"</code>. What’s not immediately obvious is that the log message <em>also</em> has structured data attached to it: a data field called <code>result</code> has the (integer) value <code>4</code>. When this is consumed by a logging provider that understands structured data, the <code>result</code> field is stored <em>along with</em> the log message, and can be used for searching or filtering.</p>
-
-<p>If you would like to follow along at home, create an ASP.NET Worker Service (which is really just a Console app with ASP.NET-style logging and dependency injection all set up for you). Then replace <code>Worker.ExecuteAsync</code> with this:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Divide</span><span class="p">(</span><span class="m">13</span><span class="p">,</span> <span class="m">3</span><span class="p">);</span></code></pre></figure>
-
-<p>When you run it, you should see this in the output:</p>
-
-<figure class="highlight"><pre><code class="language-text" data-lang="text">info: MyApp.Worker[0]
-      Result: 4</code></pre></figure>
-
-<h3 id="logging-scopes">Logging Scopes</h3>
-
-<p>So far, so good, and hopefully that’s nothing new.</p>
-
-<p>In addition to adding structured data to a single log message, most modern logging frameworks also support logging <em>scopes</em> of structured data. So you can create a logging scope that attaches structured data to <em>every</em> log message within that scope:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="kt">int</span> <span class="nf">Divide</span><span class="p">(</span><span class="kt">int</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">int</span> <span class="n">denominator</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="k">using</span> <span class="nn">var</span> <span class="n">_</span> <span class="p">=</span> <span class="n">_logger</span><span class="p">.</span><span class="n">BeginScope</span><span class="p">(</span><span class="s">&quot;Dividing {numerator} by {denominator}&quot;</span><span class="p">,</span> <span class="n">numerator</span><span class="p">,</span> <span class="n">denominator</span><span class="p">);</span>
-    <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="n">numerator</span> <span class="p">/</span> <span class="n">denominator</span><span class="p">;</span>
-    <span class="n">_logger</span><span class="p">.</span><span class="n">LogInformation</span><span class="p">(</span><span class="s">&quot;Result: {result}&quot;</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
-    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
-<span class="p">}</span></code></pre></figure>
-
-<p>Now, when the <code>Result: 4</code> message is logged, it will capture additional structured data items: <code>result</code> is <code>4</code>, <code>numerator</code> is <code>13</code>, and <code>denominator</code> is <code>3</code>. It should be clear that strategically placing data items in logging scopes can greatly assist debugging. Any time you’ve stared at an error message or unexpected result and wondered “what was the input that caused this?”, that’s the perfect place to add a logging scope.</p>
-
-<div class="alert alert-info">
-  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
-
-  <p>Tip: The Console logger ignores logging scopes by default; they have to be manually enabled.</p>
-</div>
-
-<p>If you’re following along at home, enable logging scopes for the Console logger by updating <code>CreateHostBuilder</code> in your <code>Program.cs</code>, adding a call to <code>ConfigureLogging</code> that removes the existing Console logger and adds a new one that sets <code>IncludeScopes</code> to <code>true</code>:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">static</span> <span class="n">IHostBuilder</span> <span class="nf">CreateHostBuilder</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span> <span class="p">=&gt;</span>
-    <span class="n">Host</span><span class="p">.</span><span class="n">CreateDefaultBuilder</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
-        <span class="c1">// (begin code changes)</span>
-        <span class="p">.</span><span class="n">ConfigureLogging</span><span class="p">(</span><span class="n">logging</span> <span class="p">=&gt;</span>
-        <span class="p">{</span>
-            <span class="n">logging</span><span class="p">.</span><span class="n">ClearProviders</span><span class="p">();</span>
-            <span class="n">logging</span><span class="p">.</span><span class="n">AddConsole</span><span class="p">(</span><span class="n">console</span> <span class="p">=&gt;</span>
-            <span class="p">{</span>
-                <span class="n">console</span><span class="p">.</span><span class="n">IncludeScopes</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
-            <span class="p">});</span>
-        <span class="p">})</span>
-        <span class="c1">// (end code changes)</span>
-        <span class="p">.</span><span class="n">ConfigureServices</span><span class="p">((</span><span class="n">hostContext</span><span class="p">,</span> <span class="n">services</span><span class="p">)</span> <span class="p">=&gt;</span>
-        <span class="p">{</span>
-            <span class="n">services</span><span class="p">.</span><span class="n">AddHostedService</span><span class="p">&lt;</span><span class="n">Worker</span><span class="p">&gt;();</span>
-        <span class="p">});</span></code></pre></figure>
-
-<p>Now, when you run the code, you’ll see the logging scope written to the Console as a part of the information message:</p>
-
-<figure class="highlight"><pre><code class="language-text" data-lang="text">info: MyApp.Worker[0]
-      =&gt; Dividing 13 by 3
-      Result: 4</code></pre></figure>
-
-<p>Now the logs have a clear context.</p>
-
-<h2 id="exception-logging">Exception Logging</h2>
-
-<p>So, let’s talk about logging exceptions. Most methods do not log their own exceptions; any exceptions are propagated out of the method, possibly through many other methods, and eventually logged at a much higher level in the code.</p>
-
-<p>The problem with this approach is that the logging scope is lost once the stack is unwound.</p>
-
-<p>Here’s the kind of situation that causes this problem. <code>Worker.ExecuteAsync</code> is going to wrap its call in a <code>try</code>/<code>catch</code> and log the exception. This is a very common pattern in most code bases today:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">try</span>
-<span class="p">{</span>
-    <span class="n">Divide</span><span class="p">(</span><span class="m">13</span><span class="p">,</span> <span class="m">0</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">e</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="n">_logger</span><span class="p">.</span><span class="n">LogError</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s">&quot;Unexpected error.&quot;</span><span class="p">);</span>
-    <span class="k">throw</span><span class="p">;</span>
-<span class="p">}</span></code></pre></figure>
-
-<p>The problem, as stated above, is that the logging scope is already gone by the time <code>LogError</code> is called. So our logging output looks like this:</p>
-
-<figure class="highlight"><pre><code class="language-text" data-lang="text">fail: MyApp.Worker[0]
-      Unexpected error.
-System.DivideByZeroException: Attempted to divide by zero.
-   at MyApp.Worker.Divide(Int32 numerator, Int32 denominator) in ...
-   at MyApp.Worker.&lt;ExecuteAsync&gt;b__2_0() in ...</code></pre></figure>
-
-<p>The logs have the exception details, including the stack trace, but they do not have the structured data from the logging scope. When sent to a logging backend, there is no <code>numerator</code> or <code>denominator</code> data that is attached to this log message. Losing that logging scope data is a problem.</p>
-
-<p>To fix this, we first need a minor segue into how exceptions work.</p>
-
-<h2 id="how-exceptions-work">How Exceptions Work</h2>
-
-<p>When an exception is thrown, the runtime will search the stack for a matching handler. So the runtime walks up the stack looking at each <code>catch</code> block and evaluating whether it matches the exception (e.g., the exception type matches). When a matching handler is found, then the stack is unwound to that point and the <code>catch</code> block is executed.</p>
-
-<p>The important part of this behavior is that there are two distinct steps: <em>find, then unwind</em>.</p>
-
-<h2 id="exception-filters">Exception Filters</h2>
-
-<p>Exception filters have been around for a very long time; .NET 1.0 (2002) supported them, and <a href="https://docs.microsoft.com/en-us/windows/win32/debug/structured-exception-handling">Structured Exception Handling</a> existed even way before that. C# only got exception filter capabilities in C# 6.0 (2015), and so far they haven’t really become common in most codebases. That may change now, though.</p>
-
-<p>Exception filters allow you to hook into the “find” part of “find, then unwind”. By providing an exception filter, you can control whether a specific <code>catch</code> block matches the exception.</p>
-
-<p>The key thing to keep in mind about exception filters is that because they hook into the “find” part of the process, this means <em>they run where the exception is thrown, not where the exception is caught</em>. This is a little mind-bendy at first, but it makes sense: exception filters are run <em>before</em> the stack is unwound.</p>
-
-<h2 id="solution-move-exception-logging-into-an-exception-filter">Solution: Move Exception Logging into an Exception Filter</h2>
-
-<p>So, now we have the pieces necessary for fixing the problem. We just need to log exceptions from within an exception filter. Since the exception filter runs where there exception was thrown, the logging data scope is still present. The stack hasn’t been unwound yet, so all that rich semantic data is still available.</p>
-
-<p>There’s just one quirk: the exception filter must return a boolean value, indicating whether or not the <code>catch</code> block matches. In our case, the logging is just a side effect; logging the exception has no effect on whether the <code>catch</code> block matches. So, I use a type like this that just provides methods to “execute this side effect and then return a boolean”:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">ExceptionFilterUtility</span>
-<span class="p">{</span>
-    <span class="k">public</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">True</span><span class="p">(</span><span class="n">Action</span> <span class="n">action</span><span class="p">)</span>
+  <span class="k">protected</span> <span class="k">override</span> <span class="n">Task</span> <span class="nf">ExecuteAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">stoppingToken</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">try</span>
     <span class="p">{</span>
-        <span class="n">action</span><span class="p">();</span>
-        <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+      <span class="c1">// Implementation</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">_hostLifetime</span> <span class="k">is</span> <span class="n">ServiceBase</span> <span class="n">serviceLifetime</span><span class="p">)</span>
+        <span class="n">serviceLifetime</span><span class="p">.</span><span class="n">ExitCode</span> <span class="p">=</span> <span class="p">-</span><span class="m">1</span><span class="p">;</span>
+      <span class="k">else</span>
+        <span class="n">Environment</span><span class="p">.</span><span class="n">ExitCode</span> <span class="p">=</span> <span class="p">-</span><span class="m">1</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>However, as noted above, you have to also set the <code>failureflag</code> on the service, or else the SCM will ignore the non-zero exit code.</p>
+
+<p>If desired, you can write a custom <code>WindowsServiceLifetime</code> that will treat non-zero <code>Environment.ExitCode</code> values as non-zero Win32 service exit codes:</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">MyWindowsServiceLifetime</span> <span class="p">:</span> <span class="n">WindowsServiceLifetime</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="nf">MyWindowsServiceLifetime</span><span class="p">(</span><span class="n">IHostApplicationLifetime</span> <span class="n">hostApplicationLifetime</span><span class="p">,</span> <span class="n">IHostEnvironment</span> <span class="n">environment</span><span class="p">,</span> <span class="n">ILoggerFactory</span> <span class="n">loggerFactory</span><span class="p">,</span> <span class="n">IOptions</span><span class="p">&lt;</span><span class="n">HostOptions</span><span class="p">&gt;</span> <span class="n">options</span><span class="p">)</span>
+      <span class="p">:</span> <span class="k">base</span><span class="p">(</span><span class="n">environment</span><span class="p">,</span> <span class="n">hostApplicationLifetime</span><span class="p">,</span> <span class="n">loggerFactory</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+  <span class="p">{</span>
+  <span class="p">}</span>
+
+  <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnStop</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="c1">// Take the process ExitCode if there isn&#39;t one for our Win32 service</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">ExitCode</span> <span class="p">==</span> <span class="m">0</span> <span class="p">&amp;&amp;</span> <span class="n">Environment</span><span class="p">.</span><span class="n">ExitCode</span> <span class="p">!=</span> <span class="m">0</span><span class="p">)</span>
+      <span class="n">ExitCode</span> <span class="p">=</span> <span class="n">Environment</span><span class="p">.</span><span class="n">ExitCode</span><span class="p">;</span>
+    
+    <span class="k">base</span><span class="p">.</span><span class="n">OnStop</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>This can be installed by adding this service (<code>services.AddSingleton&lt;IHostLifetime, MyWindowsServiceLifetime&gt;()</code>) after calling <code>UseWindowsService</code>; the .NET Core dependency injection will just take the last registered <code>IHostLifetime</code>.</p>
+
+<h2 id="crashing-windowsservicelifetime">Crashing WindowsServiceLifetime</h2>
+
+<p>It is also possible to create a custom derived <code>WindowsServiceLifetime</code> that can detect application failures and will prevent <code>ServiceBase</code> from sending the “stopped” message to the SCM. That way, your service will be restarted regardless of the <code>failureflag</code> setting, because any failures will cause the process to crash.</p>
+
+<p>We don’t want to crash the process immediately; instead, we want to shut down the .NET Core host and then terminate, so that the SCM knows the process failed. The <code>WindowsServiceLifetime</code> type has <a href="https://github.com/dotnet/extensions/blob/4becf241089932aa1f1e7f3ab4155a437fd3dba1/src/Hosting/WindowsServices/src/WindowsServiceLifetime.cs#L105">some similar behavior</a>: if the SCM requests the service to stop, then it will shut down the .NET Core host and wait for it to stop. We can do the same thing in our custom lifetime type:</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">MyWindowsServiceLifetime</span> <span class="p">:</span> <span class="n">WindowsServiceLifetime</span>
+<span class="p">{</span>
+  <span class="k">private</span> <span class="k">readonly</span> <span class="n">IHostApplicationLifetime</span> <span class="n">_hostApplicationLifetime</span><span class="p">;</span>
+  <span class="k">private</span> <span class="k">readonly</span> <span class="n">ManualResetEventSlim</span> <span class="n">_shutdownComplete</span><span class="p">;</span>
+  <span class="k">private</span> <span class="k">readonly</span> <span class="n">CancellationTokenRegistration</span> <span class="n">_applicationStoppedRegistration</span><span class="p">;</span>
+
+  <span class="k">public</span> <span class="nf">MyWindowsServiceLifetime</span><span class="p">(</span><span class="n">IHostApplicationLifetime</span> <span class="n">hostApplicationLifetime</span><span class="p">,</span> <span class="n">IHostEnvironment</span> <span class="n">environment</span><span class="p">,</span> <span class="n">ILoggerFactory</span> <span class="n">loggerFactory</span><span class="p">,</span> <span class="n">IOptions</span><span class="p">&lt;</span><span class="n">HostOptions</span><span class="p">&gt;</span> <span class="n">options</span><span class="p">)</span>
+      <span class="p">:</span> <span class="k">base</span><span class="p">(</span><span class="n">environment</span><span class="p">,</span> <span class="n">hostApplicationLifetime</span><span class="p">,</span> <span class="n">loggerFactory</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">_hostApplicationLifetime</span> <span class="p">=</span> <span class="n">hostApplicationLifetime</span><span class="p">;</span>
+    <span class="n">_shutdownComplete</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ManualResetEventSlim</span><span class="p">();</span>
+    <span class="n">_applicationStoppedRegistration</span> <span class="p">=</span> <span class="n">hostApplicationLifetime</span><span class="p">.</span><span class="n">ApplicationStopped</span><span class="p">.</span><span class="n">Register</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">_shutdownComplete</span><span class="p">.</span><span class="n">Set</span><span class="p">());</span>
+  <span class="p">}</span>
+
+  <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnStop</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="c1">// Take the process ExitCode if there isn&#39;t one for our Win32 service</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">ExitCode</span> <span class="p">==</span> <span class="m">0</span> <span class="p">&amp;&amp;</span> <span class="n">Environment</span><span class="p">.</span><span class="n">ExitCode</span> <span class="p">!=</span> <span class="m">0</span><span class="p">)</span>
+      <span class="n">ExitCode</span> <span class="p">=</span> <span class="n">Environment</span><span class="p">.</span><span class="n">ExitCode</span><span class="p">;</span>
+    
+    <span class="k">if</span> <span class="p">(</span><span class="n">ExitCode</span> <span class="p">!=</span> <span class="m">0</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="c1">// Wait for application to shut down.</span>
+      <span class="n">_hostApplicationLifetime</span><span class="p">.</span><span class="n">StopApplication</span><span class="p">();</span>
+      <span class="n">_shutdownComplete</span><span class="p">.</span><span class="n">Wait</span><span class="p">();</span>
+
+      <span class="c1">// Terminate app. Do not call base.OnStop().</span>
+      <span class="n">Environment</span><span class="p">.</span><span class="n">Exit</span><span class="p">(</span><span class="n">ExitCode</span><span class="p">);</span>
     <span class="p">}</span>
 
-    <span class="k">public</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">False</span><span class="p">(</span><span class="n">Action</span> <span class="n">action</span><span class="p">)</span>
+    <span class="c1">// If we&#39;re exiting normally, just let WindowsServiceLifetime do its job.</span>
+    <span class="k">base</span><span class="p">.</span><span class="n">OnStop</span><span class="p">();</span>
+  <span class="p">}</span>
+
+  <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">Dispose</span><span class="p">(</span><span class="kt">bool</span> <span class="n">disposing</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">disposing</span><span class="p">)</span>
     <span class="p">{</span>
-        <span class="n">action</span><span class="p">();</span>
-        <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+      <span class="n">_shutdownComplete</span><span class="p">.</span><span class="n">Set</span><span class="p">();</span>
+      <span class="n">_applicationStoppedRegistration</span><span class="p">.</span><span class="n">Dispose</span><span class="p">();</span>
     <span class="p">}</span>
+
+    <span class="k">base</span><span class="p">.</span><span class="n">Dispose</span><span class="p">(</span><span class="n">disposing</span><span class="p">);</span>
+  <span class="p">}</span>
 <span class="p">}</span></code></pre></figure>
 
-<p>Once you do a <code>using static ExceptionFilterUtility;</code>, you can use it like this:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">try</span>
-<span class="p">{</span>
-    <span class="n">Divide</span><span class="p">(</span><span class="m">13</span><span class="p">,</span> <span class="m">0</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">e</span><span class="p">)</span> <span class="n">when</span> <span class="p">(</span><span class="n">False</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">_logger</span><span class="p">.</span><span class="n">LogError</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s">&quot;Unexpected error.&quot;</span><span class="p">)))</span>
-<span class="p">{</span>
-    <span class="k">throw</span><span class="p">;</span>
-<span class="p">}</span></code></pre></figure>
-
-<p>And there you go! Our error log message now has the full data context of where the exception was <em>thrown</em>, instead of where it was <em>caught</em>:</p>
-
-<figure class="highlight"><pre><code class="language-text" data-lang="text">fail: MyApp.Worker[0]
-      =&gt; Dividing 13 by 0
-      Unexpected error.
-System.DivideByZeroException: Attempted to divide by zero.
-   at MyApp.Worker.Divide(Int32 numerator, Int32 denominator) in ...
-   at MyApp.Worker.&lt;ExecuteAsync&gt;b__2_0() in ...</code></pre></figure>
-
-<p>The full data logging scope is now preserved.</p>
-
-<h2 id="true-or-false">True or False?</h2>
-
-<p>I’ve defined two helper methods - <code>True</code> and <code>False</code> - to apply side effects and then return a boolean. I recommend using <code>False</code> if the body of your <code>catch</code> is nothing more than <code>throw;</code>. When an exception is thrown, the exception filter is run and the exception is logged, and then the <code>false</code> result means that the exception filter does not match the exception, and the runtime continues searching for a matching handler.</p>
-
-<p>Another scenario is if the <code>catch</code> block actually handles the exception. Say, if we know there is an exception that is safe to ignore. In that case, use the <code>True</code> helper method so that the exception matches the <code>catch</code> block and the stack is unwound and the exception is handled there.</p>
-
-<p>Both helpers are useful in different scenarios.</p>
-
-<h2 id="caveat">Caveat</h2>
-
-<p>The solution here unfortunately does not work well with <code>async</code> code. This is because <code>async</code> will cause exceptions to be caught and then re-thrown at the point of the <code>await</code>. So, the exception filter runs at the point of the <code>await</code> instead of where the exception was <em>originally</em> thrown.</p>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>Modern exception-logging code should do its logging from within an exception filter. As logging data scopes become more and more common, this pattern will enable much more helpful logs for your system.</p>
+<p>This kind of <code>MyWindowsServiceLifetime</code> implementation will work whether or not you set the <code>failureflag</code> on your service.</p>
 
   </article>
     
     <footer class="hidden-print">
         
+            <ul class="pager">
+                <li class="previous"><a href="/2020/06/backgroundservice-gotcha-application-lifetime.html" title="BackgroundService Gotcha: Application Lifetime">&larr; Previous in BackgroundService Gotchas</a></li>
+                
+            </ul>
+        
         
         <ul class="pager">
-            <li class="previous"><a href="/2020/06/backgroundservice-gotcha-application-lifetime.html" title="BackgroundService Gotcha: Application Lifetime">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2020/06/servicebase-gotcha-recovery-actions.html" title="Win32 Service Gotcha: Recovery Actions">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2020/06/a-new-pattern-for-exception-logging.html" title="A New Pattern for Exception Logging">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="comments"></div>
@@ -559,6 +459,17 @@ System.DivideByZeroException: Attempted to divide by zero.
         </div>
         <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
+                <div class="panel panel-primary">
+                    <div class="panel-heading">BackgroundService Gotchas</div>
+                    <div class="panel-body sidenav">
+                        <ul class="nav nav-pills nav-stacked">
+                                    <li class="sidenavitem"><a href="/2020/05/backgroundservice-gotcha-startup.html">Synchronous Starts</a></li>
+                                    <li class="sidenavitem"><a href="/2020/05/backgroundservice-gotcha-silent-failure.html">Silent Failures</a></li>
+                                    <li class="sidenavitem"><a href="/2020/06/backgroundservice-gotcha-application-lifetime.html">Application Lifetime</a></li>
+                                    <li class="active sidenavitem"><a href="/2020/06/servicebase-gotcha-recovery-actions.html">Service Recovery Actions</a></li>
+                        </ul>
+                    </div>
+                </div>
             
         </div>
         <div class="col-sm-2 sidebar hidden-print">
@@ -650,6 +561,17 @@ System.DivideByZeroException: Attempted to divide by zero.
 
 <!-- Scroll the sidebar into view (if necessary) -->
 
+<script src="/lib/jquery.scrollTo.min.js"></script>
+<script type="text/javascript">
+    (function ($) {
+        $(function () {
+            var container = $('.affix').filter(function() { return $(this).css('position') == 'fixed'; });
+            var target = container.find('.active');
+            container.scrollTo(target, { offset: - (container.height() / 2 - target.height() / 2) });
+        });
+    })(window.jQuery);
+</script>
+
 
 <!-- Moment -->
 <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.6.0/moment.min.js"></script>
@@ -697,7 +619,7 @@ System.DivideByZeroException: Attempted to divide by zero.
 
 <script type="text/javascript">
 
-var pageUrl = "https://blog.stephencleary.com" + "/2020/06/a-new-pattern-for-exception-logging.html";
+var pageUrl = "https://blog.stephencleary.com" + "/2020/06/servicebase-gotcha-recovery-actions.html";
 
 // (unnecessary) 1) If the URL starts with http://, replace with https://
 

@@ -8,6 +8,160 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>Win32 Service Gotcha: Recovery Actions</title>
+        <description>&lt;h2 id=&quot;win32-services-and-recovery-actions&quot;&gt;Win32 Services and Recovery Actions&lt;/h2&gt;
+
+&lt;p&gt;This blog post doesn’t have to do with &lt;code&gt;BackgroundService&lt;/code&gt; specifically, but it is an issue that can come up with .NET Core workers that are run as Win32 Services. In some ways, this blog post has more to do with &lt;a href=&quot;/2013/10/managed-services-roundup.html&quot;&gt;managed services&lt;/a&gt;, but I decided to put it with the &lt;code&gt;BackgroundService&lt;/code&gt; series because it is a problem with &lt;code&gt;BackgroundService&lt;/code&gt;s run as Win32 services.&lt;/p&gt;
+
+&lt;h2 id=&quot;background-recovery-actions&quot;&gt;Background: Recovery Actions&lt;/h2&gt;
+
+&lt;p&gt;The Win32 Service Control Manager (SCM) is responsible for starting and stopping services on Windows machines. It’s also responsible for restarting Win32 services when they fail:&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/win32-service-recovery.png&quot;&gt;&lt;img src=&quot;/assets/win32-service-recovery.png&quot; alt=&quot;Win32 Service Recovery Action Settings&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;However, it can be a bit confusing to think about what “fail” actually &lt;em&gt;means&lt;/em&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;background-win32-service-failure&quot;&gt;Background: Win32 Service Failure&lt;/h2&gt;
+
+&lt;p&gt;It’s pretty clear that if a Win32 application crashes, that indicates “failure”. Normally, Win32 services communicate with the SCM and let it know what their state is. The most common states are “stopped” and “started”, along with transitional states like “stopping” and “starting”. So, if a Win32 application exits (or crashes) without telling the SCM it is “stopped”, then the SCM treats that as a failure.&lt;/p&gt;
+
+&lt;p&gt;What’s much less clear is how exit codes are handled.&lt;/p&gt;
+
+&lt;p&gt;The first thing to keep in mind is that each Win32 service has its own exit code. A single Win32 process can contain &lt;em&gt;multiple&lt;/em&gt; different Win32 services within that single process, and each of those Win32 services has its &lt;em&gt;own&lt;/em&gt; exit code. As far as I can tell, the exit code of the process itself is completely ignored.&lt;/p&gt;
+
+&lt;p&gt;What’s more, if the Win32 service does report that it is “stopped” to the SCM, the SCM will ignore the Win32 service exit code, too! The SCM assumes that if the service has reported it is “stopped”, then the service has stopped successfully, and there is no need to restart the service.&lt;/p&gt;
+
+&lt;p&gt;This means that if you have a Win32 service and it reports a non-zero exit code (either for the process exit code or the Win32 service exit code), and if that Win32 service exits cleanly after setting its non-zero exit code, then that exit code will be ignored and the service will not be restarted.&lt;/p&gt;
+
+&lt;h2 id=&quot;tip-honoring-win32-service-exit-codes&quot;&gt;Tip: Honoring Win32 Service Exit Codes&lt;/h2&gt;
+
+&lt;p&gt;There is &lt;a href=&quot;https://docs.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_failure_actions_flag&quot;&gt;a flag&lt;/a&gt; you can set that will cause SCM to honor the Win32 service exit code, treating a non-zero code as a “failure” and running its recovery actions. You can turn this flag on at the command line as such:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;sc failureflag &amp;quot;My Service&amp;quot; 1&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Setting that flag checks this checkbox, which has the rather difficult-to-understand wording of “Enable actions for stops with errors.”:&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/win32-service-recovery-highlight.png&quot;&gt;&lt;img src=&quot;/assets/win32-service-recovery-highlight.png&quot; alt=&quot;Win32 Service Recovery Action Settings&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;win32-service-exit-codes-and-servicebase&quot;&gt;Win32 Service Exit Codes and ServiceBase&lt;/h2&gt;
+
+&lt;p&gt;For .NET applications, the &lt;code&gt;Environment.ExitCode&lt;/code&gt; property manages the exit code for the &lt;em&gt;process&lt;/em&gt;. As far as I know, this value is always ignored when the process is run as a service. The Win32 service exit code is managed by the &lt;code&gt;ServiceBase.ExitCode&lt;/code&gt; property. Remember, there can be multiple Win32 services in a single process.&lt;/p&gt;
+
+&lt;h2 id=&quot;win32-service-exit-codes-and-windowsservicelifetime&quot;&gt;Win32 Service Exit Codes and WindowsServiceLifetime&lt;/h2&gt;
+
+&lt;p&gt;In &lt;a href=&quot;https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/windows-service&quot;&gt;.NET Core applications that are run as Win32 services&lt;/a&gt;, it’s normal to call &lt;code&gt;IHostBuilder.UseWindowsService()&lt;/code&gt;, which installs a &lt;code&gt;WindowsServiceLifetime&lt;/code&gt; as the &lt;code&gt;IHostLifetime&lt;/code&gt;, instead of the default &lt;code&gt;ConsoleLifetime&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;WindowsServiceLifetime&lt;/code&gt; lets the SCM control the starting and stopping of the .NET Core application. It &lt;a href=&quot;https://github.com/dotnet/extensions/blob/4becf241089932aa1f1e7f3ab4155a437fd3dba1/src/Hosting/WindowsServices/src/WindowsServiceLifetime.cs#L14&quot;&gt;derives from &lt;code&gt;ServiceBase&lt;/code&gt;&lt;/a&gt;. Since &lt;a href=&quot;https://github.com/aspnet/Hosting/issues/1401&quot;&gt;multiple &lt;code&gt;IHostLifetime&lt;/code&gt; instances aren’t supported&lt;/a&gt;, this means that .NET Core workers do not naturally support multiple Win32 services in a single process. It may be possible to support that by creating a new type that derives from &lt;code&gt;ServiceBase&lt;/code&gt; and &lt;code&gt;IHostedService&lt;/code&gt;, along with some kind of coordinating &lt;code&gt;IHostLifetime&lt;/code&gt; implementation, but I’m not aware of anyone doing that yet. For now, all the .NET Core Win32 services I know of use &lt;code&gt;WindowsServiceLifetime&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;One important note is that &lt;code&gt;WindowsServiceLifetime&lt;/code&gt; stops cleanly. If the .NET Core application is shutdown, then &lt;code&gt;WindowsServiceLifetime&lt;/code&gt; reports to the SCM that the service is “stopped”, and this means that the SCM will not restart the service.&lt;/p&gt;
+
+&lt;p&gt;You can write code that will set the Win32 service exit code on failure by accessing &lt;code&gt;ServiceBase.ExitCode&lt;/code&gt; as such:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;MyBackgroundService&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;BackgroundService&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;readonly&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IHostLifetime&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_hostLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;MyBackgroundService&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IHostLifetime&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;hostLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;_hostLifetime&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;hostLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+  &lt;span class=&quot;k&quot;&gt;protected&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ExecuteAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;stoppingToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+      &lt;span class=&quot;c1&quot;&gt;// Implementation&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Exception&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_hostLifetime&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;is&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ServiceBase&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;serviceLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;serviceLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExitCode&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;Environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExitCode&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;However, as noted above, you have to also set the &lt;code&gt;failureflag&lt;/code&gt; on the service, or else the SCM will ignore the non-zero exit code.&lt;/p&gt;
+
+&lt;p&gt;If desired, you can write a custom &lt;code&gt;WindowsServiceLifetime&lt;/code&gt; that will treat non-zero &lt;code&gt;Environment.ExitCode&lt;/code&gt; values as non-zero Win32 service exit codes:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;MyWindowsServiceLifetime&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;WindowsServiceLifetime&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;MyWindowsServiceLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IHostApplicationLifetime&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IHostEnvironment&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ILoggerFactory&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;loggerFactory&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;HostOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;options&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;base&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;loggerFactory&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;options&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+  &lt;span class=&quot;k&quot;&gt;protected&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;OnStop&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// Take the process ExitCode if there isn&amp;#39;t one for our Win32 service&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExitCode&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExitCode&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;ExitCode&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExitCode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    
+    &lt;span class=&quot;k&quot;&gt;base&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;OnStop&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;This can be installed by adding this service (&lt;code&gt;services.AddSingleton&amp;lt;IHostLifetime, MyWindowsServiceLifetime&amp;gt;()&lt;/code&gt;) after calling &lt;code&gt;UseWindowsService&lt;/code&gt;; the .NET Core dependency injection will just take the last registered &lt;code&gt;IHostLifetime&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;crashing-windowsservicelifetime&quot;&gt;Crashing WindowsServiceLifetime&lt;/h2&gt;
+
+&lt;p&gt;It is also possible to create a custom derived &lt;code&gt;WindowsServiceLifetime&lt;/code&gt; that can detect application failures and will prevent &lt;code&gt;ServiceBase&lt;/code&gt; from sending the “stopped” message to the SCM. That way, your service will be restarted regardless of the &lt;code&gt;failureflag&lt;/code&gt; setting, because any failures will cause the process to crash.&lt;/p&gt;
+
+&lt;p&gt;We don’t want to crash the process immediately; instead, we want to shut down the .NET Core host and then terminate, so that the SCM knows the process failed. The &lt;code&gt;WindowsServiceLifetime&lt;/code&gt; type has &lt;a href=&quot;https://github.com/dotnet/extensions/blob/4becf241089932aa1f1e7f3ab4155a437fd3dba1/src/Hosting/WindowsServices/src/WindowsServiceLifetime.cs#L105&quot;&gt;some similar behavior&lt;/a&gt;: if the SCM requests the service to stop, then it will shut down the .NET Core host and wait for it to stop. We can do the same thing in our custom lifetime type:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;MyWindowsServiceLifetime&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;WindowsServiceLifetime&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;readonly&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IHostApplicationLifetime&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;readonly&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ManualResetEventSlim&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_shutdownComplete&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;readonly&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationTokenRegistration&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_applicationStoppedRegistration&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;MyWindowsServiceLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IHostApplicationLifetime&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IHostEnvironment&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ILoggerFactory&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;loggerFactory&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;HostOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;options&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;base&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;loggerFactory&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;options&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;_hostApplicationLifetime&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;_shutdownComplete&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ManualResetEventSlim&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;_applicationStoppedRegistration&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ApplicationStopped&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Register&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_shutdownComplete&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Set&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;());&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+  &lt;span class=&quot;k&quot;&gt;protected&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;OnStop&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// Take the process ExitCode if there isn&amp;#39;t one for our Win32 service&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExitCode&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExitCode&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;ExitCode&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExitCode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExitCode&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+      &lt;span class=&quot;c1&quot;&gt;// Wait for application to shut down.&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;_hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;StopApplication&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;_shutdownComplete&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Wait&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+
+      &lt;span class=&quot;c1&quot;&gt;// Terminate app. Do not call base.OnStop().&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;Environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Exit&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExitCode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// If we&amp;#39;re exiting normally, just let WindowsServiceLifetime do its job.&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;base&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;OnStop&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+  &lt;span class=&quot;k&quot;&gt;protected&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Dispose&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;disposing&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;disposing&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;_shutdownComplete&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Set&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;_applicationStoppedRegistration&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Dispose&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;base&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Dispose&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;disposing&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;This kind of &lt;code&gt;MyWindowsServiceLifetime&lt;/code&gt; implementation will work whether or not you set the &lt;code&gt;failureflag&lt;/code&gt; on your service.&lt;/p&gt;
+</description>
+        <pubDate>Thu, 18 Jun 2020 00:00:00 +0000</pubDate>
+        <link>https://blog.stephencleary.com/2020/06/servicebase-gotcha-recovery-actions.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2020/06/servicebase-gotcha-recovery-actions.html</guid>
+      </item>
+    
+      <item>
         <title>A New Pattern for Exception Logging</title>
         <description>&lt;h2 id=&quot;tldr&quot;&gt;TL;DR&lt;/h2&gt;
 
@@ -919,104 +1073,6 @@ jobs:
         <pubDate>Sat, 28 Mar 2020 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2020/03/valuetask.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2020/03/valuetask.html</guid>
-      </item>
-    
-      <item>
-        <title>Microsoft.Extensions.Logging, Part 2: Types</title>
-        <description>&lt;h2 id=&quot;factory-provider-repository-builders&quot;&gt;Factory Provider Repository Builders&lt;/h2&gt;
-
-&lt;p&gt;Yeah, naming is hard.&lt;/p&gt;
-
-&lt;p&gt;In &lt;code&gt;Microsoft.Extensions.Logging&lt;/code&gt;, there are two types in particular that I kept conflating: &lt;code&gt;ILoggerProvider&lt;/code&gt; and &lt;code&gt;ILoggerFactory&lt;/code&gt;. Even though they both can create instances of &lt;code&gt;ILogger&lt;/code&gt;, they are actually completely different!&lt;/p&gt;
-
-&lt;p&gt;In this post, I’m going to cover the main types of &lt;code&gt;Microsoft.Extensions.Logging&lt;/code&gt; and describe their intended use.&lt;/p&gt;
-
-&lt;h2 id=&quot;loglevel&quot;&gt;LogLevel&lt;/h2&gt;
-
-&lt;p&gt;Like all other logging frameworks, &lt;code&gt;Microsoft.Extensions.Logging&lt;/code&gt; defines a sequence of levels for its logs. In increasing order of severity, they are &lt;code&gt;Trace&lt;/code&gt;, &lt;code&gt;Debug&lt;/code&gt;, &lt;code&gt;Information&lt;/code&gt;, &lt;code&gt;Warning&lt;/code&gt;, &lt;code&gt;Error&lt;/code&gt;, and &lt;code&gt;Critical&lt;/code&gt;. The &lt;a href=&quot;https://docs.microsoft.com/en-us/dotnet/api/microsoft.extensions.logging.loglevel&quot;&gt;meanings of these values&lt;/a&gt; are well documented, along with &lt;a href=&quot;https://docs.microsoft.com/en-us/aspnet/core/fundamentals/logging/#log-level&quot;&gt;advice on when to use each&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;There is another “log level” which is not really a log level: &lt;code&gt;None&lt;/code&gt;. This is technically part of the enumeration, but is used during &lt;em&gt;configuration&lt;/em&gt; to indicate that no logs for that part of the system should be logged. The &lt;code&gt;None&lt;/code&gt; value is not used during logging.&lt;/p&gt;
-
-&lt;h2 id=&quot;ilogger&quot;&gt;ILogger&lt;/h2&gt;
-
-&lt;p&gt;&lt;code&gt;ILogger&lt;/code&gt; is a logger that your code can use to write log messages to. There are three core methods: &lt;code&gt;IsEnabled&lt;/code&gt; tests whether a log level is enabled on that logger; &lt;code&gt;Log&lt;/code&gt; is the core logging method that is used to write log messages; and &lt;code&gt;BeginScope&lt;/code&gt; defines a logging scope.&lt;/p&gt;
-
-&lt;p&gt;We’ll cover logging scopes later in this series. That leaves &lt;code&gt;IsEnabled&lt;/code&gt; and &lt;code&gt;Log&lt;/code&gt;, which are the core logging methods. There’s a bunch of logging extension methods that build on that core; the common methods like &lt;code&gt;LogInformation&lt;/code&gt; are just wrappers around &lt;code&gt;Log&lt;/code&gt;, with the appropriate arguments.&lt;/p&gt;
-
-&lt;p&gt;Internally, an &lt;code&gt;ILogger&lt;/code&gt; has a “name” (also called a “category”). The idea is that each &lt;code&gt;ILogger&lt;/code&gt; instance is used by a different component of the application.&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;ILogger&lt;/code&gt; is a base interface that provides the core logging functionality, but it is seldom used directly. There are some exceptions (e.g., Azure Functions will pass you an &lt;code&gt;ILogger&lt;/code&gt;), but most of the time your code will log to an &lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt;.&lt;/p&gt;
-
-&lt;h2 id=&quot;iloggerlttgt&quot;&gt;ILogger&amp;lt;T&amp;gt;&lt;/h2&gt;
-
-&lt;p&gt;&lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt; is a logger that is named after a type &lt;code&gt;T&lt;/code&gt;. All logs sent to an &lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt; (with the default implementation) will have a logger name/category of &lt;code&gt;typeof(T).FullName&lt;/code&gt;. &lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt; is derived from &lt;code&gt;ILogger&lt;/code&gt; and adds no new functionality.&lt;/p&gt;
-
-&lt;p&gt;If you’re using dependency injection, an instance of &lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt; is usually injected into your type &lt;code&gt;T&lt;/code&gt;. So, each time you have a constructor that takes an &lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt;, you are defining a “component” for your application.&lt;/p&gt;
-
-&lt;p&gt;Personally, I’m not a &lt;em&gt;huge&lt;/em&gt; fan of this style of getting a logger, but it works. In my applications, the concept of a “component” seldomly has a 1:1 relationship with “types that log”. It tends to work out best for ASP.NET Controllers, but less so for utility types used by services (where I usually want the utility type to use the service’s component name). Of course, you can just pass an &lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt; (or &lt;code&gt;ILogger&lt;/code&gt;) to the utility type, and that’s the way this is generally resolved.&lt;/p&gt;
-
-&lt;p&gt;So, here’s a question that you may have: if &lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt; provides no benefit over &lt;code&gt;ILogger&lt;/code&gt; (other than being named after a type &lt;code&gt;T&lt;/code&gt;), why does this type exist at all? The answer is logging extension methods, which we’ll look at in more detail further in this series.&lt;/p&gt;
-
-&lt;h2 id=&quot;iloggerprovider&quot;&gt;ILoggerProvider&lt;/h2&gt;
-
-&lt;p&gt;The logger provider is a type that (drum roll…) provides &lt;code&gt;ILogger&lt;/code&gt; instances. But not just that; it provides &lt;code&gt;ILogger&lt;/code&gt; instances &lt;em&gt;for a specific logging system&lt;/em&gt;. Microsoft publishes &lt;a href=&quot;https://github.com/aspnet/Logging/tree/dev/src&quot;&gt;a few logger providers&lt;/a&gt; that support writing to &lt;a href=&quot;https://www.nuget.org/packages/Microsoft.Extensions.Logging.Debug/&quot;&gt;debugger output&lt;/a&gt;, the &lt;a href=&quot;https://www.nuget.org/packages/Microsoft.Extensions.Logging.Console/&quot;&gt;Console&lt;/a&gt;, the &lt;a href=&quot;https://www.nuget.org/packages/Microsoft.Extensions.Logging.EventLog/&quot;&gt;Windows Event Log&lt;/a&gt;, &lt;a href=&quot;https://www.nuget.org/packages/Microsoft.Extensions.Logging.EventSource/&quot;&gt;Event Tracing for Windows (ETW)&lt;/a&gt;, and others.&lt;/p&gt;
-
-&lt;p&gt;There are plenty of third-party logging providers, too. The primary purpose of a logging provider is to take log events and forward them to some logging backend. So there are logging providers for all kinds of logging backends: Serilog, Seq, log4net, etc. This allows you to write code that is independent of a logging framework (logging to an &lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt;), and the implementation at runtime hits a specific backend (or multiple ones!).&lt;/p&gt;
-
-&lt;p&gt;You can also create your own implementations of &lt;code&gt;ILoggerProvider&lt;/code&gt;. In my &lt;a href=&quot;https://github.com/StephenClearyApps/DotNetApis&quot;&gt;DotNetApis project&lt;/a&gt;, I have one provider that &lt;a href=&quot;https://github.com/StephenClearyApps/DotNetApis/blob/796f146e3027a0c470717befe33457c3dfeab50c/service/DotNetApis.Common/InMemoryLoggerProvider.cs&quot;&gt;stores logs in memory&lt;/a&gt; so they can be returned to the frontend as part of the HTTP response, another provider that &lt;a href=&quot;https://github.com/StephenClearyApps/DotNetApis/blob/796f146e3027a0c470717befe33457c3dfeab50c/service/DotNetApis.Common/JsonLoggerProvider.cs&quot;&gt;streams JSON logs to a GZIP-compressed Azure blob&lt;/a&gt;, and several others.&lt;/p&gt;
-
-&lt;p&gt;Creating reusable implementations of &lt;code&gt;ILoggerProvider&lt;/code&gt; is perhaps the most underdocumented part of &lt;code&gt;Microsoft.Extensions.Logging&lt;/code&gt;. The providers in my DotNetApis project at this point are incomplete; there is no way I would put them in a NuGet package or anything. A proper, reusable &lt;code&gt;ILoggerProvider&lt;/code&gt; is more involved; later in this series I’ll look specifically at implementing &lt;code&gt;ILoggerProvider&lt;/code&gt; properly, and cover all the necessary details.&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;ILoggerProvider&lt;/code&gt; is a way to extend &lt;code&gt;Microsoft.Extensions.Logging&lt;/code&gt; by &lt;em&gt;implementation&lt;/em&gt;. However, you don’t ever want to &lt;em&gt;consume&lt;/em&gt; a logger provider directly. Even though &lt;code&gt;ILoggerProvider.CreateLogger&lt;/code&gt; creates &lt;code&gt;ILogger&lt;/code&gt; instances, you never actually want to call that method to &lt;em&gt;get&lt;/em&gt; a logger. To get loggers, you want to use dependency injection or &lt;code&gt;ILoggerFactory&lt;/code&gt;.&lt;/p&gt;
-
-&lt;h2 id=&quot;iloggerfactory&quot;&gt;ILoggerFactory&lt;/h2&gt;
-
-&lt;p&gt;&lt;code&gt;ILoggerFactory&lt;/code&gt; is the mastermind that brings together all the types above. Conceptually, an &lt;code&gt;ILoggerFactory&lt;/code&gt; has a collection of &lt;code&gt;ILoggerProvider&lt;/code&gt;s, and the &lt;code&gt;ILoggerFactory&lt;/code&gt; creates &lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt; instances for the application.&lt;/p&gt;
-
-&lt;h3 id=&quot;registering-iloggerproviders-with-iloggerfactory&quot;&gt;Registering ILoggerProviders with ILoggerFactory&lt;/h3&gt;
-
-&lt;p&gt;This is where the official documentation starts to fall short. In the ASP.NET Core world, ASP.NET Core itself takes care of creating an &lt;code&gt;ILoggerFactory&lt;/code&gt; instance, which it then passes to your application to configure. Your application can then call &lt;code&gt;AddProvider&lt;/code&gt; or a higher-level provider-specific method such as &lt;code&gt;AddDebug&lt;/code&gt;, &lt;code&gt;AddConsole&lt;/code&gt;, etc.&lt;/p&gt;
-
-&lt;p&gt;Fortunately, even without ASP.NET Core, it’s not too difficult to do this yourself using the &lt;code&gt;LoggerFactory&lt;/code&gt; type in &lt;code&gt;Microsoft.Extensions.Logging&lt;/code&gt;:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;loggerFactory&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;LoggerFactory&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AddDebug&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AddConsole&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;h3 id=&quot;getting-iloggerlttgt-instances-from-iloggerfactory&quot;&gt;Getting ILogger&amp;lt;T&amp;gt; Instances from ILoggerFactory&lt;/h3&gt;
-
-&lt;p&gt;In the ASP.NET Core world, the &lt;code&gt;ILoggerFactory&lt;/code&gt; is included in your Dependency Injection container, and it already knows how to get &lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt; values out of it, and everything is magical rainbows.&lt;/p&gt;
-
-&lt;p&gt;When you’re outside of the ASP.NET Core world, you can still use &lt;code&gt;ILoggerFactory&lt;/code&gt; in this way. You just have to:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;Provide the &lt;code&gt;ILoggerFactory&lt;/code&gt; instance to your DI container.&lt;/li&gt;
-  &lt;li&gt;Configure your DI container to resolve &lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt; instances by calling &lt;code&gt;ILoggerFactory.GetLogger&amp;lt;T&amp;gt;()&lt;/code&gt;.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;The exact instructions on how to do this depends on your DI container of choice.&lt;/p&gt;
-
-&lt;p&gt;Of course, there’s another option, too. You can just provide the &lt;code&gt;ILoggerFactory&lt;/code&gt; instance, and your consuming types can take the &lt;code&gt;ILoggerFactory&lt;/code&gt; and create their own &lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt;.&lt;/p&gt;
-
-&lt;h2 id=&quot;what-are-the-iloggerfactorys-iloggers&quot;&gt;What Are the ILoggerFactory’s ILoggers?&lt;/h2&gt;
-
-&lt;p&gt;Before closing out this post, I just want to point out that the &lt;code&gt;ILogger&lt;/code&gt; instances provided by &lt;code&gt;ILoggerFactory&lt;/code&gt; are &lt;em&gt;not&lt;/em&gt; the same as the &lt;code&gt;ILogger&lt;/code&gt; instances provided by &lt;code&gt;ILoggerProvider&lt;/code&gt;. An &lt;code&gt;ILoggerProvider&lt;/code&gt; &lt;code&gt;ILogger&lt;/code&gt; is a logger that logs &lt;em&gt;to that specific provider&lt;/em&gt;. An &lt;code&gt;ILoggerFactory&lt;/code&gt; &lt;code&gt;ILogger&lt;/code&gt; is a logger that logs &lt;em&gt;to all registered providers&lt;/em&gt;.&lt;/p&gt;
-
-&lt;p&gt;In other words, the &lt;code&gt;ILoggerFactory&lt;/code&gt; &lt;code&gt;ILogger&lt;/code&gt;/&lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt; loggers are &lt;em&gt;composite&lt;/em&gt; loggers; they forward log messages to each provider’s &lt;code&gt;ILogger&lt;/code&gt;.&lt;/p&gt;
-
-&lt;h1 id=&quot;review&quot;&gt;Review&lt;/h1&gt;
-
-&lt;p&gt;This post has described the various logging types from the component’s perspective (&lt;code&gt;ILogger&lt;/code&gt;) and working out towards the application’s perspective (&lt;code&gt;ILoggerFactory&lt;/code&gt;). Let’s briefly review, going the other way this time.&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;ILoggerFactory&lt;/code&gt; is a collection of &lt;code&gt;ILoggerProvider&lt;/code&gt;s that creates composite &lt;code&gt;ILogger&lt;/code&gt;/&lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt; loggers.&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;ILoggerProvider&lt;/code&gt; ia a provider for a &lt;em&gt;specific&lt;/em&gt; logging system. It provides &lt;code&gt;ILogger&lt;/code&gt; loggers to the &lt;code&gt;ILoggerFactory&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;Each component gets an &lt;code&gt;ILogger&amp;lt;T&amp;gt;&lt;/code&gt; (or &lt;code&gt;ILogger&lt;/code&gt;) from the &lt;code&gt;ILoggerFactory&lt;/code&gt; that it should use for logging.&lt;/p&gt;
-</description>
-        <pubDate>Thu, 07 Jun 2018 00:00:00 +0000</pubDate>
-        <link>https://blog.stephencleary.com/2018/06/microsoft-extensions-logging-part-2-types.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2018/06/microsoft-extensions-logging-part-2-types.html</guid>
       </item>
     
   </channel>
