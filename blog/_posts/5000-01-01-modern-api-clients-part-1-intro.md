@@ -8,7 +8,7 @@ description: "A discussion of API clients, and why it's often best to write your
 
 This post kicks off a new series on writing modern API clients in C#. I'm excited about this series, because there's a *lot* of information out there on all the different pieces, but AFAIK there's no complete guide that puts everything together.
 
-Over the next few weeks, we'll look at how to create a modern API client, using `HttpClient` (via `HttpClientFactory`), `Polly`, and `Refit` to provide a first-class C# client for any kind of API service.
+Over the next few weeks, we'll look at how to create a modern API client, using `HttpClient` (via an `HttpClient` factory), `Polly`, and `Refit` to provide a first-class C# client for any kind of API service.
 
 ## Why?
 
