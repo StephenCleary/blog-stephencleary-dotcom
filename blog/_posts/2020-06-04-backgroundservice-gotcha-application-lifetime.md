@@ -58,7 +58,7 @@ public class MyBackgroundService : BackgroundService
         {
             // Implementation
         }
-        catch (Exception ex) when False(() => _logger.LogCritical(ex, "Fatal error"))
+        catch (Exception ex) when (False(() => _logger.LogCritical(ex, "Fatal error")))
         {
             throw;
         }
