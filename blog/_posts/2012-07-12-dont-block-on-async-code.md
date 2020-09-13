@@ -149,7 +149,7 @@ This changes the blocking behavior of the top-level methods so that the context 
 
 This kind of deadlock is always the result of mixing synchronous with asynchronous code. Usually this is because people are just trying out async with one small piece of code and use synchronous code everywhere else. Unfortunately, partially-asynchronous code is much more complex and tricky than just making everything asynchronous.
 
-If you _do_ need to maintain a partially-asynchronous code base, then be sure to check out two more of Stephen Toub's blog posts: [Asynchronous Wrappers for Synchronous Methods](http://blogs.msdn.com/b/pfxteam/archive/2012/03/24/10287244.aspx) and [Synchronous Wrappers for Asynchronous Methods](http://blogs.msdn.com/b/pfxteam/archive/2012/04/13/10293638.aspx), as well as my [AsyncEx library](http://nitoasyncex.codeplex.com/).
+If you _do_ need to maintain a partially-asynchronous code base, then be sure to check out two more of Stephen Toub's blog posts: [Asynchronous Wrappers for Synchronous Methods](https://devblogs.microsoft.com/pfxteam/should-i-expose-asynchronous-wrappers-for-synchronous-methods/) and [Synchronous Wrappers for Asynchronous Methods](https://devblogs.microsoft.com/pfxteam/should-i-expose-synchronous-wrappers-for-asynchronous-methods/), as well as my [AsyncEx library](http://nitoasyncex.codeplex.com/).
 
 ## Answered Questions
 
