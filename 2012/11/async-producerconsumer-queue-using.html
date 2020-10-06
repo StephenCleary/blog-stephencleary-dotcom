@@ -347,7 +347,7 @@ img.comment-author-profile-image {
 
 <p>A common requirement for producer/consumer queues is a throttling restriction. We don’t want to run out of memory if the producers can produce data items faster than consumers can consume them!</p>
 
-<p>First, we need to change our producer. <code>Post</code> will (synchronously) block once the throttling threshold is reached, so we’ll switch to the asynchronous <code>SendAsync</code> (and make the producer itself asynchronous):</p>
+<p>First, we need to change our producer. <code>Post</code> may return <code>false</code> once the throttling threshold is reached, so we’ll switch to the asynchronous <code>SendAsync</code> (and make the producer itself asynchronous), which will automatically wait for space to be available:</p>
 
 <figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">Produce</span><span class="p">(</span><span class="n">BufferBlock</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">queue</span><span class="p">,</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">values</span><span class="p">)</span>
 <span class="p">{</span>
