@@ -64,7 +64,7 @@ public async Task ConsumerReceivesCorrectValues()
 
 A common requirement for producer/consumer queues is a throttling restriction. We don't want to run out of memory if the producers can produce data items faster than consumers can consume them!
 
-First, we need to change our producer. `Post` will (synchronously) block once the throttling threshold is reached, so we'll switch to the asynchronous `SendAsync` (and make the producer itself asynchronous):
+First, we need to change our producer. `Post` may return `false` once the throttling threshold is reached, so we'll switch to the asynchronous `SendAsync` (and make the producer itself asynchronous), which will automatically wait for space to be available:
 
 {% highlight csharp %}
 private static async Task Produce(BufferBlock<int> queue, IEnumerable<int> values)
