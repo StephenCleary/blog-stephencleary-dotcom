@@ -41,7 +41,7 @@ My blog often deals with "asynchronous" in the sense of the `async`/`await` keyw
 
 Asynchronous messaging has two parts (with an optional third part):
 
-1. A *reliable queue*. By "reliable", I mean a queue that at least flushes to disk on writes. An in-memory `Queue<T>` or `BlockingCollection<T>` or `ChannelWriter<T>` is not a "reliable queue" by this definition.
+1. A *reliable queue*. By "reliable", I mean a queue that at least flushes to disk on writes. In other words, the messages sent to the queue are durable. An in-memory `Queue<T>` or `BlockingCollection<T>` or `ChannelWriter<T>` is not a "reliable queue" by this definition.
 1. A *backend service*. This is an independent service that reads from that reliable queue and processes the items in it (i.e., executes the long-running operation).
 1. (optional) Some method to *retrieve results*. If the client needs to know the outcome of the long-running operation, then this is the part that provides that outcome to the client.
 
