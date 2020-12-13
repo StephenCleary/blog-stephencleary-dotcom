@@ -38,14 +38,8 @@ One final note: in order to retrieve results, your backend processing service mu
 
 ## Notification
 
-- SignalR / WebSockets
+Polling (whether done by the user or by the client) is a perfectly valid solution for most cases. In some cases, however, your clients need to know *immediately* whenever the message has been processed. This is rare, but not unheard of. In this case, you wouldn't want to use polling, where you'd have to tradeoff how quickly your client sees the completion against the number of wasted requests all saying "is it done yet?"
 
+In the case where you need realtime notification of completion, you should use a server-initiated notification system. These days, that pretty much always means WebSockets (or SignalR), although old-school solutions like long polling or even server-side events (SSE) are still around, too. All of these solutions enable an HTTP application to push a message to an already-connected client. In this case, the common approach is to have the backend processing service connect to the HTTP application via some kind of bus (e.g., it could connect to a SignalR hub), and then send a message over that bus directly to the HTTP application, which notifies its clients that the processing is complete.
 
-Mix and Match
-- Hangfire: database and in-proc solution. Issues: rolling upgrades, serialization details. TODO: retrieval?
-- others?
-Further considerations
-- Independent scaling
-- CAP: either duplicates or lost messages must be possible. Most solutions try for duplicates, and lost messages are only for truly massive outages.
-- Poison/deadletter queues.
-- Version the message DTOs.
+This is a fine approach, and only has one caveat: when a system's architecture becomes complex enough to introduce asynchronous messaging, then that system is also positioned to be prepared to scale out. The bus connecting the HTTP application instances to the background processing instances needs to be ready for scaling. Some systems (e.g., SignalR) are not set up to scale by default. If I was adding asynchronous messaging to a system and we needed to use SignalR for realtime notifications, then I would set it up with a scalable backplane immediately.
