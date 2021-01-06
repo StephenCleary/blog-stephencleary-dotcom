@@ -41,16 +41,16 @@ My blog often deals with "asynchronous" in the sense of the `async`/`await` keyw
 
 Asynchronous messaging has two parts (with an optional third part):
 
-1. A *reliable queue*. By "reliable", I mean a queue that at least flushes to disk on writes. In other words, the messages sent to the queue are durable. An in-memory `Queue<T>` or `BlockingCollection<T>` or `ChannelWriter<T>` is not a "reliable queue" by this definition.
-1. A *backend service*. This is an independent service that reads from that reliable queue and processes the items in it (i.e., executes the long-running operation).
+1. A *durable queue*. By "durable", I mean a queue that at least flushes to disk on writes. In other words, the *messages* sent to the queue are durable. An in-memory `Queue<T>` or `BlockingCollection<T>` or `ChannelWriter<T>` is not a "durable queue" by this definition.
+1. A *backend service*. This is an independent service that reads from that durable queue and processes the items in it (i.e., executes the long-running operation).
 1. (optional) Some method to *retrieve results*. If the client needs to know the outcome of the long-running operation, then this is the part that provides that outcome to the client.
 
-One common example is sending emails. If an API wants to send an email but does not want to wait for the email to be sent before returning to the client, then the API should add a message to the reliable queue describing the email to be sent and then return. Since this is a reliable queue, the email message to send is flushed to disk before the HTTP response is sent to the client. Then a separate backend service reading from that queue retrieves the queue message and sends the actual email.
+One common example is sending emails. If an API wants to send an email but does not want to wait for the email to be sent before returning to the client, then the API should add a message to the durable queue describing the email to be sent and then return. Since this is a durable queue, the queue message (containing the email details) is flushed to disk before the HTTP response is sent to the client. Then a separate backend service reading from that queue retrieves the queue message and sends the actual email.
 
-Another common example is database writes. Sometimes there are situations where the API knows what to write to the database but doesn't want to make the client wait for it. In that case, the API should write the information to a reliable queue and then return to the client. Then a separate backend service reading from that queue retrieves the information and performs the actual database update.
+Another common example is database writes. Sometimes there are situations where the API knows what to write to the database but doesn't want to make the client wait for it. In that case, the API should write the information to a durable queue and then return to the client. Then a separate backend service reading from that queue retrieves the information and performs the actual database update.
 
 Retrieving results is often not necessary. E.g., the email itself usually *is* the result of sending an email, and database writes will show up eventually as the user navigates/refreshes. But sometimes you do need the client to be notified of results; this is possible either using polling or a proactive notification using a messaging technology like WebSockets.
 
 In the rest of this series, I'll dive more into each parts of the solution, and discuss specific approaches in more detail. But the description above is usually all that's needed.
 
-The proper solution for request-extrinsic code is **asynchronous messaging**, which is accomplished by adding a **reliable queue** coupled with a **backend service**.
+The proper solution for request-extrinsic code is **asynchronous messaging**, which is accomplished by adding a **durable queue** coupled with a **backend service**.

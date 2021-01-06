@@ -6,7 +6,7 @@ seriesTitle: "Retrieve Results"
 description: "When you do and do not need to retrieve results in an asynchronous messaging solution, and methods for doing so."
 ---
 
-So far in this series, we've covered how asynchronous messaging can be implemented with a reliable queue and a backend service. Those are the most necessary components of the solution, but another piece is sometimes necessary.
+So far in this series, we've covered how asynchronous messaging can be implemented with a durable queue and a backend service. Those are the most necessary components of the solution, but another piece is sometimes necessary.
 
 Many times, it's the desire to "return early" or "fire and forget" that start developers down the path of exogenous code and asynchronous messaging. Sometimes the client, as the originator of the request, wants to get the results of the long-running background operation.
 
@@ -24,7 +24,7 @@ So, the first question to ask is whether retrieving results is actually necessar
 
 If the client does need to detect the results of the asynchronous operation, then it can poll a "status" endpoint until the results are available, and then pull the final result (or error, if the operation failed). Most HTTP APIs these days are REST-based, so I'll describe here the most common approaches for implementing polling for asynchronous messaging completion.
 
-Unfortunately, there's a wide variety of implementations for this kind of pattern. The one thing everyone agrees with is that the initial status response code should be `202 Accepted`. This is for the call that initiates the asynchronous messaging, so the HTTP application should put its message into a reliable queue and then return `202 Accepted`.
+Unfortunately, there's a wide variety of implementations for this kind of pattern. The one thing everyone agrees with is that the initial status response code should be `202 Accepted`. This is for the call that initiates the asynchronous messaging, so the HTTP application should put its message into a durable queue and then return `202 Accepted`.
 
 The HTTP application should also return some kind of information that allows the client to poll for completion. This is usually done via some kind of "status" URI. The [actual standard](https://tools.ietf.org/html/rfc7231#section-6.3.3) just says "The representation sent with this response ought to describe the request's current status and point to (or embed) a status monitor that can provide the user with an estimate of when the request will be fulfilled." This is very open-ended, and this is where the implementations begin to diverge. One option is to return the status URI in the body of the `202 Accepted` (e.g., as a JSON property). Another option is to return the status URI in the `Location` header of the response.
 

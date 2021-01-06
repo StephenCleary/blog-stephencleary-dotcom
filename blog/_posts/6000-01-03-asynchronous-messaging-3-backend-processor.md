@@ -6,11 +6,11 @@ seriesTitle: "Backend Service"
 description: "A discussion of backend processing services, with multiple examples."
 ---
 
-The proper solution for request-extrinsic code is asynchronous messaging, which has two primary parts: a reliable queue and a backend service. Today I'm going to discuss the backend service.
+The proper solution for request-extrinsic code is asynchronous messaging, which has two primary parts: a durable queue and a backend service. Today I'm going to discuss the backend service.
 
 ## Backend Services
 
-The purpose of the background service is to process the queue messages. When the HTTP application wants to return before the processing is complete, it queues a message to the reliable queue and then returns. The background service is the other side of that pipe; the HTTP application is the producer putting messages into the queue, and the background service is the consumer retrieving messages from the queue and processing them.
+The purpose of the background service is to process the queue messages. When the HTTP application wants to return before the processing is complete, it queues a message to the durable queue and then returns. The background service is the other side of that pipe; the HTTP application is the producer putting messages into the queue, and the background service is the consumer retrieving messages from the queue and processing them.
 
 I usually recommend that the background service is **independent** from the HTTP application, but it doesn't strictly have to be.
 
@@ -26,7 +26,7 @@ For all these reasons, I recommend that background services are separate, indepe
 
 An operation is **idempotent** if it can be applied multiple times and produce the same result each time. In other words, once an idempotent operation has been applied, then future applications of that same operation are noops. Ideally, the background service should process its messages idempotently.
 
-This is necessary just due to the realities of durable messages (i.e., reliable queues). The CAP theorem has all the details, but the takeaway for modern distributed computing is that reliable queues will deliver their durable messages **at least once**. This means that the background service may get the same message more than once.
+This is necessary just due to the realities of durable queues. The CAP theorem has all the details, but the takeaway for modern distributed computing is that durable queues will deliver their durable messages **at least once**. This means that the background service may get the same message more than once.
 
 Ideally, you should try to structure your processing code so that receiving the same message more than once is a noop. Sometimes this means capturing more of the "state" of the system at the time the message is queued, and including that additional state in the queue messages.
 
@@ -34,7 +34,7 @@ Sometimes idempotency just isn't possible. Or easy, at least. In that case, you 
 
 ## Examples of Backend Services
 
-Just like reliable queues, my go-to solutions for backend services are cloud solutions, specifically Functions as a Service (FaaS). FaaS is a perfect fit for background services, and even more so if you're using a cloud-based reliable queue. All the major cloud providers have built-in support for combining their reliable queues with their FaaS offerings. This includes scaling logic: each cloud provider will auto-scale FaaS consumers based on their queue messages.
+Just like durable queues, my go-to solutions for backend services are cloud solutions, specifically Functions as a Service (FaaS). FaaS is a perfect fit for background services, and even more so if you're using a cloud-based durable queue. All the major cloud providers have built-in support for combining their durable queues with their FaaS offerings. This includes scaling logic: each cloud provider will auto-scale FaaS consumers based on their queue messages.
 
 [Azure Storage Queues](https://azure.microsoft.com/en-us/services/storage/queues/) pair with [Azure Functions](https://azure.microsoft.com/en-us/services/functions/); [Amazon Simple Queue Service (SQS) queues](https://aws.amazon.com/sqs/) pair with [AWS Lambdas](https://aws.amazon.com/lambda/); and [Google Cloud Task queues](https://cloud.google.com/tasks) pair with [Google Cloud Functions](https://cloud.google.com/functions). Cloud pairs such as these are the easiest way to implement a full asynchronous messaging solution.
 
