@@ -8,6 +8,63 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>Asynchronous Messaging, Part 1: Basic Distributed Architecture</title>
+        <description>&lt;p&gt;This is the first of a short series of blog posts on Asynchronous Messaging. This is not a new problem at all, but it’s something I’ve observed becoming more and more common over the last few years. Also, this is the kind of a problem that is difficult to solve quickly - or even &lt;em&gt;describe&lt;/em&gt; the solution quickly, so I think a blog (series) is appropriate.&lt;/p&gt;
+
+&lt;p&gt;A bit of a side note, here: I primarily develop in the .NET stack these days (for the backend, at least). So some of my details will discuss ASP.NET-specific technologies and solutions. However, the general problem and solution is applicable to &lt;strong&gt;all&lt;/strong&gt; technology stacks. I’ll call out the ASP.NET-specific parts as I cover them.&lt;/p&gt;
+
+&lt;p&gt;So first, I’d like to describe how this problem usually manifests, and then I’ll discuss the solution. Sorry for the somewhat repetitive nature in this first “problem” section; I fully admit that I’m primarily writing this section for Google.&lt;/p&gt;
+
+&lt;h2 id=&quot;the-problem&quot;&gt;The Problem&lt;/h2&gt;
+
+&lt;p&gt;The problem usually manifests in a desire to &lt;strong&gt;return early&lt;/strong&gt; from an HTTP request. So, once the request has been received, the developer wants the server-side API application to &lt;strong&gt;not wait&lt;/strong&gt; for the processing to complete, and instead send the response back immediately.&lt;/p&gt;
+
+&lt;p&gt;A common term for this is &lt;strong&gt;fire and forget&lt;/strong&gt;, in the sense that the developer wants to start (“fire”) some background work but then not wait for it to complete (“forget”).&lt;/p&gt;
+
+&lt;p&gt;The goal is to have the HTTP call just &lt;strong&gt;start a workflow&lt;/strong&gt;. This workflow then runs on the server side without further input from the client application. It’s a form of &lt;strong&gt;long-running operation&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;p&gt;I’ve decided to call this “request-extrinsic code”, because it sounds fancy. “Request-extrinsic” means that it’s code that runs &lt;em&gt;outside&lt;/em&gt; of a request. This is fundamentally dangerous, which is why the solution is more complex than at first seems necessary.&lt;/p&gt;
+
+&lt;div class=&quot;alert alert-info&quot;&gt;
+  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
+
+  &lt;p&gt;&lt;strong&gt;ASP.NET-specific:&lt;/strong&gt; In ASP.NET pre-Core, there is an exception that developers may trigger with the message “An asynchronous module or handler completed while an asynchronous operation was still pending.” This is a “safety net” exception that indicates there’s some request-extrinsic code (which is dangerous). Unfortunately, ASP.NET Core does not have this “safety net” check, even though request-extrinsic code is just as bad on ASP.NET Core as it was on ASP.NET pre-Core.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;the-solution&quot;&gt;The Solution&lt;/h2&gt;
+
+&lt;p&gt;The proper solution for request-extrinsic code is &lt;strong&gt;asynchronous messaging&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;div class=&quot;alert alert-info&quot;&gt;
+  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
+
+  &lt;p&gt;My blog often deals with “asynchronous” in the sense of the &lt;code&gt;async&lt;/code&gt;/&lt;code&gt;await&lt;/code&gt; keywords. This blog series is on &lt;em&gt;asynchronous messaging&lt;/em&gt;, which is a completely different thing. &lt;code&gt;async&lt;/code&gt;/&lt;code&gt;await&lt;/code&gt; deal with asynchrony within the scope of a single process; asynchronous messaging deals with asynchrony across two processes (client and server). The two uses of “asynchronous” are similar at the 10,000 foot view, but completely different on the ground.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Asynchronous messaging has two parts (with an optional third part):&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;A &lt;em&gt;durable queue&lt;/em&gt;. By “durable”, I mean a queue that at least flushes to disk on writes. In other words, the &lt;em&gt;messages&lt;/em&gt; sent to the queue are durable. An in-memory &lt;code&gt;Queue&amp;lt;T&amp;gt;&lt;/code&gt; or &lt;code&gt;BlockingCollection&amp;lt;T&amp;gt;&lt;/code&gt; or &lt;code&gt;ChannelWriter&amp;lt;T&amp;gt;&lt;/code&gt; is not a “durable queue” by this definition.&lt;/li&gt;
+  &lt;li&gt;A &lt;em&gt;backend service&lt;/em&gt;. This is an independent service that reads from that durable queue and processes the items in it (i.e., executes the long-running operation).&lt;/li&gt;
+  &lt;li&gt;(optional) Some method to &lt;em&gt;retrieve results&lt;/em&gt;. If the client needs to know the outcome of the long-running operation, then this is the part that provides that outcome to the client.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;One common example is sending emails. If an API wants to send an email but does not want to wait for the email to be sent before returning to the client, then the API should add a message to the durable queue describing the email to be sent and then return. Since this is a durable queue, the queue message (containing the email details) is flushed to disk before the HTTP response is sent to the client. Then a separate backend service reading from that queue retrieves the queue message and sends the actual email.&lt;/p&gt;
+
+&lt;p&gt;Another common example is database writes. Sometimes there are situations where the API knows what to write to the database but doesn’t want to make the client wait for it. In that case, the API should write the information to a durable queue and then return to the client. Then a separate backend service reading from that queue retrieves the information and performs the actual database update.&lt;/p&gt;
+
+&lt;p&gt;Retrieving results is often not necessary. E.g., the email itself usually &lt;em&gt;is&lt;/em&gt; the result of sending an email, and database writes will show up eventually as the user navigates/refreshes. But sometimes you do need the client to be notified of results; this is possible either using polling or a proactive notification using a messaging technology like WebSockets.&lt;/p&gt;
+
+&lt;p&gt;In the rest of this series, I’ll dive more into each parts of the solution, and discuss specific approaches in more detail. But the description above is usually all that’s needed.&lt;/p&gt;
+
+&lt;p&gt;The proper solution for request-extrinsic code is &lt;strong&gt;asynchronous messaging&lt;/strong&gt;, which is accomplished by adding a &lt;strong&gt;durable queue&lt;/strong&gt; coupled with a &lt;strong&gt;backend service&lt;/strong&gt;.&lt;/p&gt;
+</description>
+        <pubDate>Thu, 07 Jan 2021 00:00:00 +0000</pubDate>
+        <link>https://blog.stephencleary.com/2021/01/asynchronous-messaging-1-basic-distributed-architecture.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2021/01/asynchronous-messaging-1-basic-distributed-architecture.html</guid>
+      </item>
+    
+      <item>
         <title>Win32 Service Gotcha: Recovery Actions</title>
         <description>&lt;h2 id=&quot;win32-services-and-recovery-actions&quot;&gt;Win32 Services and Recovery Actions&lt;/h2&gt;
 
@@ -1017,62 +1074,6 @@ jobs:
         <pubDate>Thu, 02 Apr 2020 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2020/04/github-actions-pull-request-staging-environments-part-1.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2020/04/github-actions-pull-request-staging-environments-part-1.html</guid>
-      </item>
-    
-      <item>
-        <title>ValueTask Restrictions</title>
-        <description>&lt;h2 id=&quot;valuetask-restrictions&quot;&gt;ValueTask Restrictions&lt;/h2&gt;
-
-&lt;p&gt;&lt;code&gt;ValueTask&amp;lt;T&amp;gt;&lt;/code&gt; is a type that was introduced waaaay back in .NET Core 1.0, almost four years ago (which is pretty much forever in Internet time). However, value tasks are just now becoming more commonly used. Language features including asynchronous disposal and asynchronous enumerables (a.k.a. asynchronous streams) are thrusting value tasks in front of many more developers.&lt;/p&gt;
-
-&lt;h2 id=&quot;valuetask-a-simple-description&quot;&gt;ValueTask: A Simple Description&lt;/h2&gt;
-
-&lt;p&gt;Here’s value tasks in a single sentence: a value task (&lt;code&gt;ValueTask&amp;lt;T&amp;gt;&lt;/code&gt;) is a more efficient task than a reference task (&lt;code&gt;Task&amp;lt;T&amp;gt;&lt;/code&gt;).&lt;/p&gt;
-
-&lt;p&gt;As the name implies, a &lt;em&gt;value&lt;/em&gt; task is a value type rather than a reference type (like ordinary tasks). When using the reference type of task (e.g., &lt;code&gt;Task&amp;lt;T&amp;gt;&lt;/code&gt;), even if the value is known synchronously (e.g., using &lt;code&gt;Task.FromResult&lt;/code&gt;), the &lt;code&gt;Task&amp;lt;T&amp;gt;&lt;/code&gt; wrapper object still needs to be allocated. Value tasks avoid this allocation because they are value types; when a value is known synchronously, code can create and return a value task without having to do any allocation. In addition to a clear performance win in the synchronous case, value tasks often produce more efficient code even in many common asynchronous cases.&lt;/p&gt;
-
-&lt;p&gt;However, value tasks come with two important restrictions. Before adopting value tasks everywhere as a replacement for reference tasks, your team needs to understand these restrictions - and if you’re writing a library, you should make sure your consumers understand these restrictions, too.&lt;/p&gt;
-
-&lt;h2 id=&quot;valuetask-restriction-1-only-consume-once-or-yoco-you-only-consume-once&quot;&gt;ValueTask Restriction #1: Only Consume Once (or “YOCO: You Only Consume Once”)&lt;/h2&gt;
-
-&lt;p&gt;Each value task can only be consumed once. This is because value tasks can be reused, so once a value task is consumed, that value task can then &lt;em&gt;change what it represents&lt;/em&gt; so it now represents some other, unrelated operation. This is unusual for value types, so it can be surprising.&lt;/p&gt;
-
-&lt;p&gt;To clarify, by “consume”, I mean use &lt;code&gt;await&lt;/code&gt; to asynchronously wait for the value task to compete, &lt;em&gt;or&lt;/em&gt; use &lt;code&gt;AsTask&lt;/code&gt; to convert the value task into a regular task.&lt;/p&gt;
-
-&lt;p&gt;Most of the time, the calling code just calls &lt;code&gt;await&lt;/code&gt; immediately after calling the function (like &lt;code&gt;await FuncAsync();&lt;/code&gt;), and value tasks work perfectly fine with code like this. But if your code does an &lt;code&gt;await&lt;/code&gt; more than once, or wants to use &lt;code&gt;Task.WhenAll&lt;/code&gt; or &lt;code&gt;Task.WhenAny&lt;/code&gt;, then it should &lt;em&gt;not&lt;/em&gt; &lt;code&gt;await&lt;/code&gt; the value task - it should convert the value task to a reference task (by calling &lt;code&gt;AsTask&lt;/code&gt;) exactly once, and then only use that reference task from then on. Reference tasks may be safely &lt;code&gt;await&lt;/code&gt;ed multiple times; a &lt;code&gt;Task&amp;lt;T&amp;gt;&lt;/code&gt; never changes what it represents.&lt;/p&gt;
-
-&lt;p&gt;Code consuming a &lt;code&gt;ValueTask&amp;lt;T&amp;gt;&lt;/code&gt; should only consume it once, and after that the &lt;code&gt;ValueTask&amp;lt;T&amp;gt;&lt;/code&gt; should be completely ignored.&lt;/p&gt;
-
-&lt;h2 id=&quot;valuetask-restriction-2-only-consume-asynchronously-or-no-more-blocking-now-i-mean-it&quot;&gt;ValueTask Restriction #2: Only Consume Asynchronously (or “No More Blocking Now, I Mean It!”)&lt;/h2&gt;
-
-&lt;p&gt;Blocking on asynchronous code has &lt;a href=&quot;https://msdn.microsoft.com/en-us/magazine/jj991977.aspx&quot;&gt;never been the ideal solution&lt;/a&gt;, but in some cases it is necessary. It is &lt;em&gt;possible&lt;/em&gt; to block on reference tasks using &lt;code&gt;GetAwaiter().GetResult()&lt;/code&gt; (or &lt;code&gt;Result&lt;/code&gt; or &lt;code&gt;Wait()&lt;/code&gt;).&lt;/p&gt;
-
-&lt;p&gt;However, this will not work for value tasks. You simply &lt;strong&gt;cannot&lt;/strong&gt; block on value tasks. If you &lt;em&gt;must&lt;/em&gt; block (again, this is never ideal), then you’ll need to convert the value task to a reference task by calling &lt;code&gt;AsTask&lt;/code&gt;, and then block on that reference task.&lt;/p&gt;
-
-&lt;p&gt;Unfortunately, value task does contain a &lt;code&gt;Result&lt;/code&gt; property, and the code &lt;code&gt;GetAwaiter().GetResult()&lt;/code&gt; will compile. So code that &lt;em&gt;attempts&lt;/em&gt; to block on a value task will compile just fine. The problem is that these code patterns &lt;em&gt;do not always block&lt;/em&gt; when used on a value task. The resulting code has undefined behavior. Just don’t go there.&lt;/p&gt;
-
-&lt;h2 id=&quot;valuetask-restrictions-and-the-pitfall-of-library-upgrades&quot;&gt;ValueTask Restrictions and the Pitfall of Library Upgrades&lt;/h2&gt;
-
-&lt;p&gt;With &lt;em&gt;both&lt;/em&gt; of the restrictions mentioned above, there is an additional value task pitfall when it comes to library upgrades. To understand why, you need to understand a bit more about how value tasks are implemented.&lt;/p&gt;
-
-&lt;p&gt;There are actually three different kinds of value tasks (as of this writing): result value wrappers, reference task wrappers, and the more complex (and more efficient) value task source wrappers. If consuming code violates either of the restrictions above, it will have undefined behavior that can be different depending on what kind of value task is returned.&lt;/p&gt;
-
-&lt;p&gt;So one problem is this: consider a library that returns value tasks. For version 1.0.0, this library just uses simple reference task wrappers for its value tasks. If users of the library write code that consumes the value tasks multiple times &lt;em&gt;or&lt;/em&gt; blocks on the value tasks, then (as of this writing) that code will just happen to work as the consumers expect it to. The undefined behavior &lt;em&gt;just happens&lt;/em&gt; to be the desired behavior. However, if version 1.0.1 of that library switches to the more efficient value task source wrappers, then those consumers would suddenly break. Not at compile time, mind you - because the compiler will still happily compile this code - but at runtime. If the user code blocks, that could throw exceptions where there were none before. If the user code consumes the value task multiple times, that could cause very strange behavior that can be extremely difficult to debug (since it could be &lt;code&gt;await&lt;/code&gt;ing operations it didn’t even start).&lt;/p&gt;
-
-&lt;p&gt;I say all that to say this: before adopting value tasks, you need to be sure your consumers internalize these restrictions! Once value task restrictions are widely understood, then we can start to use value tasks as a more general and widespread replacement for reference tasks.&lt;/p&gt;
-
-&lt;h2 id=&quot;tldr&quot;&gt;TL;DR:&lt;/h2&gt;
-
-&lt;p&gt;When adopting value tasks:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;Only Consume Once (or “YOCO: You Only Consume Once”)&lt;/li&gt;
-  &lt;li&gt;Only Consume Asynchronously (or &lt;a href=&quot;https://www.youtube.com/watch?v=ury9eoLnb-0&quot;&gt;“No More Blocking Now, I Mean It!”&lt;/a&gt;)&lt;/li&gt;
-&lt;/ol&gt;
-</description>
-        <pubDate>Sat, 28 Mar 2020 00:00:00 +0000</pubDate>
-        <link>https://blog.stephencleary.com/2020/03/valuetask.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2020/03/valuetask.html</guid>
       </item>
     
   </channel>

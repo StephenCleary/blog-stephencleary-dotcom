@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Win32 Service Gotcha: Recovery Actions</title>
+    <title>Asynchronous Messaging, Part 1: Basic Distributed Architecture</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="ServiceBase will not allow Service Control Manager (SCM) recovery actions by default." />
-    <link rel="canonical" href="https://blog.stephencleary.com/2020/06/servicebase-gotcha-recovery-actions.html" />
+    <meta name="description" content="Solving request-extrinsic problems with a distributed architecture." />
+    <link rel="canonical" href="https://blog.stephencleary.com/2021/01/asynchronous-messaging-1-basic-distributed-architecture.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -276,8 +276,8 @@ img.comment-author-profile-image {
 
   <header>
       <div class="page-header">
-          <h1>Win32 Service Gotcha: Recovery Actions</h1>
-          <small><time datetime="2020-06-18">Jun 18, 2020</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
+          <h1>Asynchronous Messaging, Part 1: Basic Distributed Architecture</h1>
+          <small><time datetime="2021-01-07">Jan 7, 2021</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
       </div>
   </header>
 
@@ -291,166 +291,69 @@ img.comment-author-profile-image {
   </header>
 
   <article>
-  <h2 id="win32-services-and-recovery-actions">Win32 Services and Recovery Actions</h2>
+  <p>This is the first of a short series of blog posts on Asynchronous Messaging. This is not a new problem at all, but it’s something I’ve observed becoming more and more common over the last few years. Also, this is the kind of a problem that is difficult to solve quickly - or even <em>describe</em> the solution quickly, so I think a blog (series) is appropriate.</p>
 
-<p>This blog post doesn’t have to do with <code>BackgroundService</code> specifically, but it is an issue that can come up with .NET Core workers that are run as Win32 Services. In some ways, this blog post has more to do with <a href="/2013/10/managed-services-roundup.html">managed services</a>, but I decided to put it with the <code>BackgroundService</code> series because it is a problem with <code>BackgroundService</code>s run as Win32 services.</p>
+<p>A bit of a side note, here: I primarily develop in the .NET stack these days (for the backend, at least). So some of my details will discuss ASP.NET-specific technologies and solutions. However, the general problem and solution is applicable to <strong>all</strong> technology stacks. I’ll call out the ASP.NET-specific parts as I cover them.</p>
 
-<h2 id="background-recovery-actions">Background: Recovery Actions</h2>
+<p>So first, I’d like to describe how this problem usually manifests, and then I’ll discuss the solution. Sorry for the somewhat repetitive nature in this first “problem” section; I fully admit that I’m primarily writing this section for Google.</p>
 
-<p>The Win32 Service Control Manager (SCM) is responsible for starting and stopping services on Windows machines. It’s also responsible for restarting Win32 services when they fail:</p>
+<h2 id="the-problem">The Problem</h2>
 
-<p class="center"><a href="/assets/win32-service-recovery.png"><img src="/assets/win32-service-recovery.png" alt="Win32 Service Recovery Action Settings" /></a></p>
+<p>The problem usually manifests in a desire to <strong>return early</strong> from an HTTP request. So, once the request has been received, the developer wants the server-side API application to <strong>not wait</strong> for the processing to complete, and instead send the response back immediately.</p>
 
-<p>However, it can be a bit confusing to think about what “fail” actually <em>means</em>.</p>
+<p>A common term for this is <strong>fire and forget</strong>, in the sense that the developer wants to start (“fire”) some background work but then not wait for it to complete (“forget”).</p>
 
-<h2 id="background-win32-service-failure">Background: Win32 Service Failure</h2>
+<p>The goal is to have the HTTP call just <strong>start a workflow</strong>. This workflow then runs on the server side without further input from the client application. It’s a form of <strong>long-running operation</strong>.</p>
 
-<p>It’s pretty clear that if a Win32 application crashes, that indicates “failure”. Normally, Win32 services communicate with the SCM and let it know what their state is. The most common states are “stopped” and “started”, along with transitional states like “stopping” and “starting”. So, if a Win32 application exits (or crashes) without telling the SCM it is “stopped”, then the SCM treats that as a failure.</p>
+<p>I’ve decided to call this “request-extrinsic code”, because it sounds fancy. “Request-extrinsic” means that it’s code that runs <em>outside</em> of a request. This is fundamentally dangerous, which is why the solution is more complex than at first seems necessary.</p>
 
-<p>What’s much less clear is how exit codes are handled.</p>
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
 
-<p>The first thing to keep in mind is that each Win32 service has its own exit code. A single Win32 process can contain <em>multiple</em> different Win32 services within that single process, and each of those Win32 services has its <em>own</em> exit code. As far as I can tell, the exit code of the process itself is completely ignored.</p>
+  <p><strong>ASP.NET-specific:</strong> In ASP.NET pre-Core, there is an exception that developers may trigger with the message “An asynchronous module or handler completed while an asynchronous operation was still pending.” This is a “safety net” exception that indicates there’s some request-extrinsic code (which is dangerous). Unfortunately, ASP.NET Core does not have this “safety net” check, even though request-extrinsic code is just as bad on ASP.NET Core as it was on ASP.NET pre-Core.</p>
+</div>
 
-<p>What’s more, if the Win32 service does report that it is “stopped” to the SCM, the SCM will ignore the Win32 service exit code, too! The SCM assumes that if the service has reported it is “stopped”, then the service has stopped successfully, and there is no need to restart the service.</p>
+<h2 id="the-solution">The Solution</h2>
 
-<p>This means that if you have a Win32 service and it reports a non-zero exit code (either for the process exit code or the Win32 service exit code), and if that Win32 service exits cleanly after setting its non-zero exit code, then that exit code will be ignored and the service will not be restarted.</p>
+<p>The proper solution for request-extrinsic code is <strong>asynchronous messaging</strong>.</p>
 
-<h2 id="tip-honoring-win32-service-exit-codes">Tip: Honoring Win32 Service Exit Codes</h2>
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
 
-<p>There is <a href="https://docs.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_failure_actions_flag">a flag</a> you can set that will cause SCM to honor the Win32 service exit code, treating a non-zero code as a “failure” and running its recovery actions. You can turn this flag on at the command line as such:</p>
+  <p>My blog often deals with “asynchronous” in the sense of the <code>async</code>/<code>await</code> keywords. This blog series is on <em>asynchronous messaging</em>, which is a completely different thing. <code>async</code>/<code>await</code> deal with asynchrony within the scope of a single process; asynchronous messaging deals with asynchrony across two processes (client and server). The two uses of “asynchronous” are similar at the 10,000 foot view, but completely different on the ground.</p>
+</div>
 
-<figure class="highlight"><pre><code class="language-text" data-lang="text">sc failureflag &quot;My Service&quot; 1</code></pre></figure>
+<p>Asynchronous messaging has two parts (with an optional third part):</p>
 
-<p>Setting that flag checks this checkbox, which has the rather difficult-to-understand wording of “Enable actions for stops with errors.”:</p>
+<ol>
+  <li>A <em>durable queue</em>. By “durable”, I mean a queue that at least flushes to disk on writes. In other words, the <em>messages</em> sent to the queue are durable. An in-memory <code>Queue&lt;T&gt;</code> or <code>BlockingCollection&lt;T&gt;</code> or <code>ChannelWriter&lt;T&gt;</code> is not a “durable queue” by this definition.</li>
+  <li>A <em>backend service</em>. This is an independent service that reads from that durable queue and processes the items in it (i.e., executes the long-running operation).</li>
+  <li>(optional) Some method to <em>retrieve results</em>. If the client needs to know the outcome of the long-running operation, then this is the part that provides that outcome to the client.</li>
+</ol>
 
-<p class="center"><a href="/assets/win32-service-recovery-highlight.png"><img src="/assets/win32-service-recovery-highlight.png" alt="Win32 Service Recovery Action Settings" /></a></p>
+<p>One common example is sending emails. If an API wants to send an email but does not want to wait for the email to be sent before returning to the client, then the API should add a message to the durable queue describing the email to be sent and then return. Since this is a durable queue, the queue message (containing the email details) is flushed to disk before the HTTP response is sent to the client. Then a separate backend service reading from that queue retrieves the queue message and sends the actual email.</p>
 
-<h2 id="win32-service-exit-codes-and-servicebase">Win32 Service Exit Codes and ServiceBase</h2>
+<p>Another common example is database writes. Sometimes there are situations where the API knows what to write to the database but doesn’t want to make the client wait for it. In that case, the API should write the information to a durable queue and then return to the client. Then a separate backend service reading from that queue retrieves the information and performs the actual database update.</p>
 
-<p>For .NET applications, the <code>Environment.ExitCode</code> property manages the exit code for the <em>process</em>. As far as I know, this value is always ignored when the process is run as a service. The Win32 service exit code is managed by the <code>ServiceBase.ExitCode</code> property. Remember, there can be multiple Win32 services in a single process.</p>
+<p>Retrieving results is often not necessary. E.g., the email itself usually <em>is</em> the result of sending an email, and database writes will show up eventually as the user navigates/refreshes. But sometimes you do need the client to be notified of results; this is possible either using polling or a proactive notification using a messaging technology like WebSockets.</p>
 
-<h2 id="win32-service-exit-codes-and-windowsservicelifetime">Win32 Service Exit Codes and WindowsServiceLifetime</h2>
+<p>In the rest of this series, I’ll dive more into each parts of the solution, and discuss specific approaches in more detail. But the description above is usually all that’s needed.</p>
 
-<p>In <a href="https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/windows-service">.NET Core applications that are run as Win32 services</a>, it’s normal to call <code>IHostBuilder.UseWindowsService()</code>, which installs a <code>WindowsServiceLifetime</code> as the <code>IHostLifetime</code>, instead of the default <code>ConsoleLifetime</code>.</p>
-
-<p><code>WindowsServiceLifetime</code> lets the SCM control the starting and stopping of the .NET Core application. It <a href="https://github.com/dotnet/extensions/blob/4becf241089932aa1f1e7f3ab4155a437fd3dba1/src/Hosting/WindowsServices/src/WindowsServiceLifetime.cs#L14">derives from <code>ServiceBase</code></a>. Since <a href="https://github.com/aspnet/Hosting/issues/1401">multiple <code>IHostLifetime</code> instances aren’t supported</a>, this means that .NET Core workers do not naturally support multiple Win32 services in a single process. It may be possible to support that by creating a new type that derives from <code>ServiceBase</code> and <code>IHostedService</code>, along with some kind of coordinating <code>IHostLifetime</code> implementation, but I’m not aware of anyone doing that yet. For now, all the .NET Core Win32 services I know of use <code>WindowsServiceLifetime</code>.</p>
-
-<p>One important note is that <code>WindowsServiceLifetime</code> stops cleanly. If the .NET Core application is shutdown, then <code>WindowsServiceLifetime</code> reports to the SCM that the service is “stopped”, and this means that the SCM will not restart the service.</p>
-
-<p>You can write code that will set the Win32 service exit code on failure by accessing <code>ServiceBase.ExitCode</code> as such:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">MyBackgroundService</span> <span class="p">:</span> <span class="n">BackgroundService</span>
-<span class="p">{</span>
-  <span class="k">private</span> <span class="k">readonly</span> <span class="n">IHostLifetime</span> <span class="n">_hostLifetime</span><span class="p">;</span>
-  <span class="k">public</span> <span class="nf">MyBackgroundService</span><span class="p">(</span><span class="n">IHostLifetime</span> <span class="n">hostLifetime</span><span class="p">)</span> <span class="p">=&gt;</span>
-      <span class="n">_hostLifetime</span> <span class="p">=</span> <span class="n">hostLifetime</span><span class="p">;</span>
-
-  <span class="k">protected</span> <span class="k">override</span> <span class="n">Task</span> <span class="nf">ExecuteAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">stoppingToken</span><span class="p">)</span>
-  <span class="p">{</span>
-    <span class="k">try</span>
-    <span class="p">{</span>
-      <span class="c1">// Implementation</span>
-    <span class="p">}</span>
-    <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span><span class="p">)</span>
-    <span class="p">{</span>
-      <span class="k">if</span> <span class="p">(</span><span class="n">_hostLifetime</span> <span class="k">is</span> <span class="n">ServiceBase</span> <span class="n">serviceLifetime</span><span class="p">)</span>
-        <span class="n">serviceLifetime</span><span class="p">.</span><span class="n">ExitCode</span> <span class="p">=</span> <span class="p">-</span><span class="m">1</span><span class="p">;</span>
-      <span class="k">else</span>
-        <span class="n">Environment</span><span class="p">.</span><span class="n">ExitCode</span> <span class="p">=</span> <span class="p">-</span><span class="m">1</span><span class="p">;</span>
-    <span class="p">}</span>
-  <span class="p">}</span>
-<span class="p">}</span></code></pre></figure>
-
-<p>However, as noted above, you have to also set the <code>failureflag</code> on the service, or else the SCM will ignore the non-zero exit code.</p>
-
-<p>If desired, you can write a custom <code>WindowsServiceLifetime</code> that will treat non-zero <code>Environment.ExitCode</code> values as non-zero Win32 service exit codes:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">MyWindowsServiceLifetime</span> <span class="p">:</span> <span class="n">WindowsServiceLifetime</span>
-<span class="p">{</span>
-  <span class="k">public</span> <span class="nf">MyWindowsServiceLifetime</span><span class="p">(</span><span class="n">IHostApplicationLifetime</span> <span class="n">hostApplicationLifetime</span><span class="p">,</span> <span class="n">IHostEnvironment</span> <span class="n">environment</span><span class="p">,</span> <span class="n">ILoggerFactory</span> <span class="n">loggerFactory</span><span class="p">,</span> <span class="n">IOptions</span><span class="p">&lt;</span><span class="n">HostOptions</span><span class="p">&gt;</span> <span class="n">options</span><span class="p">)</span>
-      <span class="p">:</span> <span class="k">base</span><span class="p">(</span><span class="n">environment</span><span class="p">,</span> <span class="n">hostApplicationLifetime</span><span class="p">,</span> <span class="n">loggerFactory</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
-  <span class="p">{</span>
-  <span class="p">}</span>
-
-  <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnStop</span><span class="p">()</span>
-  <span class="p">{</span>
-    <span class="c1">// Take the process ExitCode if there isn&#39;t one for our Win32 service</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">ExitCode</span> <span class="p">==</span> <span class="m">0</span> <span class="p">&amp;&amp;</span> <span class="n">Environment</span><span class="p">.</span><span class="n">ExitCode</span> <span class="p">!=</span> <span class="m">0</span><span class="p">)</span>
-      <span class="n">ExitCode</span> <span class="p">=</span> <span class="n">Environment</span><span class="p">.</span><span class="n">ExitCode</span><span class="p">;</span>
-    
-    <span class="k">base</span><span class="p">.</span><span class="n">OnStop</span><span class="p">();</span>
-  <span class="p">}</span>
-<span class="p">}</span></code></pre></figure>
-
-<p>This can be installed by adding this service (<code>services.AddSingleton&lt;IHostLifetime, MyWindowsServiceLifetime&gt;()</code>) after calling <code>UseWindowsService</code>; the .NET Core dependency injection will just take the last registered <code>IHostLifetime</code>.</p>
-
-<h2 id="crashing-windowsservicelifetime">Crashing WindowsServiceLifetime</h2>
-
-<p>It is also possible to create a custom derived <code>WindowsServiceLifetime</code> that can detect application failures and will prevent <code>ServiceBase</code> from sending the “stopped” message to the SCM. That way, your service will be restarted regardless of the <code>failureflag</code> setting, because any failures will cause the process to crash.</p>
-
-<p>We don’t want to crash the process immediately; instead, we want to shut down the .NET Core host and then terminate, so that the SCM knows the process failed. The <code>WindowsServiceLifetime</code> type has <a href="https://github.com/dotnet/extensions/blob/4becf241089932aa1f1e7f3ab4155a437fd3dba1/src/Hosting/WindowsServices/src/WindowsServiceLifetime.cs#L105">some similar behavior</a>: if the SCM requests the service to stop, then it will shut down the .NET Core host and wait for it to stop. We can do the same thing in our custom lifetime type:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">class</span> <span class="nc">MyWindowsServiceLifetime</span> <span class="p">:</span> <span class="n">WindowsServiceLifetime</span>
-<span class="p">{</span>
-  <span class="k">private</span> <span class="k">readonly</span> <span class="n">IHostApplicationLifetime</span> <span class="n">_hostApplicationLifetime</span><span class="p">;</span>
-  <span class="k">private</span> <span class="k">readonly</span> <span class="n">ManualResetEventSlim</span> <span class="n">_shutdownComplete</span><span class="p">;</span>
-  <span class="k">private</span> <span class="k">readonly</span> <span class="n">CancellationTokenRegistration</span> <span class="n">_applicationStoppedRegistration</span><span class="p">;</span>
-
-  <span class="k">public</span> <span class="nf">MyWindowsServiceLifetime</span><span class="p">(</span><span class="n">IHostApplicationLifetime</span> <span class="n">hostApplicationLifetime</span><span class="p">,</span> <span class="n">IHostEnvironment</span> <span class="n">environment</span><span class="p">,</span> <span class="n">ILoggerFactory</span> <span class="n">loggerFactory</span><span class="p">,</span> <span class="n">IOptions</span><span class="p">&lt;</span><span class="n">HostOptions</span><span class="p">&gt;</span> <span class="n">options</span><span class="p">)</span>
-      <span class="p">:</span> <span class="k">base</span><span class="p">(</span><span class="n">environment</span><span class="p">,</span> <span class="n">hostApplicationLifetime</span><span class="p">,</span> <span class="n">loggerFactory</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
-  <span class="p">{</span>
-    <span class="n">_hostApplicationLifetime</span> <span class="p">=</span> <span class="n">hostApplicationLifetime</span><span class="p">;</span>
-    <span class="n">_shutdownComplete</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ManualResetEventSlim</span><span class="p">();</span>
-    <span class="n">_applicationStoppedRegistration</span> <span class="p">=</span> <span class="n">hostApplicationLifetime</span><span class="p">.</span><span class="n">ApplicationStopped</span><span class="p">.</span><span class="n">Register</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">_shutdownComplete</span><span class="p">.</span><span class="n">Set</span><span class="p">());</span>
-  <span class="p">}</span>
-
-  <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnStop</span><span class="p">()</span>
-  <span class="p">{</span>
-    <span class="c1">// Take the process ExitCode if there isn&#39;t one for our Win32 service</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">ExitCode</span> <span class="p">==</span> <span class="m">0</span> <span class="p">&amp;&amp;</span> <span class="n">Environment</span><span class="p">.</span><span class="n">ExitCode</span> <span class="p">!=</span> <span class="m">0</span><span class="p">)</span>
-      <span class="n">ExitCode</span> <span class="p">=</span> <span class="n">Environment</span><span class="p">.</span><span class="n">ExitCode</span><span class="p">;</span>
-    
-    <span class="k">if</span> <span class="p">(</span><span class="n">ExitCode</span> <span class="p">!=</span> <span class="m">0</span><span class="p">)</span>
-    <span class="p">{</span>
-      <span class="c1">// Wait for application to shut down.</span>
-      <span class="n">_hostApplicationLifetime</span><span class="p">.</span><span class="n">StopApplication</span><span class="p">();</span>
-      <span class="n">_shutdownComplete</span><span class="p">.</span><span class="n">Wait</span><span class="p">();</span>
-
-      <span class="c1">// Terminate app. Do not call base.OnStop().</span>
-      <span class="n">Environment</span><span class="p">.</span><span class="n">Exit</span><span class="p">(</span><span class="n">ExitCode</span><span class="p">);</span>
-    <span class="p">}</span>
-
-    <span class="c1">// If we&#39;re exiting normally, just let WindowsServiceLifetime do its job.</span>
-    <span class="k">base</span><span class="p">.</span><span class="n">OnStop</span><span class="p">();</span>
-  <span class="p">}</span>
-
-  <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">Dispose</span><span class="p">(</span><span class="kt">bool</span> <span class="n">disposing</span><span class="p">)</span>
-  <span class="p">{</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">disposing</span><span class="p">)</span>
-    <span class="p">{</span>
-      <span class="n">_shutdownComplete</span><span class="p">.</span><span class="n">Set</span><span class="p">();</span>
-      <span class="n">_applicationStoppedRegistration</span><span class="p">.</span><span class="n">Dispose</span><span class="p">();</span>
-    <span class="p">}</span>
-
-    <span class="k">base</span><span class="p">.</span><span class="n">Dispose</span><span class="p">(</span><span class="n">disposing</span><span class="p">);</span>
-  <span class="p">}</span>
-<span class="p">}</span></code></pre></figure>
-
-<p>This kind of <code>MyWindowsServiceLifetime</code> implementation will work whether or not you set the <code>failureflag</code> on your service.</p>
+<p>The proper solution for request-extrinsic code is <strong>asynchronous messaging</strong>, which is accomplished by adding a <strong>durable queue</strong> coupled with a <strong>backend service</strong>.</p>
 
   </article>
     
     <footer class="hidden-print">
         
             <ul class="pager">
-                <li class="previous"><a href="/2020/06/backgroundservice-gotcha-application-lifetime.html" title="BackgroundService Gotcha: Application Lifetime">&larr; Previous in BackgroundService Gotchas</a></li>
+                
                 
             </ul>
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2020/06/a-new-pattern-for-exception-logging.html" title="A New Pattern for Exception Logging">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2021/01/asynchronous-messaging-1-basic-distributed-architecture.html" title="Asynchronous Messaging, Part 1: Basic Distributed Architecture">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2020/06/servicebase-gotcha-recovery-actions.html" title="Win32 Service Gotcha: Recovery Actions">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="comments"></div>
@@ -460,13 +363,10 @@ img.comment-author-profile-image {
         <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
                 <div class="panel panel-primary">
-                    <div class="panel-heading">BackgroundService Gotchas</div>
+                    <div class="panel-heading">Asynchronous Messaging</div>
                     <div class="panel-body sidenav">
                         <ul class="nav nav-pills nav-stacked">
-                                    <li class="sidenavitem"><a href="/2020/05/backgroundservice-gotcha-startup.html">Synchronous Starts</a></li>
-                                    <li class="sidenavitem"><a href="/2020/05/backgroundservice-gotcha-silent-failure.html">Silent Failures</a></li>
-                                    <li class="sidenavitem"><a href="/2020/06/backgroundservice-gotcha-application-lifetime.html">Application Lifetime</a></li>
-                                    <li class="active sidenavitem"><a href="/2020/06/servicebase-gotcha-recovery-actions.html">Service Recovery Actions</a></li>
+                                    <li class="active sidenavitem"><a href="/2021/01/asynchronous-messaging-1-basic-distributed-architecture.html">Basic Distributed Architecture</a></li>
                         </ul>
                     </div>
                 </div>
@@ -619,7 +519,7 @@ img.comment-author-profile-image {
 
 <script type="text/javascript">
 
-var pageUrl = "https://blog.stephencleary.com" + "/2020/06/servicebase-gotcha-recovery-actions.html";
+var pageUrl = "https://blog.stephencleary.com" + "/2021/01/asynchronous-messaging-1-basic-distributed-architecture.html";
 
 // (unnecessary) 1) If the URL starts with http://, replace with https://
 
