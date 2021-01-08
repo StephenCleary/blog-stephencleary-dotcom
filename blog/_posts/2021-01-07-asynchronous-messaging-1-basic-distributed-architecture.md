@@ -10,8 +10,6 @@ This is the first of a short series of blog posts on Asynchronous Messaging. Thi
 
 A bit of a side note, here: I primarily develop in the .NET stack these days (for the backend, at least). So some of my details will discuss ASP.NET-specific technologies and solutions. However, the general problem and solution is applicable to **all** technology stacks. I'll call out the ASP.NET-specific parts as I cover them.
 
-So first, I'd like to describe how this problem usually manifests, and then I'll discuss the solution. Sorry for the somewhat repetitive nature in this first "problem" section; I fully admit that I'm primarily writing this section for Google.
-
 ## The Problem
 
 The problem usually manifests in a desire to **return early** from an HTTP request. So, once the request has been received, the developer wants the server-side API application to **not wait** for the processing to complete, and instead send the response back immediately.
