@@ -8,6 +8,75 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>Asynchronous Messaging, Part 2: Durable Queues</title>
+        <description>&lt;p&gt;Last time I concluded that the proper solution for request-extrinsic code is asynchronous messaging, which has two primary parts: a durable queue and a backend service. Today I’m going to discuss durable queues.&lt;/p&gt;
+
+&lt;h2 id=&quot;the-definition-of-durable&quot;&gt;The Definition of “Durable”&lt;/h2&gt;
+
+&lt;p&gt;When I suggest the asynchronous messaging solution, I try to use the term “durable” or “reliable”, and the emphasis is on the “durable” in “durable queue”. But what do “durable” or “reliable” really mean? There’s a range of meanings, from what I would consider “minimum viable” to “paranoid”.&lt;/p&gt;
+
+&lt;p&gt;A durable queue must &lt;em&gt;at least&lt;/em&gt; write the new item to disk when it is placed into the queue. In other words, a durable queue is one that stores &lt;strong&gt;durable messages&lt;/strong&gt;. This is the minimum viable behavior for a durable queue: messages must survive shutdowns. Asynchronous messaging &lt;em&gt;must&lt;/em&gt; use a queue whose messages survive shutdown. This is good enough for many (most?) applications.&lt;/p&gt;
+
+&lt;p&gt;A &lt;em&gt;more&lt;/em&gt; durable (or more reliable) queue would be one that writes to &lt;em&gt;multiple&lt;/em&gt; disks. This allows the messages to also survive a single disk failure. An even more durable queue would be one that writes to disks on multiple &lt;em&gt;servers&lt;/em&gt;; this allows the messages to survive a complete server failure. Finally, the most paranoid durable queues write to multiple servers in distinct geographical locations; this allows the message to survive the destruction of an entire data center. Most applications do not require that level of durability.&lt;/p&gt;
+
+&lt;p&gt;But it’s important to note that the minimum acceptable reliability is writing to disk. In-memory queues are &lt;em&gt;not&lt;/em&gt; reliable enough for asynchronous messaging; this includes &lt;code&gt;Queue&amp;lt;T&amp;gt;&lt;/code&gt;, &lt;code&gt;Channel&amp;lt;T&amp;gt;&lt;/code&gt;, and &lt;code&gt;BlockingCollection&amp;lt;T&amp;gt;&lt;/code&gt;, the three most common in-memory queues. When I say they are not “reliable”, I don’t mean that they can’t be used as in-memory queues; they’re perfectly fine for that scenario. However, since their messages are not durable (i.e., will not survive shutdown), they do not provide sufficient reliability for use with asynchronous messaging.&lt;/p&gt;
+
+&lt;h2 id=&quot;the-problem-with-in-memory-queues&quot;&gt;The Problem with In-Memory Queues&lt;/h2&gt;
+
+&lt;p&gt;I’m going to dive into this in a bit of detail, because this is a common point of confusion. I’ve defined “durable” as meaning at least “on disk”, and I’ve used the reasoning that “asynchronous messages must survive shutdown”. This section will go into more detail of the reasoning behind this restriction.&lt;/p&gt;
+
+&lt;p&gt;I think it’s easiest to understand this by contemplating one question: “When is it safe for an HTTP service to shut down?”&lt;/p&gt;
+
+&lt;p&gt;The HTTP protocol is ubiquitous; it’s used by all kinds of APIs and web services. And there’s a seemingly endless number of conventions and standards built on top of HTTP. With all these details and abstractions, sometimes one critical truth is forgotten: &lt;strong&gt;the HTTP protocol is a request/response protocol&lt;/strong&gt;. In other words, for every request there is exactly one response. From the HTTP service’s perspective, a request arrives, and then some time later the response is sent and that request is completed.&lt;/p&gt;
+
+&lt;p&gt;Back to that question: “When is it safe for an HTTP service to shut down?” The easiest possible answer is “when a response for each request has been sent.” Or to word the same idea a different way: “when there are no more outstanding requests.”&lt;/p&gt;
+
+&lt;p&gt;This is such a natural answer to the question that &lt;em&gt;every&lt;/em&gt; HTTP server has this as its default answer. It doesn’t matter if you’re on ASP.NET, Node.js, Ruby on Rails, … &lt;em&gt;Every&lt;/em&gt; HTTP server framework keeps track of how many outstanding requests it has, and considers itself “safe to shut down” when that number reaches zero. This also holds true for load balancers and proxies: “When is it safe to remove this HTTP server from my list?” - “When it has no more requests waiting for responses.” It doesn’t matter if you’re using nginx, HAProxy, Kubernetes’ apiserver proxy, … &lt;em&gt;Every&lt;/em&gt; HTTP proxy application keeps track of the number of outstanding requests, and considers HTTP servers “done” when they have sent out responses for all of their requests.&lt;/p&gt;
+
+&lt;p&gt;This is why request-extrinsic code is dangerous: all of this default behavior is suddenly wrong. The HTTP service says it’s safe to shut down when it’s not safe to shut down; all the proxies and load balancers say it’s safe to take that machine out of rotation when it’s not.&lt;/p&gt;
+
+&lt;h3 id=&quot;shutdowns-are-normal&quot;&gt;Shutdowns Are Normal&lt;/h3&gt;
+
+&lt;p&gt;Often developers react to this by trying to force alternative solutions. All HTTP server frameworks answer “When is it safe to shut down?” with “When there are no more outstanding requests” &lt;em&gt;by default&lt;/em&gt;, but many of them allow overriding that default so the application itself can answer “It’s only safe to shut down when I say it’s safe to shut down.”&lt;/p&gt;
+
+&lt;p&gt;One of the problems with trying to force that alternative solution is that it only changes the answer at the HTTP service level; proxies and load balancers &lt;em&gt;also&lt;/em&gt; need to have their default logic changed (assuming that changing the default is even possible). Even if you get that working, there’s an unending maintenance problem: your HTTP server farm now handles shutdowns &lt;em&gt;completely differently&lt;/em&gt; than all other HTTP server farms.&lt;/p&gt;
+
+&lt;p&gt;When developers begin down this path, it is usually because the developer wants to keep their HTTP application running indefinitely. And this is a major misunderstanding: in reality, systems are more resilient if servers do &lt;em&gt;not&lt;/em&gt; run indefinitely. In fact, shutdowns are &lt;em&gt;normal&lt;/em&gt;, and we need to accept shutdowns as a normal part of life.&lt;/p&gt;
+
+&lt;p&gt;One example is rolling updates. When a new version of an HTTP application is developed, it needs to replace the old versions of that application. The normal way to do this is via rolling updates: for each server, the upstream proxy will stop forwarding new requests, wait until the service has no more outstanding requests, shut it down, install the update, start it up, and start forwarding new requests. Shutdowns are necessary to perform rolling updates.&lt;/p&gt;
+
+&lt;p&gt;Another example is applying operating system or runtime patches. This is similar to rolling updates, but in this case it is the lower layers that is being updated, so it’s machine-wide. The same steps apply, though: stop forwarding new requests to all services on that machine, wait until the machine has no outstanding requests, shut down all the services, install the patches (rebooting if necessary), start up all the services, and start forwarding new requests. This kind of shutdown occurs regularly, even for HTTP services that are not in active development.&lt;/p&gt;
+
+&lt;p&gt;A final example is that some frameworks and host processes just do periodic application restarts just to keep things clean. For example, Apache’s &lt;code&gt;MaxConnectionsPerChild&lt;/code&gt; or IIS’s &lt;code&gt;periodicRestart&lt;/code&gt; can recycle child processes periodically. This is primarily useful for managing memory leaks in applications, frameworks, and/or libraries. Apache no longer recycles by default, but IIS still does. Again, this is based on the number of outstanding requests: the server will recycle its child application when it has no outstanding requests.&lt;/p&gt;
+
+&lt;p&gt;The reasonable conclusion is that &lt;em&gt;shutdowns are normal&lt;/em&gt;. All HTTP applications must work correctly when shutdowns occur. Correlation: All software that assumes it will never shut down is inherently buggy.&lt;/p&gt;
+
+&lt;p&gt;Finally, we return to what “durable” means. In-memory queues cannot survive shutdowns. Therefore, “minimum acceptable reliability” means that the queue of work survives shutdowns, which are normal and common.&lt;/p&gt;
+
+&lt;h2 id=&quot;examples-of-durable-queues&quot;&gt;Examples of Durable Queues&lt;/h2&gt;
+
+&lt;p&gt;I tend to prefer cloud queues whenever possible, because the cloud provider manages them, they scale really well, and they give you knobs for controlling how paranoid you want your durability to be.&lt;/p&gt;
+
+&lt;p&gt;For this reason, my top go-tos for durable queues are &lt;a href=&quot;https://azure.microsoft.com/en-us/services/storage/queues/&quot;&gt;Azure Storage Queue&lt;/a&gt;, &lt;a href=&quot;https://aws.amazon.com/sqs/&quot;&gt;Amazon Simple Queue Service (SQS)&lt;/a&gt;, and &lt;a href=&quot;https://cloud.google.com/tasks&quot;&gt;Google Cloud Tasks&lt;/a&gt;. I’m most familiar with Azure’s queueing, though I have also used Amazon’s in production systems. All cloud queueing systems provide durable queues that can scale out automatically.&lt;/p&gt;
+
+&lt;p&gt;As much as I like cloud solutions, on-premises queueing systems are perfectly viable. It’s not possible to get the same scaling capabilities as a cloud solution, but you can get lower latencies. The most common on-premises durable queues these days are &lt;a href=&quot;https://www.rabbitmq.com/&quot;&gt;RabbitMQ&lt;/a&gt; and &lt;a href=&quot;https://kafka.apache.org/documentation/&quot;&gt;Kafka&lt;/a&gt;. I’ve also used &lt;a href=&quot;https://www.ibm.com/products/mq&quot;&gt;IBM MQ&lt;/a&gt; (called WebSphere MQ at the time). For older Windows systems, &lt;a href=&quot;https://docs.microsoft.com/en-us/previous-versions/windows/desktop/msmq/ms711472(v=vs.85)&quot;&gt;Microsoft Message Queueing (MSMQ)&lt;/a&gt; was common, though that is no longer recommended these days. Note that some on-premises queueing solutions do not use durable messages by default, so some configuration is necessary to make them actually durable (I’m looking at you, &lt;a href=&quot;https://www.rabbitmq.com/queues.html#durability&quot;&gt;RabbitMQ&lt;/a&gt;).&lt;/p&gt;
+
+&lt;p&gt;There are other solutions for both cloud and on-premises. The ones mentioned here are just ones I’ve had experience with, and which appear to be the most common.&lt;/p&gt;
+
+&lt;h3 id=&quot;database-as-a-durable-queue&quot;&gt;Database As a Durable Queue&lt;/h3&gt;
+
+&lt;p&gt;One other solution that is sometimes used is an actual database. Usually, this needs to be a database that guarantees ACID. Some NoSql databases can also be used as durable queues, as long as they actually have durable writes; but be aware that some NoSql databases can lose writes, in which case they do not qualify as durable queues. In my experience, most databases used as durable queues are fully ACID (i.e., transactional).&lt;/p&gt;
+
+&lt;p&gt;Using an ACID database as a durable queue allows you to use the Outbox Pattern. When a service wants to publish a message &lt;em&gt;if and only if&lt;/em&gt; a particular database transaction succeeds, then it writes that message to the database &lt;em&gt;as part of that transaction&lt;/em&gt;. It can’t publish the message before doing the database update, because the database update may fail; and it can’t publish the message after doing the database update, because if there’s some problem reaching the durable queue then the message wouldn’t be published. So, by using the database itself as a durable queue, then the service guarantees that the message will be published if and only if the database update takes place.&lt;/p&gt;
+
+&lt;p&gt;The Outbox Pattern gets its name because there’s usually a separate “outbox” table that just holds messages that are published. It’s possible to have the queue consumer read the outbox table directly, but a more common solution is to have the outbox table just act as temporary storage for messages on their way to another durable queue - usually one that is used by the rest of the application, e.g., a cloud queue or on-premises durable queue. In that case, the publishing service (or another service) has a polling job that reads the messages from the outbox table, sends then to the durable queue, and then deletes those messages from the outbox table. This provides an at-least-once delivery of the messages stored in the outbox table.&lt;/p&gt;
+</description>
+        <pubDate>Thu, 14 Jan 2021 00:00:00 +0000</pubDate>
+        <link>https://blog.stephencleary.com/2021/01/asynchronous-messaging-2-durable-queues.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2021/01/asynchronous-messaging-2-durable-queues.html</guid>
+      </item>
+    
+      <item>
         <title>Asynchronous Messaging, Part 1: Basic Distributed Architecture</title>
         <description>&lt;p&gt;This is the first of a short series of blog posts on Asynchronous Messaging. This is not a new problem at all, but it’s something I’ve observed becoming more and more common over the last few years. Also, this is the kind of a problem that is difficult to solve quickly - or even &lt;em&gt;describe&lt;/em&gt; the solution quickly, so I think a blog (series) is appropriate.&lt;/p&gt;
 
@@ -1012,66 +1081,6 @@ jobs:
         <pubDate>Thu, 09 Apr 2020 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2020/04/github-actions-pull-request-staging-environments-part-2-slash-commands.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2020/04/github-actions-pull-request-staging-environments-part-2-slash-commands.html</guid>
-      </item>
-    
-      <item>
-        <title>Using GitHub Actions for Pull Request Staging Environments, Part 1: Introduction</title>
-        <description>&lt;h2 id=&quot;the-goal&quot;&gt;The Goal&lt;/h2&gt;
-
-&lt;p&gt;This is a short series of posts on how to use GitHub Actions to deploy and teardown staging environments for your pull requests.&lt;/p&gt;
-
-&lt;p&gt;The idea is that each pull request on GitHub represents some change (feature, bug fix, etc) that you want to test out before merging it into master. This series looks at using GitHub Actions to deploy the PR code into an isolated staging environment, and then tearing down that environment when you’re done testing.&lt;/p&gt;
-
-&lt;h2 id=&quot;example-services&quot;&gt;Example Services&lt;/h2&gt;
-
-&lt;p&gt;Since this series is focusing on using GitHub Actions, our environments will be deliberately simple.&lt;/p&gt;
-
-&lt;p&gt;I’ll be using &lt;a href=&quot;https://www.gatsbyjs.org/&quot;&gt;Gatsby&lt;/a&gt; as the framework for the example project. I have not used Gatsby yet, but I’m considering moving this blog to it. Gatsby is a React-based front-end development system that produces static files as its output.&lt;/p&gt;
-
-&lt;p&gt;I’ll be using &lt;a href=&quot;https://surge.sh/&quot;&gt;Surge&lt;/a&gt; as a deployment engine. I never heard of Surge until I was reading the docs for Gatsby, but I must say I’m impressed with it! Surge allows you to quickly publish any folder to a domain name, and just as quickly tear it down again.&lt;/p&gt;
-
-&lt;h2 id=&quot;getting-started&quot;&gt;Getting Started&lt;/h2&gt;
-
-&lt;p&gt;It’s best if you follow along right on GitHub.&lt;/p&gt;
-
-&lt;p&gt;First, create a test repository (mine is &lt;a href=&quot;https://github.com/StephenClearyExamples/PullRequestStaging&quot;&gt;here&lt;/a&gt;); the following steps give you a repository with a tiny Gatsby site on it:&lt;/p&gt;
-&lt;ul&gt;
-  &lt;li&gt;Create a new repository on GitHub and clone it to your local machine.&lt;/li&gt;
-  &lt;li&gt;Create a new “hello, world” Gatsby project in the &lt;code&gt;my-hello-world&lt;/code&gt; folder by running &lt;code&gt;npx gatsby new my-hello-world https://github.com/gatsbyjs/gatsby-starter-hello-world&lt;/code&gt;&lt;/li&gt;
-  &lt;li&gt;Copy the files in the &lt;code&gt;my-hello-world&lt;/code&gt; folder to the root of your repository.&lt;/li&gt;
-  &lt;li&gt;Commit and push.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Next, sign up for a Surge account:&lt;/p&gt;
-&lt;ul&gt;
-  &lt;li&gt;Install Surge by running &lt;code&gt;npm install --global surge&lt;/code&gt;&lt;/li&gt;
-  &lt;li&gt;Sign up for a Surge account by running &lt;code&gt;surge login&lt;/code&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Optionally, you can deploy what’s currently on your master branch:&lt;/p&gt;
-&lt;ul&gt;
-  &lt;li&gt;Build the Gatsby site by running &lt;code&gt;npx gatsby build&lt;/code&gt;
-    &lt;ul&gt;
-      &lt;li&gt;Gatsby output is placed in the &lt;code&gt;public&lt;/code&gt; folder.&lt;/li&gt;
-    &lt;/ul&gt;
-  &lt;/li&gt;
-  &lt;li&gt;Choose a domain name that should be unique.&lt;/li&gt;
-  &lt;li&gt;Deploy the Gatsby output to your domain name by running &lt;code&gt;surge ./public MY-UNIQUE-DOMAIN.surge.sh&lt;/code&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&quot;quick-surge-primer&quot;&gt;Quick Surge Primer&lt;/h2&gt;
-
-&lt;p&gt;Be aware that running Surge without any arguments will attempt to deploy the current folder. If you need help, you have to pass a &lt;code&gt;--help&lt;/code&gt; argument.&lt;/p&gt;
-
-&lt;p&gt;At any time, you can check the status of your Surge deployments by running &lt;code&gt;surge list&lt;/code&gt;, and you can tear down any Surge deployment by running &lt;code&gt;surge teardown&lt;/code&gt;.&lt;/p&gt;
-
-&lt;h2 id=&quot;next-steps&quot;&gt;Next Steps&lt;/h2&gt;
-
-&lt;p&gt;That’s it for the command line; the rest of the repository updates can be done entirely on GitHub.&lt;/p&gt;
-</description>
-        <pubDate>Thu, 02 Apr 2020 00:00:00 +0000</pubDate>
-        <link>https://blog.stephencleary.com/2020/04/github-actions-pull-request-staging-environments-part-1.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2020/04/github-actions-pull-request-staging-environments-part-1.html</guid>
       </item>
     
   </channel>
