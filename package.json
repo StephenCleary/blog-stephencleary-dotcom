@@ -2,19 +2,13 @@
   "name": "website",
   "version": "1.0.0",
   "description": "Stephen Cleary's website (stephencleary.com)",
-  "config": {
-    "image": "pwbgl/docker-jekyll-pygments",
-    "port": "4000"
-  },
   "scripts": {
-    "pull": "docker pull %npm_package_config_image%",
-
-    "jekyll:build": "docker run --rm --volume=%INIT_CWD%:/srv/jekyll -w /srv/jekyll/blog %npm_package_config_image% jekyll build",
+    "pull": "docker pull pwbgl/docker-jekyll-pygments",
+    "jekyll:build": "docker run --rm --volume=C:/Work/stephencleary.com/src:/srv/jekyll -w /srv/jekyll/blog pwbgl/docker-jekyll-pygments jekyll build",
     "build:www": "npm run jekyll:build -- --config _config.www.yml",
     "build:blog": "npm run jekyll:build -- --config _config.blog.yml",
     "build": "npm run build:www && npm run build:blog",
-
-    "jekyll:serve": "docker run -it --rm --volume=%INIT_CWD%:/srv/jekyll -w /srv/jekyll/blog -p 127.0.0.1:%npm_package_config_port%:%npm_package_config_port% %npm_package_config_image% jekyll serve --incremental --watch --force_polling",
+    "jekyll:serve": "docker run -it --rm --volume=C:/Work/stephencleary.com/src:/srv/jekyll -w /srv/jekyll/blog -p 127.0.0.1:4000:4000 pwbgl/docker-jekyll-pygments jekyll serve --incremental --watch --force_polling",
     "serve:www": "start npm run jekyll:serve --website:port=4001 -- --config _config.www.yml,_config.www.local.yml",
     "serve:blog": "start npm run jekyll:serve -- --config _config.blog.yml,_config.blog.local.yml",
     "serve": "npm run serve:blog && npm run serve:www"
