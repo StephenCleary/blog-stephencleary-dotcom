@@ -46,7 +46,7 @@ Another example is applying operating system or runtime patches. This is similar
 
 A final example is that some frameworks and host processes just do periodic application restarts just to keep things clean. For example, Apache's `MaxConnectionsPerChild` or IIS's `periodicRestart` can recycle child processes periodically. This is primarily useful for managing memory leaks in applications, frameworks, and/or libraries. Apache no longer recycles by default, but IIS still does. Again, this is based on the number of outstanding requests: the server will recycle its child application when it has no outstanding requests.
 
-The reasonable conclusion is that *shutdowns are normal*. All HTTP applications must work correctly when shutdowns occur. Correlation: All software that assumes it will never shut down is inherently buggy.
+The reasonable conclusion is that *shutdowns are normal*. All HTTP applications must work correctly when shutdowns occur. Corollary: All software that assumes it will never shut down is inherently buggy.
 
 Finally, we return to what "durable" means. In-memory queues cannot survive shutdowns. Therefore, "minimum acceptable reliability" means that the queue of work survives shutdowns, which are normal and common.
 
