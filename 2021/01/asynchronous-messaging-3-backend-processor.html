@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Asynchronous Messaging, Part 1: Basic Distributed Architecture</title>
+    <title>Asynchronous Messaging, Part 3: Backend Service</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Solving request-extrinsic problems with a distributed architecture." />
-    <link rel="canonical" href="https://blog.stephencleary.com/2021/01/asynchronous-messaging-1-basic-distributed-architecture.html" />
+    <meta name="description" content="A discussion of backend processing services, with multiple examples." />
+    <link rel="canonical" href="https://blog.stephencleary.com/2021/01/asynchronous-messaging-3-backend-processor.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -276,8 +276,8 @@ img.comment-author-profile-image {
 
   <header>
       <div class="page-header">
-          <h1>Asynchronous Messaging, Part 1: Basic Distributed Architecture</h1>
-          <small><time datetime="2021-01-07">Jan 7, 2021</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
+          <h1>Asynchronous Messaging, Part 3: Backend Service</h1>
+          <small><time datetime="2021-01-21">Jan 21, 2021</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
       </div>
   </header>
 
@@ -291,67 +291,63 @@ img.comment-author-profile-image {
   </header>
 
   <article>
-  <p>This is the first of a short series of blog posts on Asynchronous Messaging. This is not a new problem at all, but it’s something I’ve observed becoming more and more common over the last few years. Also, this is the kind of a problem that is difficult to solve quickly - or even <em>describe</em> the solution quickly, so I think a blog (series) is appropriate.</p>
+  <p>The proper solution for request-extrinsic code is asynchronous messaging, which has two primary parts: a durable queue and a backend service. Today I’m going to discuss the backend service.</p>
 
-<p>A bit of a side note, here: I primarily develop in the .NET stack these days (for the backend, at least). So some of my details will discuss ASP.NET-specific technologies and solutions. However, the general problem and solution is applicable to <strong>all</strong> technology stacks. I’ll call out the ASP.NET-specific parts as I cover them.</p>
+<h2 id="backend-services">Backend Services</h2>
 
-<h2 id="the-problem">The Problem</h2>
+<p>The purpose of the background service is to process the queue messages. When the HTTP application wants to return before the processing is complete, it queues a message to the durable queue and then returns. The background service is the other side of that pipe; the HTTP application is the producer putting messages into the queue, and the background service is the consumer retrieving messages from the queue and processing them.</p>
 
-<p>The problem usually manifests in a desire to <strong>return early</strong> from an HTTP request. So, once the request has been received, the developer wants the server-side API application to <strong>not wait</strong> for the processing to complete, and instead send the response back immediately.</p>
+<p>I usually recommend that the background service is <strong>independent</strong> from the HTTP application, but it doesn’t strictly have to be.</p>
 
-<p>A common term for this is <strong>fire and forget</strong>, in the sense that the developer wants to start (“fire”) some background work but then not wait for it to complete (“forget”).</p>
+<p>One reason for having a separate service is that they can be scaled independently; if they were in the same application, then scaling out the HTTP application means the background service is also scaled out. Independent services means each one can be scaled as needed: the HTTP application scales based on HTTP requests, and the background service scales based on queue messages.</p>
 
-<p>The goal is to have the HTTP call just <strong>start a workflow</strong>. This workflow then runs on the server side without further input from the client application. It’s a form of <strong>long-running operation</strong>.</p>
+<p>Another reason for having a separate service is that having an independent service <em>requires</em> the use of an external queue. If the background service is in the same process as the HTTP application, it’s not obvious that an in-memory queue is an inappropriate solution, and a future code maintainer may change the queue to be in-memory as an attempted optimization.</p>
 
-<p>I’ve decided to call this “request-extrinsic code”, because it sounds fancy. “Request-extrinsic” means that it’s code that runs <em>outside</em> of a request. This is fundamentally dangerous, which is why the solution is more complex than at first seems necessary.</p>
+<p>A final reason for having an independent background service is that the background service itself affects how the HTTP application can be shut down. The background service consists entirely of request-extrinsic code, so special care must be taken to allow proper shutdowns.</p>
+
+<p>For all these reasons, I recommend that background services are separate, independent services. But regardless of whether the background service is independent or sharing the same process as the HTTP application, it must process its messages idempotently.</p>
+
+<h2 id="idempotency">Idempotency</h2>
+
+<p>An operation is <strong>idempotent</strong> if it can be applied multiple times and produce the same result each time. In other words, once an idempotent operation has been applied, then future applications of that same operation are noops. Ideally, the background service should process its messages idempotently.</p>
+
+<p>This is necessary just due to the realities of durable queues. The CAP theorem has all the details, but the takeaway for modern distributed computing is that durable queues will deliver their durable messages <strong>at least once</strong>. This means that the background service may get the same message more than once.</p>
+
+<p>Ideally, you should try to structure your processing code so that receiving the same message more than once is a noop. Sometimes this means capturing more of the “state” of the system at the time the message is queued, and including that additional state in the queue messages.</p>
+
+<p>Sometimes idempotency just isn’t possible. Or easy, at least. In that case, you can use <strong>de-duplication</strong> to explicitly check for duplicate messages over a reasonable time period. Idempotent processing is best, and de-duplication is a reasonable fallback.</p>
+
+<h2 id="examples-of-backend-services">Examples of Backend Services</h2>
+
+<p>Just like durable queues, my go-to solutions for backend services are cloud solutions, specifically Functions as a Service (FaaS). FaaS is a perfect fit for background services, and even more so if you’re using a cloud-based durable queue. All the major cloud providers have built-in support for combining their durable queues with their FaaS offerings. This includes scaling logic: each cloud provider will auto-scale FaaS consumers based on their queue messages.</p>
+
+<p><a href="https://azure.microsoft.com/en-us/services/storage/queues/">Azure Storage Queues</a> pair with <a href="https://azure.microsoft.com/en-us/services/functions/">Azure Functions</a>; <a href="https://aws.amazon.com/sqs/">Amazon Simple Queue Service (SQS) queues</a> pair with <a href="https://aws.amazon.com/lambda/">AWS Lambdas</a>; and <a href="https://cloud.google.com/tasks">Google Cloud Task queues</a> pair with <a href="https://cloud.google.com/functions">Google Cloud Functions</a>. Cloud pairs such as these are the easiest way to implement a full asynchronous messaging solution.</p>
+
+<p>For on-premises solutions, one natural approach is a <a href="https://docs.microsoft.com/en-us/windows/win32/services/services">Win32 service</a> (if on Windows) or a <a href="https://www.man7.org/linux/man-pages/man7/daemon.7.html">Linux daemon</a> (if on Linux). These are background services that run all the time the server machine is on, regardless of whether a user is logged in. They are headless processes that do not permit direct user interaction. This makes background services a natural choice for both HTTP applications and the background processing services.</p>
+
+<p>Another possible solution is a regular Console application wrapped in a Docker container. Docker containers can be deployed either on-premise or in the cloud. This is a similar approach to the Win32 service / Linux daemon approach, but has better support for scaling out. Right now, Docker orchestrators are getting more support for scaling based on queue messages; setting up an autoscaler based on RabbitMQ messages is tedious but possible.</p>
+
+<p>The final - and least recommended solution - is to have the backend service run as a part of the HTTP application. As noted above, there are a few disadvantages to this approach: it cannot scale independently, the resulting architecture implies that an in-memory queue is acceptable, and it complicates shutdown handling. However, some teams do choose this option in spite of the drawbacks. When putting the backend service in the same process as the HTTP application, the host <em>must</em> be notified of the background work, or else work may be lost. Also, any “upstream” systems like HTTP proxies, load balancers, and deployment scripts may require changes so that they are also aware of the non-standard shutdown rules.</p>
 
 <div class="alert alert-info">
   <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
 
-  <p><strong>ASP.NET-specific:</strong> In ASP.NET pre-Core, there is an exception that developers may trigger with the message “An asynchronous module or handler completed while an asynchronous operation was still pending.” This is a “safety net” exception that indicates there’s some request-extrinsic code (which is dangerous). Unfortunately, ASP.NET Core does not have this “safety net” check, even though request-extrinsic code is just as bad on ASP.NET Core as it was on ASP.NET pre-Core.</p>
+  <p><strong>ASP.NET-specific:</strong> In ASP.NET Core, use <code>IHostedService</code>, or <code>IHostApplicationLifetime</code> to detect and block HTTP application shutdown. <code>BackgroundService</code> can also be used, but be aware that work may be lost if the host shutdown times out. In ASP.NET pre-Core, use <code>HostingEnvironment.QueueBackgroundWorkItem</code> or <code>IRegisteredObject</code>. Again, this is for the <em>least recommended solution</em> and you’ll <em>also</em> need to consider the impact on proxies, load balancers, and deployment systems. A far better solution would be to make the backend processing service independent (in its own process), and not change the HTTP shutdown rules at all.</p>
 </div>
-
-<h2 id="the-solution">The Solution</h2>
-
-<p>The proper solution for request-extrinsic code is <strong>asynchronous messaging</strong>.</p>
-
-<div class="alert alert-info">
-  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
-
-  <p>My blog often deals with “asynchronous” in the sense of the <code>async</code>/<code>await</code> keywords. This blog series is on <em>asynchronous messaging</em>, which is a completely different thing. <code>async</code>/<code>await</code> deal with asynchrony within the scope of a single process; asynchronous messaging deals with asynchrony across two processes (client and server). The two uses of “asynchronous” are similar at the 10,000 foot view, but completely different on the ground.</p>
-</div>
-
-<p>Asynchronous messaging has two parts (with an optional third part):</p>
-
-<ol>
-  <li>A <em>durable queue</em>. By “durable”, I mean a queue that at least flushes to disk on writes. In other words, the <em>messages</em> sent to the queue are durable. An in-memory <code>Queue&lt;T&gt;</code> or <code>BlockingCollection&lt;T&gt;</code> or <code>ChannelWriter&lt;T&gt;</code> is not a “durable queue” by this definition.</li>
-  <li>A <em>backend service</em>. This is an independent service that reads from that durable queue and processes the items in it (i.e., executes the long-running operation).</li>
-  <li>(optional) Some method to <em>retrieve results</em>. If the client needs to know the outcome of the long-running operation, then this is the part that provides that outcome to the client.</li>
-</ol>
-
-<p>One common example is sending emails. If an API wants to send an email but does not want to wait for the email to be sent before returning to the client, then the API should add a message to the durable queue describing the email to be sent and then return. Since this is a durable queue, the queue message (containing the email details) is flushed to disk before the HTTP response is sent to the client. Then a separate backend service reading from that queue retrieves the queue message and sends the actual email.</p>
-
-<p>Another common example is database writes. Sometimes there are situations where the API knows what to write to the database but doesn’t want to make the client wait for it. In that case, the API should write the information to a durable queue and then return to the client. Then a separate backend service reading from that queue retrieves the information and performs the actual database update.</p>
-
-<p>Retrieving results is often not necessary. E.g., the email itself usually <em>is</em> the result of sending an email, and database writes will show up eventually as the user navigates/refreshes. But sometimes you do need the client to be notified of results; this is possible either using polling or a proactive notification using a messaging technology like WebSockets.</p>
-
-<p>In the rest of this series, I’ll dive more into each parts of the solution, and discuss specific approaches in more detail. But the description above is usually all that’s needed.</p>
-
-<p>The proper solution for request-extrinsic code is <strong>asynchronous messaging</strong>, which is accomplished by adding a <strong>durable queue</strong> coupled with a <strong>backend service</strong>.</p>
 
   </article>
     
     <footer class="hidden-print">
         
             <ul class="pager">
+                <li class="previous"><a href="/2021/01/asynchronous-messaging-2-durable-queues.html" title="Asynchronous Messaging, Part 2: Durable Queues">&larr; Previous in Asynchronous Messaging</a></li>
                 
-                <li class="next"><a href="/2021/01/asynchronous-messaging-2-durable-queues.html" title="Asynchronous Messaging, Part 2: Durable Queues">Next in Asynchronous Messaging &rarr;</a></li>
             </ul>
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2020/06/servicebase-gotcha-recovery-actions.html" title="Win32 Service Gotcha: Recovery Actions">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2021/01/asynchronous-messaging-2-durable-queues.html" title="Asynchronous Messaging, Part 2: Durable Queues">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2021/01/asynchronous-messaging-2-durable-queues.html" title="Asynchronous Messaging, Part 2: Durable Queues">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="comments"></div>
@@ -364,9 +360,9 @@ img.comment-author-profile-image {
                     <div class="panel-heading">Asynchronous Messaging</div>
                     <div class="panel-body sidenav">
                         <ul class="nav nav-pills nav-stacked">
-                                    <li class="active sidenavitem"><a href="/2021/01/asynchronous-messaging-1-basic-distributed-architecture.html">Basic Distributed Architecture</a></li>
+                                    <li class="sidenavitem"><a href="/2021/01/asynchronous-messaging-1-basic-distributed-architecture.html">Basic Distributed Architecture</a></li>
                                     <li class="sidenavitem"><a href="/2021/01/asynchronous-messaging-2-durable-queues.html">Durable Queues</a></li>
-                                    <li class="sidenavitem"><a href="/2021/01/asynchronous-messaging-3-backend-processor.html">Backend Service</a></li>
+                                    <li class="active sidenavitem"><a href="/2021/01/asynchronous-messaging-3-backend-processor.html">Backend Service</a></li>
                         </ul>
                     </div>
                 </div>
@@ -519,7 +515,7 @@ img.comment-author-profile-image {
 
 <script type="text/javascript">
 
-var pageUrl = "https://blog.stephencleary.com" + "/2021/01/asynchronous-messaging-1-basic-distributed-architecture.html";
+var pageUrl = "https://blog.stephencleary.com" + "/2021/01/asynchronous-messaging-3-backend-processor.html";
 
 // (unnecessary) 1) If the URL starts with http://, replace with https://
 
