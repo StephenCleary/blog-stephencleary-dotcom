@@ -16,7 +16,7 @@ Before looking into delivering results, it's important to note that there are ma
 
 One common case for long-running operations is sending an email. In cases like these, the email itself *is* the actual result of the operation. So, there is no need for the original client to get a notification that the email has actually been sent; the email itself is the result.
 
-Another case that doesn't need explicit results is when the human end-user will poll. Usually in this kind of scenario, some kind of status is exposed in the normal UI, and the end user will see the results sooner or later. Even most non-technical end-users know how to refresh the page when they are looking for updates to occur.
+Another case that doesn't need explicit results is when the human end-user will poll. Usually in this kind of scenario, some kind of status is exposed in the normal UI, and the end user will see the results sooner or later. Even the most non-technical end-users know how to refresh the page when they are looking for updates to occur.
 
 So, the first question to ask is whether retrieving results is actually necessary. In my experience, most asynchronous messaging solutions do not require explicitly retrieving results.
 
