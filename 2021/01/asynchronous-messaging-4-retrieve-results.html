@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Asynchronous Messaging, Part 1: Basic Distributed Architecture</title>
+    <title>Asynchronous Messaging, Part 4: Retrieve Results</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Solving request-extrinsic problems with a distributed architecture." />
-    <link rel="canonical" href="https://blog.stephencleary.com/2021/01/asynchronous-messaging-1-basic-distributed-architecture.html" />
+    <meta name="description" content="When you do and do not need to retrieve results in an asynchronous messaging solution, and methods for doing so." />
+    <link rel="canonical" href="https://blog.stephencleary.com/2021/01/asynchronous-messaging-4-retrieve-results.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -276,8 +276,8 @@ img.comment-author-profile-image {
 
   <header>
       <div class="page-header">
-          <h1>Asynchronous Messaging, Part 1: Basic Distributed Architecture</h1>
-          <small><time datetime="2021-01-07">Jan 7, 2021</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
+          <h1>Asynchronous Messaging, Part 4: Retrieve Results</h1>
+          <small><time datetime="2021-01-28">Jan 28, 2021</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
       </div>
   </header>
 
@@ -291,67 +291,57 @@ img.comment-author-profile-image {
   </header>
 
   <article>
-  <p>This is the first of a short series of blog posts on Asynchronous Messaging. This is not a new problem at all, but it’s something I’ve observed becoming more and more common over the last few years. Also, this is the kind of a problem that is difficult to solve quickly - or even <em>describe</em> the solution quickly, so I think a blog (series) is appropriate.</p>
+  <p>So far in this series, we’ve covered how asynchronous messaging can be implemented with a durable queue and a backend service. Those are the most necessary components of the solution, but another piece is sometimes necessary.</p>
 
-<p>A bit of a side note, here: I primarily develop in the .NET stack these days (for the backend, at least). So some of my details will discuss ASP.NET-specific technologies and solutions. However, the general problem and solution is applicable to <strong>all</strong> technology stacks. I’ll call out the ASP.NET-specific parts as I cover them.</p>
+<p>Many times, it’s the desire to “return early” or “fire and forget” that start developers down the path of exogenous code and asynchronous messaging. Sometimes the client, as the originator of the request, wants to get the results of the long-running background operation.</p>
 
-<h2 id="the-problem">The Problem</h2>
+<h2 id="no-results-necessary">No Results Necessary</h2>
 
-<p>The problem usually manifests in a desire to <strong>return early</strong> from an HTTP request. So, once the request has been received, the developer wants the server-side API application to <strong>not wait</strong> for the processing to complete, and instead send the response back immediately.</p>
+<p>Before looking into delivering results, it’s important to note that there are many scenarios that do not require explicitly sending results.</p>
 
-<p>A common term for this is <strong>fire and forget</strong>, in the sense that the developer wants to start (“fire”) some background work but then not wait for it to complete (“forget”).</p>
+<p>One common case for long-running operations is sending an email. In cases like these, the email itself <em>is</em> the actual result of the operation. So, there is no need for the original client to get a notification that the email has actually been sent; the email itself is the result.</p>
 
-<p>The goal is to have the HTTP call just <strong>start a workflow</strong>. This workflow then runs on the server side without further input from the client application. It’s a form of <strong>long-running operation</strong>.</p>
+<p>Another case that doesn’t need explicit results is when the human end-user will poll. Usually in this kind of scenario, some kind of status is exposed in the normal UI, and the end user will see the results sooner or later. Even most non-technical end-users know how to refresh the page when they are looking for updates to occur.</p>
 
-<p>I’ve decided to call this “request-extrinsic code”, because it sounds fancy. “Request-extrinsic” means that it’s code that runs <em>outside</em> of a request. This is fundamentally dangerous, which is why the solution is more complex than at first seems necessary.</p>
+<p>So, the first question to ask is whether retrieving results is actually necessary. In my experience, most asynchronous messaging solutions do not require explicitly retrieving results.</p>
 
-<div class="alert alert-info">
-  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+<h2 id="polling">Polling</h2>
 
-  <p><strong>ASP.NET-specific:</strong> In ASP.NET pre-Core, there is an exception that developers may trigger with the message “An asynchronous module or handler completed while an asynchronous operation was still pending.” This is a “safety net” exception that indicates there’s some request-extrinsic code (which is dangerous). Unfortunately, ASP.NET Core does not have this “safety net” check, even though request-extrinsic code is just as bad on ASP.NET Core as it was on ASP.NET pre-Core.</p>
-</div>
+<p>If the client does need to detect the results of the asynchronous operation, then it can poll a “status” endpoint until the results are available, and then pull the final result (or error, if the operation failed). Most HTTP APIs these days are REST-based, so I’ll describe here the most common approaches for implementing polling for asynchronous messaging completion.</p>
 
-<h2 id="the-solution">The Solution</h2>
+<p>Unfortunately, there’s a wide variety of implementations for this kind of pattern. The one thing everyone agrees with is that the initial status response code should be <code>202 Accepted</code>. This is for the call that initiates the asynchronous messaging, so the HTTP application should put its message into a durable queue and then return <code>202 Accepted</code>.</p>
 
-<p>The proper solution for request-extrinsic code is <strong>asynchronous messaging</strong>.</p>
+<p>The HTTP application should also return some kind of information that allows the client to poll for completion. This is usually done via some kind of “status” URI. The <a href="https://tools.ietf.org/html/rfc7231#section-6.3.3">actual standard</a> just says “The representation sent with this response ought to describe the request’s current status and point to (or embed) a status monitor that can provide the user with an estimate of when the request will be fulfilled.” This is very open-ended, and this is where the implementations begin to diverge. One option is to return the status URI in the body of the <code>202 Accepted</code> (e.g., as a JSON property). Another option is to return the status URI in the <code>Location</code> header of the response.</p>
 
-<div class="alert alert-info">
-  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+<p>Once the client has the status URI, it can begin calling that URI periodically for updates on that asynchronous operation. Again, implementations diverge on the details here, depending on whether the status is considered a “resource” in REST terms. As long as the operation is not complete, some implementations return <code>200 OK</code> with some kind of “incomplete” indicator in the body; other implementations return <code>202 Accepted</code> from the status URI. The server can also optionally include a “percentage complete” indicator in its response body, and/or a <code>Retry-After</code> header if it has an estimated time of completion (to discourage over-eager polling).</p>
 
-  <p>My blog often deals with “asynchronous” in the sense of the <code>async</code>/<code>await</code> keywords. This blog series is on <em>asynchronous messaging</em>, which is a completely different thing. <code>async</code>/<code>await</code> deal with asynchrony within the scope of a single process; asynchronous messaging deals with asynchrony across two processes (client and server). The two uses of “asynchronous” are similar at the 10,000 foot view, but completely different on the ground.</p>
-</div>
+<p>If the operation completes with an error, then the status URI can either return <code>200 OK</code> with the “error” in the response body (if treating the status as a “resource”), or it can return an appropriate error code (<code>4xx</code>/<code>5xx</code>) with optional error details in the response body. If the operation completes successfully, then the status URI should return <code>303 See Other</code> with the <code>Location</code> header set to the resource that was updated/modified by the asynchronous message. Alternatively, the status API could also return <code>200 OK</code>, <code>201 Created</code>, or <code>204 No Content</code> to indicate successful completion.</p>
 
-<p>Asynchronous messaging has two parts (with an optional third part):</p>
+<p>As you can see, there’s considerable variation in how exactly asynchronous messaging is implemented from a REST API standpoint. There are no standards or widespread accepted pattern. I recommend not losing too much sleep over which one is “right”, and just documenting clearly which approach you take for your API.</p>
 
-<ol>
-  <li>A <em>durable queue</em>. By “durable”, I mean a queue that at least flushes to disk on writes. In other words, the <em>messages</em> sent to the queue are durable. An in-memory <code>Queue&lt;T&gt;</code> or <code>BlockingCollection&lt;T&gt;</code> or <code>ChannelWriter&lt;T&gt;</code> is not a “durable queue” by this definition.</li>
-  <li>A <em>backend service</em>. This is an independent service that reads from that durable queue and processes the items in it (i.e., executes the long-running operation).</li>
-  <li>(optional) Some method to <em>retrieve results</em>. If the client needs to know the outcome of the long-running operation, then this is the part that provides that outcome to the client.</li>
-</ol>
+<p>One final note: in order to retrieve results, your backend processing service must be sharing its progress with the HTTP application. At the very least, the HTTP application serving the status URIs must be able to know when the asynchronous message has been processed. A more complete implementation may need to share a <code>Location</code> URI, error details, progress percentage, and/or estimated time to completion. These “in progress details” could be in a shared database (and often are placed there), but it’s not necessary that they be durable. It’s fine to store in-progress details in an in-memory structure such as a shared cache.</p>
 
-<p>One common example is sending emails. If an API wants to send an email but does not want to wait for the email to be sent before returning to the client, then the API should add a message to the durable queue describing the email to be sent and then return. Since this is a durable queue, the queue message (containing the email details) is flushed to disk before the HTTP response is sent to the client. Then a separate backend service reading from that queue retrieves the queue message and sends the actual email.</p>
+<h2 id="notification">Notification</h2>
 
-<p>Another common example is database writes. Sometimes there are situations where the API knows what to write to the database but doesn’t want to make the client wait for it. In that case, the API should write the information to a durable queue and then return to the client. Then a separate backend service reading from that queue retrieves the information and performs the actual database update.</p>
+<p>Polling (whether done by the user or by the client) is a perfectly valid solution for most cases. In some cases, however, your clients need to know <em>immediately</em> whenever the message has been processed. This is rare, but not unheard of. In this case, you wouldn’t want to use polling, where you’d have to tradeoff how quickly your client sees the completion against the number of wasted requests all saying “is it done yet?”</p>
 
-<p>Retrieving results is often not necessary. E.g., the email itself usually <em>is</em> the result of sending an email, and database writes will show up eventually as the user navigates/refreshes. But sometimes you do need the client to be notified of results; this is possible either using polling or a proactive notification using a messaging technology like WebSockets.</p>
+<p>In the case where you need realtime notification of completion, you should use a server-initiated notification system. These days, that pretty much always means WebSockets (or SignalR), although old-school solutions like long polling or even server-side events (SSE) are still around, too. All of these solutions enable an HTTP application to push a message to an already-connected client. In this case, the common approach is to have the backend processing service connect to the HTTP application via some kind of bus (e.g., it could connect to a SignalR hub), and then send a message over that bus directly to the HTTP application, which notifies its clients that the processing is complete.</p>
 
-<p>In the rest of this series, I’ll dive more into each parts of the solution, and discuss specific approaches in more detail. But the description above is usually all that’s needed.</p>
-
-<p>The proper solution for request-extrinsic code is <strong>asynchronous messaging</strong>, which is accomplished by adding a <strong>durable queue</strong> coupled with a <strong>backend service</strong>.</p>
+<p>This is a fine approach, and only has one caveat: when a system’s architecture becomes complex enough to introduce asynchronous messaging, then that system is also positioned to be prepared to scale out. The bus connecting the HTTP application instances to the background processing instances needs to be ready for scaling. Some systems (e.g., SignalR) are not set up to scale by default. If I was adding asynchronous messaging to a system and we needed to use SignalR for realtime notifications, then I would set it up with a scalable backplane immediately.</p>
 
   </article>
     
     <footer class="hidden-print">
         
             <ul class="pager">
+                <li class="previous"><a href="/2021/01/asynchronous-messaging-3-backend-processor.html" title="Asynchronous Messaging, Part 3: Backend Service">&larr; Previous in Asynchronous Messaging</a></li>
                 
-                <li class="next"><a href="/2021/01/asynchronous-messaging-2-durable-queues.html" title="Asynchronous Messaging, Part 2: Durable Queues">Next in Asynchronous Messaging &rarr;</a></li>
             </ul>
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2020/06/servicebase-gotcha-recovery-actions.html" title="Win32 Service Gotcha: Recovery Actions">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2021/01/asynchronous-messaging-2-durable-queues.html" title="Asynchronous Messaging, Part 2: Durable Queues">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2021/01/asynchronous-messaging-3-backend-processor.html" title="Asynchronous Messaging, Part 3: Backend Service">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="comments"></div>
@@ -364,10 +354,10 @@ img.comment-author-profile-image {
                     <div class="panel-heading">Asynchronous Messaging</div>
                     <div class="panel-body sidenav">
                         <ul class="nav nav-pills nav-stacked">
-                                    <li class="active sidenavitem"><a href="/2021/01/asynchronous-messaging-1-basic-distributed-architecture.html">Basic Distributed Architecture</a></li>
+                                    <li class="sidenavitem"><a href="/2021/01/asynchronous-messaging-1-basic-distributed-architecture.html">Basic Distributed Architecture</a></li>
                                     <li class="sidenavitem"><a href="/2021/01/asynchronous-messaging-2-durable-queues.html">Durable Queues</a></li>
                                     <li class="sidenavitem"><a href="/2021/01/asynchronous-messaging-3-backend-processor.html">Backend Service</a></li>
-                                    <li class="sidenavitem"><a href="/2021/01/asynchronous-messaging-4-retrieve-results.html">Retrieve Results</a></li>
+                                    <li class="active sidenavitem"><a href="/2021/01/asynchronous-messaging-4-retrieve-results.html">Retrieve Results</a></li>
                         </ul>
                     </div>
                 </div>
@@ -521,7 +511,7 @@ img.comment-author-profile-image {
 
 <script type="text/javascript">
 
-var pageUrl = "https://blog.stephencleary.com" + "/2021/01/asynchronous-messaging-1-basic-distributed-architecture.html";
+var pageUrl = "https://blog.stephencleary.com" + "/2021/01/asynchronous-messaging-4-retrieve-results.html";
 
 // (unnecessary) 1) If the URL starts with http://, replace with https://
 

@@ -8,6 +8,51 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>Asynchronous Messaging, Part 4: Retrieve Results</title>
+        <description>&lt;p&gt;So far in this series, we’ve covered how asynchronous messaging can be implemented with a durable queue and a backend service. Those are the most necessary components of the solution, but another piece is sometimes necessary.&lt;/p&gt;
+
+&lt;p&gt;Many times, it’s the desire to “return early” or “fire and forget” that start developers down the path of exogenous code and asynchronous messaging. Sometimes the client, as the originator of the request, wants to get the results of the long-running background operation.&lt;/p&gt;
+
+&lt;h2 id=&quot;no-results-necessary&quot;&gt;No Results Necessary&lt;/h2&gt;
+
+&lt;p&gt;Before looking into delivering results, it’s important to note that there are many scenarios that do not require explicitly sending results.&lt;/p&gt;
+
+&lt;p&gt;One common case for long-running operations is sending an email. In cases like these, the email itself &lt;em&gt;is&lt;/em&gt; the actual result of the operation. So, there is no need for the original client to get a notification that the email has actually been sent; the email itself is the result.&lt;/p&gt;
+
+&lt;p&gt;Another case that doesn’t need explicit results is when the human end-user will poll. Usually in this kind of scenario, some kind of status is exposed in the normal UI, and the end user will see the results sooner or later. Even most non-technical end-users know how to refresh the page when they are looking for updates to occur.&lt;/p&gt;
+
+&lt;p&gt;So, the first question to ask is whether retrieving results is actually necessary. In my experience, most asynchronous messaging solutions do not require explicitly retrieving results.&lt;/p&gt;
+
+&lt;h2 id=&quot;polling&quot;&gt;Polling&lt;/h2&gt;
+
+&lt;p&gt;If the client does need to detect the results of the asynchronous operation, then it can poll a “status” endpoint until the results are available, and then pull the final result (or error, if the operation failed). Most HTTP APIs these days are REST-based, so I’ll describe here the most common approaches for implementing polling for asynchronous messaging completion.&lt;/p&gt;
+
+&lt;p&gt;Unfortunately, there’s a wide variety of implementations for this kind of pattern. The one thing everyone agrees with is that the initial status response code should be &lt;code&gt;202 Accepted&lt;/code&gt;. This is for the call that initiates the asynchronous messaging, so the HTTP application should put its message into a durable queue and then return &lt;code&gt;202 Accepted&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;The HTTP application should also return some kind of information that allows the client to poll for completion. This is usually done via some kind of “status” URI. The &lt;a href=&quot;https://tools.ietf.org/html/rfc7231#section-6.3.3&quot;&gt;actual standard&lt;/a&gt; just says “The representation sent with this response ought to describe the request’s current status and point to (or embed) a status monitor that can provide the user with an estimate of when the request will be fulfilled.” This is very open-ended, and this is where the implementations begin to diverge. One option is to return the status URI in the body of the &lt;code&gt;202 Accepted&lt;/code&gt; (e.g., as a JSON property). Another option is to return the status URI in the &lt;code&gt;Location&lt;/code&gt; header of the response.&lt;/p&gt;
+
+&lt;p&gt;Once the client has the status URI, it can begin calling that URI periodically for updates on that asynchronous operation. Again, implementations diverge on the details here, depending on whether the status is considered a “resource” in REST terms. As long as the operation is not complete, some implementations return &lt;code&gt;200 OK&lt;/code&gt; with some kind of “incomplete” indicator in the body; other implementations return &lt;code&gt;202 Accepted&lt;/code&gt; from the status URI. The server can also optionally include a “percentage complete” indicator in its response body, and/or a &lt;code&gt;Retry-After&lt;/code&gt; header if it has an estimated time of completion (to discourage over-eager polling).&lt;/p&gt;
+
+&lt;p&gt;If the operation completes with an error, then the status URI can either return &lt;code&gt;200 OK&lt;/code&gt; with the “error” in the response body (if treating the status as a “resource”), or it can return an appropriate error code (&lt;code&gt;4xx&lt;/code&gt;/&lt;code&gt;5xx&lt;/code&gt;) with optional error details in the response body. If the operation completes successfully, then the status URI should return &lt;code&gt;303 See Other&lt;/code&gt; with the &lt;code&gt;Location&lt;/code&gt; header set to the resource that was updated/modified by the asynchronous message. Alternatively, the status API could also return &lt;code&gt;200 OK&lt;/code&gt;, &lt;code&gt;201 Created&lt;/code&gt;, or &lt;code&gt;204 No Content&lt;/code&gt; to indicate successful completion.&lt;/p&gt;
+
+&lt;p&gt;As you can see, there’s considerable variation in how exactly asynchronous messaging is implemented from a REST API standpoint. There are no standards or widespread accepted pattern. I recommend not losing too much sleep over which one is “right”, and just documenting clearly which approach you take for your API.&lt;/p&gt;
+
+&lt;p&gt;One final note: in order to retrieve results, your backend processing service must be sharing its progress with the HTTP application. At the very least, the HTTP application serving the status URIs must be able to know when the asynchronous message has been processed. A more complete implementation may need to share a &lt;code&gt;Location&lt;/code&gt; URI, error details, progress percentage, and/or estimated time to completion. These “in progress details” could be in a shared database (and often are placed there), but it’s not necessary that they be durable. It’s fine to store in-progress details in an in-memory structure such as a shared cache.&lt;/p&gt;
+
+&lt;h2 id=&quot;notification&quot;&gt;Notification&lt;/h2&gt;
+
+&lt;p&gt;Polling (whether done by the user or by the client) is a perfectly valid solution for most cases. In some cases, however, your clients need to know &lt;em&gt;immediately&lt;/em&gt; whenever the message has been processed. This is rare, but not unheard of. In this case, you wouldn’t want to use polling, where you’d have to tradeoff how quickly your client sees the completion against the number of wasted requests all saying “is it done yet?”&lt;/p&gt;
+
+&lt;p&gt;In the case where you need realtime notification of completion, you should use a server-initiated notification system. These days, that pretty much always means WebSockets (or SignalR), although old-school solutions like long polling or even server-side events (SSE) are still around, too. All of these solutions enable an HTTP application to push a message to an already-connected client. In this case, the common approach is to have the backend processing service connect to the HTTP application via some kind of bus (e.g., it could connect to a SignalR hub), and then send a message over that bus directly to the HTTP application, which notifies its clients that the processing is complete.&lt;/p&gt;
+
+&lt;p&gt;This is a fine approach, and only has one caveat: when a system’s architecture becomes complex enough to introduce asynchronous messaging, then that system is also positioned to be prepared to scale out. The bus connecting the HTTP application instances to the background processing instances needs to be ready for scaling. Some systems (e.g., SignalR) are not set up to scale by default. If I was adding asynchronous messaging to a system and we needed to use SignalR for realtime notifications, then I would set it up with a scalable backplane immediately.&lt;/p&gt;
+</description>
+        <pubDate>Thu, 28 Jan 2021 00:00:00 +0000</pubDate>
+        <link>https://blog.stephencleary.com/2021/01/asynchronous-messaging-4-retrieve-results.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2021/01/asynchronous-messaging-4-retrieve-results.html</guid>
+      </item>
+    
+      <item>
         <title>Asynchronous Messaging, Part 3: Backend Service</title>
         <description>&lt;p&gt;The proper solution for request-extrinsic code is asynchronous messaging, which has two primary parts: a durable queue and a backend service. Today I’m going to discuss the backend service.&lt;/p&gt;
 
@@ -873,160 +918,6 @@ jobs:
         <pubDate>Wed, 06 May 2020 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2020/05/github-actions-pull-request-staging-environments-part-4-automated-deploy-and-teardown.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2020/05/github-actions-pull-request-staging-environments-part-4-automated-deploy-and-teardown.html</guid>
-      </item>
-    
-      <item>
-        <title>Using GitHub Actions for Pull Request Staging Environments, Part 3: Implementing Deploy and Teardown</title>
-        <description>&lt;h2 id=&quot;implementing-deploy&quot;&gt;Implementing Deploy&lt;/h2&gt;
-
-&lt;p&gt;So far, we have a &lt;code&gt;slash-commands&lt;/code&gt; GitHub Action that translates &lt;code&gt;/deploy&lt;/code&gt; and &lt;code&gt;/teardown&lt;/code&gt; ChatOps commands into &lt;code&gt;repository_dispatch&lt;/code&gt; events.&lt;/p&gt;
-
-&lt;p&gt;To handle the &lt;code&gt;/deploy&lt;/code&gt; slash command, we’ll need to handle a &lt;code&gt;repository_dispatch&lt;/code&gt; event of type &lt;code&gt;deploy-command&lt;/code&gt;. In your GitHub repository, open up the Actions tab and choose “New workflow” and then “Set up a workflow yourself”. Name the file &lt;code&gt;deploy-command.yml&lt;/code&gt; and paste this in:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&quot;language-yaml&quot;&gt;# Inputs:
-#  client_payload.pull_request.number - PR number
-#  client_payload.pull_request.head.sha - PR SHA
-
-name: Create PR Staging Environment
-
-on:
-  repository_dispatch:
-    types: [deploy-command]
-
-# Set environment variables available to all action steps.
-env:
-  DOMAIN: ${{ format('{0}-{1}-pr{2}.surge.sh', github.event.repository.owner.login, github.event.repository.name, github.event.client_payload.pull_request.number) }}
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          ref: ${{ github.event.client_payload.pull_request.head.sha }}
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build static site
-        run: npx gatsby build
-
-      - name: Publish to surge.sh
-        run: npx surge ./public ${{ env.DOMAIN }}
-        env:
-          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
-          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
-
-      - name: Add comment to PR
-        uses: peter-evans/create-or-update-comment@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ github.event.client_payload.pull_request.number }}
-          body: |
-            ${{ format('Published to [staging environment](https://{0})', env.DOMAIN) }}
-
-            To teardown, comment with the `/teardown` command.
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;This one’s a bit longer, so let’s walk through the steps.&lt;/p&gt;
-
-&lt;p&gt;The first step checks out the repository. Note that it specifically checks out the SHA of the pull request (&lt;code&gt;client_payload.pull_request&lt;/code&gt; is provided by &lt;code&gt;slash-command-dispatch&lt;/code&gt;). So we’re checking out the code &lt;em&gt;for that PR&lt;/em&gt;.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&quot;language-yaml&quot;&gt;      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          ref: ${{ github.event.client_payload.pull_request.head.sha }}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;The next couple steps build the site by running &lt;code&gt;npm ci&lt;/code&gt; and &lt;code&gt;npx gatsby build&lt;/code&gt;. Just like building locally, the output is placed in the &lt;code&gt;public&lt;/code&gt; folder.&lt;/p&gt;
-
-&lt;p&gt;The publish step runs &lt;code&gt;npx surge ./public ${{ env.DOMAIN }}&lt;/code&gt;. This time we’re running &lt;code&gt;surge&lt;/code&gt; and giving it the name of the domain we want to publish to. The &lt;code&gt;DOMAIN&lt;/code&gt; environment variable was defined earlier in the file:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&quot;language-yaml&quot;&gt;env:
-  DOMAIN: ${{ format('{0}-{1}-pr{2}.surge.sh', github.event.repository.owner.login, github.event.repository.name, github.event.client_payload.pull_request.number) }}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;What’s really nice about this setup is that every pull request gets a different domain - and thus a different staging environment.&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;SURGE_LOGIN&lt;/code&gt; and &lt;code&gt;SURGE_TOKEN&lt;/code&gt; are additional environment variables used by the &lt;code&gt;surge&lt;/code&gt; command line so it authenticates under your account while deploying.&lt;/p&gt;
-
-&lt;p&gt;The last step adds a comment to the pull request with a clickable link for the deployed staging environment:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&quot;language-yaml&quot;&gt;      - name: Add comment to PR
-        uses: peter-evans/create-or-update-comment@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ github.event.client_payload.pull_request.number }}
-          body: |
-            ${{ format('Published to [staging environment](https://{0})', env.DOMAIN) }}
-
-            To teardown, comment with the `/teardown` command.
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;This ends up looking like this:&lt;/p&gt;
-
-&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/github-actions-deploy.png&quot;&gt;&lt;img src=&quot;/assets/github-actions-deploy.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
-
-&lt;h3 id=&quot;set-up-surge-secrets&quot;&gt;Set Up Surge Secrets&lt;/h3&gt;
-
-&lt;p&gt;There are a couple of new secrets used by the deploy action: &lt;code&gt;SURGE_LOGIN&lt;/code&gt; and &lt;code&gt;SURGE_TOKEN&lt;/code&gt;. These can be added as &lt;a href=&quot;https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets&quot;&gt;repository secrets&lt;/a&gt; just like last time.&lt;/p&gt;
-
-&lt;p&gt;Set &lt;code&gt;SURGE_LOGIN&lt;/code&gt; to the email address &lt;a href=&quot;2020-04-02-github-actions-pull-request-staging-environments-part-1&quot;&gt;you used to sign up with Surge&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;To get &lt;code&gt;SURGE_TOKEN&lt;/code&gt;, run &lt;code&gt;surge token&lt;/code&gt; from your own computer. This will give you a token that you can save in the &lt;code&gt;SURGE_TOKEN&lt;/code&gt; secret, so your deployments are associated with your Surge account.&lt;/p&gt;
-
-&lt;h2 id=&quot;try-it-out&quot;&gt;Try It Out!&lt;/h2&gt;
-
-&lt;p&gt;At this point, you should be able to create a pull request and then add a &lt;code&gt;/deploy&lt;/code&gt; comment on it. Check out the Actions tab of the repository to watch your actions run or see the logs for old action runs.&lt;/p&gt;
-
-&lt;h2 id=&quot;implementing-teardown&quot;&gt;Implementing Teardown&lt;/h2&gt;
-
-&lt;p&gt;The next step is to implement teardown. In your GitHub repository, open up the Actions tab and choose “New workflow” and then “Set up a workflow yourself”. Name the file &lt;code&gt;teardown-command.yml&lt;/code&gt; and paste this in:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&quot;language-yaml&quot;&gt;# Inputs:
-#  client_payload.pull_request.number - PR number
-
-name: Delete PR Staging Environment
-
-on:
-  repository_dispatch:
-    types: [teardown-command]
-
-env:
-  DOMAIN: ${{ format('{0}-{1}-pr{2}.surge.sh', github.event.repository.owner.login, github.event.repository.name, github.event.client_payload.pull_request.number) }}
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Teardown surge.sh
-        run: npx surge teardown ${{ env.DOMAIN }}
-        env:
-          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
-          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
-
-      - name: Add comment to PR
-        uses: peter-evans/create-or-update-comment@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ github.event.client_payload.pull_request.number }}
-          body: ${{ format('Tore down {0}', env.DOMAIN) }}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;This one is pretty simple; we use a similar pattern to &lt;code&gt;/deploy&lt;/code&gt; but there are fewer steps since there’s no build (or even a checkout). We use the same pattern for defining &lt;code&gt;DOMAIN&lt;/code&gt; and the Surge secrets, and then we run &lt;code&gt;npx surge teardown ${{ env.DOMAIN }}&lt;/code&gt; to tear down the environment for this pull request. The last step adds a comment to the PR indicating that its staging environment has been torn down.&lt;/p&gt;
-
-&lt;h2 id=&quot;who-can-issue-commands&quot;&gt;Who Can Issue Commands?&lt;/h2&gt;
-
-&lt;p&gt;By default, only developers with write access to your repository can issue slash commands. This is the default behavior of &lt;code&gt;slash-command-dispatch&lt;/code&gt;. So if this is just your project, then only you can create or tear down staging environments. If you have an open-source project - and if creating staging environments is cheap for you - you can edit the &lt;code&gt;slash-commands.yml&lt;/code&gt; file and add a &lt;code&gt;permission&lt;/code&gt; argument to &lt;code&gt;slash-command-dispatch&lt;/code&gt; with the value &lt;code&gt;none&lt;/code&gt;. That way, &lt;em&gt;anyone&lt;/em&gt; would be able to create and tear down staging environments.&lt;/p&gt;
-
-&lt;h2 id=&quot;next-time&quot;&gt;Next Time&lt;/h2&gt;
-
-&lt;p&gt;ChatOps are cool. But can we automate this further?&lt;/p&gt;
-</description>
-        <pubDate>Fri, 24 Apr 2020 00:00:00 +0000</pubDate>
-        <link>https://blog.stephencleary.com/2020/04/github-actions-pull-request-staging-environments-part-3-implementing-deploy-and-teardown.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2020/04/github-actions-pull-request-staging-environments-part-3-implementing-deploy-and-teardown.html</guid>
       </item>
     
   </channel>
