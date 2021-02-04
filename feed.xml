@@ -8,6 +8,46 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>Asynchronous Messaging, Part 5: Miscellaneous Considerations</title>
+        <description>&lt;p&gt;This entry in my asynchronous messaging series is kind of a grab bag of miscellaneous topics. I don’t really have enough to say on these to make them their own posts, but some are too important to drop completely. So, here we go!&lt;/p&gt;
+
+&lt;h2 id=&quot;poison--dead-letter-queues&quot;&gt;Poison / Dead Letter Queues&lt;/h2&gt;
+
+&lt;p&gt;When designing your system, you need to decide how to handle queue messages that insist on failing to process. Usually, you plan for some kind of “dead letter queue” to hold these “poison” messages, and then set up alerting or something on that queue. Many cloud queue/worker systems will automatically do this for you: after a certain number of retries, the problematic message is removed from the regular queue and sent to a poison queue instead.&lt;/p&gt;
+
+&lt;p&gt;Just don’t forget to set up alerting on those poison queues!&lt;/p&gt;
+
+&lt;h2 id=&quot;versioning&quot;&gt;Versioning&lt;/h2&gt;
+
+&lt;p&gt;When I design asynchronous messaging systems, I tend to treat the queued messages as a kind of Data Transfer Object (DTO). These messages act as a bridge between two processes: the HTTP application and the backend processor.&lt;/p&gt;
+
+&lt;p&gt;Just like the rest of the system, the DTOs will change over time, and it’s best to be prepared for that. Unlike an HTTP stack, there’s no versioning possible in the URL or in a header. I tend to prefer versioning in the queue name itself, but you could also embed versions in the DTOs themselves. Generally, “storage DTOs” like these only require a single version number (i.e., they only have a major version, not a minor/patch version); this is because you explicitly &lt;em&gt;don’t&lt;/em&gt; want an older consumer to process newer queue messages.&lt;/p&gt;
+
+&lt;h2 id=&quot;mix-and-match&quot;&gt;Mix and Match&lt;/h2&gt;
+
+&lt;p&gt;I’ve pointed out that the cloud queue solutions work out of the box with the cloud backend processor solutions from the same company, including automatic scaling. But you don’t &lt;em&gt;have&lt;/em&gt; to use the same provider for each part of your asynchronous messaging architecture. It’s entirely possible to, e.g., scale Azure Functions based off a RabbitMQ, or wire up a Google Cloud hosted Docker backend to an Amazon SQS queue. Sometimes there are extra costs when crossing cloud providers, and sometimes you have to write a plugin so that your backend will use your kind of queue for its scaling; but it’s certainly possible to mix and match.&lt;/p&gt;
+
+&lt;h2 id=&quot;all-in-one&quot;&gt;All-In-One&lt;/h2&gt;
+
+&lt;p&gt;And then there is the other side: some solutions are all-in-one, complete solutions for asynchronous messaging. Examples of all-in-one solutions are &lt;a href=&quot;https://www.hangfire.io/&quot;&gt;Hangfire&lt;/a&gt; (.NET) and &lt;a href=&quot;https://github.com/collectiveidea/delayed_job&quot;&gt;Delayed Job&lt;/a&gt; (Ruby). Their all-in-one nature means they are easier to set up, but inevitably also means they are less flexible. There are also some very serious considerations you need to look into before adopting an all-in-one solution; what the developers of that solution created may be very different than what your application needs.&lt;/p&gt;
+
+&lt;p&gt;Specifically, you need to look into:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Does it use a durable queue? If not, I would not even consider it. As a corollary, anything that uses Redis as a queue should not be used in its default configuration, including some very popular solutions such as Sidekiq (Ruby) and Bull (NodeJS). If you do wish to use Redis-based message queues, then you should configure Redis to be durable by telling it to write an Append Only File &lt;em&gt;and&lt;/em&gt; telling it to sync that file on every command. Both Hangfire and Delayed Job use a database as a queue, which is &lt;em&gt;just ok&lt;/em&gt; (assuming you already have a database in your architecture), but not &lt;em&gt;ideal&lt;/em&gt; (now your database server has to deal with all the queue messages as well as its normal data).&lt;/li&gt;
+  &lt;li&gt;How are jobs serialized - is the serialization backwards-compatible when your library is updated? As an example of this, until recently (early 2019), Hangfire &lt;em&gt;did not support rolling upgrades&lt;/em&gt; due to the way they serialized jobs. Before that time, Hangfire-based applications had to shut down completely before rolling out a Hangfire upgrade, and if a rollback was necessary, they had to shut down completely before doing the rollback, too. Ouch!&lt;/li&gt;
+  &lt;li&gt;How are jobs serialized - how much can the “runner” code change? My experience here is more with Hangfire: .NET is pretty specific when it comes to serializing method delegates, and even something like adding a parameter (with a default argument) can cause a failure. Any change like that now requires &lt;em&gt;two&lt;/em&gt; updates instead of one: the first will add the new overload, and once the old jobs have all completed, a second update can roll out to remove the old overload. I’m not as familiar with Delayed Jobs; Ruby is a more dynamic language, so it may not have this problem.&lt;/li&gt;
+  &lt;li&gt;How are errors handled? Most all-in-one solutions will automatically retry, but if the job message insists on failing, then it has to do something else with it. By default, Hangfire will leave those job messages in a “failed” state (and it’s up to you to build some kind of notification on that), whereas Delayed Job will &lt;em&gt;delete&lt;/em&gt; those jobs (!).&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;In conclusion, caveat emptor. Don’t just slap an all-in-one solution into your architecture; a well-thought-out, proper asynchronous messaging solution is almost always the better choice.&lt;/p&gt;
+</description>
+        <pubDate>Thu, 04 Feb 2021 00:00:00 +0000</pubDate>
+        <link>https://blog.stephencleary.com/2021/02/asynchronous-messaging-5-miscellaneous-considerations.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2021/02/asynchronous-messaging-5-miscellaneous-considerations.html</guid>
+      </item>
+    
+      <item>
         <title>Asynchronous Messaging, Part 4: Retrieve Results</title>
         <description>&lt;p&gt;So far in this series, we’ve covered how asynchronous messaging can be implemented with a durable queue and a backend service. Those are the most necessary components of the solution, but another piece is sometimes necessary.&lt;/p&gt;
 
@@ -826,98 +866,6 @@ System.DivideByZeroException: Attempted to divide by zero.
         <pubDate>Thu, 21 May 2020 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2020/05/backgroundservice-gotcha-startup.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2020/05/backgroundservice-gotcha-startup.html</guid>
-      </item>
-    
-      <item>
-        <title>Using GitHub Actions for Pull Request Staging Environments, Part 4: Automated Deploy and Teardown</title>
-        <description>&lt;h2 id=&quot;automating-deploy&quot;&gt;Automating Deploy&lt;/h2&gt;
-
-&lt;p&gt;We currently have slash commands &lt;code&gt;/deploy&lt;/code&gt; and &lt;code&gt;/teardown&lt;/code&gt; that are converted into &lt;code&gt;repository_dispatch&lt;/code&gt; (&lt;code&gt;deploy-command&lt;/code&gt; / &lt;code&gt;teardown-command&lt;/code&gt;) events, and those &lt;code&gt;repository_dispatch&lt;/code&gt; events deploy or tear down a staging environment specific to a pull request. That’s pretty cool.&lt;/p&gt;
-
-&lt;p&gt;But what I’d &lt;em&gt;really&lt;/em&gt; like is to deploy a PR’s staging environment as soon as the PR is created, and automatically tear it down when the PR is closed. That would be &lt;em&gt;really&lt;/em&gt; cool.&lt;/p&gt;
-
-&lt;h2 id=&quot;security-again&quot;&gt;Security (Again)&lt;/h2&gt;
-
-&lt;p&gt;First, though, I do have to talk about security. Yes, again.&lt;/p&gt;
-
-&lt;p&gt;For security reasons, &lt;em&gt;all secrets are unavailable&lt;/em&gt; when automating a pull request from a &lt;em&gt;fork&lt;/em&gt; of a repository. This makes sense; you don’t want someone to create a fork, change the actions, and be able to retrieve your secrets by opening a PR against your repository.&lt;/p&gt;
-
-&lt;p&gt;Currently, this is a hard and fast rule. But there are discussions about loosening up these rules a bit:&lt;/p&gt;
-&lt;ul&gt;
-  &lt;li&gt;&lt;a href=&quot;https://github.community/t5/GitHub-Actions/Make-secrets-available-to-builds-of-forks/td-p/30678&quot;&gt;Opt-in to secret sharing to forks&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://github.community/t5/GitHub-Actions/Allow-secrets-to-be-shared-with-trusted-Actions/td-p/34278&quot;&gt;Mark certain actions as “trusted”&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Personally, I think it makes sense to always have pull request events run using the actions of the &lt;em&gt;base&lt;/em&gt; branch, not the &lt;em&gt;head&lt;/em&gt; branch. So cross-repository pull requests will always run the actions in the origin repository, not the fork repository.&lt;/p&gt;
-
-&lt;p&gt;However, for now, the result of this security restriction is that we can only automate &lt;em&gt;local&lt;/em&gt; pull requests (from one branch to another in the same repository). The solution we’re using here will not work for cross-repository PRs (i.e., a PR from a forked repository).&lt;/p&gt;
-
-&lt;h2 id=&quot;dispatch-when-a-pull-request-is-opened&quot;&gt;Dispatch when a Pull Request is Opened&lt;/h2&gt;
-
-&lt;p&gt;We already have an action that handles &lt;code&gt;repository_dispatch&lt;/code&gt; events of type &lt;code&gt;deploy-command&lt;/code&gt;, so we can just use a pull request event as a “trigger”, dispatching the same kind of command:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&quot;language-yaml&quot;&gt;# Queues a deploy command for every local PR.
-
-name: Local PR Opened/Updated
-
-# By default, this is run when a PR is opened or synchronized.
-on:
-  pull_request:
-
-jobs:
-  dispatch-deploy-command:
-    if: github.repository == github.event.pull_request.head.repo.full_name # Only try to deploy local PRs
-    runs-on: ubuntu-latest
-    steps:
-    - name: Dispatch /deploy Command
-      uses: peter-evans/repository-dispatch@v1
-      with:
-        token: ${{ secrets.DISPATCH_TOKEN }} # Same security issues as before, unfortunately
-        event-type: deploy-command # Send the deploy-command type for the repository_dispatch event
-        client-payload: '{&quot;pull_request&quot;: ${{ toJson(github.event.pull_request) }}}' # Pass along the pull request details
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;The only tricky part here is the last line: our &lt;code&gt;deploy-command.yml&lt;/code&gt; handler expects to be able to use &lt;code&gt;client_payload.pull_request.number&lt;/code&gt; and &lt;code&gt;client_payload.pull_request.head.sha&lt;/code&gt;. &lt;code&gt;client_payload.pull_request&lt;/code&gt; is populated automatically by &lt;code&gt;slash-command-dispatch&lt;/code&gt;, but here we need to fill it out ourselves. Fortunately, the &lt;code&gt;pull_request&lt;/code&gt; data is already provided to us as part of the &lt;code&gt;pull_request&lt;/code&gt; event, so we just need to copy it over.&lt;/p&gt;
-
-&lt;h2 id=&quot;dispatch-when-a-pull-request-is-closed&quot;&gt;Dispatch when a Pull Request is Closed&lt;/h2&gt;
-
-&lt;p&gt;Similarly, we have an action that handles &lt;code&gt;repository_dispatch&lt;/code&gt; events of type &lt;code&gt;teardown-command&lt;/code&gt;, so we can use a pull request close event to dispatch the same command:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&quot;language-yaml&quot;&gt;# Queues a teardown command for every local PR closed.
-
-name: Local PR Closed
-
-# Only listen for close events.
-on:
-  pull_request:
-    types: [ closed ]
-
-jobs:
-  dispatch-teardown-command:
-    if: github.repository == github.event.pull_request.head.repo.full_name # Only try to tear down local PRs
-    runs-on: ubuntu-latest
-    steps:
-    - name: Dispatch /teardown Command
-      uses: peter-evans/repository-dispatch@v1
-      with:
-        token: ${{ secrets.DISPATCH_TOKEN }} # Same security issues as before, unfortunately
-        event-type: teardown-command # Send the deploy-command type for the repository_dispatch event
-        client-payload: '{&quot;pull_request&quot;: ${{ toJson(github.event.pull_request) }}}' # Pass along the pull request details
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h2 id=&quot;done&quot;&gt;Done&lt;/h2&gt;
-
-&lt;p&gt;At this point, we’re as automated as we can be (safely). All PRs support &lt;code&gt;/deploy&lt;/code&gt; and &lt;code&gt;/teardown&lt;/code&gt; commands, managing a per-PR staging environment. In addition, local PRs get their environments deployed and torn down automatically.&lt;/p&gt;
-
-&lt;p&gt;Hopefully in the future, we can fully automate PRs from forks. That would be especially helpful for open-source projects. In the meantime, &lt;code&gt;/deploy&lt;/code&gt; and &lt;code&gt;/teardown&lt;/code&gt; are still pretty cool.&lt;/p&gt;
-
-&lt;p&gt;As a final reminder, the staging environments in this example were deliberately simple: building a static site and deploying that static site. This simple example is fine for a lot of front-end projects. But staging environments can also include back-end code. There’s no reason you can’t define “deploy” to mean “deploy the front end to Surge &lt;em&gt;and&lt;/em&gt; deploy the backend to a new Azure resource group” or something like that. So dream big!&lt;/p&gt;
-
-&lt;p&gt;Enjoy GitHub Actions!&lt;/p&gt;
-</description>
-        <pubDate>Wed, 06 May 2020 00:00:00 +0000</pubDate>
-        <link>https://blog.stephencleary.com/2020/05/github-actions-pull-request-staging-environments-part-4-automated-deploy-and-teardown.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2020/05/github-actions-pull-request-staging-environments-part-4-automated-deploy-and-teardown.html</guid>
       </item>
     
   </channel>

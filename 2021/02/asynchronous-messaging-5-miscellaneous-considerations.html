@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Asynchronous Messaging, Part 2: Durable Queues</title>
+    <title>Asynchronous Messaging, Part 5: Miscellaneous Considerations</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="The definition of a durable queue, with multiple examples." />
-    <link rel="canonical" href="https://blog.stephencleary.com/2021/01/asynchronous-messaging-2-durable-queues.html" />
+    <meta name="description" content="Final remarks on considerations for using asynchronous messaging with request-exogenous code." />
+    <link rel="canonical" href="https://blog.stephencleary.com/2021/02/asynchronous-messaging-5-miscellaneous-considerations.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -276,8 +276,8 @@ img.comment-author-profile-image {
 
   <header>
       <div class="page-header">
-          <h1>Asynchronous Messaging, Part 2: Durable Queues</h1>
-          <small><time datetime="2021-01-14">Jan 14, 2021</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
+          <h1>Asynchronous Messaging, Part 5: Miscellaneous Considerations</h1>
+          <small><time datetime="2021-02-04">Feb 4, 2021</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
       </div>
   </header>
 
@@ -291,81 +291,52 @@ img.comment-author-profile-image {
   </header>
 
   <article>
-  <p>Last time I concluded that the proper solution for request-extrinsic code is asynchronous messaging, which has two primary parts: a durable queue and a backend service. Today I’m going to discuss durable queues.</p>
+  <p>This entry in my asynchronous messaging series is kind of a grab bag of miscellaneous topics. I don’t really have enough to say on these to make them their own posts, but some are too important to drop completely. So, here we go!</p>
 
-<h2 id="the-definition-of-durable">The Definition of “Durable”</h2>
+<h2 id="poison--dead-letter-queues">Poison / Dead Letter Queues</h2>
 
-<p>When I suggest the asynchronous messaging solution, I try to use the term “durable” or “reliable”, and the emphasis is on the “durable” in “durable queue”. But what do “durable” or “reliable” really mean? There’s a range of meanings, from what I would consider “minimum viable” to “paranoid”.</p>
+<p>When designing your system, you need to decide how to handle queue messages that insist on failing to process. Usually, you plan for some kind of “dead letter queue” to hold these “poison” messages, and then set up alerting or something on that queue. Many cloud queue/worker systems will automatically do this for you: after a certain number of retries, the problematic message is removed from the regular queue and sent to a poison queue instead.</p>
 
-<p>A durable queue must <em>at least</em> write the new item to disk when it is placed into the queue. In other words, a durable queue is one that stores <strong>durable messages</strong>. This is the minimum viable behavior for a durable queue: messages must survive shutdowns. Asynchronous messaging <em>must</em> use a queue whose messages survive shutdown. This is good enough for many (most?) applications.</p>
+<p>Just don’t forget to set up alerting on those poison queues!</p>
 
-<p>A <em>more</em> durable (or more reliable) queue would be one that writes to <em>multiple</em> disks. This allows the messages to also survive a single disk failure. An even more durable queue would be one that writes to disks on multiple <em>servers</em>; this allows the messages to survive a complete server failure. Finally, the most paranoid durable queues write to multiple servers in distinct geographical locations; this allows the message to survive the destruction of an entire data center. Most applications do not require that level of durability.</p>
+<h2 id="versioning">Versioning</h2>
 
-<p>But it’s important to note that the minimum acceptable reliability is writing to disk. In-memory queues are <em>not</em> reliable enough for asynchronous messaging; this includes <code>Queue&lt;T&gt;</code>, <code>Channel&lt;T&gt;</code>, and <code>BlockingCollection&lt;T&gt;</code>, the three most common in-memory queues. When I say they are not “reliable”, I don’t mean that they can’t be used as in-memory queues; they’re perfectly fine for that scenario. However, since their messages are not durable (i.e., will not survive shutdown), they do not provide sufficient reliability for use with asynchronous messaging.</p>
+<p>When I design asynchronous messaging systems, I tend to treat the queued messages as a kind of Data Transfer Object (DTO). These messages act as a bridge between two processes: the HTTP application and the backend processor.</p>
 
-<h2 id="the-problem-with-in-memory-queues">The Problem with In-Memory Queues</h2>
+<p>Just like the rest of the system, the DTOs will change over time, and it’s best to be prepared for that. Unlike an HTTP stack, there’s no versioning possible in the URL or in a header. I tend to prefer versioning in the queue name itself, but you could also embed versions in the DTOs themselves. Generally, “storage DTOs” like these only require a single version number (i.e., they only have a major version, not a minor/patch version); this is because you explicitly <em>don’t</em> want an older consumer to process newer queue messages.</p>
 
-<p>I’m going to dive into this in a bit of detail, because this is a common point of confusion. I’ve defined “durable” as meaning at least “on disk”, and I’ve used the reasoning that “asynchronous messages must survive shutdown”. This section will go into more detail of the reasoning behind this restriction.</p>
+<h2 id="mix-and-match">Mix and Match</h2>
 
-<p>I think it’s easiest to understand this by contemplating one question: “When is it safe for an HTTP service to shut down?”</p>
+<p>I’ve pointed out that the cloud queue solutions work out of the box with the cloud backend processor solutions from the same company, including automatic scaling. But you don’t <em>have</em> to use the same provider for each part of your asynchronous messaging architecture. It’s entirely possible to, e.g., scale Azure Functions based off a RabbitMQ, or wire up a Google Cloud hosted Docker backend to an Amazon SQS queue. Sometimes there are extra costs when crossing cloud providers, and sometimes you have to write a plugin so that your backend will use your kind of queue for its scaling; but it’s certainly possible to mix and match.</p>
 
-<p>The HTTP protocol is ubiquitous; it’s used by all kinds of APIs and web services. And there’s a seemingly endless number of conventions and standards built on top of HTTP. With all these details and abstractions, sometimes one critical truth is forgotten: <strong>the HTTP protocol is a request/response protocol</strong>. In other words, for every request there is exactly one response. From the HTTP service’s perspective, a request arrives, and then some time later the response is sent and that request is completed.</p>
+<h2 id="all-in-one">All-In-One</h2>
 
-<p>Back to that question: “When is it safe for an HTTP service to shut down?” The easiest possible answer is “when a response for each request has been sent.” Or to word the same idea a different way: “when there are no more outstanding requests.”</p>
+<p>And then there is the other side: some solutions are all-in-one, complete solutions for asynchronous messaging. Examples of all-in-one solutions are <a href="https://www.hangfire.io/">Hangfire</a> (.NET) and <a href="https://github.com/collectiveidea/delayed_job">Delayed Job</a> (Ruby). Their all-in-one nature means they are easier to set up, but inevitably also means they are less flexible. There are also some very serious considerations you need to look into before adopting an all-in-one solution; what the developers of that solution created may be very different than what your application needs.</p>
 
-<p>This is such a natural answer to the question that <em>every</em> HTTP server has this as its default answer. It doesn’t matter if you’re on ASP.NET, Node.js, Ruby on Rails, … <em>Every</em> HTTP server framework keeps track of how many outstanding requests it has, and considers itself “safe to shut down” when that number reaches zero. This also holds true for load balancers and proxies: “When is it safe to remove this HTTP server from my list?” - “When it has no more requests waiting for responses.” It doesn’t matter if you’re using nginx, HAProxy, Kubernetes’ apiserver proxy, … <em>Every</em> HTTP proxy application keeps track of the number of outstanding requests, and considers HTTP servers “done” when they have sent out responses for all of their requests.</p>
+<p>Specifically, you need to look into:</p>
 
-<p>This is why request-extrinsic code is dangerous: all of this default behavior is suddenly wrong. The HTTP service says it’s safe to shut down when it’s not safe to shut down; all the proxies and load balancers say it’s safe to take that machine out of rotation when it’s not.</p>
+<ol>
+  <li>Does it use a durable queue? If not, I would not even consider it. As a corollary, anything that uses Redis as a queue should not be used in its default configuration, including some very popular solutions such as Sidekiq (Ruby) and Bull (NodeJS). If you do wish to use Redis-based message queues, then you should configure Redis to be durable by telling it to write an Append Only File <em>and</em> telling it to sync that file on every command. Both Hangfire and Delayed Job use a database as a queue, which is <em>just ok</em> (assuming you already have a database in your architecture), but not <em>ideal</em> (now your database server has to deal with all the queue messages as well as its normal data).</li>
+  <li>How are jobs serialized - is the serialization backwards-compatible when your library is updated? As an example of this, until recently (early 2019), Hangfire <em>did not support rolling upgrades</em> due to the way they serialized jobs. Before that time, Hangfire-based applications had to shut down completely before rolling out a Hangfire upgrade, and if a rollback was necessary, they had to shut down completely before doing the rollback, too. Ouch!</li>
+  <li>How are jobs serialized - how much can the “runner” code change? My experience here is more with Hangfire: .NET is pretty specific when it comes to serializing method delegates, and even something like adding a parameter (with a default argument) can cause a failure. Any change like that now requires <em>two</em> updates instead of one: the first will add the new overload, and once the old jobs have all completed, a second update can roll out to remove the old overload. I’m not as familiar with Delayed Jobs; Ruby is a more dynamic language, so it may not have this problem.</li>
+  <li>How are errors handled? Most all-in-one solutions will automatically retry, but if the job message insists on failing, then it has to do something else with it. By default, Hangfire will leave those job messages in a “failed” state (and it’s up to you to build some kind of notification on that), whereas Delayed Job will <em>delete</em> those jobs (!).</li>
+</ol>
 
-<h3 id="shutdowns-are-normal">Shutdowns Are Normal</h3>
-
-<p>Often developers react to this by trying to force alternative solutions. All HTTP server frameworks answer “When is it safe to shut down?” with “When there are no more outstanding requests” <em>by default</em>, but many of them allow overriding that default so the application itself can answer “It’s only safe to shut down when I say it’s safe to shut down.”</p>
-
-<p>One of the problems with trying to force that alternative solution is that it only changes the answer at the HTTP service level; proxies and load balancers <em>also</em> need to have their default logic changed (assuming that changing the default is even possible). Even if you get that working, there’s an unending maintenance problem: your HTTP server farm now handles shutdowns <em>completely differently</em> than all other HTTP server farms.</p>
-
-<p>When developers begin down this path, it is usually because the developer wants to keep their HTTP application running indefinitely. And this is a major misunderstanding: in reality, systems are more resilient if servers do <em>not</em> run indefinitely. In fact, shutdowns are <em>normal</em>, and we need to accept shutdowns as a normal part of life.</p>
-
-<p>One example is rolling updates. When a new version of an HTTP application is developed, it needs to replace the old versions of that application. The normal way to do this is via rolling updates: for each server, the upstream proxy will stop forwarding new requests, wait until the service has no more outstanding requests, shut it down, install the update, start it up, and start forwarding new requests. Shutdowns are necessary to perform rolling updates.</p>
-
-<p>Another example is applying operating system or runtime patches. This is similar to rolling updates, but in this case it is the lower layers that is being updated, so it’s machine-wide. The same steps apply, though: stop forwarding new requests to all services on that machine, wait until the machine has no outstanding requests, shut down all the services, install the patches (rebooting if necessary), start up all the services, and start forwarding new requests. This kind of shutdown occurs regularly, even for HTTP services that are not in active development.</p>
-
-<p>A final example is that some frameworks and host processes just do periodic application restarts just to keep things clean. For example, Apache’s <code>MaxConnectionsPerChild</code> or IIS’s <code>periodicRestart</code> can recycle child processes periodically. This is primarily useful for managing memory leaks in applications, frameworks, and/or libraries. Apache no longer recycles by default, but IIS still does. Again, this is based on the number of outstanding requests: the server will recycle its child application when it has no outstanding requests.</p>
-
-<p>The reasonable conclusion is that <em>shutdowns are normal</em>. All HTTP applications must work correctly when shutdowns occur. Corollary: All software that assumes it will never shut down is inherently buggy.</p>
-
-<p>Finally, we return to what “durable” means. In-memory queues cannot survive shutdowns. Therefore, “minimum acceptable reliability” means that the queue of work survives shutdowns, which are normal and common.</p>
-
-<h2 id="examples-of-durable-queues">Examples of Durable Queues</h2>
-
-<p>I tend to prefer cloud queues whenever possible, because the cloud provider manages them, they scale really well, and they give you knobs for controlling how paranoid you want your durability to be.</p>
-
-<p>For this reason, my top go-tos for durable queues are <a href="https://azure.microsoft.com/en-us/services/storage/queues/">Azure Storage Queue</a>, <a href="https://aws.amazon.com/sqs/">Amazon Simple Queue Service (SQS)</a>, and <a href="https://cloud.google.com/tasks">Google Cloud Tasks</a>. I’m most familiar with Azure’s queueing, though I have also used Amazon’s in production systems. All cloud queueing systems provide durable queues that can scale out automatically.</p>
-
-<p>As much as I like cloud solutions, on-premises queueing systems are perfectly viable. It’s not possible to get the same scaling capabilities as a cloud solution, but you can get lower latencies. The most common on-premises durable queues these days are <a href="https://www.rabbitmq.com/">RabbitMQ</a> and <a href="https://kafka.apache.org/documentation/">Kafka</a>. I’ve also used <a href="https://www.ibm.com/products/mq">IBM MQ</a> (called WebSphere MQ at the time). For older Windows systems, <a href="https://docs.microsoft.com/en-us/previous-versions/windows/desktop/msmq/ms711472(v=vs.85)">Microsoft Message Queueing (MSMQ)</a> was common, though that is no longer recommended these days. Note that some on-premises queueing solutions do not use durable messages by default, so some configuration is necessary to make them actually durable (I’m looking at you, <a href="https://www.rabbitmq.com/queues.html#durability">RabbitMQ</a>).</p>
-
-<p>There are other solutions for both cloud and on-premises. The ones mentioned here are just ones I’ve had experience with, and which appear to be the most common.</p>
-
-<h3 id="database-as-a-durable-queue">Database As a Durable Queue</h3>
-
-<p>One other solution that is sometimes used is an actual database. Usually, this needs to be a database that guarantees ACID. Some NoSql databases can also be used as durable queues, as long as they actually have durable writes; but be aware that some NoSql databases can lose writes, in which case they do not qualify as durable queues. In my experience, most databases used as durable queues are fully ACID (i.e., transactional).</p>
-
-<p>Using an ACID database as a durable queue allows you to use the Outbox Pattern. When a service wants to publish a message <em>if and only if</em> a particular database transaction succeeds, then it writes that message to the database <em>as part of that transaction</em>. It can’t publish the message before doing the database update, because the database update may fail; and it can’t publish the message after doing the database update, because if there’s some problem reaching the durable queue then the message wouldn’t be published. So, by using the database itself as a durable queue, then the service guarantees that the message will be published if and only if the database update takes place.</p>
-
-<p>The Outbox Pattern gets its name because there’s usually a separate “outbox” table that just holds messages that are published. It’s possible to have the queue consumer read the outbox table directly, but a more common solution is to have the outbox table just act as temporary storage for messages on their way to another durable queue - usually one that is used by the rest of the application, e.g., a cloud queue or on-premises durable queue. In that case, the publishing service (or another service) has a polling job that reads the messages from the outbox table, sends then to the durable queue, and then deletes those messages from the outbox table. This provides an at-least-once delivery of the messages stored in the outbox table.</p>
+<p>In conclusion, caveat emptor. Don’t just slap an all-in-one solution into your architecture; a well-thought-out, proper asynchronous messaging solution is almost always the better choice.</p>
 
   </article>
     
     <footer class="hidden-print">
         
             <ul class="pager">
-                <li class="previous"><a href="/2021/01/asynchronous-messaging-1-basic-distributed-architecture.html" title="Asynchronous Messaging, Part 1: Basic Distributed Architecture">&larr; Previous in Asynchronous Messaging</a></li>
-                <li class="next"><a href="/2021/01/asynchronous-messaging-3-backend-processor.html" title="Asynchronous Messaging, Part 3: Backend Service">Next in Asynchronous Messaging &rarr;</a></li>
+                <li class="previous"><a href="/2021/01/asynchronous-messaging-4-retrieve-results.html" title="Asynchronous Messaging, Part 4: Retrieve Results">&larr; Previous in Asynchronous Messaging</a></li>
+                
             </ul>
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2021/01/asynchronous-messaging-1-basic-distributed-architecture.html" title="Asynchronous Messaging, Part 1: Basic Distributed Architecture">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2021/01/asynchronous-messaging-3-backend-processor.html" title="Asynchronous Messaging, Part 3: Backend Service">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2021/01/asynchronous-messaging-4-retrieve-results.html" title="Asynchronous Messaging, Part 4: Retrieve Results">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="comments"></div>
@@ -379,10 +350,10 @@ img.comment-author-profile-image {
                     <div class="panel-body sidenav">
                         <ul class="nav nav-pills nav-stacked">
                                     <li class="sidenavitem"><a href="/2021/01/asynchronous-messaging-1-basic-distributed-architecture.html">Basic Distributed Architecture</a></li>
-                                    <li class="active sidenavitem"><a href="/2021/01/asynchronous-messaging-2-durable-queues.html">Durable Queues</a></li>
+                                    <li class="sidenavitem"><a href="/2021/01/asynchronous-messaging-2-durable-queues.html">Durable Queues</a></li>
                                     <li class="sidenavitem"><a href="/2021/01/asynchronous-messaging-3-backend-processor.html">Backend Service</a></li>
                                     <li class="sidenavitem"><a href="/2021/01/asynchronous-messaging-4-retrieve-results.html">Retrieve Results</a></li>
-                                    <li class="sidenavitem"><a href="/2021/02/asynchronous-messaging-5-miscellaneous-considerations.html">Miscellaneous Considerations</a></li>
+                                    <li class="active sidenavitem"><a href="/2021/02/asynchronous-messaging-5-miscellaneous-considerations.html">Miscellaneous Considerations</a></li>
                         </ul>
                     </div>
                 </div>
@@ -536,7 +507,7 @@ img.comment-author-profile-image {
 
 <script type="text/javascript">
 
-var pageUrl = "https://blog.stephencleary.com" + "/2021/01/asynchronous-messaging-2-durable-queues.html";
+var pageUrl = "https://blog.stephencleary.com" + "/2021/02/asynchronous-messaging-5-miscellaneous-considerations.html";
 
 // (unnecessary) 1) If the URL starts with http://, replace with https://
 
