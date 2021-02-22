@@ -290,7 +290,13 @@ img.comment-author-profile-image {
   </header>
 
   <article>
-  <p>.NET 4.5.2 added a built-in way to queue background (a.k.a. “fire and forget”) work in ASP.NET. This post is a summary of the different techniques available today.</p>
+  <div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p><strong>Update, 2021-02-22:</strong> Fire-and-forget is <em>almost always</em> the wrong solution. I have <a href="/2021/01/asynchronous-messaging-1-basic-distributed-architecture.html" class="alert-link">a whole series of posts on Asynchronous Messaging</a>, which is the <em>proper</em> solution for request-extrinsic code.</p>
+</div>
+
+<p>.NET 4.5.2 added a built-in way to queue background (a.k.a. “fire and forget”) work in ASP.NET. This post is a summary of the different techniques available today.</p>
 
 <h2 id="threadpool">ThreadPool</h2>
 
@@ -346,6 +352,12 @@ img.comment-author-profile-image {
 <h2 id="distributed-architecture">Distributed Architecture</h2>
 
 <p>The proper solution is to use a basic distributed architecture.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p><strong>Update, 2021-02-22:</strong> I have <a href="/2021/01/asynchronous-messaging-1-basic-distributed-architecture.html" class="alert-link">a whole series of posts on a basic distributed architecture for asynchronous messaging</a>, which is the proper solution for request-extrinsic code.</p>
+</div>
 
 <p>The first thing you need is a reliable storage medium. I prefer queues (e.g., Azure queues, WebSphere message queues, Microsoft message queueing, etc), but any kind of reliable storage would work (as previously mentioned, HangFire prefers databases).</p>
 

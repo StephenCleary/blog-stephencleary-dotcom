@@ -293,7 +293,7 @@ img.comment-author-profile-image {
   <div class="alert alert-info">
   <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
 
-  <p><strong>Update, 2014-06-07:</strong> There is more information in <a href="/2014/06/fire-and-forget-on-asp-net.html" class="alert-link">a newer post</a>.</p>
+  <p><strong>Update, 2021-02-22:</strong> There is more information in <a href="/2021/01/asynchronous-messaging-1-basic-distributed-architecture.html" class="alert-link">a whole series of posts on Asynchronous Messaging</a>, which is the <em>proper</em> solution for request-extrinsic code.</p>
 </div>
 
 <p>I have great reservations about writing this blog post. Pretty much everything I’m going to describe here is a bad idea and you should strongly avoid putting it into production, but there <em>are</em> just a few situations where this technique can be really helpful.</p>
@@ -313,6 +313,12 @@ img.comment-author-profile-image {
 <p>The correct solutions are all complicated: you need to put the additional work in a safe place, like an Azure queue, database, or persistent messaging system (Azure message bus, MSMQ, WebSphere MQ, etc). And each of those solutions brings a whole scope of additional work: setup and configuration, dead-letter queues, poison messages, etc.</p>
 
 <p>But that’s the correct way to do it, because <em>you can’t drop the ball!</em> You store the additional work in the safe place and then return a response after the work is safely stored. Personally, I like distributed systems (like Azure queues) because it’s not just safely stored on the hard drive - it’s safely stored on <em>six</em> hard drives, three of which are in a <em>different geographic location.</em> This gives you more protection from more problems (like hard drive failures and hurricanes).</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p><strong>Update, 2021-02-22:</strong> I have <a href="/2021/01/asynchronous-messaging-1-basic-distributed-architecture.html" class="alert-link">a whole series of posts on asynchronous messaging</a>, which is the proper solution for request-extrinsic code.</p>
+</div>
 
 <h2 id="the-improper-solution">The Improper “Solution”</h2>
 
