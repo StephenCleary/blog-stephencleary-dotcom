@@ -4,6 +4,12 @@ title: "Fire and Forget on ASP.NET"
 description: "A summary of the various ways to schedule background or fire-and-forget tasks on ASP.NET."
 ---
 
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+**Update, 2021-02-22:** Fire-and-forget is *almost always* the wrong solution. I have [a whole series of posts on Asynchronous Messaging]({% post_url 2021-01-07-asynchronous-messaging-1-basic-distributed-architecture %}){:.alert-link}, which is the *proper* solution for request-extrinsic code.
+</div>
+
 .NET 4.5.2 added a built-in way to queue background (a.k.a. "fire and forget") work in ASP.NET. This post is a summary of the different techniques available today.
 
 ## ThreadPool
@@ -56,6 +62,12 @@ So, I'd need to research this library more to feel comfortable using it (and ext
 ## Distributed Architecture
 
 The proper solution is to use a basic distributed architecture.
+
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+**Update, 2021-02-22:** I have [a whole series of posts on a basic distributed architecture for asynchronous messaging]({% post_url 2021-01-07-asynchronous-messaging-1-basic-distributed-architecture %}){:.alert-link}, which is the proper solution for request-extrinsic code.
+</div>
 
 The first thing you need is a reliable storage medium. I prefer queues (e.g., Azure queues, WebSphere message queues, Microsoft message queueing, etc), but any kind of reliable storage would work (as previously mentioned, HangFire prefers databases).
 

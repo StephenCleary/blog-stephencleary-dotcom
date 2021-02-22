@@ -2,10 +2,11 @@
 layout: post
 title: "Returning Early from ASP.NET Requests"
 ---
+
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
-**Update, 2014-06-07:** There is more information in [a newer post]({% post_url 2014-06-07-fire-and-forget-on-asp-net %}){:.alert-link}.
+**Update, 2021-02-22:** There is more information in [a whole series of posts on Asynchronous Messaging]({% post_url 2021-01-07-asynchronous-messaging-1-basic-distributed-architecture %}){:.alert-link}, which is the *proper* solution for request-extrinsic code.
 </div>
 
 I have great reservations about writing this blog post. Pretty much everything I'm going to describe here is a bad idea and you should strongly avoid putting it into production, but there _are_ just a few situations where this technique can be really helpful.
@@ -25,6 +26,12 @@ Consider what happens if you generate (and return) the response but you're still
 The correct solutions are all complicated: you need to put the additional work in a safe place, like an Azure queue, database, or persistent messaging system (Azure message bus, MSMQ, WebSphere MQ, etc). And each of those solutions brings a whole scope of additional work: setup and configuration, dead-letter queues, poison messages, etc.
 
 But that's the correct way to do it, because _you can't drop the ball!_ You store the additional work in the safe place and then return a response after the work is safely stored. Personally, I like distributed systems (like Azure queues) because it's not just safely stored on the hard drive - it's safely stored on _six_ hard drives, three of which are in a _different geographic location._ This gives you more protection from more problems (like hard drive failures and hurricanes).
+
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+**Update, 2021-02-22:** I have [a whole series of posts on asynchronous messaging]({% post_url 2021-01-07-asynchronous-messaging-1-basic-distributed-architecture %}){:.alert-link}, which is the proper solution for request-extrinsic code.
+</div>
 
 ## The Improper "Solution"
 

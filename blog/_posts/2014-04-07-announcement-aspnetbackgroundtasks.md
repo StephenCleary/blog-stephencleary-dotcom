@@ -5,7 +5,7 @@ title: "Announcement: AspNetBackgroundTasks NuGet library"
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
-**Update, 2014-06-07:** There is more information in [a newer post]({% post_url 2014-06-07-fire-and-forget-on-asp-net %}){:.alert-link}.
+**Update, 2021-02-22:** There is more information in [a whole series of posts on Asynchronous Messaging]({% post_url 2021-01-07-asynchronous-messaging-1-basic-distributed-architecture %}){:.alert-link}.
 </div>
 
 Yielding to popular demand - and against my better judgement - I have created a NuGet package for the code [I previously wrote]({% post_url 2012-12-13-returning-early-from-aspnet-requests %}) for handling "fire-and-forget" tasks in ASP.NET.
