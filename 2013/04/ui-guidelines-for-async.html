@@ -297,7 +297,7 @@ img.comment-author-profile-image {
 
 <h2 id="the-50ms-rule">The 50ms Rule</h2>
 
-<p>Operations should be made asynchronous if they “could take longer than 50 milliseconds to execute” (Jason Olson, <a href="http://blogs.msdn.com/b/windowsappdev/archive/2012/03/20/keeping-apps-fast-and-fluid-with-asynchrony-in-the-windows-runtime.aspx">Keeping apps fast and fluid with asynchrony in the Windows Runtime</a>).</p>
+<p>Operations should be made asynchronous if they “could take longer than 50 milliseconds to execute” (Jason Olson, <a href="https://web.archive.org/web/20120323020957/http://blogs.msdn.com/b/windowsappdev/archive/2012/03/20/keeping-apps-fast-and-fluid-with-asynchrony-in-the-windows-runtime.aspx">Keeping apps fast and fluid with asynchrony in the Windows Runtime</a>).</p>
 
 <p>This is the rule that Microsoft followed with the WinRT APIs; anything taking less than 50ms is considered “fast” and close enough to “immediate” that they do not require an asynchronous API. I also recommend this rule be applied to any synchronous blocks of code; if they are likely to take more than 50ms, push them onto the thread pool via <code>Task.Run</code>.</p>
 
@@ -305,7 +305,7 @@ img.comment-author-profile-image {
 
 <p>It’s usually a good idea to use <code>ConfigureAwait(false)</code> in your library code, and only run continuations on the UI thread if they actually need a UI context. But how many continuations can the UI thread really be expected to handle?</p>
 
-<p>At least on the WinRT platform, “the guidance is that just a hundred or so awaits resuming on the UI thread per second will be fine, but a thousand per second will be bad” (Lucian Wischik, <a href="http://blogs.msdn.com/b/lucian/archive/2013/02/18/talk-the-new-async-design-patterns.aspx">Async Design Patterns</a>). Naturally, this is assuming that the continuations do not block for any substantial period of time.</p>
+<p>At least on the WinRT platform, “the guidance is that just a hundred or so awaits resuming on the UI thread per second will be fine, but a thousand per second will be bad” (Lucian Wischik, <a href="https://docs.microsoft.com/en-us/archive/blogs/lucian/talk-the-new-async-design-patterns">Async Design Patterns</a>). Naturally, this is assuming that the continuations do not block for any substantial period of time.</p>
 
 <h2 id="caveats">Caveats</h2>
 

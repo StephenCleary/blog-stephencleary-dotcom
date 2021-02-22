@@ -379,7 +379,7 @@ img.comment-author-profile-image {
 
 <p>Note that this member is explicitly implemented, so consuming code <em>must</em> cast the <code>Task</code> as <code>IAsyncResult</code> before reading it. The actual underlying wait handle is lazy-allocated.</p>
 
-<p>Code using <code>AsyncWaitHandle</code> should be extremely, <em>extremely</em> rare. It only makes sense if you have tons of existing code that is built around <code>WaitHandle</code>. If you do read the <code>AsyncWaitHandle</code> property, strongly consider <a href="http://blogs.msdn.com/b/pfxteam/archive/2012/03/25/10287435.aspx">disposing the task instance</a>.</p>
+<p>Code using <code>AsyncWaitHandle</code> should be extremely, <em>extremely</em> rare. It only makes sense if you have tons of existing code that is built around <code>WaitHandle</code>. If you do read the <code>AsyncWaitHandle</code> property, strongly consider <a href="https://devblogs.microsoft.com/pfxteam/do-i-need-to-dispose-of-tasks/">disposing the task instance</a>.</p>
 
 <h2 id="conclusion">Conclusion</h2>
 

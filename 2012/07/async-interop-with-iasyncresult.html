@@ -369,7 +369,7 @@ img.comment-author-profile-image {
   <span class="k">return</span> <span class="n">tcs</span><span class="p">.</span><span class="n">Task</span><span class="p">;</span>
 <span class="p">}</span></code></pre></figure>
 
-<p>The Task returned by Begin needs to be a different instance than the Task returned by the Async implementation because <a href="http://blogs.msdn.com/b/junfeng/archive/2006/03/28/563627.aspx">IAsyncResult.AsyncState needs to return the state passed into the Begin method</a>.</p>
+<p>The Task returned by Begin needs to be a different instance than the Task returned by the Async implementation because <a href="https://docs.microsoft.com/en-us/archive/blogs/junfeng/iasyncresult-implementation-compliant">IAsyncResult.AsyncState needs to return the state passed into the Begin method</a>.</p>
 
 <p>The example code above will always complete the Task and invoke the user callback from a thread pool thread. There are situations where it would be faster to do this synchronously (TaskContinuationOptions.ExecuteSynchronously), but <a href="http://social.msdn.microsoft.com/Forums/en-US/async/thread/9535a4a6-6218-45fe-aa45-79332b9e5b88">this can cause complex problems</a>. ExecuteSynchronously should <strong>not</strong> be used in APM wrappers for TAP methods!</p>
 

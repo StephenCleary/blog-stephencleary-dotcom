@@ -317,7 +317,7 @@ img.comment-author-profile-image {
   <p>Update (2014-12-01): For more details, see Chapters 4 and 5 in my <a href="https://stephencleary.com/book/" class="alert-link">Concurrency Cookbook</a>.</p>
 </div>
 
-<p>The first option isn’t always feasible, though. If you want minimal impact to your existing code, you can check out Stephen Toub’s series where he creates async-friendly versions of <a href="http://blogs.msdn.com/b/pfxteam/archive/2012/02/11/10266920.aspx">ManualResetEvent</a>, <a href="http://blogs.msdn.com/b/pfxteam/archive/2012/02/11/10266923.aspx">AutoResetEvent</a>, <a href="http://blogs.msdn.com/b/pfxteam/archive/2012/02/11/10266930.aspx">CountdownEvent</a>, <a href="http://blogs.msdn.com/b/pfxteam/archive/2012/02/11/10266932.aspx">Barrier</a>, <a href="http://blogs.msdn.com/b/pfxteam/archive/2012/02/12/10266983.aspx">Semaphore</a>, <a href="http://blogs.msdn.com/b/pfxteam/archive/2012/02/12/10266988.aspx">lock</a>, and <a href="http://blogs.msdn.com/b/pfxteam/archive/2012/02/12/building-async-coordination-primitives-part-7-asyncreaderwriterlock.aspx">ReaderWriterLock</a>. There’s some tremendous knowledge in these posts, even if you don’t use the code.</p>
+<p>The first option isn’t always feasible, though. If you want minimal impact to your existing code, you can check out Stephen Toub’s series where he creates async-friendly versions of <a href="https://devblogs.microsoft.com/pfxteam/building-async-coordination-primitives-part-1-asyncmanualresetevent/">ManualResetEvent</a>, <a href="https://devblogs.microsoft.com/pfxteam/building-async-coordination-primitives-part-2-asyncautoresetevent/">AutoResetEvent</a>, <a href="https://devblogs.microsoft.com/pfxteam/building-async-coordination-primitives-part-3-asynccountdownevent/">CountdownEvent</a>, <a href="https://devblogs.microsoft.com/pfxteam/building-async-coordination-primitives-part-5-asyncsemaphore/">Semaphore</a>, <a href="https://devblogs.microsoft.com/pfxteam/building-async-coordination-primitives-part-6-asynclock/">lock</a>, and <a href="https://devblogs.microsoft.com/pfxteam/building-async-coordination-primitives-part-7-asyncreaderwriterlock/">ReaderWriterLock</a>. There’s some tremendous knowledge in these posts, even if you don’t use the code.</p>
 
 <div class="alert alert-info">
   <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
@@ -343,12 +343,12 @@ img.comment-author-profile-image {
 
 <p>There are two important TaskSchedulers you should know about. The first one is TaskScheduler.Default, which schedules tasks to the ThreadPool. That one’s not very interesting because it’s the default behavior if we don’t provide a custom TaskScheduler.</p>
 
-<p>The other TaskScheduler is very interesting. It’s new in .NET 4.5 and goes by the name of <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.concurrentexclusiveschedulerpair(v=VS.110).aspx">ConcurrentExclusiveScheculerPair</a>. It’s actually a pair of schedulers: one concurrent and one exclusive. It acts like a reader/writer lock, only at the scheduler level. So instead of blocking a task (synchronously via ReaderWriterLock or asynchronously via <a href="http://blogs.msdn.com/b/pfxteam/archive/2012/02/12/building-async-coordination-primitives-part-7-asyncreaderwriterlock.aspx">AsyncReaderWriterLock</a>), it simply doesn’t execute the task until it’s permitted to run.</p>
+<p>The other TaskScheduler is very interesting. It’s new in .NET 4.5 and goes by the name of <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.concurrentexclusiveschedulerpair(v=VS.110).aspx">ConcurrentExclusiveScheculerPair</a>. It’s actually a pair of schedulers: one concurrent and one exclusive. It acts like a reader/writer lock, only at the scheduler level. So instead of blocking a task (synchronously via ReaderWriterLock or asynchronously via <a href="https://devblogs.microsoft.com/pfxteam/building-async-coordination-primitives-part-7-asyncreaderwriterlock/">AsyncReaderWriterLock</a>), it simply doesn’t execute the task until it’s permitted to run.</p>
 
 <div class="alert alert-info">
   <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
 
-  <p>As of this writing, the .NET 4.5 docs are a bit lacking. For more information on the design of ConcurrentExclusiveSchedulerPair, see <a href="http://blogs.msdn.com/b/pfxteam/archive/2010/04/08/9990422.aspx" class="alert-link">this blog post by Stephen Toub</a> (who else?) or <a href="http://code.msdn.microsoft.com/Samples-for-Parallel-b4b76364/sourcecode?fileId=44488&amp;pathId=2072038893" class="alert-link">the original implementation</a>. At that time, it was called ConcurrentExclusiveInterleave.</p>
+  <p>As of this writing, the .NET 4.5 docs are a bit lacking. For more information on the design of ConcurrentExclusiveSchedulerPair, see <a href="https://devblogs.microsoft.com/pfxteam/parallelextensionsextras-tour-6-concurrentexclusiveinterleave/" class="alert-link">this blog post by Stephen Toub</a> (who else?) or <a href="http://code.msdn.microsoft.com/Samples-for-Parallel-b4b76364/sourcecode?fileId=44488&amp;pathId=2072038893" class="alert-link">the original implementation</a>. At that time, it was called ConcurrentExclusiveInterleave.</p>
 </div>
 
 <p>ConcurrentExclusiveSchedulerPair actually handles any mixture of these scenarios:</p>
@@ -364,7 +364,7 @@ img.comment-author-profile-image {
 <div class="alert alert-danger">
   <p><i class="fa fa-exclamation-triangle fa-2x pull-left"></i></p>
 
-  <p><strong>Note:</strong> When an asynchronous method awaits, it returns back to its context. This means that ExclusiveScheduler is perfectly happy to run one task <em>at a time</em>, not one task <em>until it completes</em>. As soon as an asynchronous method awaits, it’s no longer the “owner” of the ExclusiveScheduler. Stephen Toub’s async-friendly primitives like <a href="http://blogs.msdn.com/b/pfxteam/archive/2012/02/12/10266988.aspx" class="alert-link">AsyncLock</a> use a different strategy, allowing an asynchronous method to hold the lock while it awaits.</p>
+  <p><strong>Note:</strong> When an asynchronous method awaits, it returns back to its context. This means that ExclusiveScheduler is perfectly happy to run one task <em>at a time</em>, not one task <em>until it completes</em>. As soon as an asynchronous method awaits, it’s no longer the “owner” of the ExclusiveScheduler. Stephen Toub’s async-friendly primitives like <a href="https://devblogs.microsoft.com/pfxteam/building-async-coordination-primitives-part-6-asynclock/" class="alert-link">AsyncLock</a> use a different strategy, allowing an asynchronous method to hold the lock while it awaits.</p>
 </div>
 
 <div class="alert alert-info">
@@ -381,7 +381,7 @@ img.comment-author-profile-image {
 
 <p>The most obvious example is TaskScheduler.FromCurrentSynchronizationContext, which is a TaskScheduler that schedules tasks on the current SynchronizationContext. Await does't use this scheduler because it will use SynchronizationContext directly if it is present.</p>
 
-<p>What about other contexts? Stephen Toub (again) has been there and done that with his <a href="http://blogs.msdn.com/b/pfxteam/archive/2010/04/07/9990421.aspx">StaTaskScheduler</a> (for scheduling tasks to an STA thread for COM interop) and <a href="http://blogs.msdn.com/b/pfxteam/archive/2010/04/09/9990424.aspx">many other interesting schedulers</a>. However, out of all of these, only ConcurrentExclusiveSchedulerPair made it into production.</p>
+<p>What about other contexts? Stephen Toub (again) has been there and done that with his <a href="https://devblogs.microsoft.com/pfxteam/parallelextensionsextras-tour-5-stataskscheduler/">StaTaskScheduler</a> (for scheduling tasks to an STA thread for COM interop) and <a href="https://devblogs.microsoft.com/pfxteam/parallelextensionsextras-tour-7-additional-taskschedulers/">many other interesting schedulers</a>. However, out of all of these, only ConcurrentExclusiveSchedulerPair made it into production.</p>
 
 -->
 

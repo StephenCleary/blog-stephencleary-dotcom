@@ -403,7 +403,7 @@ img.comment-author-profile-image {
     <span class="p">}</span>
 <span class="p">}</span></code></pre></figure>
 
-<p>The tricky part in this code is the double-<code>await</code> in <code>RunCoroutineAsync</code>. This is a <a href="http://blogs.msdn.com/b/pfxteam/archive/2011/10/24/10229468.aspx">normal pattern</a> when you use <code>TaskFactory.StartNew</code> with asynchronous delegates (alternatively, you could use <code>Task.Unwrap</code>).</p>
+<p>The tricky part in this code is the double-<code>await</code> in <code>RunCoroutineAsync</code>. This is a <a href="https://devblogs.microsoft.com/pfxteam/task-run-vs-task-factory-startnew/">normal pattern</a> when you use <code>TaskFactory.StartNew</code> with asynchronous delegates (alternatively, you could use <code>Task.Unwrap</code>).</p>
 
 <p>Logically, the “coroutine” parameter to <code>RunCoroutineAsync</code> is an asynchronous delegate (referring to one of the async co-routine methods). When we pass it to <code>StartNew</code>, we get back a <code>Task&lt;Task&gt;</code> representing the <em>starting</em> of that asynchronous delegate on our exclusive scheduler. The inner task represents the <em>completion</em> of that asynchronous delegate. So the <code>await await</code> is used because we want <code>RunCoroutineAsync</code> to complete only when the asynchronous delegate completes.</p>
 

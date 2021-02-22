@@ -323,7 +323,7 @@ img.comment-author-profile-image {
     <span class="p">}</span>
 <span class="p">}</span></code></pre></figure>
 
-<p>Chris Burrows, a Microsoft developer on the C# compiler team, explains why this is bad in his blog post <a href="http://blogs.msdn.com/cburrows/archive/2008/02/18/field-like-events-considered-harmful.aspx">Field-like Events Considered Harmful</a>. His blog post covers the reasoning thoroughly, so it won’t be repeated here.</p>
+<p>Chris Burrows, a Microsoft developer on the C# compiler team, explains why this is bad in his blog post <a href="https://docs.microsoft.com/en-us/archive/blogs/cburrows/field-like-events-considered-harmful">Field-like Events Considered Harmful</a>. His blog post covers the reasoning thoroughly, so it won’t be repeated here.</p>
 
 <div class="alert alert-info">
   <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
@@ -354,7 +354,7 @@ img.comment-author-profile-image {
     <span class="n">myEvent</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="n">args</span><span class="p">);</span>
 <span class="p">}</span></code></pre></figure>
 
-<p>This is the solution used by <a href="http://msdn.microsoft.com/en-us/library/w369ty8x.aspx">MSDN examples</a> and recommended by the semi-standard <a href="http://www.amazon.com/gp/product/0321545613?ie=UTF8&amp;tag=stepheclearys-20&amp;linkCode=as2&amp;camp=1789&amp;creative=390957&amp;creativeASIN=0321545613">Framework Design Guidelines</a> (my 2nd edition has it on page 157, but the relevant section of the book is available online <a href="http://blogs.msdn.com/brada/archive/2005/01/14/353132.aspx">here</a>).</p>
+<p>This is the solution used by [MSDN examples]https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/events/how-to-publish-events-that-conform-to-net-framework-guidelines) and recommended by the semi-standard <a href="https://www.amazon.com/gp/product/0321545613?ie=UTF8&amp;tag=stepheclearys-20&amp;linkCode=as2&amp;camp=1789&amp;creative=390957&amp;creativeASIN=0321545613">Framework Design Guidelines</a> (my 2nd edition has it on page 157).</p>
 
 <p>This solution is simple, obvious, and wrong. [By the way, I’m not dissing Framework Design Guidelines. They have lots of good advice, and I don’t mean to be critical of the book in general. They’re just mistaken in this particular recommendataion.]</p>
 
@@ -364,9 +364,9 @@ img.comment-author-profile-image {
 
 <h2 id="the-wrong-solution-3-from-jon-skeet">The Wrong Solution #3, from Jon Skeet</h2>
 
-<p>[OK, let me say this first: Jon Skeet is an awesome programmer. I highly recommend his book <a href="http://www.amazon.com/gp/product/1933988363?ie=UTF8&amp;tag=stepheclearys-20&amp;linkCode=as2&amp;camp=1789&amp;creative=390957&amp;creativeASIN=1933988363">C# in Depth</a> to <em>anyone and everyone using C#</em> (I own the first edition and will buy the 2nd as soon as it comes out; he’s writing it now and I’m so excited!). I follow his blog. I highly respect the man, and I can’t believe my first mention of him on my blog is in a negative light… However, he did come up with a wrong solution for thread-safe events. To give him credit, though, he ended his paper recommending the right solution!]</p>
+<p>[OK, let me say this first: Jon Skeet is an awesome programmer. I highly recommend his book <a href="https://www.amazon.com/C-Depth-Jon-Skeet-dp-1617294535/dp/1617294535?&amp;linkCode=ll1&amp;tag=stepheclearys-20&amp;linkId=487eed7f1fec8cc1ea832efc1c165998&amp;language=en_US&amp;ref_=as_li_ss_tl">C# in Depth</a> to <em>anyone and everyone using C#</em> (I own the first edition and will buy the 2nd as soon as it comes out; he’s writing it now and I’m so excited!). I follow his blog. I highly respect the man, and I can’t believe my first mention of him on my blog is in a negative light… However, he did come up with a wrong solution for thread-safe events. To give him credit, though, he ended his paper recommending the right solution!]</p>
 
-<p>Jon Skeet has a great treatment of this subject in his paper <a href="http://www.yoda.arachsys.com/csharp/events.html">Delegates and Events</a> (you may wish to skip to the section titled “Thread-safe events”). He covers everything that I’ve described above, but then proceeds on to propose another wrong solution. He dislikes the memory barrier solution (as do I), and attempts to solve it by wrapping the copy operation within the lock. As Jon points out, the event add/remove methods <em>may</em> lock <code>this</code> or they could lock something else (remember, a future C# compiler may choose to lock on a super-secret private field instead). So, the default add/remove methods have to be replaced with ones that perform an explicit lock, as such:</p>
+<p>Jon Skeet has a great treatment of this subject in his paper <a href="https://csharpindepth.com/Articles/Events">Delegates and Events</a> (you may wish to skip to the section titled “Thread-safe events”). He covers everything that I’ve described above, but then proceeds on to propose another wrong solution. He dislikes the memory barrier solution (as do I), and attempts to solve it by wrapping the copy operation within the lock. As Jon points out, the event add/remove methods <em>may</em> lock <code>this</code> or they could lock something else (remember, a future C# compiler may choose to lock on a super-secret private field instead). So, the default add/remove methods have to be replaced with ones that perform an explicit lock, as such:</p>
 
 <figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="kt">object</span> <span class="n">myEventLock</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">object</span><span class="p">();</span>
 <span class="k">private</span> <span class="n">MyEventHandler</span> <span class="n">myEvent</span><span class="p">;</span>
