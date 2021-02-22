@@ -254,7 +254,7 @@ With this perspective, a recursive lock makes no sense at all. The fact that you
 
 Like many developers, I was taught the classical (thread) definition in school, and my first multithreaded programs used coarse-grained locking to coordinate threads. After a few years of minimizing the code under lock and restricting lock visibility, I just sort of gravitated to the alternate (block of code) definition.
 
-In fact, you _have_ to embrace the alternate definition in order to consider new types of locks such as [asynchronous locks](http://blogs.msdn.com/b/pfxteam/archive/2012/02/12/10266988.aspx), which _cannot_ be tied to a thread.
+In fact, you _have_ to embrace the alternate definition in order to consider new types of locks such as [asynchronous locks](https://devblogs.microsoft.com/pfxteam/building-async-coordination-primitives-part-6-asynclock/), which _cannot_ be tied to a thread.
 
 ## Conclusion
 

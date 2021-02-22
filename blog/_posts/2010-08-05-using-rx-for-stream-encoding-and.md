@@ -4,7 +4,7 @@ title: "Using Rx for Stream Encoding and Decoding"
 ---
 Still on my Rx kick...
 
-The Rx team had a two-part series last month demonstrating one way to use Rx on the server: [asynchronous Stream](http://blogs.msdn.com/b/jeffva/archive/2010/07/23/rx-on-the-server-part-1-of-n-asynchronous-system-io-stream-reading.aspx) and [asynchronous StreamReader](http://blogs.msdn.com/b/jeffva/archive/2010/07/26/rx-on-the-server-part-2-of-n-asynchronous-streamreader.aspx). In the asynchronous StreamReader example, they punt on the decoding issue, instead demonstrating how to split the text into lines.
+The Rx team had a two-part series last month demonstrating one way to use Rx on the server: [asynchronous Stream](https://docs.microsoft.com/en-us/archive/blogs/jeffva/rx-on-the-server-part-1-of-n-asynchronous-system-io-stream-reading) and [asynchronous StreamReader](https://docs.microsoft.com/en-us/archive/blogs/jeffva/rx-on-the-server-part-2-of-n-asynchronous-streamreader). In the asynchronous StreamReader example, they punt on the decoding issue, instead demonstrating how to split the text into lines.
 
 As it turns out, decoding (and encoding) are quite simple in Rx. The code below should be clear to anyone who's been following the Rx team blog posts:
 

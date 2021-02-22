@@ -38,7 +38,7 @@ public event MyEventHandler MyEvent
 }
 {% endhighlight %}
 
-Chris Burrows, a Microsoft developer on the C# compiler team, explains why this is bad in his blog post [Field-like Events Considered Harmful](http://blogs.msdn.com/cburrows/archive/2008/02/18/field-like-events-considered-harmful.aspx). His blog post covers the reasoning thoroughly, so it won't be repeated here.
+Chris Burrows, a Microsoft developer on the C# compiler team, explains why this is bad in his blog post [Field-like Events Considered Harmful](https://docs.microsoft.com/en-us/archive/blogs/cburrows/field-like-events-considered-harmful). His blog post covers the reasoning thoroughly, so it won't be repeated here.
 
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
@@ -73,7 +73,7 @@ if (myEvent != null)
 }
 {% endhighlight %}
 
-This is the solution used by [MSDN examples](http://msdn.microsoft.com/en-us/library/w369ty8x.aspx) and recommended by the semi-standard [Framework Design Guidelines](http://www.amazon.com/gp/product/0321545613?ie=UTF8&tag=stepheclearys-20&linkCode=as2&camp=1789&creative=390957&creativeASIN=0321545613) (my 2nd edition has it on page 157, but the relevant section of the book is available online [here](http://blogs.msdn.com/brada/archive/2005/01/14/353132.aspx)).
+This is the solution used by [MSDN examples]https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/events/how-to-publish-events-that-conform-to-net-framework-guidelines) and recommended by the semi-standard [Framework Design Guidelines](https://www.amazon.com/gp/product/0321545613?ie=UTF8&tag=stepheclearys-20&linkCode=as2&camp=1789&creative=390957&creativeASIN=0321545613) (my 2nd edition has it on page 157).
 
 This solution is simple, obvious, and wrong. [By the way, I'm not dissing Framework Design Guidelines. They have lots of good advice, and I don't mean to be critical of the book in general. They're just mistaken in this particular recommendataion.]
 
@@ -83,9 +83,9 @@ In short, this solution does prevent the NullReferenceException race condition; 
 
 ## The Wrong Solution #3, from Jon Skeet
 
-[OK, let me say this first: Jon Skeet is an awesome programmer. I highly recommend his book [C# in Depth](http://www.amazon.com/gp/product/1933988363?ie=UTF8&tag=stepheclearys-20&linkCode=as2&camp=1789&creative=390957&creativeASIN=1933988363) to _anyone and everyone using C#_ (I own the first edition and will buy the 2nd as soon as it comes out; he's writing it now and I'm so excited!). I follow his blog. I highly respect the man, and I can't believe my first mention of him on my blog is in a negative light... However, he did come up with a wrong solution for thread-safe events. To give him credit, though, he ended his paper recommending the right solution!]
+[OK, let me say this first: Jon Skeet is an awesome programmer. I highly recommend his book [C# in Depth](https://www.amazon.com/C-Depth-Jon-Skeet-dp-1617294535/dp/1617294535?&linkCode=ll1&tag=stepheclearys-20&linkId=487eed7f1fec8cc1ea832efc1c165998&language=en_US&ref_=as_li_ss_tl) to _anyone and everyone using C#_ (I own the first edition and will buy the 2nd as soon as it comes out; he's writing it now and I'm so excited!). I follow his blog. I highly respect the man, and I can't believe my first mention of him on my blog is in a negative light... However, he did come up with a wrong solution for thread-safe events. To give him credit, though, he ended his paper recommending the right solution!]
 
-Jon Skeet has a great treatment of this subject in his paper [Delegates and Events](http://www.yoda.arachsys.com/csharp/events.html) (you may wish to skip to the section titled "Thread-safe events"). He covers everything that I've described above, but then proceeds on to propose another wrong solution. He dislikes the memory barrier solution (as do I), and attempts to solve it by wrapping the copy operation within the lock. As Jon points out, the event add/remove methods _may_ lock `this` or they could lock something else (remember, a future C# compiler may choose to lock on a super-secret private field instead). So, the default add/remove methods have to be replaced with ones that perform an explicit lock, as such:
+Jon Skeet has a great treatment of this subject in his paper [Delegates and Events](https://csharpindepth.com/Articles/Events) (you may wish to skip to the section titled "Thread-safe events"). He covers everything that I've described above, but then proceeds on to propose another wrong solution. He dislikes the memory barrier solution (as do I), and attempts to solve it by wrapping the copy operation within the lock. As Jon points out, the event add/remove methods _may_ lock `this` or they could lock something else (remember, a future C# compiler may choose to lock on a super-secret private field instead). So, the default add/remove methods have to be replaced with ones that perform an explicit lock, as such:
 
 {% highlight csharp %}
 private object myEventLock = new object();

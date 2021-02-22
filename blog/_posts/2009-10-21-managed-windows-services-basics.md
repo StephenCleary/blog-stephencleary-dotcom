@@ -5,7 +5,7 @@ seriesOrder: 2
 series: "Managed Services"
 seriesTitle: "Basics"
 ---
-Managed (.NET) Windows Services suffer from a lack of sufficient information in the .NET MSDN documentation. Earlier this year, the BCL team put a post on their blog that fills in the gaps: [How .NET Managed Services Interact with the Service Control Manager](http://blogs.msdn.com/bclteam/archive/2009/02/19/in-depth-how-net-managed-services-interact-with-the-servicecontrolmanager-scm-kim-hamilton.aspx). The Service Control Manager (SCM) is the part of Windows that controls starting and stopping Windows Services.
+Managed (.NET) Windows Services suffer from a lack of sufficient information in the .NET MSDN documentation. Earlier this year, the BCL team put a post on their blog that fills in the gaps: [How .NET Managed Services Interact with the Service Control Manager](https://web.archive.org/web/20090228182830/http://blogs.msdn.com/bclteam/archive/2009/02/19/in-depth-how-net-managed-services-interact-with-the-servicecontrolmanager-scm-kim-hamilton.aspx). The Service Control Manager (SCM) is the part of Windows that controls starting and stopping Windows Services.
 
 ## Services and the .NET ServiceBase Class
 

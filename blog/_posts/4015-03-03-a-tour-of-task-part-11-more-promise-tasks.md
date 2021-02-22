@@ -70,5 +70,5 @@ Task<TResult> FromAsync<TResult>(IAsyncResult, Func<IAsyncResult, TResult>);
 Task<TResult> FromAsync<TResult>(IAsyncResult, Func<IAsyncResult, TResult>, TaskCreationOptions);
 Task<TResult> FromAsync<TResult>(IAsyncResult, Func<IAsyncResult, TResult>, TaskCreationOptions, TaskScheduler);
 
-// http://blogs.msdn.com/b/pfxteam/archive/2009/06/09/9716439.aspx
-// http://blogs.msdn.com/b/pfxteam/archive/2012/02/06/10264610.aspx
+// https://devblogs.microsoft.com/pfxteam/tasks-and-the-apm-pattern/
+// https://devblogs.microsoft.com/pfxteam/fromasyncasyncresult-vs-fromasyncbeginmethod/

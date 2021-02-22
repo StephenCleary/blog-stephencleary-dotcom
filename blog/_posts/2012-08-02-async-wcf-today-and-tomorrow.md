@@ -219,7 +219,7 @@ In this sample code, Main is blocking on the Task returned from CallCalculator. 
 
 Well, that's quite a bit of work to enable async!
 
-The good news is: in .NET 4.5, [this all gets easier](http://blogs.msdn.com/b/endpoint/archive/2010/11/13/simplified-asynchronous-programming-model-in-wcf-with-async-await.aspx) ([webcite](http://www.webcitation.org/69BfBD7pO)). How much easier, you ask?
+The good news is: in .NET 4.5, [this all gets easier](https://docs.microsoft.com/en-us/archive/blogs/endpoint/simplified-asynchronous-programming-model-in-wcf-with-asyncawait) ([webcite](http://www.webcitation.org/69BfBD7pO)). How much easier, you ask?
 
 A **lot** easier.
 

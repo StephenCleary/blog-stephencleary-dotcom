@@ -2,7 +2,7 @@
 layout: post
 title: "Another SynchronizationContext Gotcha: InvokeRequired?"
 ---
-There was a good post today by the Parallel Programming .NET Team where they clarify [how the upcoming Task class can make use of SynchronizationContext](http://blogs.msdn.com/pfxteam/archive/2009/09/22/9898090.aspx). In reading that post, I was reminded of Yet Another SynchronizationContext Gotcha.
+There was a good post today by the Parallel Programming .NET Team where they clarify [how the upcoming Task class can make use of SynchronizationContext](https://devblogs.microsoft.com/pfxteam/taskscheduler-fromcurrentsynchronizationcontext/). In reading that post, I was reminded of Yet Another SynchronizationContext Gotcha.
 
 Given a [SynchronizationContext](http://msdn.microsoft.com/en-us/library/system.threading.synchronizationcontext.aspx) of unknown type, you _cannot tell_ if you are on a thread that is associated with that SynchronizationContext. This is the old "Do I need to invoke?" question that is answered by [ISynchronizeInvoke.InvokeRequired](http://msdn.microsoft.com/en-us/library/system.componentmodel.isynchronizeinvoke.invokerequired.aspx) on Windows Forms and [Dispatcher.CheckAccess](http://msdn.microsoft.com/en-us/library/system.windows.threading.dispatcher.checkaccess.aspx) on Windows Presentation Foundation. However, use of these methods is usually an earmark of poor design; most methods should not be designed to be called "from any thread" (unless they are part of a class used for thread synchronization).
 

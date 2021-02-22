@@ -33,7 +33,7 @@ class Program
 
 The output of this program is `null,null,1`. A lot of developers are surprised at this; after all, when you return a `Task` from an `async` method, doesn't that `Task` represent the complete method? Yes, it does _conceptually_ represent the `async` method, but it does not _literally execute_ the `async` method.
 
-In fact, `Task` instances returned from `async` methods are not _executed_ at all; under the hood, they are `TaskCompletionSource<TResult>`-style (event-based) tasks, not delegate (code-based) tasks. (For more information on the differences, see my blog post on [creating tasks]({% post_url 2012-02-09-creating-tasks %}) or Stephen Toub's blog post on [the nature of TaskCompletionSource](http://blogs.msdn.com/b/pfxteam/archive/2009/06/02/9685804.aspx)). So `Task.CurrentId` returns `null` because there is no task actually _executing_.
+In fact, `Task` instances returned from `async` methods are not _executed_ at all; under the hood, they are `TaskCompletionSource<TResult>`-style (event-based) tasks, not delegate (code-based) tasks. (For more information on the differences, see my blog post on [creating tasks]({% post_url 2012-02-09-creating-tasks %}) or Stephen Toub's blog post on [the nature of TaskCompletionSource](https://devblogs.microsoft.com/pfxteam/the-nature-of-taskcompletionsourcetresult/)). So `Task.CurrentId` returns `null` because there is no task actually _executing_.
 
 As a reminder, code-based tasks are usually started with `Task.Run` to toss work onto the thread pool, or `TaskFactory.StartNew` to specify a scheduler where the task will run. But you can still end up surprised when you schedule an `async` method. Consider the modified program:
 

@@ -6,7 +6,7 @@ description: "Visual Studio 14 will probably support await in catch and finally 
 
 This is just a brief note to publicize a coming improvement to the `async` language support.
 
-Visual Studio "14" [is currently in CTP](http://blogs.msdn.com/b/somasegar/archive/2014/06/03/first-preview-of-visual-studio-quot-14-quot-available-now.aspx), and is [available for download](http://www.visualstudio.com/en-us/downloads/visual-studio-14-ctp-vs). One of the primary advantages of this release is the new Roslyn-based compilers.
+Visual Studio "14" [is currently in CTP](https://docs.microsoft.com/en-us/archive/blogs/somasegar/visual-studio-14-ctp), and is [available for download](http://www.visualstudio.com/en-us/downloads/visual-studio-14-ctp-vs). One of the primary advantages of this release is the new Roslyn-based compilers.
 
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>

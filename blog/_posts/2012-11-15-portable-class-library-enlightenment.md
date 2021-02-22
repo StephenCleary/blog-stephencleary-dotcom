@@ -22,7 +22,7 @@ Portable Class Libraries enable you to create a single binary that runs on sever
 
 ## Possible Solutions
 
-There are several ways to do this. [Daniel Plaisted has a great blog post](http://blogs.msdn.com/b/dsplaisted/archive/2012/08/27/how-to-make-portable-class-libraries-work-for-you.aspx) that gives an overview of different solutions:
+There are several ways to do this. [Daniel Plaisted has a great blog post](https://docs.microsoft.com/en-us/archive/blogs/dsplaisted/how-to-make-portable-class-libraries-work-for-you) that gives an overview of different solutions:
 
 1. Manual dependency injection (passing interface implementations into constructors). Daniel's classic "Disentaglement" demo uses this approach as he describes [in his //build/ talk](http://channel9.msdn.com/Events/Build/2012/3-004). This is OK if your PCL just has a few large classes (e.g., ViewModels) which are always the "entry point" to your PCL. It's not so good if your PCL is more of a generic library.
 1. Real dependency injection. The disadvantage to this approach is that it restricts all users of a PCL to a specific DI provider.
@@ -38,7 +38,7 @@ This is fine if your PCL is just the core of a portable _application_, like Dani
 
 But I'm not a fan of this. When I distribute a library, I want users to just add it via NuGet and start using it; requiring "startup" code is a big barrier to adoption.
 
-AFAIK, the Rx team was the first to solve this problem. They describe their "Platform Enlightenment" approach well [on their blog (section "Intermezzo - The refactored API surface")](http://blogs.msdn.com/b/rxteam/archive/2012/08/15/reactive-extensions-v2-0-has-arrived.aspx). Members of the PCL team have referred to this technique as "Platform Adaptation".
+AFAIK, the Rx team was the first to solve this problem. They describe their "Platform Enlightenment" approach well [on their blog (section "Intermezzo - The refactored API surface")](https://docs.microsoft.com/en-us/archive/blogs/rxteam/reactive-extensions-v2-0-has-arrived). Members of the PCL team have referred to this technique as "Platform Adaptation".
 
 {:.center}
 ![]({{ site_url }}/assets/Blog%203.png)
@@ -311,9 +311,9 @@ If you're modifying an existing library to have a portable core, you should keep
 
 ## References
 
-Daniel Plaisted's blog post [How to Make Portable Class Libraries Work for You](http://blogs.msdn.com/b/dsplaisted/archive/2012/08/27/how-to-make-portable-class-libraries-work-for-you.aspx).
+Daniel Plaisted's blog post [How to Make Portable Class Libraries Work for You](https://docs.microsoft.com/en-us/archive/blogs/dsplaisted/how-to-make-portable-class-libraries-work-for-you).
 
-The [original Rx team blog post describes their "Platform Enlightenment" (section "Intermezzo - The refactored API surface")](http://blogs.msdn.com/b/rxteam/archive/2012/08/15/reactive-extensions-v2-0-has-arrived.aspx).
+The [original Rx team blog post describes their "Platform Enlightenment" (section "Intermezzo - The refactored API surface")](https://docs.microsoft.com/en-us/archive/blogs/rxteam/reactive-extensions-v2-0-has-arrived).
 
 The [Portable Class Libraries Contrib project has a "Platform Adaptation" implementation (under Source/Portable.Runtime/Adaptation)](http://pclcontrib.codeplex.com/SourceControl/changeset/view/82200).
 

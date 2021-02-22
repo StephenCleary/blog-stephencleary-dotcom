@@ -158,7 +158,7 @@ In this type of relationship, the "parent" table has an identity, and the "child
 1. In the "Principal" drop-down, select the "parent" entity. If your foreign key columns in the "child" entity have the same names as the primary key columns in the "parent" entity, then the rest of the dialog is filled in for you. (If not, you'll have to select which "Dependent Property" maches each "Principal Key").
 1. Click OK. The foreign key association is now completed.
 
-Thanks to the Entity Framework Design team for their [blog post on FK Associations](http://blogs.msdn.com/b/efdesign/archive/2009/03/16/foreign-keys-in-the-entity-framework.aspx); my instructions above are derived from that post.
+Thanks to the Entity Framework Design team for their [blog post on FK Associations](https://docs.microsoft.com/en-us/archive/blogs/efdesign/foreign-keys-in-the-entity-framework); my instructions above are derived from that post.
 
 ### Foreign Keys: M to N
 

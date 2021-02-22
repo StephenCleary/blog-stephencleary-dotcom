@@ -14,7 +14,7 @@ Similarly, the [BackgroundWorker class](http://msdn.microsoft.com/en-us/library/
 
 Background tasks come in two basic flavors. Some of them update the UI infrequently, and can be easily broken into separate tasks which only update at each "checkpoint." Other background tasks update the UI more frequently, and cannot be easily divided this way.
 
-For the background tasks that infrequently update the UI, the common approach is to split them into separate Tasks with "checkpoints" in-between. At these "checkpoints," a [task continuation](http://msdn.microsoft.com/en-us/library/ee372288.aspx) is used to update the UI. The C# FAQ blog has [an entry](http://blogs.msdn.com/b/csharpfaq/archive/2010/06/18/parallel-programming-task-schedulers-and-synchronization-context.aspx) describing this approach.
+For the background tasks that infrequently update the UI, the common approach is to split them into separate Tasks with "checkpoints" in-between. At these "checkpoints," a [task continuation](http://msdn.microsoft.com/en-us/library/ee372288.aspx) is used to update the UI. The C# FAQ blog has [an entry](https://docs.microsoft.com/en-us/archive/blogs/csharpfaq/parallel-programming-task-schedulers-and-synchronization-context) describing this approach.
 
 For the background tasks that need to frequently update the UI (and can't be easily split into "checkpointed" Tasks), another approach is necessary. The easiest solution is to create an inner Task to update the UI.
 

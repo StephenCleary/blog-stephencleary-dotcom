@@ -81,7 +81,7 @@ public Task<int> GetValue()
 
 Consider: Backwards compatibility and code readability.
 
-Eric Lippert has the [definitive post](http://blogs.msdn.com/b/ericlippert/archive/2010/11/11/whither-async.aspx) on the subject. It's also been discussed in [blog comments](http://blogs.msdn.com/b/ericlippert/archive/2010/10/29/asynchronous-programming-in-c-5-0-part-two-whence-await.aspx), [Channel9](http://channel9.msdn.com/Forums/Coffeehouse/Why-is-the-async-keyword-needed), [forums](http://social.msdn.microsoft.com/Forums/en-US/async/thread/75493675-4a39-4958-a493-ad8a96f8a19d), and [Stack Overflow](http://stackoverflow.com/questions/9225748/why-does-the-async-keyword-exist).
+Eric Lippert has the [definitive post](https://docs.microsoft.com/en-us/archive/blogs/ericlippert/asynchrony-in-c-5-part-six-whither-async) on the subject. It's also been discussed in [blog comments]https://docs.microsoft.com/en-us/archive/blogs/ericlippert/asynchronous-programming-in-c-5-0-part-two-whence-await), [Channel9](http://channel9.msdn.com/Forums/Coffeehouse/Why-is-the-async-keyword-needed), [forums](http://social.msdn.microsoft.com/Forums/en-US/async/thread/75493675-4a39-4958-a493-ad8a96f8a19d), and [Stack Overflow](http://stackoverflow.com/questions/9225748/why-does-the-async-keyword-exist).
 
 To summarize, a single-word **await** keyword would be too big of a breaking change. The choice was between a multi-word await (e.g., **await for**) or a keyword on the method (**async**) that would enable the **await** keyword just within that method. Explicitly marking methods **async** is easier for both humans and computers to parse, so they decided to go with the **async**/**await** pair.
 

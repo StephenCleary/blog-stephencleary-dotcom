@@ -32,7 +32,7 @@ This a bit complex to describe in words, so here's a little table that lays out 
 
 </div>
 
-The table above ignores `async void` methods, which you [should be avoiding anyway](http://msdn.microsoft.com/en-us/magazine/jj991977.aspx). Async void methods are tricky because you _can_ assign a lambda like `async () => { await Task.Yield(); }` to a variable of type `Action`, even though the _natural_ type of that lambda is `Func<Task>`. Stephen Toub has written [more about the pitfalls of async void lambdas](http://blogs.msdn.com/b/pfxteam/archive/2012/02/08/10265476.aspx).
+The table above ignores `async void` methods, which you [should be avoiding anyway](http://msdn.microsoft.com/en-us/magazine/jj991977.aspx). Async void methods are tricky because you _can_ assign a lambda like `async () => { await Task.Yield(); }` to a variable of type `Action`, even though the _natural_ type of that lambda is `Func<Task>`. Stephen Toub has written [more about the pitfalls of async void lambdas](https://devblogs.microsoft.com/pfxteam/potential-pitfalls-to-avoid-when-passing-around-async-lambdas/).
 
 As a closing note, the C# compiler has been updated in VS2012 to correctly perform overload resolution in the presence of async lambdas. So, this kind of method declaration works fine:
 

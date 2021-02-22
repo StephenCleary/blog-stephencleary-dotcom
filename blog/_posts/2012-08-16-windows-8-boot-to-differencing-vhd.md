@@ -8,7 +8,7 @@ We only have one computer in our house. Sometimes it's used for work, and someti
 
 ## Considering Hyper-V
 
-One of the (many) hallmarks of Windows 8 is that [Microsoft is providing client Hyper-V](http://blogs.msdn.com/b/b8/archive/2011/09/07/bringing-hyper-v-to-windows-8.aspx). Using Hyper-V, I could run multiple virtual computers at the same time. Hyper-V (like every virtualization system) also has a nice "snapshot" feature. However, I decided not to go with Hyper-V because it's not a very seamless experience - e.g., for USB devices to work, you have to actually remote desktop into the VM.
+One of the (many) hallmarks of Windows 8 is that [Microsoft is providing client Hyper-V](https://docs.microsoft.com/en-us/archive/blogs/b8/bringing-hyper-v-to-windows-8). Using Hyper-V, I could run multiple virtual computers at the same time. Hyper-V (like every virtualization system) also has a nice "snapshot" feature. However, I decided not to go with Hyper-V because it's not a very seamless experience - e.g., for USB devices to work, you have to actually remote desktop into the VM.
 
 I made the decision to boot from VHD instead. With this approach, only one OS can be running at a time - the only thing virtualized is the disk access, and it's virtualized within the OS itself, not by another full layer (like Hyper-V). So, boot from VHD runs faster and you get full access to hardware, but you lose the multiple-VMs-running-at-once that you can get from Hyper-V. Also, you can use snapshots with boot-from-VHD, but they're not as easy to use as snapshots in Hyper-V.
 

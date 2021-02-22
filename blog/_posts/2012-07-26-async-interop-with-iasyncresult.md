@@ -89,7 +89,7 @@ public IAsyncResult BeginDivide(int numerator, int denominator, AsyncCallback ca
 }
 {% endhighlight %}
 
-The Task returned by Begin needs to be a different instance than the Task returned by the Async implementation because [IAsyncResult.AsyncState needs to return the state passed into the Begin method](http://blogs.msdn.com/b/junfeng/archive/2006/03/28/563627.aspx).
+The Task returned by Begin needs to be a different instance than the Task returned by the Async implementation because [IAsyncResult.AsyncState needs to return the state passed into the Begin method](https://docs.microsoft.com/en-us/archive/blogs/junfeng/iasyncresult-implementation-compliant).
 
 The example code above will always complete the Task and invoke the user callback from a thread pool thread. There are situations where it would be faster to do this synchronously (TaskContinuationOptions.ExecuteSynchronously), but [this can cause complex problems](http://social.msdn.microsoft.com/Forums/en-US/async/thread/9535a4a6-6218-45fe-aa45-79332b9e5b88). ExecuteSynchronously should **not** be used in APM wrappers for TAP methods!
 

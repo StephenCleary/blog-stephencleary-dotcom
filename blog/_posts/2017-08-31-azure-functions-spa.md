@@ -10,7 +10,7 @@ I had to set up a SPA with an API running on Azure Functions recently, and it to
 
 ## Host the API
 
-The first step is to define your API and host it in Azure Functions. [The Visual Studio tooling is out of preview now](https://blogs.msdn.microsoft.com/appserviceteam/2017/08/14/azure-functions-tools-released-for-visual-studio-2017-update-3/), and setting up a C# API is straightforward. Personally, I set up automated deployment from GitHub to my Azure Functions app.
+The first step is to define your API and host it in Azure Functions. [The Visual Studio tooling is out of preview now](https://azure.github.io/AppService/2017/08/14/Azure-Functions-Tools-released-for-Visual-Studio-2017-Update-3.html), and setting up a C# API is straightforward. Personally, I set up automated deployment from GitHub to my Azure Functions app.
 
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>

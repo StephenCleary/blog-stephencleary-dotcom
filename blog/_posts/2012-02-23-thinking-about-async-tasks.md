@@ -40,11 +40,11 @@ Each TPL task may have multiple errors. Even if a task only has one exception, i
 
 An awaitable is a very generic form of background operation. Awaitables support testing for completion (IsCompleted), scheduling continuations (OnCompleted), and retrieving the results of the operation (GetResult).
 
-The await operator uses [a well-defined pattern](http://blogs.msdn.com/b/lucian/archive/2011/04/15/async-ctp-refresh-design-changes.aspx), so it's possible to have some very strange awaitables that do work correctly.
+The await operator uses [a well-defined pattern](https://web.archive.org/web/20120201065726/http://blogs.msdn.com/b/lucian/archive/2011/04/15/async-ctp-refresh-design-changes.aspx), so it's possible to have some very strange awaitables that do work correctly.
 
 For example, the awaitable returned by the Task.Yield method _never_ returns true for IsCompleted, and its OnCompleted will immediately schedule the completions. So, on the one hand it never completes, but on the other hand it is already completed.
 
-WinRT awaitables are also not quite like Task objects. <del>The most important difference is that WinRT operations do not start their operation immediately. Normally, the WinRT awaitable will start the operation for you when it is used in an await expression. However, this won't work as well if you want to have multiple operations running simultaneously. In this case, you can convert any WinRT awaitable into an async Task by calling the **StartAsTask** extension method.</del> **Update:** WinRT operations [have been changed](http://blogs.msdn.com/b/windowsappdev/archive/2012/03/20/keeping-apps-fast-and-fluid-with-asynchrony-in-the-windows-runtime.aspx) so that they _do_ start immediately.
+WinRT awaitables are also not quite like Task objects. <del>The most important difference is that WinRT operations do not start their operation immediately. Normally, the WinRT awaitable will start the operation for you when it is used in an await expression. However, this won't work as well if you want to have multiple operations running simultaneously. In this case, you can convert any WinRT awaitable into an async Task by calling the **StartAsTask** extension method.</del> **Update:** WinRT operations [have been changed](https://web.archive.org/web/20120323020957/http://blogs.msdn.com/b/windowsappdev/archive/2012/03/20/keeping-apps-fast-and-fluid-with-asynchrony-in-the-windows-runtime.aspx) so that they _do_ start immediately.
 
 ## Functional Concepts
 

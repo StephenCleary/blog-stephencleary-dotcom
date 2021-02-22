@@ -59,7 +59,7 @@ static void Main(string[] args)
 }
 {% endhighlight %}
 
-This idea came from Luca Bolognese's blog post [Simulating INumeric with dynamic in C# 4.0](http://blogs.msdn.com/lucabol/archive/2009/02/05/simulating-inumeric-with-dynamic-in-c-4-0.aspx), where he states that with a generic signature "you get a different call site with each combination of type arguments and, since they are separate, the binding caches should stay small."
+This idea came from Luca Bolognese's blog post [Simulating INumeric with dynamic in C# 4.0](https://www.lucabol.com/posts/2009-02-05-simulating-inumeric-with-dynamic-in-c-4-0/), where he states that with a generic signature "you get a different call site with each combination of type arguments and, since they are separate, the binding caches should stay small."
 
 Final note: this is only an implementation detail of the DLR. These performance characteristics may change in a .NET service pack or future version.
 

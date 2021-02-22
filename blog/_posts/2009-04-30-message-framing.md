@@ -49,7 +49,7 @@ Whether using length-prefixing or delimiters, one must include code to prevent d
 
 A code sample for using length-prefixing is in [its own blog post]({% post_url 2009-04-30-sample-code-length-prefix-message %}).
 
-Another decent code example of length prefixing is on [Jon Cole's blog](http://blogs.msdn.com/joncole/archive/2006/04/25/simple-message-framing-sample-for-tcp-socket-part-2-asynchronous.aspx), although he assumes all the messages are just ASCII strings.
+Another decent code example of length prefixing is on [Jon Cole's blog](https://docs.microsoft.com/en-us/archive/blogs/joncole/simple-message-framing-sample-for-tcp-socket-part-2-asynchronous), although he assumes all the messages are just ASCII strings.
 
-Yet another example of length prefixing is in the [Nito.Async](http://www.codeplex.com/NitoAsync) library: the Nito.Async.Sockets.SocketPacketProtocol class can be used to send or receive length-prefixed binary messages. It is written to use the Nito.Async socket classes, but the same code concepts translate well to the .NET Socket class.
+Yet another example of length prefixing is in the [Nito.Async](https://github.com/StephenClearyArchive/Nito.Asynchronous) library: the Nito.Async.Sockets.SocketPacketProtocol class can be used to send or receive length-prefixed binary messages. It is written to use the Nito.Async socket classes, but the same code concepts translate well to the .NET Socket class.
 

@@ -41,7 +41,7 @@ LINQ is an example of a declarative sub-language within an imperative language (
 
 Since anyone is free to implement a LINQ provider, LINQ is an example of a declarative language with an extension point (the Queryable system). People have written providers for an amazing array of data sources.
 
-The problem: implementing a LINQ provider is [hard!](http://blogs.msdn.com/mattwar/pages/linq-links.aspx) Getting one working is hard enough; making it general-purpose (i.e., intelligently handling all LINQ operations) is a nightmare; and creating one that is efficient is next to impossible. So, this leads us to the predictable conclusion: a handful of provider authors attempting to satisfy the demands of the masses. Furthermore, the vast majority of LINQ providers only do the minimum necessary to get it working; they are neither general-purpose nor efficient.
+The problem: implementing a LINQ provider is [hard!](https://docs.microsoft.com/en-us/archive/blogs/mattwar/) Getting one working is hard enough; making it general-purpose (i.e., intelligently handling all LINQ operations) is a nightmare; and creating one that is efficient is next to impossible. So, this leads us to the predictable conclusion: a handful of provider authors attempting to satisfy the demands of the masses. Furthermore, the vast majority of LINQ providers only do the minimum necessary to get it working; they are neither general-purpose nor efficient.
 
 ## Declarative Languages Aren't All Bad
 

@@ -108,7 +108,7 @@ WaitHandle IAsyncResult.AsyncWaitHandle { get; }
 
 Note that this member is explicitly implemented, so consuming code _must_ cast the `Task` as `IAsyncResult` before reading it. The actual underlying wait handle is lazy-allocated.
 
-Code using `AsyncWaitHandle` should be extremely, _extremely_ rare. It only makes sense if you have tons of existing code that is built around `WaitHandle`. If you do read the `AsyncWaitHandle` property, strongly consider [disposing the task instance](http://blogs.msdn.com/b/pfxteam/archive/2012/03/25/10287435.aspx).
+Code using `AsyncWaitHandle` should be extremely, _extremely_ rare. It only makes sense if you have tons of existing code that is built around `WaitHandle`. If you do read the `AsyncWaitHandle` property, strongly consider [disposing the task instance](https://devblogs.microsoft.com/pfxteam/do-i-need-to-dispose-of-tasks/).
 
 ## Conclusion
 

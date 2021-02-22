@@ -47,7 +47,7 @@ To mitigate this, you can set [`MaxMessagesPerTask` in the options when construc
 This introductory series on Dataflow is just scratching the surface. The resources below have much more information.
 
 - [Document: Introduction to TPL Dataflow](http://www.microsoft.com/en-us/download/details.aspx?id=14782)
-- [Document: Guide to Implementing Custom TPL Dataflow Blocks](http://blogs.msdn.com/b/pfxteam/archive/2011/12/05/10244302.aspx)
+- [Document: Guide to Implementing Custom TPL Dataflow Blocks](https://devblogs.microsoft.com/pfxteam/paper-guide-to-implementing-custom-tpl-dataflow-blocks/)
 - [TPL Dataflow forum](http://social.msdn.microsoft.com/Forums/en/tpldataflow/threads)
 
 <div class="alert alert-info" markdown="1">

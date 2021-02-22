@@ -7,7 +7,7 @@ This is a bit of an obscure topic, but something I had to work on recently. A co
 ## Anatomy of a Normal GUID and SqlGuid
 
 - GUIDs are 128 bits long (16 bytes), normally grouped into 4 bytes + 2 bytes + 2 bytes + 2 bytes + 6 bytes because of its [RFC4122](http://www.faqs.org/rfcs/rfc4122.html) definition (time-low group, time-mid group, time-high-and-version group, clock-seq-high-and-reserved + clock-seq-low group, and node group).
-- GUIDs are compared by SQL server as byte groups right-to-left, then each byte left-to-right within the group. (See [http://blogs.msdn.com/sqlprogrammability/archive/2006/11/06/how-are-guids-compared-in-sql-server-2005.aspx](http://blogs.msdn.com/sqlprogrammability/archive/2006/11/06/how-are-guids-compared-in-sql-server-2005.aspx)).
+- GUIDs are compared by SQL server as byte groups right-to-left, then each byte left-to-right within the group. (See [https://docs.microsoft.com/en-us/archive/blogs/sqlprogrammability/how-are-guids-compared-in-sql-server-2005](https://docs.microsoft.com/en-us/archive/blogs/sqlprogrammability/how-are-guids-compared-in-sql-server-2005)).
 - The performance benefits of a custom GUID generation based on time (even with most bits left random) are well known. (See [http://www.informit.com/articles/article.aspx?p=25862&seqNum=7](http://www.informit.com/articles/article.aspx?p=25862&seqNum=7)).
 - SQL server's newsequentialid() function actually does not return a standards-conforming (RFC 4122) GUID because it reverses the bytes in the first group. (See [http://www.jorriss.net/blog/jorriss/archive/2008/04/24/unraveling-the-mysteries-of-newsequentialid.aspx](http://www.jorriss.net/blog/jorriss/archive/2008/04/24/unraveling-the-mysteries-of-newsequentialid.aspx)).
 

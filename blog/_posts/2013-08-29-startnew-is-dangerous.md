@@ -2,7 +2,7 @@
 layout: post
 title: "StartNew is Dangerous"
 ---
-I see a lot of code on blogs and in SO questions that use `Task.Factory.StartNew` to spin up work on a background thread. Stephen Toub has an [excellent blog article that explains why `Task.Run` is better than `Task.Factory.StartNew`](http://blogs.msdn.com/b/pfxteam/archive/2011/10/24/10229468.aspx), but I think a lot of people just haven't read it (or don't understand it). So, I've taken the same arguments, added some more forceful language, and we'll see how this goes. :)
+I see a lot of code on blogs and in SO questions that use `Task.Factory.StartNew` to spin up work on a background thread. Stephen Toub has an [excellent blog article that explains why `Task.Run` is better than `Task.Factory.StartNew`](https://devblogs.microsoft.com/pfxteam/task-run-vs-task-factory-startnew/), but I think a lot of people just haven't read it (or don't understand it). So, I've taken the same arguments, added some more forceful language, and we'll see how this goes. :)
 
 `StartNew` does offer many more options than `Task.Run`, but it is quite dangerous, as we'll see. You should prefer `Task.Run` over `Task.Factory.StartNew` in `async` code.
 

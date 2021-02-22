@@ -64,7 +64,7 @@ Note that "the" GUID algorithm did not change. Microsoft simply changed which GU
 
 Database indexes do not work well with random values; the on-disk search trees end up very wide because the indexes do not cluster well. So, when using GUIDs for keys, it helps to use a more... _sequential..._ solution.
 
-However, there's another problem with GUIDs as database keys: the order in which the database compares GUIDs. Remember that sequential GUIDs aren't really _sequential_ because the Timestamp field is not at the end of the GUID structure. Furthermore, some databases compare GUID values in strange ways (I'm looking at you, [SQL Server](http://blogs.msdn.com/b/sqlprogrammability/archive/2006/11/06/how-are-guids-compared-in-sql-server-2005.aspx) ([webcite](http://www.webcitation.org/5ylIiAwyb))).
+However, there's another problem with GUIDs as database keys: the order in which the database compares GUIDs. Remember that sequential GUIDs aren't really _sequential_ because the Timestamp field is not at the end of the GUID structure. Furthermore, some databases compare GUID values in strange ways (I'm looking at you, [SQL Server](https://docs.microsoft.com/en-us/archive/blogs/sqlprogrammability/how-are-guids-compared-in-sql-server-2005) ([webcite](http://www.webcitation.org/5ylIiAwyb))).
 
 So, when Microsoft added [newsequentialid()](http://msdn.microsoft.com/en-us/library/ms189786.aspx) to SQL Server, they did not just return a regular sequential GUID. They [shuffled some of the bytes](http://www.jorriss.net/blog/jorriss/archive/2008/04/24/unraveling-the-mysteries-of-newsequentialid.aspx) ([webcite](http://www.webcitation.org/5ylItnhAb)) to make index clustering more efficient.
 

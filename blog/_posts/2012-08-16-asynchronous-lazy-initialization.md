@@ -4,7 +4,7 @@ title: "Asynchronous Lazy Initialization"
 ---
 When you have a lazy-created value, it's often useful to lazy-create it in an asynchronous fashion. A simple Lazy\<T> provides lazy initialization, but the initialization executes synchronously when the value is created.
 
-Stephen Toub first introduced this approach [in a blog post way back in January, 2011](http://blogs.msdn.com/b/pfxteam/archive/2011/01/15/10116210.aspx). This is his code, which I've updated, documented, and tweaked slightly:
+Stephen Toub first introduced this approach [in a blog post way back in January, 2011](https://devblogs.microsoft.com/pfxteam/asynclazyt/). This is his code, which I've updated, documented, and tweaked slightly:
 
 {% highlight csharp %}
  
