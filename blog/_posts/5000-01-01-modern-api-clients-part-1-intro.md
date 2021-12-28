@@ -20,7 +20,7 @@ A lot of services on the Internet are API-first. So their API is their primary e
 
 ### Documentation
 
-For an API-first service, the API is documented well. Client libraries using that API? Not so much. With many client libraries, you have to spend enough time with it to know its "flavor" of talking to the API, and then use the actual API documentation to figure out how to use the client. Sometimes the C# client libraries have barely any documentation at all; other times the client library documentation is auto-generated from the API documentation, and will occasionally not make sense since it is written from an HTTP perspective rather than a C# perspective.
+For an API-first service, the API is documented well. Client libraries using that API? Not so much. With many client libraries, you have to spend enough time with it to learn its "flavor" of talking to the API, and then use the actual API documentation to figure out how to use the client. Sometimes the C# client libraries have barely any documentation at all; other times the client library documentation is auto-generated from the API documentation, and will occasionally not make sense since it is written from an HTTP perspective rather than a C# perspective.
 
 The bottom line is that client libraries are almost never as well-documented as the actual API.
 
@@ -30,7 +30,7 @@ There's almost always a feature lag between the API and its client libraries. Th
 
 Some teams try to use tools like Swagger to auto-generate client libraries and thus avoid the feature lag; however, the resulting client library suffers from an impedance mismatch (see next section) as well as documentation problems (see previous section) since the auto-generated docs are written for the HTTP API rather than a C# API.
 
-This problem is particularly common if you want to use *prerelease* features. API-first services often support prerelease features only at the API level, and only spend the time to add them to their clients after the features are officially released. If you need a prerelease API feature, the client libraries are less likely to support it.
+This problem is particularly common if you want to use *prerelease* features. API-first services often support prerelease features only at the API level, and only spend the time to add them to their clients after the features are officially released. If you need a prerelease API feature, the client libraries are much less likely to support it.
 
 ### Impedance Mismatch
 
@@ -40,7 +40,7 @@ Although this is a common problem with auto-generated clients, it can occur with
 
 ### Bugs
 
-Client libraries tend to have bugs. Many times, there are not fully exhaustive tests for the client libraries. This makes sense - otherwise, the team would have to maintain multiple exhaustive test suites across a wide variety of languages and runtimes, which is impractical. So, C# API client libraries tend to have more bugs than other C# libraries. Sometimes it's something as simple as a missing property for some object passed to the API; other times it's more serious like structuring the C# API so it's impossible to handle all results from the HTTP API. (I have seen both of these in real-world C# APIs).
+Client libraries tend to have bugs. Many times, there are not fully exhaustive tests for the client libraries. This makes sense - otherwise, the team would have to maintain multiple exhaustive test suites across a wide variety of languages and runtimes, which is impractical. So, C# API client libraries tend to have more bugs than other C# libraries. Sometimes it's something as simple as a missing property for some object passed to the API; other times it's more serious like structuring the C# API so it's impossible to handle all results from the HTTP API. (I have seen both of these in real-world C# client libraries).
 
 ### Variation in Error Handling
 
@@ -54,7 +54,7 @@ Over time, teams may deliberately change the behavior of their C# clients. When 
 
 Some teams deliberately move *towards* auto-generated clients, wanting the benefits of feature parity with the API and removing bugs. Other teams deliberately move *away from* auto-generated clients, wanting the benefits of native-friendly documentation and "feel" of the API. And some teams have moved both ways, at different times. Neither solution is perfect; there are tradeoffs both ways. But as the teams deliberately move in one direction or the other, their client libraries will change.
 
-When C# client libraries change, this results in additional work for all of their consumers. As a consumer, you now have to update to the latest C# client version and possibly learning a new "flavor" for the library. And all of this work is tedious because there is no net benefit to your customers - you have to do the work (to stay up-to-date), but the end result is that your code calls the same APIs in the same way as is was doing before. It's work just to keep up with the client; it adds no value to your application.
+When C# client libraries change, this results in additional work for all of their consumers. As a consumer, you now have to update to the latest C# client version and possibly learn a new "flavor" for the library. And all of this work is tedious because there is no net benefit to your customers - you have to do the work (to stay up-to-date), but the end result is that your code calls the same APIs in the same way as is was doing before. It's work just to keep up with the client; it adds no value to your application.
 
 Updates can also be dangerous. For example, if a C# client library chooses to change how it handles errors. This actually happened to me. One version of a C# client library returned an HTTP response kind of object from every API call, but it would throw an exception instead of returning the response if the status code indicated an error. The next (major) version of that same C# client library also returned an HTTP response kind of object from every API call, but the exceptions were no longer thrown. Instead, the caller was expected to check the status code and throw if necessary.
 

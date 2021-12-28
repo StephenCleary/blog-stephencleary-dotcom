@@ -25,7 +25,7 @@ When developers use `HttpClient` directly, they very seldom use the `HttpMessage
 
 ## Implementing DelegatingHandler
 
-As a general rule, try to keep state out of your `DelegatingHandler` implementations. There is one primary method (`SendAsync`) that can be called concurrently, and it's easier to implement `DelegatingHandler` correctly if it has no state.
+As a general rule, try to keep state out of your `DelegatingHandler` implementations. There is one primary method (`SendAsync`) that can be called concurrently, and it's easier to implement `DelegatingHandler` correctly if the class has no state.
 
 Any custom `DelegatingHandler` that you write should have a constructor that does *not* take an `HttpMessageHandler`. The `DelegatingHandler` base type [has two constructors](https://docs.microsoft.com/en-us/dotnet/api/system.net.http.delegatinghandler.-ctor): one with an `HttpMessageHandler` and one without. It's best to ignore the constructor that takes an `HttpMessageHandler` and just always use the base constructor that takes no arguments. This is because the "pipeline building" code will use the [`DelegatingHandler.InnerHandler` property](https://docs.microsoft.com/en-us/dotnet/api/system.net.http.delegatinghandler.innerhandler) to create the pipeline; it will *not* use constructor arguments to build the pipeline.
 

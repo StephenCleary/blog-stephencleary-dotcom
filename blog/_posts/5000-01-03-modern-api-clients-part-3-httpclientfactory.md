@@ -38,7 +38,7 @@ So, long-lived applications can't use the workaround where `HttpClient` is just 
 
 ## Solution: HttpClient factory
 
-The modern solution for using `HttpClient` instances is that you *don't*. Instead, you interact with an `HttpClient` factory, which manages a pool and passes out `HttpClient`s as the code has need of them. Socket connections come from the pool, so they are intelligently reused; but they also have a limited lifetime, so that they don't cache DNS lookups indefinitely. Both problems are solved!
+The modern solution for creating `HttpClient` instances is that you *don't*. Instead, you interact with an `HttpClient` factory, which manages a pool and passes out `HttpClient`s as the code has need of them. Socket connections come from the pool, so they are intelligently reused; but they also have a limited lifetime, so that they don't cache DNS lookups indefinitely. Both problems are solved!
 
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
@@ -93,7 +93,7 @@ The `HttpClient` factory doesn't actually maintain a pool of `HttpClient`s; it m
 
 The `HttpClient` instance itself is not pooled and reused. It is actually a transient wrapper around the pooled `HttpMessageHandler`.
 
-This also means that your service types are declared as transient. The code that adds a typed `HttpClient` also registers your service with a transient lifetime:
+This also means that your consuming service types are declared as transient. The code that adds a typed `HttpClient` also registers your service with a transient lifetime:
 
 {% highlight csharp %}
 // The following line registers `GitHubService` as a transient implementation of `IGitHubService`.
