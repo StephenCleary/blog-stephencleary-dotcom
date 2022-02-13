@@ -34,6 +34,8 @@ async Task DoSomethingAsync(int data, CancellationToken cancellationToken)
 
 A `CancellationToken` can be any kind of cancellation: a user pressing a Cancel button; a client disconnecting from a server; an application shutting down; a timeout. It shouldn't matter to your code *why* it's being cancelled; just the fact that it *is* being cancelled.
 
+Each `CancellationToken` may only be cancelled one time; once it is cancelled, it is always cancelled.
+
 ## The Cancellation Contract: Method Signature
 
 [By convention](https://docs.microsoft.com/en-us/dotnet/standard/asynchronous-programming-patterns/task-based-asynchronous-pattern-tap#cancellation-optional), the `CancellationToken` parameter is usually the last parameter unless an `IProgress<T>` parameter is present. It is common to provide an overload or default parameter so that callers do not *have* to provide a `CancellationToken` if they do not have one; the `default` value of a `CancellationToken` is the same as `CancellationToken.None`, i.e., a cancellation token that will never be canceled.
@@ -73,38 +75,6 @@ async Task DoSomethingAsync(int data, CancellationToken cancellationToken)
 <i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
 
 There are a lot of code examples out there that just silently return early when cancellation is requested. Please do not do this; it's a violation of the cancellation contract! When the responding code just returns early, the calling code cannot know whether its cancellation request was honored or ignored.
-</div>
-
-If your code must do something *different* when a cancellation happens, then you can handle that in a `catch` block. Well, first, I'd recommend taking a step back and asking yourself if you *really have* to do that, because it's unusual and raises concerns about the code design, and it can be difficult to test as well. But if you must:
-
-{% highlight csharp %}
-async Task DoSomethingAsync(int data, CancellationToken cancellationToken)
-{
-    try
-    {
-        var intermediateValue = await DoFirstStepAsync(data, cancellationToken);
-        await DoSecondStepAsync(intermediateValue, cancellationToken);
-    }
-    catch (OperationCanceledException)
-    {
-        ...
-        throw;
-    }
-}
-{% endhighlight %}
-
-Note the `throw;` to keep the cancellation contract: if the cancellation actually cancels something, then an `OperationCanceledException` should be thrown.
-
-<div class="alert alert-danger" markdown="1">
-<i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
-
-Do not catch `TaskCanceledException`. Always catch `OperationCanceledException` instead.
-</div>
-
-<div class="alert alert-danger" markdown="1">
-<i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
-
-Do not use `OperationCanceledException.CancellationToken`. I'll explain why in detail in a future post, but the TL;DR is that it doesn't work as expected when linked cancellation tokens enter the picture.
 </div>
 
 ## Exception to the "90% Case"
