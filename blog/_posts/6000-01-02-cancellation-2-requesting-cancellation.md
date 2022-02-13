@@ -175,8 +175,6 @@ There are many other options available, depending on your desired user experienc
 
 ## Cleaning Up: Cancelling and Disposing
 
-// TODO: Does CancelAfter only use one timer? And is that timer cleaned up when cancelled and disposed?
-
 To avoid resource leaks, it's important to clean up your `CancellationTokenSource` instances. There are a couple of kinds of resources that are cleaned up: first, the timeout timer (if any) is freed; second, any "listeners" attached to `CancellationToken`s are freed (we'll cover "listening" registrations later in this series). This cleanup is done when the `CancellationTokenSource` is cancelled *or* when it's disposed. You can either cancel or dispose, but you should ensure one or the other is done to avoid resource leaks.
 
-The examples in this blog post always dispose the `CancelltionTokenSource` when the responding code is done executing (and thus the `CancellationToken`s are no longer used). If the `CancellationToken` is saved and used later, then you *don't* want to dispose the `CancellationTokenSource`. In that case, you'd want to keep the `CancellationTokenSource` alive until you are sure that all code is done with its `CancellationToken`s. This is a more advanced case, and often it's more convenient to cancel the `CancellationTokenSource` rather than disposing it.
+The examples in this blog post always dispose the `CancelltionTokenSource` when the responding code is done executing (and thus the `CancellationToken`s are no longer used). If the `CancellationToken` is saved and used later, then you *don't* want to dispose the `CancellationTokenSource`. In that case, you'd want to keep the `CancellationTokenSource` alive until you are sure that all code is done with its `CancellationToken`s. This is a more advanced case, and sometimes it's more convenient to cancel the `CancellationTokenSource` rather than disposing it.
