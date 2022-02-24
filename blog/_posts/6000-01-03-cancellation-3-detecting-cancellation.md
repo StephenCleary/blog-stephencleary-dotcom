@@ -60,12 +60,12 @@ async Task DoSomethingAsync()
 
 You may notice that there is another cancellation exception type: `TaskCanceledException`. This is raised by some APIs instead of `OperationCanceledException`.
 
-As a general rule, I recommend you completely ignore `TaskCanceledException`. Some APIs just raise `OperationCanceledException`, even if they deal with cancelled tasks. And since `TaskCanceledException` derives from `OperationCanceledException`, your cancellation exception handler code can just use `OperationCanceledException`, ignore `TaskCanceledException` completely, and work everywhere.
+As a general rule, I recommend you completely ignore `TaskCanceledException`. Some APIs just raise `OperationCanceledException`, even if they deal with cancelled tasks. And since `TaskCanceledException` derives from `OperationCanceledException`, your cancellation exception handler code can just use `OperationCanceledException`, ignore `TaskCanceledException` completely, and it will work everywhere.
 
 <div class="alert alert-danger" markdown="1">
 <i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
 
-Do not catch `TaskCanceledException`. Always catch `OperationCanceledException` instead.
+Do not catch `TaskCanceledException`. Catch `OperationCanceledException` instead.
 </div>
 
 ## OperationCanceledException.CancellationToken
@@ -118,7 +118,7 @@ async Task DoSomethingAsync()
 }
 {% endhighlight %}
 
-*Technically,* the semantics of this are not "did my token cause the cancellation", but rather "did cancellation happen and is my token requesting cancellation". But in every case I've seen in the real world, these semantics have been sufficient.
+*Technically,* the semantics of this are not "did my token cause the cancellation", but rather "did cancellation happen and is my token requesting cancellation". But in every case I've seen in the real world, the alternative semantics have been sufficient.
 
 <div class="alert alert-danger" markdown="1">
 <i class="fa fa-exclamation-triangle fa-2x pull-left"></i>

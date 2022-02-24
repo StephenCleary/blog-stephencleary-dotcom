@@ -1,10 +1,72 @@
 ---
 layout: post
-title: "Cancellation, Part 1: Overview"
+title: "Cancellation, Part 4: Polling"
 series: "Cancellation"
-seriesTitle: "Overview"
-description: "How cancellation works in .NET and the 90% rule."
+seriesTitle: "Polling"
+description: "Responding to cancellation requests by using polling."
 ---
+
+So far in this series, I've talked about how to request and detect cancellation, but for the next couple of posts I'll be switching perspectives and discussing ways to respond to cancellation.
+
+I know I've probably said this a half dozen times already, but it bears repeating: cancellation is cooperative. Your code will be provided a `CancellationToken`, and it must *do* something with that `CancellationToken` in order to be cancelable. Most of the time, this is just passing the `CancellationToken` down to lower-level APIs, but if you want cancelable code at the lowest level, there are a couple of other options. The one we're looking at today is polling.
+
+## How to Poll
+
+The normal pattern is to periodically call `ThrowIfCancellationRequested`:
+
+{% highlight csharp %}
+void DoSomething(CancellationToken cancellationToken)
+{
+    while (!done)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        Thread.Sleep(200); // do synchronous work
+    }
+}
+{% endhighlight %}
+
+The example code above checks the cancellation token *before* it starts work, which is a good general practice. It is often possible that the token is already cancelled by the time your operation starts running.
+
+`ThrowIfCancellationRequested` will check to see if cancellation is requested, and if it is, it will throw `OperationCanceledException`. So it handles the proper reporting of cancellation for you; your code should just let that exception propagate out of the method.
+
+One question you'll need to answer is how *often* to poll. There really isn't a good answer for this; ideally you probably want to poll several times a second, but when you're talking about CPU-bound code running on potentially very different machines, it's pretty much a guess at where in the code the `ThrowIfCancellationRequested` should go. Just put it in the best place(s), run some tests to see if cancellation feels responsive enough, and that's the best you can do.
+
+## How Not to Poll
+
+There's a sadly common antipattern regarding polling for cancellation, particularly in infinite loops: the "while not cancelled" loop, which looks like this:
+
+{% highlight csharp %}
+void DoSomethingForever(CancellationToken cancellationToken)
+{
+    Environment.FailFast("Bad code! Do not use!");
+    while (!cancellationToken.IsCanceled)
+    {
+        Thread.Sleep(200); // do work
+    }
+}
+{% endhighlight %}
+
+When this code runs, it will periodically check the cancellation token; but when cancellation is requested, the method just returns early. This method doesn't satisfy the cancellation contract of throwing an exception on cancellation. This means that the calling code cannot know whether the method ran to completion or whether it was cancelled.
+
+The proper solution is to use `ThrowIfCancellationRequested`, even for infinite loops:
+
+{% highlight csharp %}
+void DoSomethingForever(CancellationToken cancellationToken)
+{
+    while (true)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        Thread.Sleep(200); // do work
+    }
+}
+{% endhighlight %}
+
+## When to Poll
+
+Polling is an appropriate option for observing cancellation if your code is synchronous, such as CPU-bound code.
+
+
+
 
 Cancellation is a topic that I haven't written on much yet, because the [Microsoft documentation](https://docs.microsoft.com/en-us/dotnet/standard/threading/cancellation-in-managed-threads) is quite good. But after answering many questions for many years, I thought it would be a good topic to cover once, exhaustively.
 
@@ -56,8 +118,6 @@ async Task DoSomethingAsync(int data, CancellationToken cancellationToken = defa
 {% endhighlight %}
 
 Some method signatures take both a `CancellationToken` and a timeout value as separate parameters. I don't recommend this for your own code; this is mainly done in the BCL to enable more efficient p/Invokes of methods that take timeout parameters. Unless you're also p/Invoking APIs that take timeout parameters, I recommend just taking a single `CancellationToken` which can represent *any* kind of cancellation.
-
-By taking a `CancellationToken` parameter, a method is implicitly claiming that it may respond to cancellation. Technically, this is "may respond", not "must respond". In some cases (like interface implementations), a `CancellationToken` argument may be ignored. So the presence of a `CancellationToken` parameter does not necessarily mean the code *must* support cancellation, but it *might*.
 
 ## The Cancellation Contract: Response
 
