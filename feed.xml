@@ -8,6 +8,111 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>Cancellation, Part 1: Overview</title>
+        <description>&lt;p&gt;Cancellation is a topic that I haven’t written on much yet, because the &lt;a href=&quot;https://docs.microsoft.com/en-us/dotnet/standard/threading/cancellation-in-managed-threads&quot;&gt;Microsoft documentation&lt;/a&gt; is quite good. But after answering many questions for many years, I thought it would be a good topic to cover once, exhaustively.&lt;/p&gt;
+
+&lt;h2 id=&quot;cooperative-cancellation&quot;&gt;Cooperative Cancellation&lt;/h2&gt;
+
+&lt;p&gt;Cancellation in .NET is &lt;em&gt;cooperative&lt;/em&gt;.&lt;/p&gt;
+
+&lt;p&gt;What this really means is that one part of the code Requests cancellation, and another part of the code Responds to that request. We often talk about some code “cancelling” other code, but what actually happens is that the requesting code just politely notifies the other code that it would like it to please stop, and the responding code may react to that cancellation request in any way it chooses. The responding code may immediately stop what it is doing, or it may continue until it reaches a valid stopping point, or it may ignore the cancellation request completely.&lt;/p&gt;
+
+&lt;p&gt;So, the important takeaway here is that the responding code must respond to the cancellation request in order for cancellation to actually &lt;em&gt;cancel&lt;/em&gt; anything.&lt;/p&gt;
+
+&lt;p&gt;This discussion usually brings up a question: What about code that doesn’t cooperate? I.e., how do I cancel uncancelable code? This is actually an advanced scenario, so I’ll discuss it (with solutions) at the end of this series.&lt;/p&gt;
+
+&lt;h2 id=&quot;cancellation-tokens-and-the-90-case&quot;&gt;Cancellation Tokens and the 90% Case&lt;/h2&gt;
+
+&lt;p&gt;In .NET, a cancellation token is the “carrier” of a cancellation request. The requesting code will cancel a cancellation token, and the responding code reacts to the token being cancelled. We’ll look at the details of how to create and cancel tokens - as well as how to respond to them - in future posts. For now, it’s sufficient to know that the cancellation token is how the cancellation request is passed from the requesting code to the responding code.&lt;/p&gt;
+
+&lt;p&gt;In fact, I’d say about 90% of the cancellation code you’ll need to write is simply that: add a &lt;code&gt;CancellationToken&lt;/code&gt; parameter to your method and then pass it down to whatever APIs you call:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;intermediateValue&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;DoFirstStepAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSecondStepAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;intermediateValue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;A &lt;code&gt;CancellationToken&lt;/code&gt; can be any kind of cancellation: a user pressing a Cancel button; a client disconnecting from a server; an application shutting down; a timeout. It shouldn’t matter to your code &lt;em&gt;why&lt;/em&gt; it’s being cancelled; just the fact that it &lt;em&gt;is&lt;/em&gt; being cancelled.&lt;/p&gt;
+
+&lt;p&gt;Each &lt;code&gt;CancellationToken&lt;/code&gt; may only be cancelled one time; once it is cancelled, it is always cancelled.&lt;/p&gt;
+
+&lt;h2 id=&quot;the-cancellation-contract-method-signature&quot;&gt;The Cancellation Contract: Method Signature&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://docs.microsoft.com/en-us/dotnet/standard/asynchronous-programming-patterns/task-based-asynchronous-pattern-tap#cancellation-optional&quot;&gt;By convention&lt;/a&gt;, the &lt;code&gt;CancellationToken&lt;/code&gt; parameter is usually the last parameter unless an &lt;code&gt;IProgress&amp;lt;T&amp;gt;&lt;/code&gt; parameter is present. It is common to provide an overload or default parameter so that callers do not &lt;em&gt;have&lt;/em&gt; to provide a &lt;code&gt;CancellationToken&lt;/code&gt; if they do not have one; the &lt;code&gt;default&lt;/code&gt; value of a &lt;code&gt;CancellationToken&lt;/code&gt; is the same as &lt;code&gt;CancellationToken.None&lt;/code&gt;, i.e., a cancellation token that will never be canceled.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;// or:&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;default&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Some method signatures take both a &lt;code&gt;CancellationToken&lt;/code&gt; and a timeout value as separate parameters. I don’t recommend this for your own code; this is mainly done in the BCL to enable more efficient p/Invokes of methods that take timeout parameters. Unless you’re also p/Invoking APIs that take timeout parameters, I recommend just taking a single &lt;code&gt;CancellationToken&lt;/code&gt; which can represent &lt;em&gt;any&lt;/em&gt; kind of cancellation.&lt;/p&gt;
+
+&lt;p&gt;By taking a &lt;code&gt;CancellationToken&lt;/code&gt; parameter, a method is implicitly claiming that it may respond to cancellation. Technically, this is “may respond”, not “must respond”. In some cases (like interface implementations), a &lt;code&gt;CancellationToken&lt;/code&gt; argument may be ignored. So the presence of a &lt;code&gt;CancellationToken&lt;/code&gt; parameter does not necessarily mean the code &lt;em&gt;must&lt;/em&gt; support cancellation, but it &lt;em&gt;might&lt;/em&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;the-cancellation-contract-response&quot;&gt;The Cancellation Contract: Response&lt;/h2&gt;
+
+&lt;p&gt;As noted above, when cancellation is requested, the responding code may cancel whatever it is doing, or it may not. Even if it &lt;em&gt;attempts&lt;/em&gt; to cancel, there is usually a race condition and the method may actually complete before the cancellation request can be honored. The cancellation contract handles this by having canceled code throw &lt;code&gt;OperationCanceledException&lt;/code&gt; when the cancellation is observed and has actually canceled some work. If the cancellation request is ignored or if it arrives too late and the work is finished anyway, then the method returns normally without throwing &lt;code&gt;OperationCanceledException&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;The standard “90% case” code handles this implicitly; if &lt;code&gt;DoFirstStepAsync&lt;/code&gt; or &lt;code&gt;DoSecondStepAsync&lt;/code&gt; throw &lt;code&gt;OperationCanceledException&lt;/code&gt;, then that exception is also propagated out of &lt;code&gt;DoSomethingAsync&lt;/code&gt;. No change to the “90% case” code is necessary:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;intermediateValue&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;DoFirstStepAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSecondStepAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;intermediateValue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;div class=&quot;alert alert-danger&quot;&gt;
+  &lt;p&gt;&lt;i class=&quot;fa fa-exclamation-triangle fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
+
+  &lt;p&gt;There are a lot of code examples out there that just silently return early when cancellation is requested. Please do not do this; it’s a violation of the cancellation contract! When the responding code just returns early, the calling code cannot know whether its cancellation request was honored or ignored.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;exception-to-the-90-case&quot;&gt;Exception to the “90% Case”&lt;/h2&gt;
+
+&lt;p&gt;The “90% case” just takes a &lt;code&gt;CancellationToken&lt;/code&gt; parameter and passes it down. There’s one notable exception to this rule: you shouldn’t pass down &lt;code&gt;CancellationToken&lt;/code&gt;s to &lt;code&gt;Task.Run&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;The reason is that (IMO) the semantics are confusing. A lot of developers pass a delegate and a &lt;code&gt;CancellationToken&lt;/code&gt; to &lt;code&gt;Task.Run&lt;/code&gt; and expect the delegate to be cancelled when the token is cancelled, but that’s not what happens. The &lt;code&gt;CancellationToken&lt;/code&gt; passed to &lt;code&gt;Task.Run&lt;/code&gt; just cancels the &lt;em&gt;scheduling&lt;/em&gt; of the delegate to the thread pool; once that delegate starts running (which happens pretty much immediately), that cancellation token is ignored.&lt;/p&gt;
+
+&lt;p&gt;To put it in example code, this is what many developers write, incorrectly expecting that &lt;code&gt;// Do something&lt;/code&gt; will be canceled after it starts:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;test&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Run&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// Do something, ignoring cancellationToken&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;By never passing the &lt;code&gt;CancellationToken&lt;/code&gt; to &lt;code&gt;Task.Run&lt;/code&gt; (which is ignored anyway unless there’s serious thread pool contention or the token is &lt;em&gt;already&lt;/em&gt; cancelled), we make it clearer that the delegate &lt;em&gt;itself&lt;/em&gt; has to respond to the token:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;test&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Run&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// Do something&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// The IDE is telling me cancellationToken is unused,&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;//    so this delegate code better use it.&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;});&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+</description>
+        <pubDate>Thu, 24 Feb 2022 00:00:00 +0000</pubDate>
+        <link>https://blog.stephencleary.com/2022/02/cancellation-1-overview.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2022/02/cancellation-1-overview.html</guid>
+      </item>
+    
+      <item>
         <title>Asynchronous Messaging, Part 5: Miscellaneous Considerations</title>
         <description>&lt;p&gt;This entry in my asynchronous messaging series is kind of a grab bag of miscellaneous topics. I don’t really have enough to say on these to make them their own posts, but some are too important to drop completely. So, here we go!&lt;/p&gt;
 
@@ -815,57 +920,6 @@ System.DivideByZeroException: Attempted to divide by zero.
         <pubDate>Thu, 28 May 2020 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2020/05/backgroundservice-gotcha-silent-failure.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2020/05/backgroundservice-gotcha-silent-failure.html</guid>
-      </item>
-    
-      <item>
-        <title>BackgroundService Gotcha: Startup</title>
-        <description>&lt;h2 id=&quot;backgroundservice-gotcha-synchronous-starts&quot;&gt;BackgroundService Gotcha: Synchronous Starts&lt;/h2&gt;
-
-&lt;p&gt;This is some behavior that I’ve found surprising (and others have as well): ASP.NET Core background services are started with a synchronous call.&lt;/p&gt;
-
-&lt;p&gt;Specifically, the host will invoke &lt;code&gt;IHostedService.StartAsync&lt;/code&gt; for all its hosted services, and &lt;code&gt;BackgroundService&lt;/code&gt; &lt;a href=&quot;https://github.com/dotnet/runtime/blob/e3ffd343ad5bd3a999cb9515f59e6e7a777b2c34/src/libraries/Microsoft.Extensions.Hosting.Abstractions/src/BackgroundService.cs#L37&quot;&gt;directly invokes &lt;code&gt;ExecuteAsync&lt;/code&gt; before returning from &lt;code&gt;StartAsync&lt;/code&gt;&lt;/a&gt;. So &lt;code&gt;BackgroundService&lt;/code&gt; &lt;em&gt;assumes&lt;/em&gt; that its derived classes will have an asynchronous &lt;code&gt;ExecuteAsync&lt;/code&gt;. If the &lt;code&gt;ExecuteAsync&lt;/code&gt; implementation is synchronous (or starts executing with a blocking call), then problems will ensue.&lt;/p&gt;
-
-&lt;h2 id=&quot;problem-description&quot;&gt;Problem Description&lt;/h2&gt;
-
-&lt;p&gt;The resulting behavior is that the background service will start executing, but the host will be unable to finish starting up. This will block other background services from starting.&lt;/p&gt;
-
-&lt;p&gt;Depending on the background service implementation, this may manifest as a delay of startup or a complete block of startup. If &lt;code&gt;ExecuteAsync&lt;/code&gt; is synchronous, then the host cannot continue starting up until that background service has &lt;em&gt;completed&lt;/em&gt;. If &lt;code&gt;ExecuteAsync&lt;/code&gt; is asynchronous but takes a long time before it yields, then the host has its startup delayed.&lt;/p&gt;
-
-&lt;h2 id=&quot;common-scenarios&quot;&gt;Common Scenarios&lt;/h2&gt;
-
-&lt;p&gt;This problem is common in any of these conditions:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;The hosted service has a synchronous &lt;code&gt;ExecuteAsync&lt;/code&gt;. In this case, the host is prevented from starting until &lt;code&gt;ExecuteAsync&lt;/code&gt; completes.&lt;/li&gt;
-  &lt;li&gt;The hosted service reads from a queue to process messages, but the queue reading is blocking. Even if the processing is asynchronous, the host startup is blocked until the first message arrives for this service and is (asynchronously) processed.&lt;/li&gt;
-  &lt;li&gt;The hosted service is properly asynchronous, but the asynchrony is completing immediately. E.g., if it is asynchronously reading from a queue but there are many messages immediately received, then the host startup is blocked until the background service actually yields.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;h2 id=&quot;solution&quot;&gt;Solution&lt;/h2&gt;
-
-&lt;p&gt;Since the problem is synchronous &lt;code&gt;ExecuteAsync&lt;/code&gt; methods (or at least &lt;code&gt;ExecuteAsync&lt;/code&gt; methods that do non-trivial work before they become asynchronous), the simplest solution is to ensure &lt;code&gt;ExecuteAsync&lt;/code&gt; is asynchronous.&lt;/p&gt;
-
-&lt;p&gt;I’m &lt;a href=&quot;/2013/11/taskrun-etiquette-examples-dont-use.html&quot;&gt;not a fan of using &lt;code&gt;Task.Run&lt;/code&gt; to wrap the body of a method&lt;/a&gt; (i.e., “fake asynchrony”), but since the caller &lt;em&gt;requires&lt;/em&gt; an asynchronous implementation, I think that’s an acceptable approach in this case:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;MyBackgroundService&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;BackgroundService&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;protected&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ExecuteAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;stoppingToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Run&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;c1&quot;&gt;// Implementation&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;});&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;That way, any slow or blocking code early in &lt;code&gt;ExecuteAsync&lt;/code&gt; will not prevent the host from starting up.&lt;/p&gt;
-
-&lt;h2 id=&quot;update-2020-05-22&quot;&gt;Update (2020-05-22)&lt;/h2&gt;
-
-&lt;div class=&quot;alert alert-info&quot;&gt;
-  &lt;p&gt;&lt;strong&gt;Update (2020-05-22):&lt;/strong&gt; I’ve &lt;a href=&quot;https://twitter.com/klettier/status/1263727450502152194&quot; class=&quot;alert-link&quot;&gt;been informed&lt;/a&gt; that the .NET Core team is &lt;a href=&quot;https://github.com/dotnet/runtime/issues/36063#issuecomment-518913079&quot; class=&quot;alert-link&quot;&gt;considering changing this behavior&lt;/a&gt;.&lt;/p&gt;
-&lt;/div&gt;
-</description>
-        <pubDate>Thu, 21 May 2020 00:00:00 +0000</pubDate>
-        <link>https://blog.stephencleary.com/2020/05/backgroundservice-gotcha-startup.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2020/05/backgroundservice-gotcha-startup.html</guid>
       </item>
     
   </channel>

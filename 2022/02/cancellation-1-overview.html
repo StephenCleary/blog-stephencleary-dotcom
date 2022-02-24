@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Asynchronous Messaging, Part 5: Miscellaneous Considerations</title>
+    <title>Cancellation, Part 1: Overview</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Final remarks on considerations for using asynchronous messaging with request-exogenous code." />
-    <link rel="canonical" href="https://blog.stephencleary.com/2021/02/asynchronous-messaging-5-miscellaneous-considerations.html" />
+    <meta name="description" content="How cancellation works in .NET and the 90% rule." />
+    <link rel="canonical" href="https://blog.stephencleary.com/2022/02/cancellation-1-overview.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -275,8 +275,8 @@ img.comment-author-profile-image {
 
   <header>
       <div class="page-header">
-          <h1>Asynchronous Messaging, Part 5: Miscellaneous Considerations</h1>
-          <small><time datetime="2021-02-04">Feb 4, 2021</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
+          <h1>Cancellation, Part 1: Overview</h1>
+          <small><time datetime="2022-02-24">Feb 24, 2022</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
       </div>
   </header>
 
@@ -290,52 +290,117 @@ img.comment-author-profile-image {
   </header>
 
   <article>
-  <p>This entry in my asynchronous messaging series is kind of a grab bag of miscellaneous topics. I don’t really have enough to say on these to make them their own posts, but some are too important to drop completely. So, here we go!</p>
+  <p>Cancellation is a topic that I haven’t written on much yet, because the <a href="https://docs.microsoft.com/en-us/dotnet/standard/threading/cancellation-in-managed-threads">Microsoft documentation</a> is quite good. But after answering many questions for many years, I thought it would be a good topic to cover once, exhaustively.</p>
 
-<h2 id="poison--dead-letter-queues">Poison / Dead Letter Queues</h2>
+<h2 id="cooperative-cancellation">Cooperative Cancellation</h2>
 
-<p>When designing your system, you need to decide how to handle queue messages that insist on failing to process. Usually, you plan for some kind of “dead letter queue” to hold these “poison” messages, and then set up alerting or something on that queue. Many cloud queue/worker systems will automatically do this for you: after a certain number of retries, the problematic message is removed from the regular queue and sent to a poison queue instead.</p>
+<p>Cancellation in .NET is <em>cooperative</em>.</p>
 
-<p>Just don’t forget to set up alerting on those poison queues!</p>
+<p>What this really means is that one part of the code Requests cancellation, and another part of the code Responds to that request. We often talk about some code “cancelling” other code, but what actually happens is that the requesting code just politely notifies the other code that it would like it to please stop, and the responding code may react to that cancellation request in any way it chooses. The responding code may immediately stop what it is doing, or it may continue until it reaches a valid stopping point, or it may ignore the cancellation request completely.</p>
 
-<h2 id="versioning">Versioning</h2>
+<p>So, the important takeaway here is that the responding code must respond to the cancellation request in order for cancellation to actually <em>cancel</em> anything.</p>
 
-<p>When I design asynchronous messaging systems, I tend to treat the queued messages as a kind of Data Transfer Object (DTO). These messages act as a bridge between two processes: the HTTP application and the backend processor.</p>
+<p>This discussion usually brings up a question: What about code that doesn’t cooperate? I.e., how do I cancel uncancelable code? This is actually an advanced scenario, so I’ll discuss it (with solutions) at the end of this series.</p>
 
-<p>Just like the rest of the system, the DTOs will change over time, and it’s best to be prepared for that. Unlike an HTTP stack, there’s no versioning possible in the URL or in a header. I tend to prefer versioning in the queue name itself, but you could also embed versions in the DTOs themselves. Generally, “storage DTOs” like these only require a single version number (i.e., they only have a major version, not a minor/patch version); this is because you explicitly <em>don’t</em> want an older consumer to process newer queue messages.</p>
+<h2 id="cancellation-tokens-and-the-90-case">Cancellation Tokens and the 90% Case</h2>
 
-<h2 id="mix-and-match">Mix and Match</h2>
+<p>In .NET, a cancellation token is the “carrier” of a cancellation request. The requesting code will cancel a cancellation token, and the responding code reacts to the token being cancelled. We’ll look at the details of how to create and cancel tokens - as well as how to respond to them - in future posts. For now, it’s sufficient to know that the cancellation token is how the cancellation request is passed from the requesting code to the responding code.</p>
 
-<p>I’ve pointed out that the cloud queue solutions work out of the box with the cloud backend processor solutions from the same company, including automatic scaling. But you don’t <em>have</em> to use the same provider for each part of your asynchronous messaging architecture. It’s entirely possible to, e.g., scale Azure Functions based off a RabbitMQ, or wire up a Google Cloud hosted Docker backend to an Amazon SQS queue. Sometimes there are extra costs when crossing cloud providers, and sometimes you have to write a plugin so that your backend will use your kind of queue for its scaling; but it’s certainly possible to mix and match.</p>
+<p>In fact, I’d say about 90% of the cancellation code you’ll need to write is simply that: add a <code>CancellationToken</code> parameter to your method and then pass it down to whatever APIs you call:</p>
 
-<h2 id="all-in-one">All-In-One</h2>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">data</span><span class="p">,</span> <span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">var</span> <span class="n">intermediateValue</span> <span class="p">=</span> <span class="k">await</span> <span class="n">DoFirstStepAsync</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">cancellationToken</span><span class="p">);</span>
+    <span class="k">await</span> <span class="nf">DoSecondStepAsync</span><span class="p">(</span><span class="n">intermediateValue</span><span class="p">,</span> <span class="n">cancellationToken</span><span class="p">);</span>
+<span class="p">}</span></code></pre></figure>
 
-<p>And then there is the other side: some solutions are all-in-one, complete solutions for asynchronous messaging. Examples of all-in-one solutions are <a href="https://www.hangfire.io/">Hangfire</a> (.NET) and <a href="https://github.com/collectiveidea/delayed_job">Delayed Job</a> (Ruby). Their all-in-one nature means they are easier to set up, but inevitably also means they are less flexible. There are also some very serious considerations you need to look into before adopting an all-in-one solution; what the developers of that solution created may be very different than what your application needs.</p>
+<p>A <code>CancellationToken</code> can be any kind of cancellation: a user pressing a Cancel button; a client disconnecting from a server; an application shutting down; a timeout. It shouldn’t matter to your code <em>why</em> it’s being cancelled; just the fact that it <em>is</em> being cancelled.</p>
 
-<p>Specifically, you need to look into:</p>
+<p>Each <code>CancellationToken</code> may only be cancelled one time; once it is cancelled, it is always cancelled.</p>
 
-<ol>
-  <li>Does it use a durable queue? If not, I would not even consider it. As a corollary, anything that uses Redis as a queue should not be used in its default configuration, including some very popular solutions such as Sidekiq (Ruby) and Bull (NodeJS). If you do wish to use Redis-based message queues, then you should configure Redis to be durable by telling it to write an Append Only File <em>and</em> telling it to sync that file on every command. Both Hangfire and Delayed Job use a database as a queue, which is <em>just ok</em> (assuming you already have a database in your architecture), but not <em>ideal</em> (now your database server has to deal with all the queue messages as well as its normal data).</li>
-  <li>How are jobs serialized - is the serialization backwards-compatible when your library is updated? As an example of this, until recently (early 2019), Hangfire <em>did not support rolling upgrades</em> due to the way they serialized jobs. Before that time, Hangfire-based applications had to shut down completely before rolling out a Hangfire upgrade, and if a rollback was necessary, they had to shut down completely before doing the rollback, too. Ouch!</li>
-  <li>How are jobs serialized - how much can the “runner” code change? My experience here is more with Hangfire: .NET is pretty specific when it comes to serializing method delegates, and even something like adding a parameter (with a default argument) can cause a failure. Any change like that now requires <em>two</em> updates instead of one: the first will add the new overload, and once the old jobs have all completed, a second update can roll out to remove the old overload. I’m not as familiar with Delayed Jobs; Ruby is a more dynamic language, so it may not have this problem.</li>
-  <li>How are errors handled? Most all-in-one solutions will automatically retry, but if the job message insists on failing, then it has to do something else with it. By default, Hangfire will leave those job messages in a “failed” state (and it’s up to you to build some kind of notification on that), whereas Delayed Job will <em>delete</em> those jobs (!).</li>
-</ol>
+<h2 id="the-cancellation-contract-method-signature">The Cancellation Contract: Method Signature</h2>
 
-<p>In conclusion, caveat emptor. Don’t just slap an all-in-one solution into your architecture; a well-thought-out, proper asynchronous messaging solution is almost always the better choice.</p>
+<p><a href="https://docs.microsoft.com/en-us/dotnet/standard/asynchronous-programming-patterns/task-based-asynchronous-pattern-tap#cancellation-optional">By convention</a>, the <code>CancellationToken</code> parameter is usually the last parameter unless an <code>IProgress&lt;T&gt;</code> parameter is present. It is common to provide an overload or default parameter so that callers do not <em>have</em> to provide a <code>CancellationToken</code> if they do not have one; the <code>default</code> value of a <code>CancellationToken</code> is the same as <code>CancellationToken.None</code>, i.e., a cancellation token that will never be canceled.</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">data</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="n">DoSomethingAsync</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">.</span><span class="n">None</span><span class="p">);</span>
+<span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">data</span><span class="p">,</span> <span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="p">...</span>
+<span class="p">}</span>
+
+<span class="c1">// or:</span>
+
+<span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">data</span><span class="p">,</span> <span class="n">CancellationToken</span> <span class="n">cancellationToken</span> <span class="p">=</span> <span class="k">default</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="p">...</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>Some method signatures take both a <code>CancellationToken</code> and a timeout value as separate parameters. I don’t recommend this for your own code; this is mainly done in the BCL to enable more efficient p/Invokes of methods that take timeout parameters. Unless you’re also p/Invoking APIs that take timeout parameters, I recommend just taking a single <code>CancellationToken</code> which can represent <em>any</em> kind of cancellation.</p>
+
+<p>By taking a <code>CancellationToken</code> parameter, a method is implicitly claiming that it may respond to cancellation. Technically, this is “may respond”, not “must respond”. In some cases (like interface implementations), a <code>CancellationToken</code> argument may be ignored. So the presence of a <code>CancellationToken</code> parameter does not necessarily mean the code <em>must</em> support cancellation, but it <em>might</em>.</p>
+
+<h2 id="the-cancellation-contract-response">The Cancellation Contract: Response</h2>
+
+<p>As noted above, when cancellation is requested, the responding code may cancel whatever it is doing, or it may not. Even if it <em>attempts</em> to cancel, there is usually a race condition and the method may actually complete before the cancellation request can be honored. The cancellation contract handles this by having canceled code throw <code>OperationCanceledException</code> when the cancellation is observed and has actually canceled some work. If the cancellation request is ignored or if it arrives too late and the work is finished anyway, then the method returns normally without throwing <code>OperationCanceledException</code>.</p>
+
+<p>The standard “90% case” code handles this implicitly; if <code>DoFirstStepAsync</code> or <code>DoSecondStepAsync</code> throw <code>OperationCanceledException</code>, then that exception is also propagated out of <code>DoSomethingAsync</code>. No change to the “90% case” code is necessary:</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">data</span><span class="p">,</span> <span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">var</span> <span class="n">intermediateValue</span> <span class="p">=</span> <span class="k">await</span> <span class="n">DoFirstStepAsync</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">cancellationToken</span><span class="p">);</span>
+    <span class="k">await</span> <span class="nf">DoSecondStepAsync</span><span class="p">(</span><span class="n">intermediateValue</span><span class="p">,</span> <span class="n">cancellationToken</span><span class="p">);</span>
+<span class="p">}</span></code></pre></figure>
+
+<div class="alert alert-danger">
+  <p><i class="fa fa-exclamation-triangle fa-2x pull-left"></i></p>
+
+  <p>There are a lot of code examples out there that just silently return early when cancellation is requested. Please do not do this; it’s a violation of the cancellation contract! When the responding code just returns early, the calling code cannot know whether its cancellation request was honored or ignored.</p>
+</div>
+
+<h2 id="exception-to-the-90-case">Exception to the “90% Case”</h2>
+
+<p>The “90% case” just takes a <code>CancellationToken</code> parameter and passes it down. There’s one notable exception to this rule: you shouldn’t pass down <code>CancellationToken</code>s to <code>Task.Run</code>.</p>
+
+<p>The reason is that (IMO) the semantics are confusing. A lot of developers pass a delegate and a <code>CancellationToken</code> to <code>Task.Run</code> and expect the delegate to be cancelled when the token is cancelled, but that’s not what happens. The <code>CancellationToken</code> passed to <code>Task.Run</code> just cancels the <em>scheduling</em> of the delegate to the thread pool; once that delegate starts running (which happens pretty much immediately), that cancellation token is ignored.</p>
+
+<p>To put it in example code, this is what many developers write, incorrectly expecting that <code>// Do something</code> will be canceled after it starts:</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">var</span> <span class="n">test</span> <span class="p">=</span> <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span>
+    <span class="p">{</span>
+        <span class="c1">// Do something, ignoring cancellationToken</span>
+    <span class="p">},</span> <span class="n">cancellationToken</span><span class="p">);</span>
+    <span class="p">...</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>By never passing the <code>CancellationToken</code> to <code>Task.Run</code> (which is ignored anyway unless there’s serious thread pool contention or the token is <em>already</em> cancelled), we make it clearer that the delegate <em>itself</em> has to respond to the token:</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">var</span> <span class="n">test</span> <span class="p">=</span> <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span>
+    <span class="p">{</span>
+        <span class="c1">// Do something</span>
+        <span class="c1">// The IDE is telling me cancellationToken is unused,</span>
+        <span class="c1">//    so this delegate code better use it.</span>
+    <span class="p">});</span>
+    <span class="p">...</span>
+<span class="p">}</span></code></pre></figure>
+
 
   </article>
     
     <footer class="hidden-print">
         
             <ul class="pager">
-                <li class="previous"><a href="/2021/01/asynchronous-messaging-4-retrieve-results.html" title="Asynchronous Messaging, Part 4: Retrieve Results">&larr; Previous in Asynchronous Messaging</a></li>
+                
                 
             </ul>
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2021/01/asynchronous-messaging-4-retrieve-results.html" title="Asynchronous Messaging, Part 4: Retrieve Results">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2022/02/cancellation-1-overview.html" title="Cancellation, Part 1: Overview">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2021/02/asynchronous-messaging-5-miscellaneous-considerations.html" title="Asynchronous Messaging, Part 5: Miscellaneous Considerations">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="comments"></div>
@@ -345,14 +410,10 @@ img.comment-author-profile-image {
         <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
                 <div class="panel panel-primary">
-                    <div class="panel-heading">Asynchronous Messaging</div>
+                    <div class="panel-heading">Cancellation</div>
                     <div class="panel-body sidenav">
                         <ul class="nav nav-pills nav-stacked">
-                                    <li class="sidenavitem"><a href="/2021/01/asynchronous-messaging-1-basic-distributed-architecture.html">Basic Distributed Architecture</a></li>
-                                    <li class="sidenavitem"><a href="/2021/01/asynchronous-messaging-2-durable-queues.html">Durable Queues</a></li>
-                                    <li class="sidenavitem"><a href="/2021/01/asynchronous-messaging-3-backend-processor.html">Backend Service</a></li>
-                                    <li class="sidenavitem"><a href="/2021/01/asynchronous-messaging-4-retrieve-results.html">Retrieve Results</a></li>
-                                    <li class="active sidenavitem"><a href="/2021/02/asynchronous-messaging-5-miscellaneous-considerations.html">Miscellaneous Considerations</a></li>
+                                    <li class="active sidenavitem"><a href="/2022/02/cancellation-1-overview.html">Overview</a></li>
                         </ul>
                     </div>
                 </div>
@@ -506,7 +567,7 @@ img.comment-author-profile-image {
 
 <script type="text/javascript">
 
-var pageUrl = "https://blog.stephencleary.com" + "/2021/02/asynchronous-messaging-5-miscellaneous-considerations.html";
+var pageUrl = "https://blog.stephencleary.com" + "/2022/02/cancellation-1-overview.html";
 
 // (unnecessary) 1) If the URL starts with http://, replace with https://
 
