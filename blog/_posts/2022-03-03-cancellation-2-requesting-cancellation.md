@@ -10,13 +10,13 @@ Last time we covered the basic cancellation contract. Responding code takes a `C
 
 ## CancellationTokenSource
 
-Some `CancellationToken`s are provided by a framework or library that you're using. For example, ASP.NET will provide you a `CancellationToken` that represents an unexpected client disconnection. As another example, Polly can provide your delegate with a `CancellationToken` that represents a more generic timeout (e.g., a timeout policy being triggered).
+Some `CancellationToken`s are provided by a framework or library that you're using. For example, ASP.NET will provide you a `CancellationToken` that represents an unexpected client disconnect. As another example, Polly can provide your delegate with a `CancellationToken` that represents a more generic cancellation (e.g., a timeout policy being triggered).
 
 For other scenarios, you'll need to provide your own `CancellationToken`. You can use the `CancellationToken` constructor or `CancellationToken.None` to create a cancellation token that is either signalled (and always signalled) or unsignalled (and never signalled).
 
 But in the general case, when you want to create a `CancellationToken` that can be cancelled later, then you'll need to use `CancellationTokenSource`.
 
-Each `CancellationTokenSource` controls its own set of `CancellationToken`s. Each `CancellationToken` created from a `CancellationTokenSource` is just a small `struct` that refers back to its `CancellationTokenSource`. A `CancellationToken` can only respond to cancellation requests; the `CancellationTokenSource` is necessary to request cancellation. So the requesting code creates the `CancellationTokenSource` and keeps a reference to it (later, using it to request cancellation), and the responding code just gets a `CancellationToken` and uses that to respond to the cancellation requests.
+Each `CancellationTokenSource` controls its own set of `CancellationToken`s. Each `CancellationToken` created from a `CancellationTokenSource` is just a small `struct` that refers back to its `CancellationTokenSource`. A `CancellationToken` can only respond to cancellation requests; the `CancellationTokenSource` is necessary to request cancellation. So the requesting code creates the `CancellationTokenSource` and keeps a reference to it (using that reference later to request cancellation), and the responding code just gets a `CancellationToken` and uses that to respond to the cancellation requests.
 
 ## Timeouts
 
@@ -40,7 +40,7 @@ async Task DoSomethingWithTimeoutAsync()
 
 ## Manual Cancellation
 
-For a fully generic solution, create a `CancellationTokenSource`, and at some point in the future call its `Cancel` method to manually request cancellation.
+For more general cancellation needs, create a `CancellationTokenSource`, and at some point in the future call its `Cancel` method to manually request cancellation.
 
 One example is a GUI application with an actual "Cancel" button:
 

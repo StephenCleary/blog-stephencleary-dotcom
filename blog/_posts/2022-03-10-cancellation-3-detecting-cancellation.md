@@ -6,13 +6,13 @@ seriesTitle: "Detecting Cancellation"
 description: "After issuing a cancellation request, detect whether the operation completed normally or was cancelled."
 ---
 
-It's not uncommon to want to detect cancellation. Cancellation is cooperative, and sometimes the code requesting cancellation needs to know whether that cancellation actually took place, or whether the operation just completed normally.
+It's not uncommon to want to detect whether the cancellation actually canceled anything or not. Cancellation is cooperative, and sometimes the code requesting cancellation needs to know whether that cancellation actually took place, or whether the operation just completed normally.
 
 As a reminder, the cancellation contract has a way to communicate that: methods that take `CancellationToken`, by convention, will throw `OperationCanceledException` when they are cancelled. This is true for all BCL methods, and should be true for your code as well. Later in this series we'll cover the best ways for code to respond to cancellation requests, all of which satisfy this contract, i.e., throwing `OperationCanceledException` when they cancel.
 
 ## Responding to Cancellation
 
-The most common scenario for detecting cancelltion is to avoid taking the normal error path if the code has been cancelled. Usually, the `OperationCanceledException` is just ignored:
+The most common scenario for detecting cancellation is to avoid taking the normal error path if the code has been cancelled. Usually, the `OperationCanceledException` is just ignored:
 
 {% highlight csharp %}
 async Task TryDoSomethingAsync()
@@ -31,6 +31,8 @@ async Task TryDoSomethingAsync()
     }
 }
 {% endhighlight %}
+
+The code above will log any unexpected errors, but will ignore cancellation exceptions.
 
 If your code must do something *different* when a cancellation happens, then you can handle that in a `catch` block. Well, first, I'd recommend taking a step back and asking yourself if you *really have* to do that, because it's unusual and raises concerns about the code design, and it can be difficult to test as well. But if you must:
 
@@ -123,5 +125,5 @@ async Task DoSomethingAsync()
 <div class="alert alert-danger" markdown="1">
 <i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
 
-Do not use `OperationCanceledException.CancellationToken`. I'll explain why in more detail in a future post, but the TL;DR is that it doesn't work as expected when linked cancellation tokens enter the picture.
+Do not use `OperationCanceledException.CancellationToken`. It doesn't work as expected.
 </div>

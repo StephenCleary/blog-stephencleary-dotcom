@@ -68,6 +68,8 @@ Polling is an appropriate option for observing cancellation if your code is sync
 
 
 
+
+
 Cancellation is a topic that I haven't written on much yet, because the [Microsoft documentation](https://docs.microsoft.com/en-us/dotnet/standard/threading/cancellation-in-managed-threads) is quite good. But after answering many questions for many years, I thought it would be a good topic to cover once, exhaustively.
 
 ## Cooperative Cancellation
