@@ -8,6 +8,195 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>Cancellation, Part 2: Requesting Cancellation</title>
+        <description>&lt;p&gt;&lt;a href=&quot;/2022/02/cancellation-1-overview.html&quot;&gt;Last time&lt;/a&gt; we covered the basic cancellation contract. Responding code takes a &lt;code&gt;CancellationToken&lt;/code&gt;, which is a way to communicate a cancellation request. Today we’re looking at how to create &lt;code&gt;CancellationToken&lt;/code&gt;s and how to request cancellation.&lt;/p&gt;
+
+&lt;h2 id=&quot;cancellationtokensource&quot;&gt;CancellationTokenSource&lt;/h2&gt;
+
+&lt;p&gt;Some &lt;code&gt;CancellationToken&lt;/code&gt;s are provided by a framework or library that you’re using. For example, ASP.NET will provide you a &lt;code&gt;CancellationToken&lt;/code&gt; that represents an unexpected client disconnect. As another example, Polly can provide your delegate with a &lt;code&gt;CancellationToken&lt;/code&gt; that represents a more generic cancellation (e.g., a timeout policy being triggered).&lt;/p&gt;
+
+&lt;p&gt;For other scenarios, you’ll need to provide your own &lt;code&gt;CancellationToken&lt;/code&gt;. You can use the &lt;code&gt;CancellationToken&lt;/code&gt; constructor or &lt;code&gt;CancellationToken.None&lt;/code&gt; to create a cancellation token that is either signalled (and always signalled) or unsignalled (and never signalled).&lt;/p&gt;
+
+&lt;p&gt;But in the general case, when you want to create a &lt;code&gt;CancellationToken&lt;/code&gt; that can be cancelled later, then you’ll need to use &lt;code&gt;CancellationTokenSource&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Each &lt;code&gt;CancellationTokenSource&lt;/code&gt; controls its own set of &lt;code&gt;CancellationToken&lt;/code&gt;s. Each &lt;code&gt;CancellationToken&lt;/code&gt; created from a &lt;code&gt;CancellationTokenSource&lt;/code&gt; is just a small &lt;code&gt;struct&lt;/code&gt; that refers back to its &lt;code&gt;CancellationTokenSource&lt;/code&gt;. A &lt;code&gt;CancellationToken&lt;/code&gt; can only respond to cancellation requests; the &lt;code&gt;CancellationTokenSource&lt;/code&gt; is necessary to request cancellation. So the requesting code creates the &lt;code&gt;CancellationTokenSource&lt;/code&gt; and keeps a reference to it (using that reference later to request cancellation), and the responding code just gets a &lt;code&gt;CancellationToken&lt;/code&gt; and uses that to respond to the cancellation requests.&lt;/p&gt;
+
+&lt;h2 id=&quot;timeouts&quot;&gt;Timeouts&lt;/h2&gt;
+
+&lt;p&gt;One common need for cancellation is implementing a timeout. The solution is to have a timer that requests cancellation when it expires. This is actually common enough that &lt;code&gt;CancellationTokenSource&lt;/code&gt; has this behavior built-in. You can either use the &lt;code&gt;CancellationTokenSource&lt;/code&gt; constructor that takes a delay, or call &lt;code&gt;CancelAfter&lt;/code&gt; on an existing &lt;code&gt;CancellationTokenSource&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;For example, if you want to apply a timeout to a code scope:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingWithTimeoutAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// Create a CTS that cancels after 5 minutes.&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;CancellationTokenSource&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TimeSpan&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FromMinutes&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// Pass the token for that CTS to lower-level code.&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// At the end of this method, the CTS is disposed.&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// All of its tokens should not be used after this point.&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h2 id=&quot;manual-cancellation&quot;&gt;Manual Cancellation&lt;/h2&gt;
+
+&lt;p&gt;For more general cancellation needs, create a &lt;code&gt;CancellationTokenSource&lt;/code&gt;, and at some point in the future call its &lt;code&gt;Cancel&lt;/code&gt; method to manually request cancellation.&lt;/p&gt;
+
+&lt;p&gt;One example is a GUI application with an actual “Cancel” button:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationTokenSource&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;?&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;StartButton_Click&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(..)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// Create a CTS for manual cancellation requests.&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// Pass the token for that CTS to lower-level code.&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Exception&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Display error in UI.&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;CancelButton_Click&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(..)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// Manually cancel the CTS.&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;!.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Cancel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;The code above shows the basic idea, but has some serious problems that you wouldn’t want to have in production. For one thing, the cancel button can be clicked when &lt;code&gt;_cts&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;, causing a &lt;code&gt;NullReferenceException&lt;/code&gt;. Also, the start button handler will blindly overwrite any &lt;code&gt;_cts&lt;/code&gt; value, ignoring any existing ongoing operation.&lt;/p&gt;
+
+&lt;p&gt;The proper resolution of these issues depends on your desired user experience and nature of the operation. Just to make this example more complete and production-ready, let’s implement the following:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Either the start or cancel buttons should be enabled at any time, never both.&lt;/li&gt;
+  &lt;li&gt;If the operation completes on its own, the start button should be enabled and the cancel button disabled.&lt;/li&gt;
+  &lt;li&gt;If the operation is cancelled, the start button should remain disabled until the operation completes (either successfully or with an &lt;code&gt;OperationCanceledException&lt;/code&gt;).&lt;/li&gt;
+  &lt;li&gt;After the operation is cancelled, the cancel button remains enabled but becomes a noop.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;These requirements result in this kind of code:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;Constructor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancelButton&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Enabled&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationTokenSource&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;?&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;StartButton_Click&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(..)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;StartButton&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Enabled&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;CancelButton&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Enabled&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// Create a CTS for manual cancellation requests.&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// Pass the token for that CTS to lower-level code.&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Display success in UI.&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Exception&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Display error in UI.&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;finally&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;StartButton&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Enabled&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;CancelButton&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Enabled&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;CancelButton_Click&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(..)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// Manually cancel the CTS.&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;!.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Cancel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;You may wish to have different requirements. For example:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Either the start or cancel buttons should be enabled at any time, never both.&lt;/li&gt;
+  &lt;li&gt;If the operation completes on its own, the start button should be enabled and the cancel button disabled.&lt;/li&gt;
+  &lt;li&gt;
+    &lt;s&gt;If the operation is cancelled, the start button should remain disabled until the operation completes (either successfully or with an `OperationCanceledException`).&lt;/s&gt;
+    &lt;p&gt;&lt;em&gt;If one operation is cancelled, the start button should become enabled immediately. Any cancelled operations no longer cause any UI updates.&lt;/em&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;s&gt;After the operation is cancelled, the cancel button remains enabled but becomes a noop.&lt;/s&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Since the new requirements allow the user to start a new operation &lt;em&gt;as soon as the old operation is cancelled&lt;/em&gt; (without waiting for the old operation to complete), the “update the UI” code needs to be guarded to ensure only the current operation updates the UI:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;Constructor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancelButton&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Enabled&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationTokenSource&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;?&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;StartButton_Click&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(..)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;StartButton&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Enabled&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;CancelButton&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Enabled&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// Create a CTS for manual cancellation requests.&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// In this method, we can check whether we are the current operation by doing (cts == _cts)&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// This works because _cts changes every time the start button is clicked.&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// Pass the token for that CTS to lower-level code.&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Display success in UI.&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Exception&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Display error in UI.&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;finally&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;StartButton&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Enabled&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;CancelButton&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Enabled&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;CancelButton_Click&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(..)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;StartButton&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Enabled&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;CancelButton&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Enabled&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// Manually cancel the CTS.&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;!.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Cancel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// Ensure cancelled operations do not update the UI with success/errors&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;There are many other options available, depending on your desired user experience. For example, you might choose to keep the start button enabled and just have it implicitly cancel the previous operation (if any). Whatever you end up with, just be sure to walk through all the possible states of your UI and ensure that your handlers are interacting with your &lt;code&gt;CancellationTokenSource&lt;/code&gt; instances appropriately.&lt;/p&gt;
+
+&lt;h2 id=&quot;cleaning-up-cancelling-and-disposing&quot;&gt;Cleaning Up: Cancelling and Disposing&lt;/h2&gt;
+
+&lt;p&gt;To avoid resource leaks, it’s important to clean up your &lt;code&gt;CancellationTokenSource&lt;/code&gt; instances. There are a couple of kinds of resources that are cleaned up: first, the timeout timer (if any) is freed; second, any “listeners” attached to &lt;code&gt;CancellationToken&lt;/code&gt;s are freed (we’ll cover “listening” registrations later in this series). This cleanup is done when the &lt;code&gt;CancellationTokenSource&lt;/code&gt; is cancelled &lt;em&gt;or&lt;/em&gt; when it’s disposed. You can either cancel or dispose, but you should ensure one or the other is done to avoid resource leaks.&lt;/p&gt;
+
+&lt;p&gt;The examples in this blog post always dispose the &lt;code&gt;CancelltionTokenSource&lt;/code&gt; when the responding code is done executing (and thus the &lt;code&gt;CancellationToken&lt;/code&gt;s are no longer used). If the &lt;code&gt;CancellationToken&lt;/code&gt; is saved and used later, then you &lt;em&gt;don’t&lt;/em&gt; want to dispose the &lt;code&gt;CancellationTokenSource&lt;/code&gt;. In that case, you’d want to keep the &lt;code&gt;CancellationTokenSource&lt;/code&gt; alive until you are sure that all code is done with its &lt;code&gt;CancellationToken&lt;/code&gt;s. This is a more advanced case, and sometimes it’s more convenient to cancel the &lt;code&gt;CancellationTokenSource&lt;/code&gt; rather than disposing it.&lt;/p&gt;
+</description>
+        <pubDate>Thu, 03 Mar 2022 00:00:00 +0000</pubDate>
+        <link>https://blog.stephencleary.com/2022/03/cancellation-2-requesting-cancellation.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2022/03/cancellation-2-requesting-cancellation.html</guid>
+      </item>
+    
+      <item>
         <title>Cancellation, Part 1: Overview</title>
         <description>&lt;p&gt;Cancellation is a topic that I haven’t written on much yet, because the &lt;a href=&quot;https://docs.microsoft.com/en-us/dotnet/standard/threading/cancellation-in-managed-threads&quot;&gt;Microsoft documentation&lt;/a&gt; is quite good. But after answering many questions for many years, I thought it would be a good topic to cover once, exhaustively.&lt;/p&gt;
 
@@ -854,72 +1043,6 @@ System.DivideByZeroException: Attempted to divide by zero.
         <pubDate>Thu, 04 Jun 2020 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2020/06/backgroundservice-gotcha-application-lifetime.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2020/06/backgroundservice-gotcha-application-lifetime.html</guid>
-      </item>
-    
-      <item>
-        <title>BackgroundService Gotcha: Silent Failures</title>
-        <description>&lt;h2 id=&quot;backgroundservice-gotcha-silent-failures&quot;&gt;BackgroundService Gotcha: Silent Failures&lt;/h2&gt;
-
-&lt;p&gt;I know &lt;a href=&quot;/2020/05/backgroundservice-gotcha-startup.html&quot;&gt;last time&lt;/a&gt; I talked about &lt;code&gt;BackgroundService&lt;/code&gt;… I don’t want to make this a series or anything, but there is another common “gotcha” when it comes to &lt;code&gt;BackgroundService&lt;/code&gt;: exceptions are silently ignored.&lt;/p&gt;
-
-&lt;p&gt;If the &lt;code&gt;ExecuteAsync&lt;/code&gt; implementation throws an exception, that exception is silently swallowed and ignored. This is because &lt;code&gt;BackgroundService&lt;/code&gt; captures the task from &lt;code&gt;ExecuteAsync&lt;/code&gt; but never &lt;code&gt;await&lt;/code&gt;s it - i.e., &lt;a href=&quot;https://github.com/dotnet/runtime/blob/e3ffd343ad5bd3a999cb9515f59e6e7a777b2c34/src/libraries/Microsoft.Extensions.Hosting.Abstractions/src/BackgroundService.cs&quot;&gt;&lt;code&gt;BackgroundService&lt;/code&gt; uses fire-and-forget&lt;/a&gt;.&lt;/p&gt;
-
-&lt;h2 id=&quot;problem-description&quot;&gt;Problem Description&lt;/h2&gt;
-
-&lt;p&gt;This problem will surface as &lt;code&gt;BackgroundService&lt;/code&gt; instances just stopping, without any indication of a problem. What actually happens if &lt;code&gt;ExecuteAsync&lt;/code&gt; throws an exception is that the exception is captured and placed on the &lt;code&gt;Task&lt;/code&gt; that was returned from &lt;code&gt;ExecuteAsync&lt;/code&gt;. The problem is that &lt;code&gt;BackgroundService&lt;/code&gt; doesn’t observe that task, so there’s no logging and no process crash - the &lt;code&gt;BackgroundService&lt;/code&gt; has completed executing but it just sits there doing nothing.&lt;/p&gt;
-
-&lt;p&gt;This is not &lt;em&gt;necessarily&lt;/em&gt; a problem with &lt;code&gt;BackgroundService&lt;/code&gt;; fire-and-forget can be appropriate for “top-level” loops such as a background worker task. However, it would be nice to have logging at least, so this “gotcha” is detectable.&lt;/p&gt;
-
-&lt;h2 id=&quot;solution&quot;&gt;Solution&lt;/h2&gt;
-
-&lt;p&gt;All top-level loops should have a &lt;code&gt;try&lt;/code&gt;/&lt;code&gt;catch&lt;/code&gt; with some kind of reporting if something goes wrong. &lt;code&gt;ExecuteAsync&lt;/code&gt; implementations are top-level loops, so they should have a top-level &lt;code&gt;try&lt;/code&gt; that catches all exceptions:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;MyBackgroundService&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;BackgroundService&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;readonly&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ILogger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;MyBackgroundService&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_logger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;MyBackgroundService&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ILogger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;MyBackgroundService&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;logger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_logger&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;logger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-
-    &lt;span class=&quot;k&quot;&gt;protected&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ExecuteAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;stoppingToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-            &lt;span class=&quot;c1&quot;&gt;// Implementation&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Exception&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;when&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;False&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_logger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;LogCritical&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;Fatal error&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)))&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-            &lt;span class=&quot;k&quot;&gt;throw&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-
-    &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;False&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Action&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;I recommend you combine this solution with the solution from last time that &lt;a href=&quot;/2020/05/backgroundservice-gotcha-startup.html&quot;&gt;uses &lt;code&gt;Task.Run&lt;/code&gt; to avoid startup problems&lt;/a&gt;:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;MyBackgroundService&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;BackgroundService&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;readonly&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ILogger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;MyBackgroundService&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_logger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;MyBackgroundService&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ILogger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;MyBackgroundService&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;logger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_logger&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;logger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-
-    &lt;span class=&quot;k&quot;&gt;protected&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ExecuteAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;stoppingToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Run&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-            &lt;span class=&quot;c1&quot;&gt;// Implementation&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Exception&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;when&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;False&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_logger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;LogCritical&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;Fatal error&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)))&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-            &lt;span class=&quot;k&quot;&gt;throw&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;});&lt;/span&gt;
-
-    &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;False&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Action&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-</description>
-        <pubDate>Thu, 28 May 2020 00:00:00 +0000</pubDate>
-        <link>https://blog.stephencleary.com/2020/05/backgroundservice-gotcha-silent-failure.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2020/05/backgroundservice-gotcha-silent-failure.html</guid>
       </item>
     
   </channel>

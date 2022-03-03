@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Cancellation, Part 1: Overview</title>
+    <title>Cancellation, Part 2: Requesting Cancellation</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="How cancellation works in .NET and the 90% rule." />
-    <link rel="canonical" href="https://blog.stephencleary.com/2022/02/cancellation-1-overview.html" />
+    <meta name="description" content="Creating cancellation tokens and cancelling them." />
+    <link rel="canonical" href="https://blog.stephencleary.com/2022/03/cancellation-2-requesting-cancellation.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -275,8 +275,8 @@ img.comment-author-profile-image {
 
   <header>
       <div class="page-header">
-          <h1>Cancellation, Part 1: Overview</h1>
-          <small><time datetime="2022-02-24">Feb 24, 2022</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
+          <h1>Cancellation, Part 2: Requesting Cancellation</h1>
+          <small><time datetime="2022-03-03">Mar 3, 2022</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
       </div>
   </header>
 
@@ -290,117 +290,201 @@ img.comment-author-profile-image {
   </header>
 
   <article>
-  <p>Cancellation is a topic that I haven’t written on much yet, because the <a href="https://docs.microsoft.com/en-us/dotnet/standard/threading/cancellation-in-managed-threads">Microsoft documentation</a> is quite good. But after answering many questions for many years, I thought it would be a good topic to cover once, exhaustively.</p>
+  <p><a href="/2022/02/cancellation-1-overview.html">Last time</a> we covered the basic cancellation contract. Responding code takes a <code>CancellationToken</code>, which is a way to communicate a cancellation request. Today we’re looking at how to create <code>CancellationToken</code>s and how to request cancellation.</p>
 
-<h2 id="cooperative-cancellation">Cooperative Cancellation</h2>
+<h2 id="cancellationtokensource">CancellationTokenSource</h2>
 
-<p>Cancellation in .NET is <em>cooperative</em>.</p>
+<p>Some <code>CancellationToken</code>s are provided by a framework or library that you’re using. For example, ASP.NET will provide you a <code>CancellationToken</code> that represents an unexpected client disconnect. As another example, Polly can provide your delegate with a <code>CancellationToken</code> that represents a more generic cancellation (e.g., a timeout policy being triggered).</p>
 
-<p>What this really means is that one part of the code Requests cancellation, and another part of the code Responds to that request. We often talk about some code “cancelling” other code, but what actually happens is that the requesting code just politely notifies the other code that it would like it to please stop, and the responding code may react to that cancellation request in any way it chooses. The responding code may immediately stop what it is doing, or it may continue until it reaches a valid stopping point, or it may ignore the cancellation request completely.</p>
+<p>For other scenarios, you’ll need to provide your own <code>CancellationToken</code>. You can use the <code>CancellationToken</code> constructor or <code>CancellationToken.None</code> to create a cancellation token that is either signalled (and always signalled) or unsignalled (and never signalled).</p>
 
-<p>So, the important takeaway here is that the responding code must respond to the cancellation request in order for cancellation to actually <em>cancel</em> anything.</p>
+<p>But in the general case, when you want to create a <code>CancellationToken</code> that can be cancelled later, then you’ll need to use <code>CancellationTokenSource</code>.</p>
 
-<p>This discussion usually brings up a question: What about code that doesn’t cooperate? I.e., how do I cancel uncancelable code? This is actually an advanced scenario, so I’ll discuss it (with solutions) at the end of this series.</p>
+<p>Each <code>CancellationTokenSource</code> controls its own set of <code>CancellationToken</code>s. Each <code>CancellationToken</code> created from a <code>CancellationTokenSource</code> is just a small <code>struct</code> that refers back to its <code>CancellationTokenSource</code>. A <code>CancellationToken</code> can only respond to cancellation requests; the <code>CancellationTokenSource</code> is necessary to request cancellation. So the requesting code creates the <code>CancellationTokenSource</code> and keeps a reference to it (using that reference later to request cancellation), and the responding code just gets a <code>CancellationToken</code> and uses that to respond to the cancellation requests.</p>
 
-<h2 id="cancellation-tokens-and-the-90-case">Cancellation Tokens and the 90% Case</h2>
+<h2 id="timeouts">Timeouts</h2>
 
-<p>In .NET, a cancellation token is the “carrier” of a cancellation request. The requesting code will cancel a cancellation token, and the responding code reacts to the token being cancelled. We’ll look at the details of how to create and cancel tokens - as well as how to respond to them - in future posts. For now, it’s sufficient to know that the cancellation token is how the cancellation request is passed from the requesting code to the responding code.</p>
+<p>One common need for cancellation is implementing a timeout. The solution is to have a timer that requests cancellation when it expires. This is actually common enough that <code>CancellationTokenSource</code> has this behavior built-in. You can either use the <code>CancellationTokenSource</code> constructor that takes a delay, or call <code>CancelAfter</code> on an existing <code>CancellationTokenSource</code>.</p>
 
-<p>In fact, I’d say about 90% of the cancellation code you’ll need to write is simply that: add a <code>CancellationToken</code> parameter to your method and then pass it down to whatever APIs you call:</p>
+<p>For example, if you want to apply a timeout to a code scope:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">data</span><span class="p">,</span> <span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingWithTimeoutAsync</span><span class="p">()</span>
 <span class="p">{</span>
-    <span class="kt">var</span> <span class="n">intermediateValue</span> <span class="p">=</span> <span class="k">await</span> <span class="n">DoFirstStepAsync</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">cancellationToken</span><span class="p">);</span>
-    <span class="k">await</span> <span class="nf">DoSecondStepAsync</span><span class="p">(</span><span class="n">intermediateValue</span><span class="p">,</span> <span class="n">cancellationToken</span><span class="p">);</span>
+    <span class="c1">// Create a CTS that cancels after 5 minutes.</span>
+    <span class="k">using</span> <span class="nn">CancellationTokenSource</span> <span class="n">cts</span> <span class="p">=</span> <span class="k">new</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">FromMinutes</span><span class="p">(</span><span class="m">5</span><span class="p">));</span>
+
+    <span class="c1">// Pass the token for that CTS to lower-level code.</span>
+    <span class="k">await</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="n">cts</span><span class="p">.</span><span class="n">Token</span><span class="p">);</span>
+
+    <span class="c1">// At the end of this method, the CTS is disposed.</span>
+    <span class="c1">// All of its tokens should not be used after this point.</span>
 <span class="p">}</span></code></pre></figure>
 
-<p>A <code>CancellationToken</code> can be any kind of cancellation: a user pressing a Cancel button; a client disconnecting from a server; an application shutting down; a timeout. It shouldn’t matter to your code <em>why</em> it’s being cancelled; just the fact that it <em>is</em> being cancelled.</p>
+<h2 id="manual-cancellation">Manual Cancellation</h2>
 
-<p>Each <code>CancellationToken</code> may only be cancelled one time; once it is cancelled, it is always cancelled.</p>
+<p>For more general cancellation needs, create a <code>CancellationTokenSource</code>, and at some point in the future call its <code>Cancel</code> method to manually request cancellation.</p>
 
-<h2 id="the-cancellation-contract-method-signature">The Cancellation Contract: Method Signature</h2>
+<p>One example is a GUI application with an actual “Cancel” button:</p>
 
-<p><a href="https://docs.microsoft.com/en-us/dotnet/standard/asynchronous-programming-patterns/task-based-asynchronous-pattern-tap#cancellation-optional">By convention</a>, the <code>CancellationToken</code> parameter is usually the last parameter unless an <code>IProgress&lt;T&gt;</code> parameter is present. It is common to provide an overload or default parameter so that callers do not <em>have</em> to provide a <code>CancellationToken</code> if they do not have one; the <code>default</code> value of a <code>CancellationToken</code> is the same as <code>CancellationToken.None</code>, i.e., a cancellation token that will never be canceled.</p>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">private</span> <span class="n">CancellationTokenSource</span><span class="p">?</span> <span class="n">_cts</span><span class="p">;</span>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">data</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="n">DoSomethingAsync</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">.</span><span class="n">None</span><span class="p">);</span>
-<span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">data</span><span class="p">,</span> <span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">void</span> <span class="nf">StartButton_Click</span><span class="p">(..)</span>
 <span class="p">{</span>
-    <span class="p">...</span>
+    <span class="c1">// Create a CTS for manual cancellation requests.</span>
+    <span class="k">using</span> <span class="nn">var</span> <span class="n">cts</span> <span class="p">=</span> <span class="n">_cts</span> <span class="p">=</span> <span class="k">new</span><span class="p">();</span>
+
+    <span class="k">try</span>
+    <span class="p">{</span>
+        <span class="c1">// Pass the token for that CTS to lower-level code.</span>
+        <span class="k">await</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="n">_cts</span><span class="p">.</span><span class="n">Token</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="p">..</span> <span class="c1">// Display error in UI.</span>
+    <span class="p">}</span>
 <span class="p">}</span>
 
-<span class="c1">// or:</span>
-
-<span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">data</span><span class="p">,</span> <span class="n">CancellationToken</span> <span class="n">cancellationToken</span> <span class="p">=</span> <span class="k">default</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">void</span> <span class="nf">CancelButton_Click</span><span class="p">(..)</span>
 <span class="p">{</span>
-    <span class="p">...</span>
+    <span class="c1">// Manually cancel the CTS.</span>
+    <span class="n">_cts</span><span class="p">!.</span><span class="n">Cancel</span><span class="p">();</span>
 <span class="p">}</span></code></pre></figure>
 
-<p>Some method signatures take both a <code>CancellationToken</code> and a timeout value as separate parameters. I don’t recommend this for your own code; this is mainly done in the BCL to enable more efficient p/Invokes of methods that take timeout parameters. Unless you’re also p/Invoking APIs that take timeout parameters, I recommend just taking a single <code>CancellationToken</code> which can represent <em>any</em> kind of cancellation.</p>
+<p>The code above shows the basic idea, but has some serious problems that you wouldn’t want to have in production. For one thing, the cancel button can be clicked when <code>_cts</code> is <code>null</code>, causing a <code>NullReferenceException</code>. Also, the start button handler will blindly overwrite any <code>_cts</code> value, ignoring any existing ongoing operation.</p>
 
-<p>By taking a <code>CancellationToken</code> parameter, a method is implicitly claiming that it may respond to cancellation. Technically, this is “may respond”, not “must respond”. In some cases (like interface implementations), a <code>CancellationToken</code> argument may be ignored. So the presence of a <code>CancellationToken</code> parameter does not necessarily mean the code <em>must</em> support cancellation, but it <em>might</em>.</p>
+<p>The proper resolution of these issues depends on your desired user experience and nature of the operation. Just to make this example more complete and production-ready, let’s implement the following:</p>
 
-<h2 id="the-cancellation-contract-response">The Cancellation Contract: Response</h2>
+<ul>
+  <li>Either the start or cancel buttons should be enabled at any time, never both.</li>
+  <li>If the operation completes on its own, the start button should be enabled and the cancel button disabled.</li>
+  <li>If the operation is cancelled, the start button should remain disabled until the operation completes (either successfully or with an <code>OperationCanceledException</code>).</li>
+  <li>After the operation is cancelled, the cancel button remains enabled but becomes a noop.</li>
+</ul>
 
-<p>As noted above, when cancellation is requested, the responding code may cancel whatever it is doing, or it may not. Even if it <em>attempts</em> to cancel, there is usually a race condition and the method may actually complete before the cancellation request can be honored. The cancellation contract handles this by having canceled code throw <code>OperationCanceledException</code> when the cancellation is observed and has actually canceled some work. If the cancellation request is ignored or if it arrives too late and the work is finished anyway, then the method returns normally without throwing <code>OperationCanceledException</code>.</p>
+<p>These requirements result in this kind of code:</p>
 
-<p>The standard “90% case” code handles this implicitly; if <code>DoFirstStepAsync</code> or <code>DoSecondStepAsync</code> throw <code>OperationCanceledException</code>, then that exception is also propagated out of <code>DoSomethingAsync</code>. No change to the “90% case” code is necessary:</p>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Constructor</span><span class="p">()</span> <span class="p">=&gt;</span> <span class="n">CancelButton</span><span class="p">.</span><span class="n">Enabled</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">data</span><span class="p">,</span> <span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
+<span class="k">private</span> <span class="n">CancellationTokenSource</span><span class="p">?</span> <span class="n">_cts</span><span class="p">;</span>
+
+<span class="k">async</span> <span class="k">void</span> <span class="nf">StartButton_Click</span><span class="p">(..)</span>
 <span class="p">{</span>
-    <span class="kt">var</span> <span class="n">intermediateValue</span> <span class="p">=</span> <span class="k">await</span> <span class="n">DoFirstStepAsync</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">cancellationToken</span><span class="p">);</span>
-    <span class="k">await</span> <span class="nf">DoSecondStepAsync</span><span class="p">(</span><span class="n">intermediateValue</span><span class="p">,</span> <span class="n">cancellationToken</span><span class="p">);</span>
-<span class="p">}</span></code></pre></figure>
+    <span class="n">StartButton</span><span class="p">.</span><span class="n">Enabled</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+    <span class="n">CancelButton</span><span class="p">.</span><span class="n">Enabled</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
 
-<div class="alert alert-danger">
-  <p><i class="fa fa-exclamation-triangle fa-2x pull-left"></i></p>
+    <span class="c1">// Create a CTS for manual cancellation requests.</span>
+    <span class="k">using</span> <span class="nn">var</span> <span class="n">cts</span> <span class="p">=</span> <span class="n">_cts</span> <span class="p">=</span> <span class="k">new</span><span class="p">();</span>
 
-  <p>There are a lot of code examples out there that just silently return early when cancellation is requested. Please do not do this; it’s a violation of the cancellation contract! When the responding code just returns early, the calling code cannot know whether its cancellation request was honored or ignored.</p>
-</div>
-
-<h2 id="exception-to-the-90-case">Exception to the “90% Case”</h2>
-
-<p>The “90% case” just takes a <code>CancellationToken</code> parameter and passes it down. There’s one notable exception to this rule: you shouldn’t pass down <code>CancellationToken</code>s to <code>Task.Run</code>.</p>
-
-<p>The reason is that (IMO) the semantics are confusing. A lot of developers pass a delegate and a <code>CancellationToken</code> to <code>Task.Run</code> and expect the delegate to be cancelled when the token is cancelled, but that’s not what happens. The <code>CancellationToken</code> passed to <code>Task.Run</code> just cancels the <em>scheduling</em> of the delegate to the thread pool; once that delegate starts running (which happens pretty much immediately), that cancellation token is ignored.</p>
-
-<p>To put it in example code, this is what many developers write, incorrectly expecting that <code>// Do something</code> will be canceled after it starts:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="kt">var</span> <span class="n">test</span> <span class="p">=</span> <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span>
+    <span class="k">try</span>
     <span class="p">{</span>
-        <span class="c1">// Do something, ignoring cancellationToken</span>
-    <span class="p">},</span> <span class="n">cancellationToken</span><span class="p">);</span>
-    <span class="p">...</span>
-<span class="p">}</span></code></pre></figure>
-
-<p>By never passing the <code>CancellationToken</code> to <code>Task.Run</code> (which is ignored anyway unless there’s serious thread pool contention or the token is <em>already</em> cancelled), we make it clearer that the delegate <em>itself</em> has to respond to the token:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="kt">var</span> <span class="n">test</span> <span class="p">=</span> <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span>
+        <span class="c1">// Pass the token for that CTS to lower-level code.</span>
+        <span class="k">await</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="n">_cts</span><span class="p">.</span><span class="n">Token</span><span class="p">);</span>
+        <span class="p">..</span> <span class="c1">// Display success in UI.</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span>
     <span class="p">{</span>
-        <span class="c1">// Do something</span>
-        <span class="c1">// The IDE is telling me cancellationToken is unused,</span>
-        <span class="c1">//    so this delegate code better use it.</span>
-    <span class="p">});</span>
-    <span class="p">...</span>
+        <span class="p">..</span> <span class="c1">// Display error in UI.</span>
+    <span class="p">}</span>
+    <span class="k">finally</span>
+    <span class="p">{</span>
+        <span class="n">StartButton</span><span class="p">.</span><span class="n">Enabled</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+        <span class="n">CancelButton</span><span class="p">.</span><span class="n">Enabled</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">async</span> <span class="k">void</span> <span class="nf">CancelButton_Click</span><span class="p">(..)</span>
+<span class="p">{</span>
+    <span class="c1">// Manually cancel the CTS.</span>
+    <span class="n">_cts</span><span class="p">!.</span><span class="n">Cancel</span><span class="p">();</span>
 <span class="p">}</span></code></pre></figure>
 
+<p>You may wish to have different requirements. For example:</p>
+
+<ul>
+  <li>Either the start or cancel buttons should be enabled at any time, never both.</li>
+  <li>If the operation completes on its own, the start button should be enabled and the cancel button disabled.</li>
+  <li>
+    <s>If the operation is cancelled, the start button should remain disabled until the operation completes (either successfully or with an `OperationCanceledException`).</s>
+    <p><em>If one operation is cancelled, the start button should become enabled immediately. Any cancelled operations no longer cause any UI updates.</em></p>
+  </li>
+  <li>
+    <s>After the operation is cancelled, the cancel button remains enabled but becomes a noop.</s>
+  </li>
+</ul>
+
+<p>Since the new requirements allow the user to start a new operation <em>as soon as the old operation is cancelled</em> (without waiting for the old operation to complete), the “update the UI” code needs to be guarded to ensure only the current operation updates the UI:</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Constructor</span><span class="p">()</span> <span class="p">=&gt;</span> <span class="n">CancelButton</span><span class="p">.</span><span class="n">Enabled</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+
+<span class="k">private</span> <span class="n">CancellationTokenSource</span><span class="p">?</span> <span class="n">_cts</span><span class="p">;</span>
+
+<span class="k">async</span> <span class="k">void</span> <span class="nf">StartButton_Click</span><span class="p">(..)</span>
+<span class="p">{</span>
+    <span class="n">StartButton</span><span class="p">.</span><span class="n">Enabled</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+    <span class="n">CancelButton</span><span class="p">.</span><span class="n">Enabled</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+
+    <span class="c1">// Create a CTS for manual cancellation requests.</span>
+    <span class="k">using</span> <span class="nn">var</span> <span class="n">cts</span> <span class="p">=</span> <span class="n">_cts</span> <span class="p">=</span> <span class="k">new</span><span class="p">();</span>
+
+    <span class="c1">// In this method, we can check whether we are the current operation by doing (cts == _cts)</span>
+    <span class="c1">// This works because _cts changes every time the start button is clicked.</span>
+
+    <span class="k">try</span>
+    <span class="p">{</span>
+        <span class="c1">// Pass the token for that CTS to lower-level code.</span>
+        <span class="k">await</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="n">_cts</span><span class="p">.</span><span class="n">Token</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">cts</span> <span class="p">==</span> <span class="n">_cts</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="p">..</span> <span class="c1">// Display success in UI.</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">cts</span> <span class="p">==</span> <span class="n">_cts</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="p">..</span> <span class="c1">// Display error in UI.</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="k">finally</span>
+    <span class="p">{</span>
+        <span class="n">StartButton</span><span class="p">.</span><span class="n">Enabled</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+        <span class="n">CancelButton</span><span class="p">.</span><span class="n">Enabled</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">async</span> <span class="k">void</span> <span class="nf">CancelButton_Click</span><span class="p">(..)</span>
+<span class="p">{</span>
+    <span class="n">StartButton</span><span class="p">.</span><span class="n">Enabled</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+    <span class="n">CancelButton</span><span class="p">.</span><span class="n">Enabled</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+
+    <span class="c1">// Manually cancel the CTS.</span>
+    <span class="n">_cts</span><span class="p">!.</span><span class="n">Cancel</span><span class="p">();</span>
+
+    <span class="c1">// Ensure cancelled operations do not update the UI with success/errors</span>
+    <span class="n">_cts</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>There are many other options available, depending on your desired user experience. For example, you might choose to keep the start button enabled and just have it implicitly cancel the previous operation (if any). Whatever you end up with, just be sure to walk through all the possible states of your UI and ensure that your handlers are interacting with your <code>CancellationTokenSource</code> instances appropriately.</p>
+
+<h2 id="cleaning-up-cancelling-and-disposing">Cleaning Up: Cancelling and Disposing</h2>
+
+<p>To avoid resource leaks, it’s important to clean up your <code>CancellationTokenSource</code> instances. There are a couple of kinds of resources that are cleaned up: first, the timeout timer (if any) is freed; second, any “listeners” attached to <code>CancellationToken</code>s are freed (we’ll cover “listening” registrations later in this series). This cleanup is done when the <code>CancellationTokenSource</code> is cancelled <em>or</em> when it’s disposed. You can either cancel or dispose, but you should ensure one or the other is done to avoid resource leaks.</p>
+
+<p>The examples in this blog post always dispose the <code>CancelltionTokenSource</code> when the responding code is done executing (and thus the <code>CancellationToken</code>s are no longer used). If the <code>CancellationToken</code> is saved and used later, then you <em>don’t</em> want to dispose the <code>CancellationTokenSource</code>. In that case, you’d want to keep the <code>CancellationTokenSource</code> alive until you are sure that all code is done with its <code>CancellationToken</code>s. This is a more advanced case, and sometimes it’s more convenient to cancel the <code>CancellationTokenSource</code> rather than disposing it.</p>
 
   </article>
     
     <footer class="hidden-print">
         
             <ul class="pager">
+                <li class="previous"><a href="/2022/02/cancellation-1-overview.html" title="Cancellation, Part 1: Overview">&larr; Previous in Cancellation</a></li>
                 
-                <li class="next"><a href="/2022/03/cancellation-2-requesting-cancellation.html" title="Cancellation, Part 2: Requesting Cancellation">Next in Cancellation &rarr;</a></li>
             </ul>
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2021/02/asynchronous-messaging-5-miscellaneous-considerations.html" title="Asynchronous Messaging, Part 5: Miscellaneous Considerations">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2022/03/cancellation-2-requesting-cancellation.html" title="Cancellation, Part 2: Requesting Cancellation">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2022/02/cancellation-1-overview.html" title="Cancellation, Part 1: Overview">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="comments"></div>
@@ -413,8 +497,8 @@ img.comment-author-profile-image {
                     <div class="panel-heading">Cancellation</div>
                     <div class="panel-body sidenav">
                         <ul class="nav nav-pills nav-stacked">
-                                    <li class="active sidenavitem"><a href="/2022/02/cancellation-1-overview.html">Overview</a></li>
-                                    <li class="sidenavitem"><a href="/2022/03/cancellation-2-requesting-cancellation.html">Requesting Cancellation</a></li>
+                                    <li class="sidenavitem"><a href="/2022/02/cancellation-1-overview.html">Overview</a></li>
+                                    <li class="active sidenavitem"><a href="/2022/03/cancellation-2-requesting-cancellation.html">Requesting Cancellation</a></li>
                         </ul>
                     </div>
                 </div>
@@ -568,7 +652,7 @@ img.comment-author-profile-image {
 
 <script type="text/javascript">
 
-var pageUrl = "https://blog.stephencleary.com" + "/2022/02/cancellation-1-overview.html";
+var pageUrl = "https://blog.stephencleary.com" + "/2022/03/cancellation-2-requesting-cancellation.html";
 
 // (unnecessary) 1) If the URL starts with http://, replace with https://
 
