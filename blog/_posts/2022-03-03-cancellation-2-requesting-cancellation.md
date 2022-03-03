@@ -6,7 +6,7 @@ seriesTitle: "Requesting Cancellation"
 description: "Creating cancellation tokens and cancelling them."
 ---
 
-Last time we covered the basic cancellation contract. Responding code takes a `CancellationToken`, which is a way to communicate a cancellation request. Today we're looking at how to create `CancellationToken`s and how to request cancellation.
+[Last time]({% post_url 2022-02-24-cancellation-1-overview %}) we covered the basic cancellation contract. Responding code takes a `CancellationToken`, which is a way to communicate a cancellation request. Today we're looking at how to create `CancellationToken`s and how to request cancellation.
 
 ## CancellationTokenSource
 
@@ -76,7 +76,7 @@ The proper resolution of these issues depends on your desired user experience an
 
 - Either the start or cancel buttons should be enabled at any time, never both.
 - If the operation completes on its own, the start button should be enabled and the cancel button disabled.
-- If one operation is cancelled, the start button should remain disabled until the operation completes (either successfully or with an `OperationCanceledException`).
+- If the operation is cancelled, the start button should remain disabled until the operation completes (either successfully or with an `OperationCanceledException`).
 - After the operation is cancelled, the cancel button remains enabled but becomes a noop.
 
 These requirements result in this kind of code:
@@ -122,8 +122,8 @@ You may wish to have different requirements. For example:
 
 - Either the start or cancel buttons should be enabled at any time, never both.
 - If the operation completes on its own, the start button should be enabled and the cancel button disabled.
-- ~If one operation is cancelled, the start button should remain disabled until the operation completes (either successfully or with an `OperationCanceledException`).~ *If one operation is cancelled, the start button should become enabled immediately. The cancelled operation does not update the UI.*
-- ~After the operation is cancelled, the cancel button remains enabled but becomes a noop.~
+- <s>If the operation is cancelled, the start button should remain disabled until the operation completes (either successfully or with an `OperationCanceledException`).</s> *If one operation is cancelled, the start button should become enabled immediately. Any cancelled operations no longer cause any UI updates.*
+- <s>After the operation is cancelled, the cancel button remains enabled but becomes a noop.</s>
 
 Since the new requirements allow the user to start a new operation *as soon as the old operation is cancelled* (without waiting for the old operation to complete), the "update the UI" code needs to be guarded to ensure only the current operation updates the UI:
 
@@ -159,6 +159,11 @@ async void StartButton_Click(..)
             .. // Display error in UI.
         }
     }
+    finally
+    {
+        StartButton.Enabled = true;
+        CancelButton.Enabled = false;
+    }
 }
 
 async void CancelButton_Click(..)
@@ -168,6 +173,9 @@ async void CancelButton_Click(..)
 
     // Manually cancel the CTS.
     _cts!.Cancel();
+
+    // Ensure cancelled operations do not update the UI with success/errors
+    _cts = null;
 }
 {% endhighlight %}
 
