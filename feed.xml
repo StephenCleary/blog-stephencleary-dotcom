@@ -8,6 +8,127 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>Cancellation, Part 3: Detecting Cancellation</title>
+        <description>&lt;p&gt;It’s not uncommon to want to detect whether the cancellation actually canceled anything or not. Cancellation is cooperative, and sometimes the code requesting cancellation needs to know whether that cancellation actually took place, or whether the operation just completed normally.&lt;/p&gt;
+
+&lt;p&gt;As a reminder, the cancellation contract has a way to communicate that: methods that take &lt;code&gt;CancellationToken&lt;/code&gt;, by convention, will throw &lt;code&gt;OperationCanceledException&lt;/code&gt; when they are cancelled. This is true for all BCL methods, and should be true for your code as well. Later in this series we’ll cover the best ways for code to respond to cancellation requests, all of which satisfy this contract, i.e., throwing &lt;code&gt;OperationCanceledException&lt;/code&gt; when they cancel.&lt;/p&gt;
+
+&lt;h2 id=&quot;responding-to-cancellation&quot;&gt;Responding to Cancellation&lt;/h2&gt;
+
+&lt;p&gt;The most common scenario for detecting cancellation is to avoid taking the normal error path if the code has been cancelled. Usually, the &lt;code&gt;OperationCanceledException&lt;/code&gt; is just ignored:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;TryDoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;CancellationTokenSource&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+
+    &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Wire up something that may cancel the CTS.&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoThingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Exception&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;when&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;is&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;not&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;OperationCanceledException&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Normal error handling; log, etc.&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;The code above will log any unexpected errors, but will ignore cancellation exceptions.&lt;/p&gt;
+
+&lt;p&gt;If your code must do something &lt;em&gt;different&lt;/em&gt; when a cancellation happens, then you can handle that in a &lt;code&gt;catch&lt;/code&gt; block. Well, first, I’d recommend taking a step back and asking yourself if you &lt;em&gt;really have&lt;/em&gt; to do that, because it’s unusual and raises concerns about the code design, and it can be difficult to test as well. But if you must:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;CancellationTokenSource&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+
+    &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Wire up something that may cancel the CTS.&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoThingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;OperationCanceledException&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Special cancellation handling&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Exception&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Normal error handling; log, etc.&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h2 id=&quot;taskcanceledexception&quot;&gt;TaskCanceledException&lt;/h2&gt;
+
+&lt;p&gt;You may notice that there is another cancellation exception type: &lt;code&gt;TaskCanceledException&lt;/code&gt;. This is raised by some APIs instead of &lt;code&gt;OperationCanceledException&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;As a general rule, I recommend you completely ignore &lt;code&gt;TaskCanceledException&lt;/code&gt;. Some APIs just raise &lt;code&gt;OperationCanceledException&lt;/code&gt;, even if they deal with cancelled tasks. And since &lt;code&gt;TaskCanceledException&lt;/code&gt; derives from &lt;code&gt;OperationCanceledException&lt;/code&gt;, your cancellation exception handler code can just use &lt;code&gt;OperationCanceledException&lt;/code&gt;, ignore &lt;code&gt;TaskCanceledException&lt;/code&gt; completely, and it will work everywhere.&lt;/p&gt;
+
+&lt;div class=&quot;alert alert-danger&quot;&gt;
+  &lt;p&gt;&lt;i class=&quot;fa fa-exclamation-triangle fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
+
+  &lt;p&gt;Do not catch &lt;code&gt;TaskCanceledException&lt;/code&gt;. Catch &lt;code&gt;OperationCanceledException&lt;/code&gt; instead.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;operationcanceledexceptioncancellationtoken&quot;&gt;OperationCanceledException.CancellationToken&lt;/h2&gt;
+
+&lt;p&gt;You may also notice that &lt;code&gt;OperationCanceledException&lt;/code&gt; has a &lt;code&gt;CancellationToken&lt;/code&gt; property. This is the token that caused the cancellation. That is, if it’s set; not all APIs set this value on the exceptions they throw.&lt;/p&gt;
+
+&lt;p&gt;If your code needs to determine whether &lt;em&gt;it&lt;/em&gt; cancels the operation or whether something &lt;em&gt;else&lt;/em&gt; cancels the operation, then you might be tempted to use this property. But I recommend that your code ignore this property. When linked cancel tokens are used (a topic I’ll cover in a future post), it’s possible that the token in this property is not actually the root cause of the cancellation.&lt;/p&gt;
+
+&lt;p&gt;More specifically:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;Environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FailFast&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;Bad code; do not use!&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;CancellationTokenSource&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+
+    &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Wire up something that may cancel the CTS.&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoThingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;OperationCanceledException&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;when&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Special cancellation handling for &amp;quot;our&amp;quot; cancellation only.&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;The code above has a problem: depending on the implementation of &lt;code&gt;DoThingAsync&lt;/code&gt;, it’s possible that &lt;code&gt;cts&lt;/code&gt; will be cancelled, and that cancellation will cause &lt;code&gt;DoThingAsync&lt;/code&gt; to throw &lt;code&gt;OperationCanceledException&lt;/code&gt;, and for the token referenced by that exception to be &lt;em&gt;different&lt;/em&gt; than the &lt;code&gt;cts&lt;/code&gt;’s token.&lt;/p&gt;
+
+&lt;p&gt;If you do need to do special processing for when this specific cancellation happens, I recommend something like this:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;CancellationTokenSource&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+
+    &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Wire up something that may cancel the CTS.&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoThingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;OperationCanceledException&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;when&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IsCancellationRequested&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Special cancellation handling for &amp;quot;our&amp;quot; cancellation only.&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;&lt;em&gt;Technically,&lt;/em&gt; the semantics of this are not “did my token cause the cancellation”, but rather “did cancellation happen and is my token requesting cancellation”. But in every case I’ve seen in the real world, the alternative semantics have been sufficient.&lt;/p&gt;
+
+&lt;div class=&quot;alert alert-danger&quot;&gt;
+  &lt;p&gt;&lt;i class=&quot;fa fa-exclamation-triangle fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
+
+  &lt;p&gt;Do not use &lt;code&gt;OperationCanceledException.CancellationToken&lt;/code&gt;. It doesn’t work as expected.&lt;/p&gt;
+&lt;/div&gt;
+</description>
+        <pubDate>Thu, 10 Mar 2022 00:00:00 +0000</pubDate>
+        <link>https://blog.stephencleary.com/2022/03/cancellation-3-detecting-cancellation.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2022/03/cancellation-3-detecting-cancellation.html</guid>
+      </item>
+    
+      <item>
         <title>Cancellation, Part 2: Requesting Cancellation</title>
         <description>&lt;p&gt;&lt;a href=&quot;/2022/02/cancellation-1-overview.html&quot;&gt;Last time&lt;/a&gt; we covered the basic cancellation contract. Responding code takes a &lt;code&gt;CancellationToken&lt;/code&gt;, which is a way to communicate a cancellation request. Today we’re looking at how to create &lt;code&gt;CancellationToken&lt;/code&gt;s and how to request cancellation.&lt;/p&gt;
 
@@ -972,77 +1093,6 @@ System.DivideByZeroException: Attempted to divide by zero.
         <pubDate>Thu, 11 Jun 2020 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2020/06/a-new-pattern-for-exception-logging.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2020/06/a-new-pattern-for-exception-logging.html</guid>
-      </item>
-    
-      <item>
-        <title>BackgroundService Gotcha: Application Lifetime</title>
-        <description>&lt;h2 id=&quot;backgroundservice-gotcha-service-lifetime-is-independent-from-application-lifetime&quot;&gt;BackgroundService Gotcha: Service Lifetime is Independent from Application Lifetime&lt;/h2&gt;
-
-&lt;p&gt;OK, I guess I &lt;em&gt;do&lt;/em&gt; have a series on my hands.&lt;/p&gt;
-
-&lt;p&gt;This one isn’t so much a “gotcha” as it is a common mistake. Hosted services (including &lt;code&gt;BackgroundService&lt;/code&gt;s) have a lifetime that is &lt;em&gt;independent&lt;/em&gt; from their host. This means that if a &lt;code&gt;BackgroundService&lt;/code&gt; exits, its host will not exit. And a host will happily continue running even if &lt;em&gt;all&lt;/em&gt; its services have exited.&lt;/p&gt;
-
-&lt;p&gt;This mistake is most common when writing a kind of “subscriber” or “backend processor” application - something that listens to a queue and processes messages on that queue. For these kinds of applications, it’s common to have a .NET Core host with only a single hosted service, and the service has a loop which processes messages from the queue. This is essentially the “ASP.NET Core Worker Process” template project in Visual Studio. When writing this kind of application, it’s easy to forget about the host, and treat the hosted service &lt;em&gt;as&lt;/em&gt; the application. But when there are no more messages (or some other shutdown signal is delivered to the hosted service) and the service exits, then the host application stays around.&lt;/p&gt;
-
-&lt;h2 id=&quot;solution&quot;&gt;Solution&lt;/h2&gt;
-
-&lt;p&gt;This behavior is by design. If a &lt;code&gt;BackgroundService&lt;/code&gt; implementation wants the application to exit when it stops (or &lt;a href=&quot;/2020/05/backgroundservice-gotcha-silent-failure.html&quot;&gt;has a fatal error&lt;/a&gt;), it needs to do that itself by injecting an &lt;code&gt;IHostApplicationLifetime&lt;/code&gt; and calling &lt;code&gt;StopApplication&lt;/code&gt;:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;MyBackgroundService&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;BackgroundService&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;readonly&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IHostApplicationLifetime&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;MyBackgroundService&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IHostApplicationLifetime&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt;
-        &lt;span class=&quot;n&quot;&gt;_hostApplicationLifetime&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-
-    &lt;span class=&quot;k&quot;&gt;protected&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ExecuteAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;stoppingToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-            &lt;span class=&quot;c1&quot;&gt;// Implementation&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;finally&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-            &lt;span class=&quot;n&quot;&gt;_hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;StopApplication&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;I recommend also &lt;a href=&quot;/2020/05/backgroundservice-gotcha-startup.html&quot;&gt;using &lt;code&gt;Task.Run&lt;/code&gt; to avoid startup problems&lt;/a&gt; and &lt;a href=&quot;/2020/05/backgroundservice-gotcha-silent-failure.html&quot;&gt;logging all exceptions in this top-level loop&lt;/a&gt;:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;MyBackgroundService&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;BackgroundService&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;readonly&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IHostApplicationLifetime&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;readonly&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ILogger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;MyBackgroundService&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_logger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;MyBackgroundService&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IHostApplicationLifetime&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ILogger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;MyBackgroundService&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;logger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;n&quot;&gt;_hostApplicationLifetime&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-        &lt;span class=&quot;n&quot;&gt;_logger&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;logger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-
-    &lt;span class=&quot;k&quot;&gt;protected&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ExecuteAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;stoppingToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Run&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-            &lt;span class=&quot;c1&quot;&gt;// Implementation&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Exception&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;when&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;False&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_logger&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;LogCritical&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;Fatal error&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)))&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-            &lt;span class=&quot;k&quot;&gt;throw&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;finally&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-            &lt;span class=&quot;n&quot;&gt;_hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;StopApplication&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;});&lt;/span&gt;
-
-    &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;False&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Action&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;action&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;At this point, this is a fair amount of boilerplate code to go into each background service. Production code bases should probably define a “critical background service” base type that handles all the wrapper code so background services only need to define the &lt;code&gt;// Implementation&lt;/code&gt; part.&lt;/p&gt;
-</description>
-        <pubDate>Thu, 04 Jun 2020 00:00:00 +0000</pubDate>
-        <link>https://blog.stephencleary.com/2020/06/backgroundservice-gotcha-application-lifetime.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2020/06/backgroundservice-gotcha-application-lifetime.html</guid>
       </item>
     
   </channel>
