@@ -25,11 +25,11 @@ void DoSomething(CancellationToken cancellationToken)
 }
 {% endhighlight %}
 
-The example code above checks the cancellation token *before* it starts work, which is a good general practice. It is often possible that the token is already cancelled by the time your operation starts running.
+The example code above checks the cancellation token *before* it starts work, which is a good general practice. It is possible that the token is already cancelled by the time your operation starts running.
 
 `ThrowIfCancellationRequested` will check to see if cancellation is requested, and if it is, it will throw `OperationCanceledException`. So it handles the proper reporting of cancellation for you; your code should just let that exception propagate out of the method.
 
-One question you'll need to answer is how *often* to poll. There really isn't a good answer for this; ideally you probably want to poll several times a second, but when you're talking about CPU-bound code running on potentially very different machines, it's pretty much a guess at where in the code the `ThrowIfCancellationRequested` should go. Just put it in the best place(s), run some tests to see if cancellation feels responsive enough, and that's the best you can do.
+One question you'll need to answer is how *often* to poll. There really isn't a good answer for this; ideally you probably want to poll a few times a second, but when you're talking about CPU-bound code running on potentially very different machines, it's pretty much a guess at where in the code the `ThrowIfCancellationRequested` should go. Just put it in the best place(s), run some tests to see if cancellation feels responsive enough, and that's the best you can do.
 
 ## How Not to Poll
 
@@ -63,114 +63,26 @@ void DoSomethingForever(CancellationToken cancellationToken)
 
 ## When to Poll
 
-Polling is an appropriate option for observing cancellation if your code is synchronous, such as CPU-bound code.
+Polling is an appropriate option for observing cancellation if your code is synchronous, such as CPU-bound code. Cancellation is often thought of as only a concern for asynchronous code; it was explicitly pointed out in the documentation for `async` when `async` was introduced. But cancellation in .NET predates `async`, and cancellation is just as applicable to synchronous code as to asynchronous code. In fact, `Parallel` loops and PLINQ each have built-in support for cancellation: `ParallelOptions.CancellationToken` for `Parallel`, and `WithCancellation` for PLINQ.
 
-
-
-
-
-
-Cancellation is a topic that I haven't written on much yet, because the [Microsoft documentation](https://docs.microsoft.com/en-us/dotnet/standard/threading/cancellation-in-managed-threads) is quite good. But after answering many questions for many years, I thought it would be a good topic to cover once, exhaustively.
-
-## Cooperative Cancellation
-
-Cancellation in .NET is *cooperative*.
-
-What this really means is that one part of the code Requests cancellation, and another part of the code Responds to that request. We often talk about some code "cancelling" other code, but what actually happens is that the requesting code just politely notifies the other code that it would like it to please stop, and the responding code may react to that cancellation request in any way it chooses. The responding code may immediately stop what it is doing, or it may continue until it reaches a valid stopping point, or it may ignore the cancellation request completely.
-
-So, the important takeaway here is that the responding code must respond to the cancellation request in order for cancellation to actually *cancel* anything.
-
-This discussion usually brings up a question: What about code that doesn't cooperate? I.e., how do I cancel uncancelable code? This is actually an advanced scenario, so I'll discuss it (with solutions) at the end of this series.
-
-## Cancellation Tokens and the 90% Case
-
-In .NET, a cancellation token is the "carrier" of a cancellation request. The requesting code will cancel a cancellation token, and the responding code reacts to the token being cancelled. We'll look at the details of how to create and cancel tokens - as well as how to respond to them - in future posts. For now, it's sufficient to know that the cancellation token is how the cancellation request is passed from the requesting code to the responding code.
-
-In fact, I'd say about 90% of the cancellation code you'll need to write is simply that: add a `CancellationToken` parameter to your method and then pass it down to whatever APIs you call:
+That's not to say you can't use it for asynchronous code. It's also appropriate to inject a `ThrowIfCancellationRequested` in asynchronous code, if you are not sure whether other methods will respect their cancellation tokens. Remember, taking a `CancellationToken` parameter means that the method *may* respect cancellation; it may also ignore the token and just ignore any cancellation requests. So your code may want to inject cancellation checks in-between "steps" of its operation. In this case, `ThrowIfCancellationRequested` isn't so much "polling" as it is an "occasional check":
 
 {% highlight csharp %}
-async Task DoSomethingAsync(int data, CancellationToken cancellationToken)
+async Task DoComplexWorkAsync(CancellationToken cancellationToken)
 {
-    var intermediateValue = await DoFirstStepAsync(data, cancellationToken);
-    await DoSecondStepAsync(intermediateValue, cancellationToken);
+    // From testing, it appears that DoStep1Async and DoStep2Async do not always cancel when requested.
+    cancellationToken.ThrowIfCancellationRequested();
+    await DoStep1Async(cancellationToken);
+
+    cancellationToken.ThrowIfCancellationRequested();
+    await DoStep2Async(cancellationToken);
 }
 {% endhighlight %}
 
-A `CancellationToken` can be any kind of cancellation: a user pressing a Cancel button; a client disconnecting from a server; an application shutting down; a timeout. It shouldn't matter to your code *why* it's being cancelled; just the fact that it *is* being cancelled.
+While you *can* sprinkle calls to `ThrowIfCancellationRequested` throughout your code like this, I only do this when testing indicates that the code does not respect cancellation. In other words, I assume that `DoStep1Async` and `DoStep2Async` will respect cancellation until proven otherwise by testing.
 
-Each `CancellationToken` may only be cancelled one time; once it is cancelled, it is always cancelled.
+It is also appropriate to use `ThrowIfCancellationRequested` at certain points where your code is about to do something expensive. Just adding a cancellation check there means your code won't have to do the expensive work if it's cancelled anyway.
 
-## The Cancellation Contract: Method Signature
+## Summary
 
-[By convention](https://docs.microsoft.com/en-us/dotnet/standard/asynchronous-programming-patterns/task-based-asynchronous-pattern-tap#cancellation-optional), the `CancellationToken` parameter is usually the last parameter unless an `IProgress<T>` parameter is present. It is common to provide an overload or default parameter so that callers do not *have* to provide a `CancellationToken` if they do not have one; the `default` value of a `CancellationToken` is the same as `CancellationToken.None`, i.e., a cancellation token that will never be canceled.
-
-{% highlight csharp %}
-Task DoSomethingAsync(int data) => DoSomethingAsync(data, CancellationToken.None);
-async Task DoSomethingAsync(int data, CancellationToken cancellationToken)
-{
-    ...
-}
-
-// or:
-
-async Task DoSomethingAsync(int data, CancellationToken cancellationToken = default)
-{
-    ...
-}
-{% endhighlight %}
-
-Some method signatures take both a `CancellationToken` and a timeout value as separate parameters. I don't recommend this for your own code; this is mainly done in the BCL to enable more efficient p/Invokes of methods that take timeout parameters. Unless you're also p/Invoking APIs that take timeout parameters, I recommend just taking a single `CancellationToken` which can represent *any* kind of cancellation.
-
-## The Cancellation Contract: Response
-
-As noted above, when cancellation is requested, the responding code may cancel whatever it is doing, or it may not. Even if it *attempts* to cancel, there is usually a race condition and the method may actually complete before the cancellation request can be honored. The cancellation contract handles this by having canceled code throw `OperationCanceledException` when the cancellation is observed and has actually canceled some work. If the cancellation request is ignored or if it arrives too late and the work is finished anyway, then the method returns normally without throwing `OperationCanceledException`.
-
-The standard "90% case" code handles this implicitly; if `DoFirstStepAsync` or `DoSecondStepAsync` throw `OperationCanceledException`, then that exception is also propagated out of `DoSomethingAsync`. No change to the "90% case" code is necessary:
-
-{% highlight csharp %}
-async Task DoSomethingAsync(int data, CancellationToken cancellationToken)
-{
-    var intermediateValue = await DoFirstStepAsync(data, cancellationToken);
-    await DoSecondStepAsync(intermediateValue, cancellationToken);
-}
-{% endhighlight %}
-
-<div class="alert alert-danger" markdown="1">
-<i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
-
-There are a lot of code examples out there that just silently return early when cancellation is requested. Please do not do this; it's a violation of the cancellation contract! When the responding code just returns early, the calling code cannot know whether its cancellation request was honored or ignored.
-</div>
-
-## Exception to the "90% Case"
-
-The "90% case" just takes a `CancellationToken` parameter and passes it down. There's one notable exception to this rule: you shouldn't pass down `CancellationToken`s to `Task.Run`.
-
-The reason is that (IMO) the semantics are confusing. A lot of developers pass a delegate and a `CancellationToken` to `Task.Run` and expect the delegate to be cancelled when the token is cancelled, but that's not what happens. The `CancellationToken` passed to `Task.Run` just cancels the *scheduling* of the delegate to the thread pool; once that delegate starts running (which happens pretty much immediately), that cancellation token is ignored.
-
-To put it in example code, this is what many developers write, incorrectly expecting that `// Do something` will be canceled after it starts:
-
-{% highlight csharp %}
-async Task DoSomethingAsync(CancellationToken cancellationToken)
-{
-    var test = await Task.Run(() =>
-    {
-        // Do something, ignoring cancellationToken
-    }, cancellationToken);
-    ...
-}
-{% endhighlight %}
-
-By never passing the `CancellationToken` to `Task.Run` (which is ignored anyway unless there's serious thread pool contention or the token is *already* cancelled), we make it clearer that the delegate *itself* has to respond to the token:
-
-{% highlight csharp %}
-async Task DoSomethingAsync(CancellationToken cancellationToken)
-{
-    var test = await Task.Run(() =>
-    {
-        // Do something
-        // The IDE is telling me cancellationToken is unused,
-        //    so this delegate code better use it.
-    });
-    ...
-}
-{% endhighlight %}
+Polling - implemented by periodic calls to `ThrowIfCancellationRequested` - is one way to respond to cancellation requests. This is the common solution for synchronous, CPU-bound methods, and can also be used in a few other scenarios. Most asynchronous code does not use polling; we'll cover that scenario next time!
