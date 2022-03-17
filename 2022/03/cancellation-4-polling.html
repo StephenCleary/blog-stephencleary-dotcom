@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Cancellation, Part 3: Detecting Cancellation</title>
+    <title>Cancellation, Part 4: Polling</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="After issuing a cancellation request, detect whether the operation completed normally or was cancelled." />
-    <link rel="canonical" href="https://blog.stephencleary.com/2022/03/cancellation-3-detecting-cancellation.html" />
+    <meta name="description" content="Responding to cancellation requests by using polling." />
+    <link rel="canonical" href="https://blog.stephencleary.com/2022/03/cancellation-4-polling.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -275,8 +275,8 @@ img.comment-author-profile-image {
 
   <header>
       <div class="page-header">
-          <h1>Cancellation, Part 3: Detecting Cancellation</h1>
-          <small><time datetime="2022-03-10">Mar 10, 2022</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
+          <h1>Cancellation, Part 4: Polling</h1>
+          <small><time datetime="2022-03-17">Mar 17, 2022</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
       </div>
   </header>
 
@@ -290,133 +290,92 @@ img.comment-author-profile-image {
   </header>
 
   <article>
-  <p>It’s not uncommon to want to detect whether the cancellation actually canceled anything or not. Cancellation is cooperative, and sometimes the code requesting cancellation needs to know whether that cancellation actually took place, or whether the operation just completed normally.</p>
+  <p>So far in this series, I’ve talked about how to request and detect cancellation, but for the next couple of posts I’ll be switching perspectives and discussing ways to respond to cancellation.</p>
 
-<p>As a reminder, the cancellation contract has a way to communicate that: methods that take <code>CancellationToken</code>, by convention, will throw <code>OperationCanceledException</code> when they are cancelled. This is true for all BCL methods, and should be true for your code as well. Later in this series we’ll cover the best ways for code to respond to cancellation requests, all of which satisfy this contract, i.e., throwing <code>OperationCanceledException</code> when they cancel.</p>
+<p>I know I’ve probably said this a half dozen times already, but it bears repeating: cancellation is cooperative. Your code will be provided a <code>CancellationToken</code>, and it must <em>do</em> something with that <code>CancellationToken</code> in order to be cancelable. Most of the time, this is just passing the <code>CancellationToken</code> down to lower-level APIs, but if you want cancelable code at the lowest level, there are a couple of other options. The one we’re looking at today is polling.</p>
 
-<h2 id="responding-to-cancellation">Responding to Cancellation</h2>
+<h2 id="how-to-poll">How to Poll</h2>
 
-<p>The most common scenario for detecting cancellation is to avoid taking the normal error path if the code has been cancelled. Usually, the <code>OperationCanceledException</code> is just ignored:</p>
+<p>The normal pattern is to periodically call <code>ThrowIfCancellationRequested</code>:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">TryDoSomethingAsync</span><span class="p">()</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">void</span> <span class="nf">DoSomething</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
 <span class="p">{</span>
-    <span class="k">using</span> <span class="nn">CancellationTokenSource</span> <span class="n">cts</span> <span class="p">=</span> <span class="k">new</span><span class="p">();</span>
-
-    <span class="p">..</span> <span class="c1">// Wire up something that may cancel the CTS.</span>
-
-    <span class="k">try</span>
+    <span class="k">while</span> <span class="p">(!</span><span class="n">done</span><span class="p">)</span>
     <span class="p">{</span>
-        <span class="k">await</span> <span class="nf">DoThingAsync</span><span class="p">(</span><span class="n">cts</span><span class="p">.</span><span class="n">Token</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span> <span class="n">when</span> <span class="p">(</span><span class="n">ex</span> <span class="k">is</span> <span class="n">not</span> <span class="n">OperationCanceledException</span><span class="p">)</span>
-    <span class="p">{</span>
-        <span class="p">..</span> <span class="c1">// Normal error handling; log, etc.</span>
+        <span class="n">cancellationToken</span><span class="p">.</span><span class="n">ThrowIfCancellationRequested</span><span class="p">();</span>
+        <span class="n">Thread</span><span class="p">.</span><span class="n">Sleep</span><span class="p">(</span><span class="m">200</span><span class="p">);</span> <span class="c1">// do synchronous work</span>
     <span class="p">}</span>
 <span class="p">}</span></code></pre></figure>
 
-<p>The code above will log any unexpected errors, but will ignore cancellation exceptions.</p>
+<p>The example code above checks the cancellation token <em>before</em> it starts work, which is a good general practice. It is possible that the token is already cancelled by the time your operation starts running.</p>
 
-<p>If your code must do something <em>different</em> when a cancellation happens, then you can handle that in a <code>catch</code> block. Well, first, I’d recommend taking a step back and asking yourself if you <em>really have</em> to do that, because it’s unusual and raises concerns about the code design, and it can be difficult to test as well. But if you must:</p>
+<p><code>ThrowIfCancellationRequested</code> will check to see if cancellation is requested, and if it is, it will throw <code>OperationCanceledException</code>. So it handles the proper reporting of cancellation for you; your code should just let that exception propagate out of the method.</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">()</span>
+<p>One question you’ll need to answer is how <em>often</em> to poll. There really isn’t a good answer for this; ideally you probably want to poll a few times a second, but when you’re talking about CPU-bound code running on potentially very different machines, it’s pretty much a guess at where in the code the <code>ThrowIfCancellationRequested</code> should go. Just put it in the best place(s), run some tests to see if cancellation feels responsive enough, and that’s the best you can do.</p>
+
+<h2 id="how-not-to-poll">How Not to Poll</h2>
+
+<p>There’s a sadly common antipattern regarding polling for cancellation, particularly in infinite loops: the “while not cancelled” loop, which looks like this:</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">void</span> <span class="nf">DoSomethingForever</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
 <span class="p">{</span>
-    <span class="k">using</span> <span class="nn">CancellationTokenSource</span> <span class="n">cts</span> <span class="p">=</span> <span class="k">new</span><span class="p">();</span>
-
-    <span class="p">..</span> <span class="c1">// Wire up something that may cancel the CTS.</span>
-
-    <span class="k">try</span>
+    <span class="n">Environment</span><span class="p">.</span><span class="n">FailFast</span><span class="p">(</span><span class="s">&quot;Bad code! Do not use!&quot;</span><span class="p">);</span>
+    <span class="k">while</span> <span class="p">(!</span><span class="n">cancellationToken</span><span class="p">.</span><span class="n">IsCanceled</span><span class="p">)</span>
     <span class="p">{</span>
-        <span class="k">await</span> <span class="nf">DoThingAsync</span><span class="p">(</span><span class="n">cts</span><span class="p">.</span><span class="n">Token</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="k">catch</span> <span class="p">(</span><span class="n">OperationCanceledException</span><span class="p">)</span>
-    <span class="p">{</span>
-        <span class="p">..</span> <span class="c1">// Special cancellation handling</span>
-    <span class="p">}</span>
-    <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span>
-    <span class="p">{</span>
-        <span class="p">..</span> <span class="c1">// Normal error handling; log, etc.</span>
+        <span class="n">Thread</span><span class="p">.</span><span class="n">Sleep</span><span class="p">(</span><span class="m">200</span><span class="p">);</span> <span class="c1">// do work</span>
     <span class="p">}</span>
 <span class="p">}</span></code></pre></figure>
 
-<h2 id="taskcanceledexception">TaskCanceledException</h2>
+<p>When this code runs, it will periodically check the cancellation token; but when cancellation is requested, the method just returns early. This method doesn’t satisfy the cancellation contract of throwing an exception on cancellation. This means that the calling code cannot know whether the method ran to completion or whether it was cancelled.</p>
 
-<p>You may notice that there is another cancellation exception type: <code>TaskCanceledException</code>. This is raised by some APIs instead of <code>OperationCanceledException</code>.</p>
+<p>The proper solution is to use <code>ThrowIfCancellationRequested</code>, even for infinite loops:</p>
 
-<p>As a general rule, I recommend you completely ignore <code>TaskCanceledException</code>. Some APIs just raise <code>OperationCanceledException</code>, even if they deal with cancelled tasks. And since <code>TaskCanceledException</code> derives from <code>OperationCanceledException</code>, your cancellation exception handler code can just use <code>OperationCanceledException</code>, ignore <code>TaskCanceledException</code> completely, and it will work everywhere.</p>
-
-<div class="alert alert-danger">
-  <p><i class="fa fa-exclamation-triangle fa-2x pull-left"></i></p>
-
-  <p>Do not catch <code>TaskCanceledException</code>. Catch <code>OperationCanceledException</code> instead.</p>
-</div>
-
-<h2 id="operationcanceledexceptioncancellationtoken">OperationCanceledException.CancellationToken</h2>
-
-<p>You may also notice that <code>OperationCanceledException</code> has a <code>CancellationToken</code> property. This is the token that caused the cancellation. That is, if it’s set; not all APIs set this value on the exceptions they throw.</p>
-
-<p>If your code needs to determine whether <em>it</em> cancels the operation or whether something <em>else</em> cancels the operation, then you might be tempted to use this property. But I recommend that your code ignore this property. When linked cancel tokens are used (a topic I’ll cover in a future post), it’s possible that the token in this property is not actually the root cause of the cancellation.</p>
-
-<p>More specifically:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">()</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">void</span> <span class="nf">DoSomethingForever</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
 <span class="p">{</span>
-    <span class="n">Environment</span><span class="p">.</span><span class="n">FailFast</span><span class="p">(</span><span class="s">&quot;Bad code; do not use!&quot;</span><span class="p">);</span>
-
-    <span class="k">using</span> <span class="nn">CancellationTokenSource</span> <span class="n">cts</span> <span class="p">=</span> <span class="k">new</span><span class="p">();</span>
-
-    <span class="p">..</span> <span class="c1">// Wire up something that may cancel the CTS.</span>
-
-    <span class="k">try</span>
+    <span class="k">while</span> <span class="p">(</span><span class="k">true</span><span class="p">)</span>
     <span class="p">{</span>
-        <span class="k">await</span> <span class="nf">DoThingAsync</span><span class="p">(</span><span class="n">cts</span><span class="p">.</span><span class="n">Token</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="k">catch</span> <span class="p">(</span><span class="n">OperationCanceledException</span> <span class="n">ex</span><span class="p">)</span> <span class="n">when</span> <span class="p">(</span><span class="n">ex</span><span class="p">.</span><span class="n">CancellationToken</span> <span class="p">==</span> <span class="n">cts</span><span class="p">.</span><span class="n">Token</span><span class="p">)</span>
-    <span class="p">{</span>
-        <span class="p">..</span> <span class="c1">// Special cancellation handling for &quot;our&quot; cancellation only.</span>
+        <span class="n">cancellationToken</span><span class="p">.</span><span class="n">ThrowIfCancellationRequested</span><span class="p">();</span>
+        <span class="n">Thread</span><span class="p">.</span><span class="n">Sleep</span><span class="p">(</span><span class="m">200</span><span class="p">);</span> <span class="c1">// do work</span>
     <span class="p">}</span>
 <span class="p">}</span></code></pre></figure>
 
-<p>The code above has a problem: depending on the implementation of <code>DoThingAsync</code>, it’s possible that <code>cts</code> will be cancelled, and that cancellation will cause <code>DoThingAsync</code> to throw <code>OperationCanceledException</code>, and for the token referenced by that exception to be <em>different</em> than the <code>cts</code>’s token.</p>
+<h2 id="when-to-poll">When to Poll</h2>
 
-<p>If you do need to do special processing for when this specific cancellation happens, I recommend something like this:</p>
+<p>Polling is an appropriate option for observing cancellation if your code is synchronous, such as CPU-bound code. Cancellation is often thought of as only a concern for asynchronous code; it was explicitly pointed out in the documentation for <code>async</code> when <code>async</code> was introduced. But cancellation in .NET predates <code>async</code>, and cancellation is just as applicable to synchronous code as to asynchronous code. In fact, <code>Parallel</code> loops and PLINQ each have built-in support for cancellation: <code>ParallelOptions.CancellationToken</code> for <code>Parallel</code>, and <code>WithCancellation</code> for PLINQ.</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">()</span>
+<p>That’s not to say you can’t use it for asynchronous code. It’s also appropriate to inject a <code>ThrowIfCancellationRequested</code> in asynchronous code, if you are not sure whether other methods will respect their cancellation tokens. Remember, taking a <code>CancellationToken</code> parameter means that the method <em>may</em> respect cancellation; it may also ignore the token and just ignore any cancellation requests. So your code may want to inject cancellation checks in-between “steps” of its operation. In this case, <code>ThrowIfCancellationRequested</code> isn’t so much “polling” as it is an “occasional check”:</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">DoComplexWorkAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
 <span class="p">{</span>
-    <span class="k">using</span> <span class="nn">CancellationTokenSource</span> <span class="n">cts</span> <span class="p">=</span> <span class="k">new</span><span class="p">();</span>
+    <span class="c1">// From testing, it appears that DoStep1Async and DoStep2Async do not always cancel when requested.</span>
+    <span class="n">cancellationToken</span><span class="p">.</span><span class="n">ThrowIfCancellationRequested</span><span class="p">();</span>
+    <span class="k">await</span> <span class="nf">DoStep1Async</span><span class="p">(</span><span class="n">cancellationToken</span><span class="p">);</span>
 
-    <span class="p">..</span> <span class="c1">// Wire up something that may cancel the CTS.</span>
-
-    <span class="k">try</span>
-    <span class="p">{</span>
-        <span class="k">await</span> <span class="nf">DoThingAsync</span><span class="p">(</span><span class="n">cts</span><span class="p">.</span><span class="n">Token</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="k">catch</span> <span class="p">(</span><span class="n">OperationCanceledException</span> <span class="n">ex</span><span class="p">)</span> <span class="n">when</span> <span class="p">(</span><span class="n">cts</span><span class="p">.</span><span class="n">IsCancellationRequested</span><span class="p">)</span>
-    <span class="p">{</span>
-        <span class="p">..</span> <span class="c1">// Special cancellation handling for &quot;our&quot; cancellation only.</span>
-    <span class="p">}</span>
+    <span class="n">cancellationToken</span><span class="p">.</span><span class="n">ThrowIfCancellationRequested</span><span class="p">();</span>
+    <span class="k">await</span> <span class="nf">DoStep2Async</span><span class="p">(</span><span class="n">cancellationToken</span><span class="p">);</span>
 <span class="p">}</span></code></pre></figure>
 
-<p><em>Technically,</em> the semantics of this are not “did my token cause the cancellation”, but rather “did cancellation happen and is my token requesting cancellation”. But in every case I’ve seen in the real world, the alternative semantics have been sufficient.</p>
+<p>While you <em>can</em> sprinkle calls to <code>ThrowIfCancellationRequested</code> throughout your code like this, I only do this when testing indicates that the code does not respect cancellation. In other words, I assume that <code>DoStep1Async</code> and <code>DoStep2Async</code> will respect cancellation until proven otherwise by testing.</p>
 
-<div class="alert alert-danger">
-  <p><i class="fa fa-exclamation-triangle fa-2x pull-left"></i></p>
+<p>It is also appropriate to use <code>ThrowIfCancellationRequested</code> at certain points where your code is about to do something expensive. Just adding a cancellation check there means your code won’t have to do the expensive work if it’s cancelled anyway.</p>
 
-  <p>Do not use <code>OperationCanceledException.CancellationToken</code>. It doesn’t work as expected.</p>
-</div>
+<h2 id="summary">Summary</h2>
+
+<p>Polling - implemented by periodic calls to <code>ThrowIfCancellationRequested</code> - is one way to respond to cancellation requests. This is the common solution for synchronous, CPU-bound methods, and can also be used in a few other scenarios. Most asynchronous code does not use polling; we’ll cover that scenario next time!</p>
 
   </article>
     
     <footer class="hidden-print">
         
             <ul class="pager">
-                <li class="previous"><a href="/2022/03/cancellation-2-requesting-cancellation.html" title="Cancellation, Part 2: Requesting Cancellation">&larr; Previous in Cancellation</a></li>
-                <li class="next"><a href="/2022/03/cancellation-4-polling.html" title="Cancellation, Part 4: Polling">Next in Cancellation &rarr;</a></li>
+                <li class="previous"><a href="/2022/03/cancellation-3-detecting-cancellation.html" title="Cancellation, Part 3: Detecting Cancellation">&larr; Previous in Cancellation</a></li>
+                
             </ul>
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2022/03/cancellation-2-requesting-cancellation.html" title="Cancellation, Part 2: Requesting Cancellation">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2022/03/cancellation-4-polling.html" title="Cancellation, Part 4: Polling">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2022/03/cancellation-3-detecting-cancellation.html" title="Cancellation, Part 3: Detecting Cancellation">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="comments"></div>
@@ -431,8 +390,8 @@ img.comment-author-profile-image {
                         <ul class="nav nav-pills nav-stacked">
                                     <li class="sidenavitem"><a href="/2022/02/cancellation-1-overview.html">Overview</a></li>
                                     <li class="sidenavitem"><a href="/2022/03/cancellation-2-requesting-cancellation.html">Requesting Cancellation</a></li>
-                                    <li class="active sidenavitem"><a href="/2022/03/cancellation-3-detecting-cancellation.html">Detecting Cancellation</a></li>
-                                    <li class="sidenavitem"><a href="/2022/03/cancellation-4-polling.html">Polling</a></li>
+                                    <li class="sidenavitem"><a href="/2022/03/cancellation-3-detecting-cancellation.html">Detecting Cancellation</a></li>
+                                    <li class="active sidenavitem"><a href="/2022/03/cancellation-4-polling.html">Polling</a></li>
                         </ul>
                     </div>
                 </div>
@@ -586,7 +545,7 @@ img.comment-author-profile-image {
 
 <script type="text/javascript">
 
-var pageUrl = "https://blog.stephencleary.com" + "/2022/03/cancellation-3-detecting-cancellation.html";
+var pageUrl = "https://blog.stephencleary.com" + "/2022/03/cancellation-4-polling.html";
 
 // (unnecessary) 1) If the URL starts with http://, replace with https://
 
