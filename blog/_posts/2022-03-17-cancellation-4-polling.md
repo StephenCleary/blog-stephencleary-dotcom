@@ -39,7 +39,7 @@ There's a sadly common antipattern regarding polling for cancellation, particula
 void DoSomethingForever(CancellationToken cancellationToken)
 {
     Environment.FailFast("Bad code! Do not use!");
-    while (!cancellationToken.IsCanceled)
+    while (!cancellationToken.IsCancellationRequested)
     {
         Thread.Sleep(200); // do work
     }
