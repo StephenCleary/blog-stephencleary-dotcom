@@ -320,7 +320,7 @@ img.comment-author-profile-image {
 <figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">void</span> <span class="nf">DoSomethingForever</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">Environment</span><span class="p">.</span><span class="n">FailFast</span><span class="p">(</span><span class="s">&quot;Bad code! Do not use!&quot;</span><span class="p">);</span>
-    <span class="k">while</span> <span class="p">(!</span><span class="n">cancellationToken</span><span class="p">.</span><span class="n">IsCanceled</span><span class="p">)</span>
+    <span class="k">while</span> <span class="p">(!</span><span class="n">cancellationToken</span><span class="p">.</span><span class="n">IsCancellationRequested</span><span class="p">)</span>
     <span class="p">{</span>
         <span class="n">Thread</span><span class="p">.</span><span class="n">Sleep</span><span class="p">(</span><span class="m">200</span><span class="p">);</span> <span class="c1">// do work</span>
     <span class="p">}</span>
