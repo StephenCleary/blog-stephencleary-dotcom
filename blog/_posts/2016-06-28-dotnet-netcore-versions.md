@@ -119,9 +119,9 @@ Good luck!
 
 [All about netstandard](https://github.com/dotnet/corefx/blob/master/Documentation/architecture/net-platform-standard.md)
 
-[Packages, Metapackages, and Frameworks](https://docs.microsoft.com/en-us/dotnet/articles/core/packages)
+[Packages, Metapackages, and Frameworks](https://docs.microsoft.com/en-us/dotnet/articles/core/packages?WT.mc_id=DT-MVP-5000058)
 
-[Dependency Trimming](https://docs.microsoft.com/en-us/dotnet/articles/core/deploying/reducing-dependencies)
+[Dependency Trimming](https://docs.microsoft.com/en-us/dotnet/articles/core/deploying/reducing-dependencies?WT.mc_id=DT-MVP-5000058)
 
 ### Upgrading
 
@@ -137,7 +137,7 @@ Good luck!
 
 [[ASP.NET] Migrating from ASP.NET 5 RC1 to ASP.NET Core 1.0](https://aspnet-aspnet.readthedocs-hosted.com/en/latest/migration/rc1-to-rtm.html)
 
-[Migrating from DNX](https://docs.microsoft.com/en-us/dotnet/articles/core/migrating-from-dnx)
+[Migrating from DNX](https://docs.microsoft.com/en-us/dotnet/articles/core/migrating-from-dnx?WT.mc_id=DT-MVP-5000058)
 
 ## Uninstalling Old versions
 

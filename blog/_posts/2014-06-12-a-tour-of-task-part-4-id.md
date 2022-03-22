@@ -15,7 +15,7 @@ I've talked a bit about [task identifiers before]({% post_url 2013-03-21-a-few-w
 
 First, in spite of what the documentation says, the identifiers are not actually _unique_. They are pretty close, but not actually unique. The identifiers are generated on-demand, and will never be zero.
 
-The task identifiers are useful if you're [reading the ETW events](http://msdn.microsoft.com/en-us/library/ee517329.aspx) or [debugging with the Tasks window](http://msdn.microsoft.com/en-us/library/dd998369.aspx), but they don't really have a use case outside of diagnostics and debugging.
+The task identifiers are useful if you're [reading the ETW events](http://msdn.microsoft.com/en-us/library/ee517329.aspx?WT.mc_id=DT-MVP-5000058) or [debugging with the Tasks window](http://msdn.microsoft.com/en-us/library/dd998369.aspx?WT.mc_id=DT-MVP-5000058), but they don't really have a use case outside of diagnostics and debugging.
 
 Sometimes developers try to use the task identifiers as keys in a collection, to associate "extra data" with a task. This is an incorrect approach; usually what they're looking for is an [`async` local]({% post_url 2013-04-04-implicit-async-context-asynclocal %}).
 

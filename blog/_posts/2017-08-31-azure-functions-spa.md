@@ -64,7 +64,7 @@ The `appResources` proxy will forward all requests starting with `/static` to yo
 
 The `app` proxy will forward all remaining requests to the SPA.
 
-A brief note on priorities: Azure Functions Proxies use the same [route ordering rules as WebAPI 2 attribute routing](https://docs.microsoft.com/en-us/aspnet/web-api/overview/web-api-routing-and-actions/attribute-routing-in-web-api-2#route-order). So the `api` and `appResources` proxies are always evaluated before the `app` proxy because they start with constant path segment prefixes (the `api` proxy starts with an `/api/` path segment, and the `appResources` proxy starts with a `/static/` path segment). This way, the `app` proxy doesn't intercept `/api` and `/static` requests.
+A brief note on priorities: Azure Functions Proxies use the same [route ordering rules as WebAPI 2 attribute routing](https://docs.microsoft.com/en-us/aspnet/web-api/overview/web-api-routing-and-actions/attribute-routing-in-web-api-2#route-order?WT.mc_id=DT-MVP-5000058). So the `api` and `appResources` proxies are always evaluated before the `app` proxy because they start with constant path segment prefixes (the `api` proxy starts with an `/api/` path segment, and the `appResources` proxy starts with a `/static/` path segment). This way, the `app` proxy doesn't intercept `/api` and `/static` requests.
 
 ## Conclusion
 

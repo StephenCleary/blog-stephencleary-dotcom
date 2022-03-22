@@ -12,4 +12,4 @@ Also, my goal for this talk is to have it be very heavily influenced by Q&amp;A 
 
 If you feel this session would be helpful for your colleagues (or just want a refresher yourself), you can [register online](http://aka.ms/mvpvirtualconference2015). It's entirely free!
 
-**Update, 2015-06-02:** Video is [now available](http://channel9.msdn.com/Events/MVP-Virtual-Conference/MVP-Virtual-Conference-Americas-2015/Dev2-Surviving-in-an-Async-First-Development-World).
+**Update, 2015-06-02:** Video is [now available](http://channel9.msdn.com/Events/MVP-Virtual-Conference/MVP-Virtual-Conference-Americas-2015/Dev2-Surviving-in-an-Async-First-Development-World?WT.mc_id=DT-MVP-5000058).

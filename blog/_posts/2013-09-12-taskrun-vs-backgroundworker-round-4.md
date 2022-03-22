@@ -61,7 +61,7 @@ Another minor drawback is how cancellation is observed in `RunWorkerCompleted`; 
 
 ### Task.Run
 
-`Task.Run` uses the same [cooperative cancellation model](http://msdn.microsoft.com/en-us/library/dd997364.aspx) used by the rest of the .NET 4.0 framework. We note once again that `BackgroundWorker` was passed over when other types were updated to use `CancellationToken` - maybe that should tell us something...
+`Task.Run` uses the same [cooperative cancellation model](http://msdn.microsoft.com/en-us/library/dd997364.aspx?WT.mc_id=DT-MVP-5000058) used by the rest of the .NET 4.0 framework. We note once again that `BackgroundWorker` was passed over when other types were updated to use `CancellationToken` - maybe that should tell us something...
 
 Since `Task.Run` uses the same cancellation support as every other modern API, it's much easier to remember. Also, it's easier to implement:
 

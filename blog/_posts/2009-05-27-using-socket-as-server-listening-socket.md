@@ -12,7 +12,7 @@ One result of this architecture is that the listening socket never actually perf
 The listening socket usually proceeds through the operations below.
 
 1. **Construct**. Socket construction is identical for all TCP/IP sockets; see [Socket Operations]({% post_url 2009-05-05-socket-operations %}) for details.
-1. **Bind**. Binding for listening sockets is usually done only on the port, setting the IP address parameter to IPAddress.Any ([MSDN](http://msdn.microsoft.com/en-us/library/system.net.ipaddress.any.aspx)). A Bind failure is usually due to another process already bound to that port (possibly another instance of the server process).
+1. **Bind**. Binding for listening sockets is usually done only on the port, setting the IP address parameter to IPAddress.Any ([MSDN](http://msdn.microsoft.com/en-us/library/system.net.ipaddress.any.aspx?WT.mc_id=DT-MVP-5000058)). A Bind failure is usually due to another process already bound to that port (possibly another instance of the server process).
 1. **Listen**. The listening socket actually begins listening at this point. It is not yet accepting connections, but the OS may accept connections on its behalf.  
 
 _The confusing "backlog" parameter_. The "backlog" parameter to Socket.Listen is how many connections the OS may accept on behalf of the application. This is not the total number of active connections; it is only how many connections will be established if the application "gets behind". Once connections are Accepted, they move out of the backlog queue and no longer "count" against the backlog limit.  

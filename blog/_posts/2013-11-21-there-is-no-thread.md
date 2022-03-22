@@ -26,7 +26,7 @@ We already know that the UI thread is not blocked during the `await`. Question: 
 
 Take my hand. We shall dive deep.
 
-First stop: the library (e.g., entering the BCL code). Let us assume that `WriteAsync` is implemented using the [standard P/Invoke asynchronous I/O system in .NET](http://msdn.microsoft.com/en-us/library/system.threading.overlapped.aspx), which is based on overlapped I/O. So, this starts a Win32 overlapped I/O operation on the device's underlying `HANDLE`.
+First stop: the library (e.g., entering the BCL code). Let us assume that `WriteAsync` is implemented using the [standard P/Invoke asynchronous I/O system in .NET](http://msdn.microsoft.com/en-us/library/system.threading.overlapped.aspx?WT.mc_id=DT-MVP-5000058), which is based on overlapped I/O. So, this starts a Win32 overlapped I/O operation on the device's underlying `HANDLE`.
 
 The OS then turns to the device driver and asks it to begin the write operation. It does so by first constructing an object that represents the write request; this is called an I/O Request Packet (IRP).
 
@@ -61,7 +61,7 @@ When the CPU is done being bothered by interrupts, it will get around to its DPC
 
 The DPC takes the IRP representing the write request and marks it as "complete". However, that "completion" status only exists at the OS level; the process has its own memory space that must be notified. So the OS queues a special-kernel-mode Asynchronous Procedure Call (APC) to the thread owning the `HANDLE`.
 
-Since the library/BCL is using the standard P/Invoke overlapped I/O system, it has already [registered the handle](http://msdn.microsoft.com/en-us/library/system.threading.threadpool.bindhandle.aspx) with the I/O Completion Port (IOCP), which is part of the thread pool. So an I/O thread pool thread is borrowed briefly to execute the APC, which notifies the task that it's complete.
+Since the library/BCL is using the standard P/Invoke overlapped I/O system, it has already [registered the handle](http://msdn.microsoft.com/en-us/library/system.threading.threadpool.bindhandle.aspx?WT.mc_id=DT-MVP-5000058) with the I/O Completion Port (IOCP), which is part of the thread pool. So an I/O thread pool thread is borrowed briefly to execute the APC, which notifies the task that it's complete.
 
 The task has captured the UI context, so it does not resume the `async` method directly on the thread pool thread. Instead, it queues the continuation of that method onto the UI context, and the UI thread will resume executing that method when it gets around to it.
 

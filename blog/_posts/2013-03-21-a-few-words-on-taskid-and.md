@@ -2,7 +2,7 @@
 layout: post
 title: "A Few Words on Task.Id (and TaskScheduler.Id)"
 ---
-There are some `Id` properties in TPL types (notably `Task.Id` and `TaskScheduler.Id`); these "identifiers" follow the same pattern. I believe their primary use case is for [ETW events](http://msdn.microsoft.com/en-us/library/ee517329.aspx), though they may have other uses.
+There are some `Id` properties in TPL types (notably `Task.Id` and `TaskScheduler.Id`); these "identifiers" follow the same pattern. I believe their primary use case is for [ETW events](http://msdn.microsoft.com/en-us/library/ee517329.aspx?WT.mc_id=DT-MVP-5000058), though they may have other uses.
 
 ## Generated On-Demand
 
@@ -10,7 +10,7 @@ Identifiers are generated on-demand. So if you don't read the properties and don
 
 ## Invalid/Unassigned Value
 
-The value `0` is never used. This is technically undocumented, but it's pretty safe to assume. The ETW events all produce plain `int`s for task and task scheduler identifiers, and [some ETW events](http://msdn.microsoft.com/en-us/library/ee517329.aspx) need a value for "none" (e.g., `OriginatingTaskId` needs to support a value meaning "there was no originating task").
+The value `0` is never used. This is technically undocumented, but it's pretty safe to assume. The ETW events all produce plain `int`s for task and task scheduler identifiers, and [some ETW events](http://msdn.microsoft.com/en-us/library/ee517329.aspx?WT.mc_id=DT-MVP-5000058) need a value for "none" (e.g., `OriginatingTaskId` needs to support a value meaning "there was no originating task").
 
 This means you'll never actually see a zero value as an identifier. A task (or task scheduler) can internally have a zero identifier (meaning "unassigned") but will generate an actual identifier if that value is ever read.
 

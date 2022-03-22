@@ -15,11 +15,11 @@ Azure caching is a form of distributed cache, so it uses serialization to store 
 </dataCacheClients>
 {% endhighlight %}
 
-Most of the settings are documented [on MSDN](http://msdn.microsoft.com/en-us/library/windowsazure/jj658973.aspx).
+Most of the settings are documented [on MSDN](http://msdn.microsoft.com/en-us/library/windowsazure/jj658973.aspx?WT.mc_id=DT-MVP-5000058).
 
-With the default settings like this, Azure Caching will use [`NetDataContractSerializer`](http://msdn.microsoft.com/en-us/library/system.runtime.serialization.netdatacontractserializer.aspx). As we'll see, this is not exactly the most efficient setting.
+With the default settings like this, Azure Caching will use [`NetDataContractSerializer`](http://msdn.microsoft.com/en-us/library/system.runtime.serialization.netdatacontractserializer.aspx?WT.mc_id=DT-MVP-5000058). As we'll see, this is not exactly the most efficient setting.
 
-First, let's consider alternative serializers. You can add a `serializationProperties` element to your config and specify [`BinaryFormatter`](http://msdn.microsoft.com/en-us/library/system.runtime.serialization.formatters.binary.binaryformatter.aspx) as such:
+First, let's consider alternative serializers. You can add a `serializationProperties` element to your config and specify [`BinaryFormatter`](http://msdn.microsoft.com/en-us/library/system.runtime.serialization.formatters.binary.binaryformatter.aspx?WT.mc_id=DT-MVP-5000058) as such:
 
 {% highlight xml %}
 <dataCacheClients>

@@ -22,7 +22,7 @@ One limitation with Virtual PC is that it can only handle 127 GB hard drives. In
 
 The plan at this point was to virtualize each machine to a different version of Virtual PC (running on different OSes and hardware). We'll see how well this worked in a moment, but first I'll mention the tool which kicked off this whole adventure.
 
-Systems Internals has a great tool called [disk2vhd](http://technet.microsoft.com/en-us/sysinternals/ee656415), which can create a virtual disk from a physical disk - even storing the virtual disk image on the physical disk it's imaging, while the physical disk is running the OS running disk2vhd. If you think about it, that's pretty cool.
+Systems Internals has a great tool called [disk2vhd](http://technet.microsoft.com/en-us/sysinternals/ee656415?WT.mc_id=DT-MVP-5000058), which can create a virtual disk from a physical disk - even storing the virtual disk image on the physical disk it's imaging, while the physical disk is running the OS running disk2vhd. If you think about it, that's pretty cool.
 
 Disk2vhd can take quite a while (i.e., 8-10 hours) to run, so I tried to make my plan where it would run overnight. Once I have the machines in a VHD image, I should be able to create a Virtual PC machine using that for a hard drive. VirtualBox also supports VHD, so my fallback would be ready just in case.
 
@@ -81,7 +81,7 @@ The project was completed, though it took longer than I expected. I'll find out 
 Lessons learned:
 
 - You cannot virtualize an OEM install. You have to change it to a Retail install first, using the [Product Key Update Tool](http://go.microsoft.com/fwlink/?LinkId=204141).
-- [Disk2vhd](http://technet.microsoft.com/en-us/sysinternals/ee656415) can target a vhd image over the network.
+- [Disk2vhd](http://technet.microsoft.com/en-us/sysinternals/ee656415?WT.mc_id=DT-MVP-5000058) can target a vhd image over the network.
 - You must be physically present to set up the virtual machines, at least until the point that Integration Services are installed.
 - If you're having problems getting the virtual machine on the network, try using NAT.
 - Some Integration Components features do not work if the guest is XP Home.

@@ -2,7 +2,7 @@
 layout: post
 title: "The Async CTP \"Why Do the Keywords Work THAT Way\" Unofficial FAQ"
 ---
-There's a lot of interest in the [Async CTP](http://msdn.microsoft.com/en-US/vstudio/async), with good reason. The Async CTP will make asynchronous programming much, much easier than it has ever been. It's somewhat less powerful but much easier to learn than [Rx](http://msdn.microsoft.com/en-us/data/gg577609).
+There's a lot of interest in the [Async CTP](http://msdn.microsoft.com/en-US/vstudio/async?WT.mc_id=DT-MVP-5000058), with good reason. The Async CTP will make asynchronous programming much, much easier than it has ever been. It's somewhat less powerful but much easier to learn than [Rx](http://msdn.microsoft.com/en-us/data/gg577609?WT.mc_id=DT-MVP-5000058).
 
 The Async CTP introduces two new keywords, **async** and **await**. Asynchronous methods (or lambda expressions) must return **void**, **Task**, or **Task\<TResult>**.
 
@@ -36,11 +36,11 @@ public async int GetValue()
 
 Consider: How will the method signature look to callers? Async methods that return a value must have an actual result type of **Task\<TResult>**. So **GetValue** will show up in IntelliSense as returning **Task\<TResult>** (this would also be true for the object browser, Reflector, etc).
 
-Inferring the return type [was considered](http://social.msdn.microsoft.com/Forums/en-US/async/thread/0ee0af6a-3034-4ac3-aa82-cb6bd62a9ab9#8d1826a5-d603-4b74-8c64-2a9b32d6af24) during the initial design, but the team concluded that the keeping the "disconnect" within the **async** method was better than spreading the "disconnect" throughout the code base. The "disconnect" is still there, but it's smaller than it could be. The consensus is that a consistent method signature is preferred.
+Inferring the return type [was considered](http://social.msdn.microsoft.com/Forums/en-US/async/thread/0ee0af6a-3034-4ac3-aa82-cb6bd62a9ab9#8d1826a5-d603-4b74-8c64-2a9b32d6af24?WT.mc_id=DT-MVP-5000058) during the initial design, but the team concluded that the keeping the "disconnect" within the **async** method was better than spreading the "disconnect" throughout the code base. The "disconnect" is still there, but it's smaller than it could be. The consensus is that a consistent method signature is preferred.
 
 Consider: There is a difference between **async void** and **async Task**.
 
-An **async Task** method is just like any other asynchronous operation, only without a return value. An **async void** method acts as a "top-level" asynchronous operation. An **async Task** method may be composed into other async methods using **await**. An **async void** method may be used as an event handler. An **async void** method also has another important property: in an ASP.NET context, it informs the web server that the page is not completed until it returns (see [my MSDN article](http://msdn.microsoft.com/en-us/magazine/gg598924.aspx) for more information on how this works).
+An **async Task** method is just like any other asynchronous operation, only without a return value. An **async void** method acts as a "top-level" asynchronous operation. An **async Task** method may be composed into other async methods using **await**. An **async void** method may be used as an event handler. An **async void** method also has another important property: in an ASP.NET context, it informs the web server that the page is not completed until it returns (see [my MSDN article](http://msdn.microsoft.com/en-us/magazine/gg598924.aspx?WT.mc_id=DT-MVP-5000058) for more information on how this works).
 
 Inferring the return type would remove the distinction between **async void** and **async Task**; either all async methods would be **async void** (preventing composability), or they would all be **async Task** (preventing them from being event handlers, and requiring an alternative solution for ASP.NET support).
 
@@ -60,7 +60,7 @@ public async Task<int> GetValue()
 
 Consider: Converting large amounts of code from synchronous to asynchronous.
 
-The **async return** keyword [was also considered](http://social.msdn.microsoft.com/Forums/en-US/async/thread/75493675-4a39-4958-a493-ad8a96f8a19d), but it wasn't compelling enough. This is particularly true when converting a lot of synchronous code to asynchronous code (which will be common over the next few years); forcing people to add **async** to every **return** statement just seemed like "needless busy-work." It's easier to get used to the "disconnect".
+The **async return** keyword [was also considered](http://social.msdn.microsoft.com/Forums/en-US/async/thread/75493675-4a39-4958-a493-ad8a96f8a19d?WT.mc_id=DT-MVP-5000058), but it wasn't compelling enough. This is particularly true when converting a lot of synchronous code to asynchronous code (which will be common over the next few years); forcing people to add **async** to every **return** statement just seemed like "needless busy-work." It's easier to get used to the "disconnect".
 
 ## Inferring "async"
 
@@ -81,7 +81,7 @@ public Task<int> GetValue()
 
 Consider: Backwards compatibility and code readability.
 
-Eric Lippert has the [definitive post](https://docs.microsoft.com/en-us/archive/blogs/ericlippert/asynchrony-in-c-5-part-six-whither-async) on the subject. It's also been discussed in [blog comments]https://docs.microsoft.com/en-us/archive/blogs/ericlippert/asynchronous-programming-in-c-5-0-part-two-whence-await), [Channel9](http://channel9.msdn.com/Forums/Coffeehouse/Why-is-the-async-keyword-needed), [forums](http://social.msdn.microsoft.com/Forums/en-US/async/thread/75493675-4a39-4958-a493-ad8a96f8a19d), and [Stack Overflow](http://stackoverflow.com/questions/9225748/why-does-the-async-keyword-exist).
+Eric Lippert has the [definitive post](https://docs.microsoft.com/en-us/archive/blogs/ericlippert/asynchrony-in-c-5-part-six-whither-async?WT.mc_id=DT-MVP-5000058) on the subject. It's also been discussed in [blog comments]https://docs.microsoft.com/en-us/archive/blogs/ericlippert/asynchronous-programming-in-c-5-0-part-two-whence-await?WT.mc_id=DT-MVP-5000058), [Channel9](http://channel9.msdn.com/Forums/Coffeehouse/Why-is-the-async-keyword-needed?WT.mc_id=DT-MVP-5000058), [forums](http://social.msdn.microsoft.com/Forums/en-US/async/thread/75493675-4a39-4958-a493-ad8a96f8a19d?WT.mc_id=DT-MVP-5000058), and [Stack Overflow](http://stackoverflow.com/questions/9225748/why-does-the-async-keyword-exist).
 
 To summarize, a single-word **await** keyword would be too big of a breaking change. The choice was between a multi-word await (e.g., **await for**) or a keyword on the method (**async**) that would enable the **await** keyword just within that method. Explicitly marking methods **async** is easier for both humans and computers to parse, so they decided to go with the **async**/**await** pair.
 

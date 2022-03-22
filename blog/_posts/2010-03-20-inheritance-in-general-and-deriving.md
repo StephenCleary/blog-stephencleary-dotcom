@@ -10,7 +10,7 @@ This quickly becomes complex for all but the simplest classes, which has led to 
 
 Most classes are not designed for inheritance. Even for classes that _are_ designed for inheritance, a common problem surfaces: only the public API is sufficiently documented. Since this is the API used by the vast majority of developers, the protected API is too often neglected.
 
-I ran into an example of this today, when writing up a [general CRC-32 implementation](http://nitokitchensink.codeplex.com/SourceControl/changeset/view/48149#1012328). Naturally, I wanted to derive from [HashAlgorithm](http://msdn.microsoft.com/en-us/library/system.security.cryptography.hashalgorithm.aspx), but the MSDN documentation is completely lacking. After surfing around a few other implementations, I kept seeing a lot of the same mistakes.
+I ran into an example of this today, when writing up a [general CRC-32 implementation](http://nitokitchensink.codeplex.com/SourceControl/changeset/view/48149#1012328). Naturally, I wanted to derive from [HashAlgorithm](http://msdn.microsoft.com/en-us/library/system.security.cryptography.hashalgorithm.aspx?WT.mc_id=DT-MVP-5000058), but the MSDN documentation is completely lacking. After surfing around a few other implementations, I kept seeing a lot of the same mistakes.
 
 Plunging into Reflector, I dissected HashAlgorithm once and for all, and here's what _should_ be on MSDN under "Notes to Inheritors":
 

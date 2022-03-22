@@ -37,7 +37,7 @@ bool TrySetCanceled();
 
 ## Task.Factory.FromAsync
 
-The `FromAsync` methods are used to create [TAP wrappers for APM APIs](https://msdn.microsoft.com/en-us/library/hh873178%28v=vs.110%29.aspx#ApmToTap). A [TAP API](https://msdn.microsoft.com/en-us/library/hh873175(v=vs.110).aspx) is one that returns a task ready for use with `await`. An [APM API](https://msdn.microsoft.com/en-us/library/ms228963(v=vs.110).aspx) is an older style of asynchronous programming that uses `Begin`/`End` methods pairs and an `IAsyncResult` object that represents the asynchronous operation.
+The `FromAsync` methods are used to create [TAP wrappers for APM APIs](https://msdn.microsoft.com/en-us/library/hh873178%28v=vs.110%29.aspx#ApmToTap?WT.mc_id=DT-MVP-5000058). A [TAP API](https://msdn.microsoft.com/en-us/library/hh873175(v=vs.110).aspx?WT.mc_id=DT-MVP-5000058) is one that returns a task ready for use with `await`. An [APM API](https://msdn.microsoft.com/en-us/library/ms228963(v=vs.110).aspx?WT.mc_id=DT-MVP-5000058) is an older style of asynchronous programming that uses `Begin`/`End` methods pairs and an `IAsyncResult` object that represents the asynchronous operation.
 
 `FromAsync` has two different sets of overloads. The first set is the :
 
@@ -70,5 +70,5 @@ Task<TResult> FromAsync<TResult>(IAsyncResult, Func<IAsyncResult, TResult>);
 Task<TResult> FromAsync<TResult>(IAsyncResult, Func<IAsyncResult, TResult>, TaskCreationOptions);
 Task<TResult> FromAsync<TResult>(IAsyncResult, Func<IAsyncResult, TResult>, TaskCreationOptions, TaskScheduler);
 
-// https://devblogs.microsoft.com/pfxteam/tasks-and-the-apm-pattern/
-// https://devblogs.microsoft.com/pfxteam/fromasyncasyncresult-vs-fromasyncbeginmethod/
+// https://devblogs.microsoft.com/pfxteam/tasks-and-the-apm-pattern/?WT.mc_id=DT-MVP-5000058
+// https://devblogs.microsoft.com/pfxteam/fromasyncasyncresult-vs-fromasyncbeginmethod/?WT.mc_id=DT-MVP-5000058

@@ -28,7 +28,7 @@ It's more efficient to elide `async` and `await`. By not including these keyword
 
 However, it's important to point out that each of these gains are absolutely minimal. There's one fewer type, a handful of small objects saved from GC, and only a few CPU instructions skipped. The vast majority of the time, `async` is dealing with I/O, which completely dwarfs any performance gains. In almost every scenario, eliding `async` and `await` doesn't make any difference to the running time of your application.
 
-For a thorough overview of the efficiency benefits of eliding `async` and `await`, see Stephen Toub's classic video [The Zen of Async](https://channel9.msdn.com/Events/Build/BUILD2011/TOOL-829T) or [his MSDN article on the subject](https://msdn.microsoft.com/en-us/magazine/hh456402.aspx).
+For a thorough overview of the efficiency benefits of eliding `async` and `await`, see Stephen Toub's classic video [The Zen of Async](https://channel9.msdn.com/Events/Build/BUILD2011/TOOL-829T?WT.mc_id=DT-MVP-5000058) or [his MSDN article on the subject](https://msdn.microsoft.com/en-us/magazine/hh456402.aspx?WT.mc_id=DT-MVP-5000058).
 
 When I started writing about `async`, I would always recommend eliding `async` and `await`, but I've modified that stand in recent years. There are just too many pitfalls to recommend eliding as a default decision. These days I recommend keeping the `async` and `await` keywords around except for a few scenarios, because of the drawbacks described in the rest of this blog post.
 

@@ -4,7 +4,7 @@ title: "Async Console Apps on .NET CoreCLR"
 description: "Asynchronous console application entry points are supported on CoreCLR."
 ---
 
-I finally had a chance this week to play around a bit with [Visual Studio 2015 CTP 6](https://www.visualstudio.com/en-us/downloads/visual-studio-2015-ctp-vs). I hardly ever have the time to use CTP bits, but with [all the talk about CoreCLR](https://devblogs.microsoft.com/dotnet/introducing-net-core/) I just *had* to try it out. :)
+I finally had a chance this week to play around a bit with [Visual Studio 2015 CTP 6](https://www.visualstudio.com/en-us/downloads/visual-studio-2015-ctp-vs). I hardly ever have the time to use CTP bits, but with [all the talk about CoreCLR](https://devblogs.microsoft.com/dotnet/introducing-net-core/?WT.mc_id=DT-MVP-5000058) I just *had* to try it out. :)
 
 <div class="alert alert-danger" markdown="1">
 <i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
@@ -12,7 +12,7 @@ I finally had a chance this week to play around a bit with [Visual Studio 2015 C
 This entire post is about prerelease technologies. Everything is subject to change.
 </div>
 
-In [one of the recent articles about CoreCLR](https://msdn.microsoft.com/en-us/magazine/dn913182.aspx), Daniel Roth mentions in passing "You can even make the main entry point asynchronous and return a Task."
+In [one of the recent articles about CoreCLR](https://msdn.microsoft.com/en-us/magazine/dn913182.aspx?WT.mc_id=DT-MVP-5000058), Daniel Roth mentions in passing "You can even make the main entry point asynchronous and return a Task."
 
 Wait, what?
 
@@ -232,7 +232,7 @@ Incidentally, I provided this technique as a [Stack Overflow answer](http://stac
 
 ## Future Speculations
 
-Currently, the "console application" we're building is actually just a dll that's hosted by a K runtime. I *expect* that when VS2015 gets to RTM, they'll have a real executable popping out of the build. They have [already started on something like that](https://devblogs.microsoft.com/dotnet/coreclr-is-now-open-source/).
+Currently, the "console application" we're building is actually just a dll that's hosted by a K runtime. I *expect* that when VS2015 gets to RTM, they'll have a real executable popping out of the build. They have [already started on something like that](https://devblogs.microsoft.com/dotnet/coreclr-is-now-open-source/?WT.mc_id=DT-MVP-5000058).
 
 The old Console application type will undoubtedly stick around, for backwards compatibility at least. So, I'd expect VS2015 will have two Console application types: a legacy one that runs directly on the .NET Desktop Framework, and a new one that run on the K runtime (which in turn can run on either .NET Core CLR or .NET Desktop CLR). It's the K runtime that gives us the power of an asynchronous entry point, so I'd expect only the new console application type would be able to have an `async Main`.
 

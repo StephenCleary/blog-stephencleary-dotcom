@@ -16,6 +16,8 @@ Your code can register a callback with any `CancellationToken` by calling `Cance
 
 ### A Race Condition
 
+## Cleanup Is Important!
+
 
 
 The normal pattern is to periodically call `ThrowIfCancellationRequested`:

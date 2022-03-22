@@ -2,7 +2,7 @@
 layout: post
 title: "SynchronizationContext Properties Summary"
 ---
-A few of my posts recently have dealt with surprises that I've found when interacting with different implementations of [SynchronizationContext](http://msdn.microsoft.com/en-us/library/system.threading.synchronizationcontext.aspx). This post is a summary of my findings.
+A few of my posts recently have dealt with surprises that I've found when interacting with different implementations of [SynchronizationContext](http://msdn.microsoft.com/en-us/library/system.threading.synchronizationcontext.aspx?WT.mc_id=DT-MVP-5000058). This post is a summary of my findings.
 
 <div class="panel panel-default" markdown="1">
   <div class="panel-heading">SynchronizationContext Implementation Properties</div>
@@ -29,13 +29,13 @@ A few of my posts recently have dealt with surprises that I've found when intera
 
 ## SynchronizationContext Implementations
 
-The "Windows Forms" entry refers to the [System.Windows.Forms.WindowsFormsSynchronizationContext](http://msdn.microsoft.com/en-us/library/system.windows.forms.windowsformssynchronizationcontext.aspx), which is used by the GUI thread(s) in Windows Forms applications. Other threads in the same application may use different SynchronizationContext implementations.
+The "Windows Forms" entry refers to the [System.Windows.Forms.WindowsFormsSynchronizationContext](http://msdn.microsoft.com/en-us/library/system.windows.forms.windowsformssynchronizationcontext.aspx?WT.mc_id=DT-MVP-5000058), which is used by the GUI thread(s) in Windows Forms applications. Other threads in the same application may use different SynchronizationContext implementations.
 
-The "Windows Presentation Foundation and Silverlight" entry refers to the [System.Windows.Threading.DispatcherSynchronizationContext](http://msdn.microsoft.com/en-us/library/system.windows.threading.dispatchersynchronizationcontext.aspx), which is used by the GUI thread(s) in Windows Presentation Foundation and Silverlight applications. Other threads in the same application may use different SynchronizationContext implementations.
+The "Windows Presentation Foundation and Silverlight" entry refers to the [System.Windows.Threading.DispatcherSynchronizationContext](http://msdn.microsoft.com/en-us/library/system.windows.threading.dispatchersynchronizationcontext.aspx?WT.mc_id=DT-MVP-5000058), which is used by the GUI thread(s) in Windows Presentation Foundation and Silverlight applications. Other threads in the same application may use different SynchronizationContext implementations.
 
 The "Nito" entry refers to the Nito.Async.ActionDispatcherSynchronizationContext from the [Nito.Async](http://nitoasync.codeplex.com/) library. This includes Nito.Async.ActionThread threads.
 
-The "Default" entry refers the default implementation of [System.Threading.SynchronizationContext](http://msdn.microsoft.com/en-us/library/system.threading.synchronizationcontext.aspx). This includes ThreadPool and Thread class threads, Windows Services, and Console applications, unless that thread replaces the default with a different SynchronizationContext.
+The "Default" entry refers the default implementation of [System.Threading.SynchronizationContext](http://msdn.microsoft.com/en-us/library/system.threading.synchronizationcontext.aspx?WT.mc_id=DT-MVP-5000058). This includes ThreadPool and Thread class threads, Windows Services, and Console applications, unless that thread replaces the default with a different SynchronizationContext.
 
 The "ASP.NET" entry refers to the System.Web.dll:System.Web.AspNetSynchronizationContext, which is used by threads running in an application hosted by the ASP.NET runtime.
 

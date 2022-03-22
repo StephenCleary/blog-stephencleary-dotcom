@@ -16,7 +16,7 @@ In this post, I'm going to cover the main types of `Microsoft.Extensions.Logging
 
 ## LogLevel
 
-Like all other logging frameworks, `Microsoft.Extensions.Logging` defines a sequence of levels for its logs. In increasing order of severity, they are `Trace`, `Debug`, `Information`, `Warning`, `Error`, and `Critical`. The [meanings of these values](https://docs.microsoft.com/en-us/dotnet/api/microsoft.extensions.logging.loglevel) are well documented, along with [advice on when to use each](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/logging/#log-level).
+Like all other logging frameworks, `Microsoft.Extensions.Logging` defines a sequence of levels for its logs. In increasing order of severity, they are `Trace`, `Debug`, `Information`, `Warning`, `Error`, and `Critical`. The [meanings of these values](https://docs.microsoft.com/en-us/dotnet/api/microsoft.extensions.logging.loglevel?WT.mc_id=DT-MVP-5000058) are well documented, along with [advice on when to use each](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/logging/#log-level?WT.mc_id=DT-MVP-5000058).
 
 There is another "log level" which is not really a log level: `None`. This is technically part of the enumeration, but is used during *configuration* to indicate that no logs for that part of the system should be logged. The `None` value is not used during logging.
 

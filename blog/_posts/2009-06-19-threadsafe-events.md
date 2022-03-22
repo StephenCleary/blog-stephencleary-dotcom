@@ -38,7 +38,7 @@ public event MyEventHandler MyEvent
 }
 {% endhighlight %}
 
-Chris Burrows, a Microsoft developer on the C# compiler team, explains why this is bad in his blog post [Field-like Events Considered Harmful](https://docs.microsoft.com/en-us/archive/blogs/cburrows/field-like-events-considered-harmful). His blog post covers the reasoning thoroughly, so it won't be repeated here.
+Chris Burrows, a Microsoft developer on the C# compiler team, explains why this is bad in his blog post [Field-like Events Considered Harmful](https://docs.microsoft.com/en-us/archive/blogs/cburrows/field-like-events-considered-harmful?WT.mc_id=DT-MVP-5000058). His blog post covers the reasoning thoroughly, so it won't be repeated here.
 
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
@@ -73,7 +73,7 @@ if (myEvent != null)
 }
 {% endhighlight %}
 
-This is the solution used by [MSDN examples]https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/events/how-to-publish-events-that-conform-to-net-framework-guidelines) and recommended by the semi-standard [Framework Design Guidelines](https://www.amazon.com/gp/product/0321545613?ie=UTF8&tag=stepheclearys-20&linkCode=as2&camp=1789&creative=390957&creativeASIN=0321545613) (my 2nd edition has it on page 157).
+This is the solution used by [MSDN examples]https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/events/how-to-publish-events-that-conform-to-net-framework-guidelines?WT.mc_id=DT-MVP-5000058) and recommended by the semi-standard [Framework Design Guidelines](https://www.amazon.com/gp/product/0321545613?ie=UTF8&tag=stepheclearys-20&linkCode=as2&camp=1789&creative=390957&creativeASIN=0321545613) (my 2nd edition has it on page 157).
 
 This solution is simple, obvious, and wrong. [By the way, I'm not dissing Framework Design Guidelines. They have lots of good advice, and I don't mean to be critical of the book in general. They're just mistaken in this particular recommendataion.]
 
@@ -142,7 +142,7 @@ To my knowledge, no one has proposed this as a solution. In general, the communi
 
 "Callbacks" (usually events in C#) have always been problematic for multithreaded programming. This is because a good rule of thumb for component design is: **Do your best to allow the event handler to do _anything._** Since "communicate with another thread that is attempting to take any lock" is one example of "anything", a natural corollary of this rule is: **Never hold locks during callbacks.**
 
-This is the reasoning behind why locking on exposed objects (such as `this`) is considered bad practice (see [MSDN: lock Statement](http://msdn.microsoft.com/en-us/library/c5kehkcz.aspx)). Holding that lock while raising an event (such as solution 4 does) makes the bad practice even worse.
+This is the reasoning behind why locking on exposed objects (such as `this`) is considered bad practice (see [MSDN: lock Statement](http://msdn.microsoft.com/en-us/library/c5kehkcz.aspx?WT.mc_id=DT-MVP-5000058)). Holding that lock while raising an event (such as solution 4 does) makes the bad practice even worse.
 
 To review, all the solutions above fail in one of two situations.
 
@@ -216,7 +216,7 @@ protected virtual OnMyEvent(MyEventArgs args)
 }
 {% endhighlight %}
 
-Another side effect is that this type of event handling forces one towards [Event-Based Asynchronous Programming](http://msdn.microsoft.com/en-us/library/hkasytyf.aspx) (or something very similar to it). EBAP is a logical conclusion for asynchronous object design, yielding maximal reusability. EBAP is also more consistent with regards to normal object concurrency restrictions: "Public static members of this type are thread safe. Any instance members are not guaranteed to be thread safe." Events that can only be accessed by one thread follow this common pattern; the event, as an instance member, is not guaranteed to be thread safe.
+Another side effect is that this type of event handling forces one towards [Event-Based Asynchronous Programming](http://msdn.microsoft.com/en-us/library/hkasytyf.aspx?WT.mc_id=DT-MVP-5000058) (or something very similar to it). EBAP is a logical conclusion for asynchronous object design, yielding maximal reusability. EBAP is also more consistent with regards to normal object concurrency restrictions: "Public static members of this type are thread safe. Any instance members are not guaranteed to be thread safe." Events that can only be accessed by one thread follow this common pattern; the event, as an instance member, is not guaranteed to be thread safe.
 
 A third side effect takes longer to realize: more correct communication among threads. Instead of various threads directly subscribing to events (which would be run on another thread anyway), one must implement some form of thread communication. This forces the programmer to more clearly state the requirements from each thread's perspective, and this in turn results in less buggy multithreading code. Usually, more appropriate ways for thread communciation are found. The event subscription model is naturally discarded as a thread communication method (due to its inherent unsuitability) in favor of much more proven design patterns. This will eventually result in more correct multithreading code, though the process requires a minor redesign.
 

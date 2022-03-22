@@ -4,13 +4,13 @@ title: "Getting the ObjectContext from an EntityObject"
 ---
 There are a few situations where it's useful to get an **ObjectContext** from an **EntityObject**. Note that in general I do not recommend a design that depends on this; there doesn't appear to be an easy way to do this using code first in EF 4.1 (using the **DbContext** API). That said, either of the solutions in this blog post will work when using the **ObjectContext** API.
 
-The most common solution for this problem is from [a 2009 Microsoft blog post by Alex James](https://docs.microsoft.com/en-us/archive/blogs/alexj/tip-24-how-to-get-the-objectcontext-from-an-entity) ([webcite](http://www.webcitation.org/5yYYB64NN)). Unfortunately, that solution has several limitations (including the requirement that the entities must have relations to other entities). Both of the solutions below do not have these limitations.
+The most common solution for this problem is from [a 2009 Microsoft blog post by Alex James](https://docs.microsoft.com/en-us/archive/blogs/alexj/tip-24-how-to-get-the-objectcontext-from-an-entity?WT.mc_id=DT-MVP-5000058) ([webcite](http://www.webcitation.org/5yYYB64NN)). Unfortunately, that solution has several limitations (including the requirement that the entities must have relations to other entities). Both of the solutions below do not have these limitations.
 
 We use an example entity container named **NorthwindEntites**, derived from **ObjectContext**. To this we will add a factory method **FromEntity(EntityObject entity)**, which retrieves the **NorthwindEntities** instance to which that entity is attached, or **null** if the entity is detached.
 
 ## Solution 1: Dynamic
 
-The idea behind this solution is to add a property to the entity type that points to its own **ObjectContext**. It's possible to do this by [modifying the code-generating](http://msdn.microsoft.com/en-us/library/dd456821.aspx) [template](http://msdn.microsoft.com/en-us/library/ff477605.aspx) file, but it's also possible to just add the property to each entity type manually and use dynamic duck typing to access it.
+The idea behind this solution is to add a property to the entity type that points to its own **ObjectContext**. It's possible to do this by [modifying the code-generating](http://msdn.microsoft.com/en-us/library/dd456821.aspx?WT.mc_id=DT-MVP-5000058) [template](http://msdn.microsoft.com/en-us/library/ff477605.aspx?WT.mc_id=DT-MVP-5000058) file, but it's also possible to just add the property to each entity type manually and use dynamic duck typing to access it.
 
 The modified **NorthwindEntities** uses **OnContextCreated** to hook into its constructor and set up event handlers to respond whenever an entity is added to or removed from this context. Each event handler uses dynamic duck typing to access an "ObjectContext" property on the entity; if no such property exists, the entity is ignored.
 

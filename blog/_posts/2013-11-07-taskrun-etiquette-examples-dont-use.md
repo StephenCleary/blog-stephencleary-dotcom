@@ -179,7 +179,7 @@ Let's make this a bit more practical. When a new ASP.NET developer approaches ou
 
 `CalculateMandelbrotAsync` is what I call "fake-asynchronous" because it's just a thread pool wrapper around a synchronous operation. But when developers see that API, they assume that it is a naturally-asynchronous operation.
 
-This is just a brief description and I only covered one facet of this problem. Stephen Toub has an excellent blog post explaining in detail [why you should not write asynchronous wrappers for synchronous methods](https://devblogs.microsoft.com/pfxteam/should-i-expose-asynchronous-wrappers-for-synchronous-methods/).
+This is just a brief description and I only covered one facet of this problem. Stephen Toub has an excellent blog post explaining in detail [why you should not write asynchronous wrappers for synchronous methods](https://devblogs.microsoft.com/pfxteam/should-i-expose-asynchronous-wrappers-for-synchronous-methods/?WT.mc_id=DT-MVP-5000058).
 
 ## OK, enough about the _wrong_ solutions? How do we fix this the _right_ way???
 

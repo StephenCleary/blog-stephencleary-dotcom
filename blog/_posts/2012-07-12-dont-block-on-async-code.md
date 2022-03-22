@@ -69,7 +69,7 @@ Here's the situation: remember [from my intro post]({% post_url 2012-02-02-async
 
 In the first case, this context is a UI context (which applies to _any_ UI except Console applications). In the second case, this context is an ASP.NET request context.
 
-One other important point: an ASP.NET request context is not tied to a specific thread (like the UI context is), but it _does_ only allow one thread in _at a time_. This interesting aspect is not officially documented anywhere AFAIK, but it is mentioned in [my MSDN article about SynchronizationContext](http://msdn.microsoft.com/en-us/magazine/gg598924.aspx).
+One other important point: an ASP.NET request context is not tied to a specific thread (like the UI context is), but it _does_ only allow one thread in _at a time_. This interesting aspect is not officially documented anywhere AFAIK, but it is mentioned in [my MSDN article about SynchronizationContext](http://msdn.microsoft.com/en-us/magazine/gg598924.aspx?WT.mc_id=DT-MVP-5000058).
 
 So this is what happens, starting with the top-level method (Button1_Click for UI / MyController.Get for ASP.NET):
 
@@ -111,7 +111,7 @@ This changes the continuation behavior of GetJsonAsync so that it does _not_ res
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
-Using `ConfigureAwait(false)` to avoid deadlocks is a dangerous practice. You would have to use `ConfigureAwait(false)` for *every* `await` in the transitive closure of all methods called by the blocking code, *including all third- and second-party code*. Using `ConfigureAwait(false)` to avoid deadlock is at best [just a hack](https://msdn.microsoft.com/en-us/magazine/mt238404.aspx){:.alert-link}).
+Using `ConfigureAwait(false)` to avoid deadlocks is a dangerous practice. You would have to use `ConfigureAwait(false)` for *every* `await` in the transitive closure of all methods called by the blocking code, *including all third- and second-party code*. Using `ConfigureAwait(false)` to avoid deadlock is at best [just a hack](https://msdn.microsoft.com/en-us/magazine/mt238404.aspx?WT.mc_id=DT-MVP-5000058){:.alert-link}).
 
 As the title of this post points out, the better solution is "Don't block on async code".
 </div>
@@ -143,13 +143,13 @@ This changes the blocking behavior of the top-level methods so that the context 
 ## Resources
 
   - My [introduction to async/await]({% post_url 2012-02-02-async-and-await %}) is a good starting point. 
-  - Stephen Toub's blog post [Await, and UI, and deadlocks! Oh, my!](https://devblogs.microsoft.com/pfxteam/await-and-ui-and-deadlocks-oh-my/) covers this exact type of deadlock (in January of 2011, no less!).
-  - If you prefer videos, [Stephen Toub demoed this deadlock live](https://channel9.msdn.com/Events/BUILD/BUILD2011/TOOL-829T) (39:40 - 42:50, but the whole presentation is great!).
-  - The [Async/Await FAQ](https://devblogs.microsoft.com/pfxteam/asyncawait-faq/) goes into detail on exactly when contexts are captured and used for continuations.
+  - Stephen Toub's blog post [Await, and UI, and deadlocks! Oh, my!](https://devblogs.microsoft.com/pfxteam/await-and-ui-and-deadlocks-oh-my/?WT.mc_id=DT-MVP-5000058) covers this exact type of deadlock (in January of 2011, no less!).
+  - If you prefer videos, [Stephen Toub demoed this deadlock live](https://channel9.msdn.com/Events/BUILD/BUILD2011/TOOL-829T?WT.mc_id=DT-MVP-5000058) (39:40 - 42:50, but the whole presentation is great!).
+  - The [Async/Await FAQ](https://devblogs.microsoft.com/pfxteam/asyncawait-faq/?WT.mc_id=DT-MVP-5000058) goes into detail on exactly when contexts are captured and used for continuations.
 
 This kind of deadlock is always the result of mixing synchronous with asynchronous code. Usually this is because people are just trying out async with one small piece of code and use synchronous code everywhere else. Unfortunately, partially-asynchronous code is much more complex and tricky than just making everything asynchronous.
 
-If you _do_ need to maintain a partially-asynchronous code base, then be sure to check out two more of Stephen Toub's blog posts: [Asynchronous Wrappers for Synchronous Methods](https://devblogs.microsoft.com/pfxteam/should-i-expose-asynchronous-wrappers-for-synchronous-methods/) and [Synchronous Wrappers for Asynchronous Methods](https://devblogs.microsoft.com/pfxteam/should-i-expose-synchronous-wrappers-for-asynchronous-methods/), as well as my [AsyncEx library](http://nitoasyncex.codeplex.com/).
+If you _do_ need to maintain a partially-asynchronous code base, then be sure to check out two more of Stephen Toub's blog posts: [Asynchronous Wrappers for Synchronous Methods](https://devblogs.microsoft.com/pfxteam/should-i-expose-asynchronous-wrappers-for-synchronous-methods/?WT.mc_id=DT-MVP-5000058) and [Synchronous Wrappers for Asynchronous Methods](https://devblogs.microsoft.com/pfxteam/should-i-expose-synchronous-wrappers-for-asynchronous-methods/?WT.mc_id=DT-MVP-5000058), as well as my [AsyncEx library](http://nitoasyncex.codeplex.com/).
 
 ## Answered Questions
 
@@ -158,5 +158,5 @@ There are scores of answered questions out there that are all caused by the same
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
-Update (2014-12-01): For more details, see my [MSDN article on asynchronous best practices](https://docs.microsoft.com/en-us/archive/msdn-magazine/2013/march/async-await-best-practices-in-asynchronous-programming){:.alert-link} or Section 1.2 in my [Concurrency Cookbook]({{ '/book/' | prepend: site.url_www }}){:.alert-link}.
+Update (2014-12-01): For more details, see my [MSDN article on asynchronous best practices](https://docs.microsoft.com/en-us/archive/msdn-magazine/2013/march/async-await-best-practices-in-asynchronous-programming?WT.mc_id=DT-MVP-5000058){:.alert-link} or Section 1.2 in my [Concurrency Cookbook]({{ '/book/' | prepend: site.url_www }}){:.alert-link}.
 </div>

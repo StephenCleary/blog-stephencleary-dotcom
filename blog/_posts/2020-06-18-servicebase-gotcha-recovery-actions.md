@@ -33,7 +33,7 @@ This means that if you have a Win32 service and it reports a non-zero exit code 
 
 ## Tip: Honoring Win32 Service Exit Codes
 
-There is [a flag](https://docs.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_failure_actions_flag) you can set that will cause SCM to honor the Win32 service exit code, treating a non-zero code as a "failure" and running its recovery actions. You can turn this flag on at the command line as such:
+There is [a flag](https://docs.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_failure_actions_flag?WT.mc_id=DT-MVP-5000058) you can set that will cause SCM to honor the Win32 service exit code, treating a non-zero code as a "failure" and running its recovery actions. You can turn this flag on at the command line as such:
 
 {% highlight text %}
 sc failureflag "My Service" 1
@@ -50,7 +50,7 @@ For .NET applications, the `Environment.ExitCode` property manages the exit code
 
 ## Win32 Service Exit Codes and WindowsServiceLifetime
 
-In [.NET Core applications that are run as Win32 services](https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/windows-service), it's normal to call `IHostBuilder.UseWindowsService()`, which installs a `WindowsServiceLifetime` as the `IHostLifetime`, instead of the default `ConsoleLifetime`.
+In [.NET Core applications that are run as Win32 services](https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/windows-service?WT.mc_id=DT-MVP-5000058), it's normal to call `IHostBuilder.UseWindowsService()`, which installs a `WindowsServiceLifetime` as the `IHostLifetime`, instead of the default `ConsoleLifetime`.
 
 `WindowsServiceLifetime` lets the SCM control the starting and stopping of the .NET Core application. It [derives from `ServiceBase`](https://github.com/dotnet/extensions/blob/4becf241089932aa1f1e7f3ab4155a437fd3dba1/src/Hosting/WindowsServices/src/WindowsServiceLifetime.cs#L14). Since [multiple `IHostLifetime` instances aren't supported](https://github.com/aspnet/Hosting/issues/1401), this means that .NET Core workers do not naturally support multiple Win32 services in a single process. It may be possible to support that by creating a new type that derives from `ServiceBase` and `IHostedService`, along with some kind of coordinating `IHostLifetime` implementation, but I'm not aware of anyone doing that yet. For now, all the .NET Core Win32 services I know of use `WindowsServiceLifetime`.
 

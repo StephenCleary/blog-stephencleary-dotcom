@@ -4,7 +4,7 @@ title: "INI File Reader in C#"
 ---
 Most .NET applications do not need access to the old INI file format, so Microsoft decided not to include it in the .NET framework. Multiple other options are available, from .config files to the Registry. However, there are a handful of situations where an old INI file must be read.
 
-I wrote this class while doing some test development on an ini2reg-style program (a program that would read an existing INI file and then write appropriate Registry entries so that the information is read out of the registry instead; see [MSDN: GetPrivateProfileString](http://msdn.microsoft.com/en-us/library/ms724353(VS.85).aspx), [MSDN: INF Ini2Reg](http://msdn.microsoft.com/en-us/library/ms794363.aspx), and [MSDN: NT Resource Kit, Chapter 26](http://technet.microsoft.com/en-us/library/cc722567.aspx)).
+I wrote this class while doing some test development on an ini2reg-style program (a program that would read an existing INI file and then write appropriate Registry entries so that the information is read out of the registry instead; see [MSDN: GetPrivateProfileString](http://msdn.microsoft.com/en-us/library/ms724353(VS.85).aspx?WT.mc_id=DT-MVP-5000058), [MSDN: INF Ini2Reg](http://msdn.microsoft.com/en-us/library/ms794363.aspx?WT.mc_id=DT-MVP-5000058), and [MSDN: NT Resource Kit, Chapter 26](http://technet.microsoft.com/en-us/library/cc722567.aspx?WT.mc_id=DT-MVP-5000058)).
 
 Note that this is not a particularly well-designed class; I wrote it quickly. It's posted here as an example of moderately difficult interop; specifically, how to read a multi-string value, where "multi-string" means a single buffer that is double-null-terminated and may contain embedded (single) nulls.
 

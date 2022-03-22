@@ -13,7 +13,7 @@ This current leader is SandCastle. My preferred toolset includes:
 - [Sandcastle](http://sandcastle.codeplex.com/) - the core "compiler" for xml documentation.
 - [Sandcastle Styles - bug fixes and style updates for Sandcastle.](http://sandcastlestyles.codeplex.com/)
 - [Sandcastle Help File Builder](http://shfb.codeplex.com/) - a nice GUI (now within Visual Studio) for working with Help project files.
-- [HTML Help Workshop](http://msdn.microsoft.com/en-us/library/ms669985.aspx) - the same, sad old buggy software we've been dependent on for years...
+- [HTML Help Workshop](http://msdn.microsoft.com/en-us/library/ms669985.aspx?WT.mc_id=DT-MVP-5000058) - the same, sad old buggy software we've been dependent on for years...
 
 Once you've got all those installed, then you're ready to start authoring XML docs that can be used for CHM output as well as IntelliSense.
 

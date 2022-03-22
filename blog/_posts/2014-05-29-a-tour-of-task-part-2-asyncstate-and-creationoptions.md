@@ -15,7 +15,7 @@ object AsyncState { get; } // implements IAsyncResult.AsyncState
 
 The `AsyncState` property implements `IAsyncResult.AsyncState`. This member was useful back in the day, but not so much in modern applications.
 
-When asynchronous programming was going through its awkward teen stage, `AsyncState` was an important part of the [Asynchronous Programming Model (APM)](http://msdn.microsoft.com/en-us/library/ms228963(v=vs.110).aspx). The `Begin*` method would take a `state` parameter, which is assigned to the `IAsyncResult.AsyncState` member. Later, when the application code's callback is invoked, it could access the `AsyncState` value to determine which asynchronous operation completed.
+When asynchronous programming was going through its awkward teen stage, `AsyncState` was an important part of the [Asynchronous Programming Model (APM)](http://msdn.microsoft.com/en-us/library/ms228963(v=vs.110).aspx?WT.mc_id=DT-MVP-5000058). The `Begin*` method would take a `state` parameter, which is assigned to the `IAsyncResult.AsyncState` member. Later, when the application code's callback is invoked, it could access the `AsyncState` value to determine which asynchronous operation completed.
 
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
@@ -23,7 +23,7 @@ When asynchronous programming was going through its awkward teen stage, `AsyncSt
 `IAsyncResult.AsyncState` (and other "state"-like parameters) are no longer necessary these days; a lambda callback can easily capture any number of local variables in a type-safe way. I prefer the lambda approach; it is more expressive, less brittle, and more flexible than a single `object state` parameter. However, the `state` parameter approach avoids memory allocation, so it is still sometimes used in performance-sensitive code.
 </div>
 
-In modern code, the `Task.AsyncState` member is mainly used for [interoperation from `Task` to APM](http://msdn.microsoft.com/en-us/library/hh873178(v=vs.110).aspx#TapToApm). This is only necessary if you're writing `async`/`await` code that must exist within an older asynchronous framework (a rare situation these days). In that scenario, you're implementing the `Begin*`/`End*` methods and using a `Task` instance as your implementation of `IAsyncResult`. The standard approach is to create a `Task<T>` using `TaskCompletionSource<T>`, and you pass the `state` parameter into the `TaskCompletionSource<T>` constructor:
+In modern code, the `Task.AsyncState` member is mainly used for [interoperation from `Task` to APM](http://msdn.microsoft.com/en-us/library/hh873178(v=vs.110).aspx#TapToApm?WT.mc_id=DT-MVP-5000058). This is only necessary if you're writing `async`/`await` code that must exist within an older asynchronous framework (a rare situation these days). In that scenario, you're implementing the `Begin*`/`End*` methods and using a `Task` instance as your implementation of `IAsyncResult`. The standard approach is to create a `Task<T>` using `TaskCompletionSource<T>`, and you pass the `state` parameter into the `TaskCompletionSource<T>` constructor:
 
 {% highlight csharp %}
 public static IAsyncResult BeginOperation(AsyncCallback callback, object state)

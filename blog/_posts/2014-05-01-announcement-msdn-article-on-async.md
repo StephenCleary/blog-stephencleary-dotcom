@@ -2,7 +2,7 @@
 layout: post
 title: "Announcement: MSDN Article on Async Services"
 ---
-My latest MSDN article [Patterns for Asynchronous MVVM Applications: Services](http://msdn.microsoft.com/en-us/magazine/dn683795.aspx) is online! The title is a slight misnomer, since the article is actually applicable to asynchronous services in _any_ kind of application (including Console and ASP.NET apps).
+My latest MSDN article [Patterns for Asynchronous MVVM Applications: Services](http://msdn.microsoft.com/en-us/magazine/dn683795.aspx?WT.mc_id=DT-MVP-5000058) is online! The title is a slight misnomer, since the article is actually applicable to asynchronous services in _any_ kind of application (including Console and ASP.NET apps).
 
 {:.center}
 ![]({{ site_url }}/assets/dd799403.cover_lrg(en-us,MSDN.10).jpg)  

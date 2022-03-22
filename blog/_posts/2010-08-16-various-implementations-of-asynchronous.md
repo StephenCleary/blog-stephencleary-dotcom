@@ -24,20 +24,20 @@ The best overall method is to use [Task-returning asynchronous methods]({% post_
 - **Results.** Any asynchronous method returning Task\<TResult> can just return its result directly. The result is retrieved by awaiting the Task\<TResult>.
 - **Errors.** Any exceptions thrown by a task are rethrown when the task is awaited. The call stack is properly preserved.
 - **Progress.** Asynchronous methods use a progress reporting abstraction (IProgress\<T>) to report progress. The caller of the asynchronous method determines what happens to the progress updates.
-- **Cancellation.** Asynchronous methods integrate with the [unified cancellation framework](http://msdn.microsoft.com/en-us/library/dd997364.aspx), which provides exhaustive cancellation support.
+- **Cancellation.** Asynchronous methods integrate with the [unified cancellation framework](http://msdn.microsoft.com/en-us/library/dd997364.aspx?WT.mc_id=DT-MVP-5000058), which provides exhaustive cancellation support.
 - **Nesting.** Asynchronous methods naturally nest by awaiting the results of other asynchronous methods. Exceptions from inner methods are correctly propagated out. Cancellation can easily be propagated by passing the CancellationToken down to the inner method.
 - **Synchronization.** Asynchronous methods by default will capture and resume their context automatically.
 
 ## Tasks (Task Parallel Library)
 
 You can also use tasks without asynchronous methods. Tasks were introduced in the [Task Parallel 
-Library](http://msdn.microsoft.com/en-us/library/dd537609.aspx) (.NET 4.0). The following requirements are fully supported:
+Library](http://msdn.microsoft.com/en-us/library/dd537609.aspx?WT.mc_id=DT-MVP-5000058) (.NET 4.0). The following requirements are fully supported:
 
 - **Results.** The Task\<TResult> class allows the natural returning of the result. The result is retrieved by reading Task\<TResult>.Result.
-- **Errors.** Any exceptions thrown by a task are rethrown when the task is [observed](http://msdn.microsoft.com/en-us/library/dd997415.aspx). The original exception is wrapped in an AggregateException, so the outer exception no longer carries the correct call stack.
-- **Cancellation.** .NET 4.0 includes a [unified cancellation framework](http://msdn.microsoft.com/en-us/library/dd997364.aspx) that provides exhaustive cancellation support.
-- **Nesting.** Tasks can be [nested](http://msdn.microsoft.com/en-us/library/dd997417.aspx) if desired; child tasks properly propagate any exceptions upward, and parent tasks may optionally propagate cancellation downward. Nesting is not automatic, so this ability should be exposed by any business-layer API that is Task-based.
-- **Synchronization.** Tasks introduce a very flexible model of synchronization by separating the actual operation from how it is [scheduled](http://msdn.microsoft.com/en-us/library/dd997402.aspx). Synchronization with the user interface is only slightly awkward; a user interface task scheduler can be retrieved by calling TaskScheduler.FromCurrentSynchronizationContext while on the UI thread. This scheduler [can then be used](http://msdn.microsoft.com/en-us/library/dd997394.aspx) to schedule a [task continuation](http://msdn.microsoft.com/en-us/library/ee372288.aspx) to marshal the result, error, or cancellation update to the UI thread.
+- **Errors.** Any exceptions thrown by a task are rethrown when the task is [observed](http://msdn.microsoft.com/en-us/library/dd997415.aspx?WT.mc_id=DT-MVP-5000058). The original exception is wrapped in an AggregateException, so the outer exception no longer carries the correct call stack.
+- **Cancellation.** .NET 4.0 includes a [unified cancellation framework](http://msdn.microsoft.com/en-us/library/dd997364.aspx?WT.mc_id=DT-MVP-5000058) that provides exhaustive cancellation support.
+- **Nesting.** Tasks can be [nested](http://msdn.microsoft.com/en-us/library/dd997417.aspx?WT.mc_id=DT-MVP-5000058) if desired; child tasks properly propagate any exceptions upward, and parent tasks may optionally propagate cancellation downward. Nesting is not automatic, so this ability should be exposed by any business-layer API that is Task-based.
+- **Synchronization.** Tasks introduce a very flexible model of synchronization by separating the actual operation from how it is [scheduled](http://msdn.microsoft.com/en-us/library/dd997402.aspx?WT.mc_id=DT-MVP-5000058). Synchronization with the user interface is only slightly awkward; a user interface task scheduler can be retrieved by calling TaskScheduler.FromCurrentSynchronizationContext while on the UI thread. This scheduler [can then be used](http://msdn.microsoft.com/en-us/library/dd997394.aspx?WT.mc_id=DT-MVP-5000058) to schedule a [task continuation](http://msdn.microsoft.com/en-us/library/ee372288.aspx?WT.mc_id=DT-MVP-5000058) to marshal the result, error, or cancellation update to the UI thread.
 
 Progress reporting is a bit complex for tasks:
 
@@ -45,7 +45,7 @@ Progress reporting is a bit complex for tasks:
 
 ## BackgroundWorker
 
-Before .NET 4.0 was released, [BackgroundWorker](http://msdn.microsoft.com/en-us/library/8xs8549b.aspx) was the de-facto standard. It supports most of the requirements:
+Before .NET 4.0 was released, [BackgroundWorker](http://msdn.microsoft.com/en-us/library/8xs8549b.aspx?WT.mc_id=DT-MVP-5000058) was the de-facto standard. It supports most of the requirements:
 
 - **Results.** Supporting a result is slightly awkward; the DoWork delegate has to set the DoWorkEventArgs.Result property of its argument. This value is then passed to the RunWorkerCompleted delegate, as the RunWorkerCompletedEventArgs.Result property.
 - **Errors.** Exceptions thrown by DoWork are caught and passed to the RunWorkerCompleted delgate, as the RunWorkerCompletedEventArgs.Error property. That exception object does include the correct call stack; however, if the RunWorkerCompleteEventArgs.Result property is accessed when the operation completed with an error, then the original exception is wrapped in a TargetInvocationException, so the outer exception no longer carries the correct call stack.
@@ -67,7 +67,7 @@ BackgroundWorker does have one rather significant drawback. It works perfectly f
 
 ## Delegate.BeginInvoke
 
-Every delegate in .NET supports [asynchronous invocation](http://msdn.microsoft.com/en-us/library/2e08f6yc.aspx). This is a lower-level technique that does not require a separate object (e.g., Task or BackgroundWorker) to define an asynchronous operation. Because it is at a lower level, it supports fewer of the standard requirements:
+Every delegate in .NET supports [asynchronous invocation](http://msdn.microsoft.com/en-us/library/2e08f6yc.aspx?WT.mc_id=DT-MVP-5000058). This is a lower-level technique that does not require a separate object (e.g., Task or BackgroundWorker) to define an asynchronous operation. Because it is at a lower level, it supports fewer of the standard requirements:
 
 - **Results.** The result of the delegate may be retrieved by calling Delegate.EndInvoke, even if the asynchronous delegate has already completed.
 - **Errors.** Any exception thrown by the delegate is preserved and rethrown by Delegate.EndInvoke, properly preserving the call stack.
@@ -86,7 +86,7 @@ This lower-level approach does not cleanly support these requirements:
 One of the lowest-level approaches is to queue the work directly to the ThreadPool. Unfortunately, this approach does not support _any_ of the requirements directly; every requirement needs a fair amount of work:
 
 - **Results.** The delegate passed to ThreadPool.QueueUserWorkItem cannot return a value. To return a result, one must either use a child object of an argument (similar to BackgroundWorker) or pass a lambda expression bound to a variable holding the return value.
-- **Errors.** If a delegate queued to the ThreadPool allows an exception to propagate, then the entire process is killed. If any errors are possible, then they should be wrapped in a try...catch and the exception object "returned" to the calling thread (either using a child object of an argument, or using a bound variable of a lambda expression). The exception could be rethrown with the correct stack trace by calling PrepareForRethrow from the [Rx library](http://msdn.microsoft.com/en-us/devlabs/ee794896.aspx).
+- **Errors.** If a delegate queued to the ThreadPool allows an exception to propagate, then the entire process is killed. If any errors are possible, then they should be wrapped in a try...catch and the exception object "returned" to the calling thread (either using a child object of an argument, or using a bound variable of a lambda expression). The exception could be rethrown with the correct stack trace by calling PrepareForRethrow from the [Rx library](http://msdn.microsoft.com/en-us/devlabs/ee794896.aspx?WT.mc_id=DT-MVP-5000058).
 
 The other requirements have the same problems (and mitigating solutions) as the Delegate.BeginInvoke approach above.
 

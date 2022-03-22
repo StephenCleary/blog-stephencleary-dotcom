@@ -26,7 +26,7 @@ The `int` argument is treated as a number of milliseconds; I usually prefer the 
 
 Under the hood, `Delay` starts a timer and completes its returned task when that timer fires. Or, if the `CancellationToken` is signaled first, then `Delay` cancels its returned task.
 
-In real-world code, `Delay` is almost never used. Its primary use case is as a retry timeout, i.e., if an asynchronous operation failed, the code will (asynchronously) wait a period of time before trying again. Generally, retry logic is wrapped into a separate library (such as [Transient Fault Handling](https://msdn.microsoft.com/en-us/library/hh675232.aspx) or [Polly](https://github.com/michael-wolfenden/Polly)), and `Delay` is only used internally by those libraries, not directly by application code.
+In real-world code, `Delay` is almost never used. Its primary use case is as a retry timeout, i.e., if an asynchronous operation failed, the code will (asynchronously) wait a period of time before trying again. Generally, retry logic is wrapped into a separate library (such as [Transient Fault Handling](https://msdn.microsoft.com/en-us/library/hh675232.aspx?WT.mc_id=DT-MVP-5000058) or [Polly](https://github.com/michael-wolfenden/Polly)), and `Delay` is only used internally by those libraries, not directly by application code.
 
 ## Task.Yield
 

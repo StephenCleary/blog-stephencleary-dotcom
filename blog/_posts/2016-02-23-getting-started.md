@@ -11,7 +11,7 @@ Let's introduce some React! The `react` package contains almost everything, and 
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
-Most modern JavaScript libraries do not assume they're running in a browser. This is to enable server-side rendering. It's not as crazy as it sounds! Check out [this video](https://channel9.msdn.com/Events/ASPNET-Events/ASPNET-Fall-Sessions/ASPNET--Spa) of [work being done on ASP.NET Core *right now*](https://github.com/aspnet/NodeServices) where ASP.NET hosts Node, runs the web app on the server, and then sends the results to the client.
+Most modern JavaScript libraries do not assume they're running in a browser. This is to enable server-side rendering. It's not as crazy as it sounds! Check out [this video](https://channel9.msdn.com/Events/ASPNET-Events/ASPNET-Fall-Sessions/ASPNET--Spa?WT.mc_id=DT-MVP-5000058) of [work being done on ASP.NET Core *right now*](https://github.com/aspnet/NodeServices) where ASP.NET hosts Node, runs the web app on the server, and then sends the results to the client.
 </div>
 
 ## Our First React Component

@@ -120,7 +120,7 @@ partial class Program
 }
 {% endhighlight %}
 
-The tricky part in this code is the double-`await` in `RunCoroutineAsync`. This is a [normal pattern](https://devblogs.microsoft.com/pfxteam/task-run-vs-task-factory-startnew/) when you use `TaskFactory.StartNew` with asynchronous delegates (alternatively, you could use `Task.Unwrap`).
+The tricky part in this code is the double-`await` in `RunCoroutineAsync`. This is a [normal pattern](https://devblogs.microsoft.com/pfxteam/task-run-vs-task-factory-startnew/?WT.mc_id=DT-MVP-5000058) when you use `TaskFactory.StartNew` with asynchronous delegates (alternatively, you could use `Task.Unwrap`).
 
 Logically, the "coroutine" parameter to `RunCoroutineAsync` is an asynchronous delegate (referring to one of the async co-routine methods). When we pass it to `StartNew`, we get back a `Task<Task>` representing the _starting_ of that asynchronous delegate on our exclusive scheduler. The inner task represents the _completion_ of that asynchronous delegate. So the `await await` is used because we want `RunCoroutineAsync` to complete only when the asynchronous delegate completes.
 

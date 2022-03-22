@@ -24,7 +24,7 @@ using (var client = new HttpClient())
 
 The problem with this code is that the `HttpClient` is creating a new `HttpClientHandler` for each API call. As a refresher, the `HttpClientHandler` is the inner handler at the end of the pipeline that actually does the HTTP socket communication. By re-creating `HttpClientHandler`, this code is not able to re-use those client sockets.
 
-When the application uses a lot of connections using a pattern like the above, it can eventually cause socket exhaustion since those client sockets are not re-used. Technically, this is a form of [ephemeral port exhaustion](https://docs.microsoft.com/en-us/windows/client-management/troubleshoot-tcpip-port-exhaust), where the server runs out of ports to use for new client sockets.
+When the application uses a lot of connections using a pattern like the above, it can eventually cause socket exhaustion since those client sockets are not re-used. Technically, this is a form of [ephemeral port exhaustion](https://docs.microsoft.com/en-us/windows/client-management/troubleshoot-tcpip-port-exhaust?WT.mc_id=DT-MVP-5000058), where the server runs out of ports to use for new client sockets.
 
 When this problem started becoming common [several years ago](https://aspnetmonsters.com/2016/08/2016-08-27-httpclientwrong/), the conventional workaround was to declare `HttpClient` instances as `static` variables, generally one per remote host. Reusing `HttpClient`s (and thus `HttpClientHandler`s) enabled socket reuse, but this caused [a new problem](http://byterot.blogspot.com/2016/07/singleton-httpclient-dns.html).
 
@@ -48,7 +48,7 @@ The modern solution for creating `HttpClient` instances is that you *don't*. Ins
 This series will exclusively use `HttpClient` factories, and will never `new`-up an `HttpClient`.
 </div>
 
-The standard way to use the default `HttpClient` factory is by using typed clients. The [.NET docs](https://docs.microsoft.com/en-us/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests#how-to-use-typed-clients-with-ihttpclientfactory) are pretty good in describing this pattern.
+The standard way to use the default `HttpClient` factory is by using typed clients. The [.NET docs](https://docs.microsoft.com/en-us/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests#how-to-use-typed-clients-with-ihttpclientfactory?WT.mc_id=DT-MVP-5000058) are pretty good in describing this pattern.
 
 Essentially, you first define a "service" - i.e., the shape of the API as consumed by your application. I recommend you follow the ports/adapters (a.k.a. hexagonal architecture) pattern for this "service"; in other words, *define your service interface according to how your application wants to consume it, not according to how the HTTP API is actually shaped*.
 

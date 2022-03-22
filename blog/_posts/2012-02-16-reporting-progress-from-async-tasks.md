@@ -6,7 +6,7 @@ Today, we'll look at how async methods satisfy a [common requirement]({% post_ur
 
 ## Progress Reporter Abstraction
 
-When asynchronous methods report progress, they use an abstraction of the "progress reporter" concept: [**IProgress\<in T>**](http://msdn.microsoft.com/en-us/library/hh138298(v=VS.110).aspx). This interface has a single method: **void Report(T value)**. You can't get much simpler than that!
+When asynchronous methods report progress, they use an abstraction of the "progress reporter" concept: [**IProgress\<in T>**](http://msdn.microsoft.com/en-us/library/hh138298(v=VS.110).aspx?WT.mc_id=DT-MVP-5000058). This interface has a single method: **void Report(T value)**. You can't get much simpler than that!
 
 An asynchronous method that wants to report progress just takes an IProgress\<T> parameter, with some appropriate type for T. There are two important things to keep in mind:
 
@@ -27,7 +27,7 @@ This is one small step towards a functional mindset. Async/await will gently nud
 
 Now let's look at the "receiving" side of progress reports. The caller of the asynchronous method passes in the progress reporter, so it has complete control of how progress reports are handled.
 
-There is one built-in progress reporter: [Progress\<T>](http://msdn.microsoft.com/en-us/library/hh193692(v=vs.110).aspx). You can either pass an Action\<T> into the constructor or handle the ProgressChanged event.
+There is one built-in progress reporter: [Progress\<T>](http://msdn.microsoft.com/en-us/library/hh193692(v=vs.110).aspx?WT.mc_id=DT-MVP-5000058). You can either pass an Action\<T> into the constructor or handle the ProgressChanged event.
 
 One important aspect of this class is that it invokes ProgressChanged (and the Action\<T>) in the context in which it was constructed. So it's natural to write UI updates:
 
@@ -76,9 +76,9 @@ In _other_ words, don't throw exceptions from Progress\<T>.ProgressChanged. :)
 
 The callback-based Progress\<T> is great for general use, but there's no reason you couldn't write your own IProgress\<T> that works better with your own code base. Here are some implementations from the [AsyncEx library:](http://nitoasyncex.codeplex.com)
 
-  - **PropertyProgress\<T>** has a property called Progress and implements [INotifyPropertyChanged](http://msdn.microsoft.com/en-us/library/system.componentmodel.inotifypropertychanged.aspx), so progress updates can update data bindings. This implementation also captures its context just like Progress\<T>, which is expected for data binding updates.
-  - **ObserverProgress\<T>** forwards progress updates to an [IObserver\<T>](http://msdn.microsoft.com/en-us/library/dd783449.aspx), where they can be composed using Rx.
-  - **ProducerProgress\<T>** and **DataflowProgress\<T>** both place progress updates into containers (an [IProducerConsumerCollection\<T>](http://msdn.microsoft.com/en-us/library/dd287147.aspx) or an [ITargetBlock\<TInput>](http://msdn.microsoft.com/en-us/library/hh194833(v=VS.110).aspx), respectively).
+  - **PropertyProgress\<T>** has a property called Progress and implements [INotifyPropertyChanged](http://msdn.microsoft.com/en-us/library/system.componentmodel.inotifypropertychanged.aspx?WT.mc_id=DT-MVP-5000058), so progress updates can update data bindings. This implementation also captures its context just like Progress\<T>, which is expected for data binding updates.
+  - **ObserverProgress\<T>** forwards progress updates to an [IObserver\<T>](http://msdn.microsoft.com/en-us/library/dd783449.aspx?WT.mc_id=DT-MVP-5000058), where they can be composed using Rx.
+  - **ProducerProgress\<T>** and **DataflowProgress\<T>** both place progress updates into containers (an [IProducerConsumerCollection\<T>](http://msdn.microsoft.com/en-us/library/dd287147.aspx?WT.mc_id=DT-MVP-5000058) or an [ITargetBlock\<TInput>](http://msdn.microsoft.com/en-us/library/hh194833(v=VS.110).aspx?WT.mc_id=DT-MVP-5000058), respectively).
 
 ## Defining "Progress"
 

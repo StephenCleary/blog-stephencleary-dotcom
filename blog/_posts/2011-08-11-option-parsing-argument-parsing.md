@@ -94,7 +94,7 @@ It is possible to use only a part of the [option parsing pipeline]({% post_url 2
 
 The option parsing library uses a collection of "simple parsers" to convert from a string to a known type. By default, the simple parser collection understands how to parse **bool**; signed and unsigned 8-bit, 16-bit, 32-bit, and 64-bit integers; **BigInteger**; single and double-precision floating point; **decimal**; **Guid**; **TimeSpan**; **DateTime**; and **DateTimeOffset**. Strings, enumerations and nullable types are treated specially: strings are never parsed, enumerations use **Enum.Parse**, and nullable types are supported if their corresponding non-nullable types are supported. The built-in parsers all use the standard **TryParse** methods.
 
-Say, for example, we wanted to accept an argument of type [Complex](http://msdn.microsoft.com/en-us/library/system.numerics.complex.aspx). The Complex type is not included in the default simple parser collection (in fact, it does not even have a Parse or TryParse method!).
+Say, for example, we wanted to accept an argument of type [Complex](http://msdn.microsoft.com/en-us/library/system.numerics.complex.aspx?WT.mc_id=DT-MVP-5000058). The Complex type is not included in the default simple parser collection (in fact, it does not even have a Parse or TryParse method!).
 
 If we try to add it to our program, then whatever we pass as the argument value will just fail to parse:
 

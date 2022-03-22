@@ -42,7 +42,7 @@ As I mentioned, "await" takes a single argument - an "awaitable" - which is an a
 
 There are also other awaitable types: special methods such as "Task.Yield" return awaitables that are not Tasks, and the WinRT runtime (coming in Windows 8) has an unmanaged awaitable type. You can also create your own awaitable (usually for performance reasons), or use extension methods to make a non-awaitable type awaitable.
 
-That's all I'm going to say about making your own awaitables. I've only had to write a couple of awaitables in the entire time I've used async/await. If you want to know more about writing your own awaitables, see the [Parallel Team Blog](https://devblogs.microsoft.com/pfxteam/) or [Jon Skeet's Blog](http://codeblog.jonskeet.uk/).
+That's all I'm going to say about making your own awaitables. I've only had to write a couple of awaitables in the entire time I've used async/await. If you want to know more about writing your own awaitables, see the [Parallel Team Blog](https://devblogs.microsoft.com/pfxteam/?WT.mc_id=DT-MVP-5000058) or [Jon Skeet's Blog](http://codeblog.jonskeet.uk/).
 
 One important point about awaitables is this: it is the _type_ that is awaitable, not the method returning the type. In other words, you can await the result of an async method that returns Task ... _because the method returns Task, not because it's async_. So you can also await the result of a _non-async_ method that returns Task:
 
@@ -236,11 +236,11 @@ There are many new await-friendly techniques that should be used instead of the 
 
 ## Next Steps
 
-I have published an MSDN article [Best Practices in Asynchronous Programming](http://msdn.microsoft.com/en-us/magazine/jj991977.aspx), which further explains the "avoid async void", "async all the way" and "configure context" guidelines.
+I have published an MSDN article [Best Practices in Asynchronous Programming](http://msdn.microsoft.com/en-us/magazine/jj991977.aspx?WT.mc_id=DT-MVP-5000058), which further explains the "avoid async void", "async all the way" and "configure context" guidelines.
 
-The [official MSDN documentation](http://msdn.microsoft.com/en-us/library/hh191443.aspx) is quite good; they include an online version of the [Task-based Asynchronous Pattern document](http://msdn.microsoft.com/en-us/library/hh873175.aspx) which is excellent, covering the designs of asynchronous methods.
+The [official MSDN documentation](http://msdn.microsoft.com/en-us/library/hh191443.aspx?WT.mc_id=DT-MVP-5000058) is quite good; they include an online version of the [Task-based Asynchronous Pattern document](http://msdn.microsoft.com/en-us/library/hh873175.aspx?WT.mc_id=DT-MVP-5000058) which is excellent, covering the designs of asynchronous methods.
 
-The async team has published an [async/await FAQ](https://devblogs.microsoft.com/pfxteam/asyncawait-faq/) that is a great place to continue learning about async. They have pointers to the best blog posts and videos on there. Also, pretty much any blog post by [Stephen Toub](https://devblogs.microsoft.com/pfxteam/author/toub/) is instructive!
+The async team has published an [async/await FAQ](https://devblogs.microsoft.com/pfxteam/asyncawait-faq/?WT.mc_id=DT-MVP-5000058) that is a great place to continue learning about async. They have pointers to the best blog posts and videos on there. Also, pretty much any blog post by [Stephen Toub](https://devblogs.microsoft.com/pfxteam/author/toub/?WT.mc_id=DT-MVP-5000058) is instructive!
 
 Of course, another resource is my own blog.
 

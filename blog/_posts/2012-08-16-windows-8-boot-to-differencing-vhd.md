@@ -8,7 +8,7 @@ We only have one computer in our house. Sometimes it's used for work, and someti
 
 ## Considering Hyper-V
 
-One of the (many) hallmarks of Windows 8 is that [Microsoft is providing client Hyper-V](https://docs.microsoft.com/en-us/archive/blogs/b8/bringing-hyper-v-to-windows-8). Using Hyper-V, I could run multiple virtual computers at the same time. Hyper-V (like every virtualization system) also has a nice "snapshot" feature. However, I decided not to go with Hyper-V because it's not a very seamless experience - e.g., for USB devices to work, you have to actually remote desktop into the VM.
+One of the (many) hallmarks of Windows 8 is that [Microsoft is providing client Hyper-V](https://docs.microsoft.com/en-us/archive/blogs/b8/bringing-hyper-v-to-windows-8?WT.mc_id=DT-MVP-5000058). Using Hyper-V, I could run multiple virtual computers at the same time. Hyper-V (like every virtualization system) also has a nice "snapshot" feature. However, I decided not to go with Hyper-V because it's not a very seamless experience - e.g., for USB devices to work, you have to actually remote desktop into the VM.
 
 I made the decision to boot from VHD instead. With this approach, only one OS can be running at a time - the only thing virtualized is the disk access, and it's virtualized within the OS itself, not by another full layer (like Hyper-V). So, boot from VHD runs faster and you get full access to hardware, but you lose the multiple-VMs-running-at-once that you can get from Hyper-V. Also, you can use snapshots with boot-from-VHD, but they're not as easy to use as snapshots in Hyper-V.
 
@@ -42,7 +42,7 @@ If you've already got Windows 8 RTM (as of the time of this writing), then you (
 
 ## Step 2 - Use Convert-WindowsImage
 
-Once you have Windows 8 installed (virtually, if necessary), download the excellent [Convert-WindowsImage](http://gallery.technet.microsoft.com/scriptcenter/Convert-WindowsImageps1-0fe23a8f) PowerShell script (remember to [unblock](http://support.microsoft.com/kb/883260) it and [Set-ExecutionPolicy RemoteSigned](http://technet.microsoft.com/en-us/library/ee176961.aspx), or the OS won't let you run it).
+Once you have Windows 8 installed (virtually, if necessary), download the excellent [Convert-WindowsImage](http://gallery.technet.microsoft.com/scriptcenter/Convert-WindowsImageps1-0fe23a8f?WT.mc_id=DT-MVP-5000058) PowerShell script (remember to [unblock](http://support.microsoft.com/kb/883260) it and [Set-ExecutionPolicy RemoteSigned](http://technet.microsoft.com/en-us/library/ee176961.aspx?WT.mc_id=DT-MVP-5000058), or the OS won't let you run it).
 
 I like to run Convert-WindowsImage with a user interface. To do this, hit the Windows key, type "powershell", right-click PowerShell and choose "Run as Administrator". Then you can change to the directory containing the script file and execute ".\Convert-WindowsImage.ps1 -ShowUI".
 
@@ -56,7 +56,7 @@ One more thing: Windows 8 will helpfully offer to format the VHD for you. Do **n
 
 Once you have the VHD (which I placed at "C:\vhd\Win8-base.vhd"), you're ready to go! For myself, I'm going to create the first differencing VHD before proceeding. I have a tendency to really mess stuff up, and keeping that initial VHD absolutely pure gives me a nice retreat in case something goes wrong.
 
-Creating a differencing VHD is not difficult, but it's not particularly easy, either. Just run the following [diskpart](http://technet.microsoft.com/en-us/library/cc770877) commands in an elevated command prompt (this can be done in Windows 7, too):
+Creating a differencing VHD is not difficult, but it's not particularly easy, either. Just run the following [diskpart](http://technet.microsoft.com/en-us/library/cc770877?WT.mc_id=DT-MVP-5000058) commands in an elevated command prompt (this can be done in Windows 7, too):
 
     > diskpart
     > create vdisk file=C:\vhd\Win8.vhd parent=C:\vhd\Win8-base.vhd
@@ -70,7 +70,7 @@ OK, now we're to the point where we edit the BCD (Boot Configuration Data). This
 
 So the first thing we do (of course) is backup our current BCD so that we can restore it later when... er... **if** we mess anything up.
 
-Back to the elevated command prompt, using [bcdedit](http://technet.microsoft.com/en-us/library/cc731662.aspx) (again, Windows 7 can do this part):
+Back to the elevated command prompt, using [bcdedit](http://technet.microsoft.com/en-us/library/cc731662.aspx?WT.mc_id=DT-MVP-5000058) (again, Windows 7 can do this part):
 
     > bcdedit /export C:\vhd\bcdbackup
 

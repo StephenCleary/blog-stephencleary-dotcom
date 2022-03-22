@@ -6,7 +6,7 @@ seriesTitle: "Overview"
 description: "How cancellation works in .NET and the 90% rule."
 ---
 
-Cancellation is a topic that I haven't written on much yet, because the [Microsoft documentation](https://docs.microsoft.com/en-us/dotnet/standard/threading/cancellation-in-managed-threads) is quite good. But after answering many questions for many years, I thought it would be a good topic to cover once, exhaustively.
+Cancellation is a topic that I haven't written on much yet, because the [Microsoft documentation](https://docs.microsoft.com/en-us/dotnet/standard/threading/cancellation-in-managed-threads?WT.mc_id=DT-MVP-5000058) is quite good. But after answering many questions for many years, I thought it would be a good topic to cover once, exhaustively.
 
 ## Cooperative Cancellation
 
@@ -38,7 +38,7 @@ Each `CancellationToken` may only be cancelled one time; once it is cancelled, i
 
 ## The Cancellation Contract: Method Signature
 
-[By convention](https://docs.microsoft.com/en-us/dotnet/standard/asynchronous-programming-patterns/task-based-asynchronous-pattern-tap#cancellation-optional), the `CancellationToken` parameter is usually the last parameter unless an `IProgress<T>` parameter is present. It is common to provide an overload or default parameter so that callers do not *have* to provide a `CancellationToken` if they do not have one; the `default` value of a `CancellationToken` is the same as `CancellationToken.None`, i.e., a cancellation token that will never be canceled.
+[By convention](https://docs.microsoft.com/en-us/dotnet/standard/asynchronous-programming-patterns/task-based-asynchronous-pattern-tap#cancellation-optional?WT.mc_id=DT-MVP-5000058), the `CancellationToken` parameter is usually the last parameter unless an `IProgress<T>` parameter is present. It is common to provide an overload or default parameter so that callers do not *have* to provide a `CancellationToken` if they do not have one; the `default` value of a `CancellationToken` is the same as `CancellationToken.None`, i.e., a cancellation token that will never be canceled.
 
 {% highlight csharp %}
 Task DoSomethingAsync(int data) => DoSomethingAsync(data, CancellationToken.None);

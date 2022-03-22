@@ -10,7 +10,7 @@ All Task objects fall into one of two types: "code" and "event". Code-based task
 
 Tasks without code can represent any kind of event. The most common examples are I/O completion events, but event-based tasks can actually wrap _any_ kind of event.
 
-To create an event-based task, use the [**TaskCompletionSource\<TResult>**](http://msdn.microsoft.com/en-us/library/dd449174.aspx) class:
+To create an event-based task, use the [**TaskCompletionSource\<TResult>**](http://msdn.microsoft.com/en-us/library/dd449174.aspx?WT.mc_id=DT-MVP-5000058) class:
 
 {% highlight csharp %}
 public static Task<int> MyIntegerEventAsync()

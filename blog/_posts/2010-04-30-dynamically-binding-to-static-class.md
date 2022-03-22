@@ -6,7 +6,7 @@ title: "Dynamically Binding to Static (Class-Scoped) Members"
 
 One limitation is dynamically accessing static (class-scoped) members. The _dynamic_ type is intended to represent a dynamic instance, not a dynamic class. For example, if two different classes have the same static method defined, there is no way to use _dynamic_ to invoke those static methods.
 
-One can use the [DynamicObject](http://msdn.microsoft.com/en-us/library/system.dynamic.dynamicobject.aspx) class to redirect instance member access to static member access. This approach was first explored in David Ebbo's blog post ["Using C# dynamic to call static members"](https://web.archive.org/web/20100125023227/http://blogs.msdn.com/davidebb/archive/2009/10/23/using-c-dynamic-to-call-static-members.aspx). However, this approach brings with it its own limitation.
+One can use the [DynamicObject](http://msdn.microsoft.com/en-us/library/system.dynamic.dynamicobject.aspx?WT.mc_id=DT-MVP-5000058) class to redirect instance member access to static member access. This approach was first explored in David Ebbo's blog post ["Using C# dynamic to call static members"](https://web.archive.org/web/20100125023227/http://blogs.msdn.com/davidebb/archive/2009/10/23/using-c-dynamic-to-call-static-members.aspx). However, this approach brings with it its own limitation.
 
 The general concept is to implement a DynamicObject type that uses reflection to access static members. This makes sense since _dynamic_ may be seen as a more user-friendly type of reflection (of course, this simple interpretation ignores a lot of other DLR benefits). Unfortunately, DynamicObject does not support the concept of ref/out parameters, even though they are fully supported by _dynamic_. There is a work-around for this: wrapping ref or out parameters, adding a layer of indirection. The RefOutArg class was invented for this purpose ([official source](http://nitokitchensink.codeplex.com/SourceControl/changeset/view/51391#1073961)):
 
@@ -253,7 +253,7 @@ intClass.TryParse("13", result1arg); // invokes int.TryParse(string, out int)
 result1 = result1arg.Value;
 {% endhighlight %}
 
-This can be a powerful tool in some cases, allowing a higher form of "duck typing." For instance, the new [BigInteger](http://msdn.microsoft.com/en-us/library/system.numerics.biginteger.aspx) numeric type defines its own _DivRem_ method similar to the existing _DivRem_ methods defined on the [Math](http://msdn.microsoft.com/en-us/library/system.math.aspx) class for _int_ and _long_. Using DynamicStaticTypeMembers, it is possible to define a generic _DivRem_ that attempts to invoke _Math.DivRem_ but falls back on a _DivRem_ defined by the numeric type:
+This can be a powerful tool in some cases, allowing a higher form of "duck typing." For instance, the new [BigInteger](http://msdn.microsoft.com/en-us/library/system.numerics.biginteger.aspx?WT.mc_id=DT-MVP-5000058) numeric type defines its own _DivRem_ method similar to the existing _DivRem_ methods defined on the [Math](http://msdn.microsoft.com/en-us/library/system.math.aspx?WT.mc_id=DT-MVP-5000058) class for _int_ and _long_. Using DynamicStaticTypeMembers, it is possible to define a generic _DivRem_ that attempts to invoke _Math.DivRem_ but falls back on a _DivRem_ defined by the numeric type:
 
 {% highlight csharp %}
 

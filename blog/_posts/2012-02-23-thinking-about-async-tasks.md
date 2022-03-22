@@ -22,7 +22,7 @@ Because tasks complete only once, they're not ideal for representing _streams of
 
 ## Tasks Support Continuations
 
-A **continuation** is [some code that is attached to a task and executed when that task completes](http://msdn.microsoft.com/en-us/library/ee372288.aspx). Tasks have direct support for continuations via the ContinueWith method.
+A **continuation** is [some code that is attached to a task and executed when that task completes](http://msdn.microsoft.com/en-us/library/ee372288.aspx?WT.mc_id=DT-MVP-5000058). Tasks have direct support for continuations via the ContinueWith method.
 
 However, you usually do not need to call that method. The await keyword will use task continuations to schedule the remainder of the async method as necessary.
 
@@ -32,7 +32,7 @@ The Task class was introduced with the Task Parallel Library. The TPL usage of T
 
 Under the TPL, the creation of a task and the scheduling of that task may be separate. It is possible to create a Task object and not start it until later. Under Async, every task is already in progress; its operation is started when the Task object is created. Because of this, you may have to call Task.Start on a Task returned from TPL code if you want to await it.
 
-TPL has a concept of parent and child tasks. Async tasks do not use this mechanism. There _is_ a _logical_ hierarchy among async tasks, but they do not use the [parent/child relationship provided by the TPL](http://msdn.microsoft.com/en-us/library/dd997417.aspx).
+TPL has a concept of parent and child tasks. Async tasks do not use this mechanism. There _is_ a _logical_ hierarchy among async tasks, but they do not use the [parent/child relationship provided by the TPL](http://msdn.microsoft.com/en-us/library/dd997417.aspx?WT.mc_id=DT-MVP-5000058).
 
 Each TPL task may have multiple errors. Even if a task only has one exception, it is wrapped in an AggregateException. Async tasks are only expected to have one error, so the await operator will avoid this AggregateException wrapper.
 

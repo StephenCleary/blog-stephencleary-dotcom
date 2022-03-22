@@ -2,7 +2,7 @@
 layout: post
 title: "StartNew is Dangerous"
 ---
-I see a lot of code on blogs and in SO questions that use `Task.Factory.StartNew` to spin up work on a background thread. Stephen Toub has an [excellent blog article that explains why `Task.Run` is better than `Task.Factory.StartNew`](https://devblogs.microsoft.com/pfxteam/task-run-vs-task-factory-startnew/), but I think a lot of people just haven't read it (or don't understand it). So, I've taken the same arguments, added some more forceful language, and we'll see how this goes. :)
+I see a lot of code on blogs and in SO questions that use `Task.Factory.StartNew` to spin up work on a background thread. Stephen Toub has an [excellent blog article that explains why `Task.Run` is better than `Task.Factory.StartNew`](https://devblogs.microsoft.com/pfxteam/task-run-vs-task-factory-startnew/?WT.mc_id=DT-MVP-5000058), but I think a lot of people just haven't read it (or don't understand it). So, I've taken the same arguments, added some more forceful language, and we'll see how this goes. :)
 
 `StartNew` does offer many more options than `Task.Run`, but it is quite dangerous, as we'll see. You should prefer `Task.Run` over `Task.Factory.StartNew` in `async` code.
 
@@ -21,14 +21,14 @@ Let's consider each of these in turn.
 
 2. _You need to specify a custom `TaskScheduler`, instead of using the thread pool scheduler._ If you need to pass a specialized `TaskScheduler` to `StartNew`, then reconsider your API design. There are better ways of creating tasks for a specific context (e.g., `TaskFactory`).
 
-3. _You need to specify custom `TaskCreationOptions`._ Let's consider [each of the options](http://msdn.microsoft.com/en-us/library/system.threading.tasks.taskcreationoptions.aspx). `AttachedToParent` shouldn't be used in async tasks, so that's out. `DenyChildAttach` should _always_ be used with async tasks (hint: if you didn't already know that, then `StartNew` isn't the tool you need). `DenyChildAttach` is passed by `Task.Run`. `HideScheduler` might be useful in some really obscure scheduling scenarios but in general should be avoided for `async` tasks. That only leaves `LongRunning` and `PreferFairness`, which are both optimization hints that **should only be specified after application profiling**. I often see `LongRunning` misused in particular. In the vast majority of situations, the threadpool will adjust to any long-running task in 0.5 seconds - _without_ the `LongRunning` flag. Most likely, you don't really need it.
+3. _You need to specify custom `TaskCreationOptions`._ Let's consider [each of the options](http://msdn.microsoft.com/en-us/library/system.threading.tasks.taskcreationoptions.aspx?WT.mc_id=DT-MVP-5000058). `AttachedToParent` shouldn't be used in async tasks, so that's out. `DenyChildAttach` should _always_ be used with async tasks (hint: if you didn't already know that, then `StartNew` isn't the tool you need). `DenyChildAttach` is passed by `Task.Run`. `HideScheduler` might be useful in some really obscure scheduling scenarios but in general should be avoided for `async` tasks. That only leaves `LongRunning` and `PreferFairness`, which are both optimization hints that **should only be specified after application profiling**. I often see `LongRunning` misused in particular. In the vast majority of situations, the threadpool will adjust to any long-running task in 0.5 seconds - _without_ the `LongRunning` flag. Most likely, you don't really need it.
 
 4. _You need to pass a state object to the delegate to reduce memory pressure from lambda variable capture._ Again, avoid the premature optimization. You should discover that you need this after doing memory profiling.
 
 Now, I'm not saying to _never_ use `Task.Factory.StartNew`. If you're writing a low-level, general-purpose async library, then there are some rare situations where you do want to use `StartNew`. But for the vast majority of `async` code, `Task.Factory.StartNew` is a mistake.
 
 <div class="alert alert-info" markdown="1">
-As a side note, the context of this discussion is _async code_. If you're writing _parallel code_ (e.g., [dynamic task-based parallelism](http://msdn.microsoft.com/en-us/library/ff963551.aspx){:.alert-link}), then `StartNew` is the tool you want to use.
+As a side note, the context of this discussion is _async code_. If you're writing _parallel code_ (e.g., [dynamic task-based parallelism](http://msdn.microsoft.com/en-us/library/ff963551.aspx?WT.mc_id=DT-MVP-5000058){:.alert-link}), then `StartNew` is the tool you want to use.
 </div>
 
 ## Why Not to Use Task.Factory.StartNew?

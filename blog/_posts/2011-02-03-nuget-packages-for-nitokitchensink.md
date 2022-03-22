@@ -12,11 +12,11 @@ The KitchenSink project will continue, but this is the first step of making it i
 
 <p>The Nito.KitchenSink packages published tonight are:</p>
 <ul>
-<li><b>BinaryData</b> - A <b>BinaryConverter</b> class which is easier to use than <a href="http://msdn.microsoft.com/en-us/library/system.bitconverter.aspx">BitConverter</a> for packed byte arrays, and extension methods for displaying binary byte arrays as a string.</li>
-<li><b>CRC</b> - <b>CRC16</b> and <b>CRC32</b> classes (deriving from <a href="http://msdn.microsoft.com/en-us/library/system.security.cryptography.hashalgorithm.aspx">HashAlgorithm</a>) which can implement <i>any</i> CRC-16 or CRC-32 algorithm, and definitions for the common implementations.</li>
+<li><b>BinaryData</b> - A <b>BinaryConverter</b> class which is easier to use than <a href="http://msdn.microsoft.com/en-us/library/system.bitconverter.aspx?WT.mc_id=DT-MVP-5000058">BitConverter</a> for packed byte arrays, and extension methods for displaying binary byte arrays as a string.</li>
+<li><b>CRC</b> - <b>CRC16</b> and <b>CRC32</b> classes (deriving from <a href="http://msdn.microsoft.com/en-us/library/system.security.cryptography.hashalgorithm.aspx?WT.mc_id=DT-MVP-5000058">HashAlgorithm</a>) which can implement <i>any</i> CRC-16 or CRC-32 algorithm, and definitions for the common implementations.</li>
 <li><b>Dynamic</b> - Classes for dynamically accessing static type members, using the approach <a href="http://blog.stephencleary.com/2010/04/dynamically-binding-to-static-class.html">described on this blog last year.</a></li>
-<li><b>Exceptions</b> - Extension methods for exceptions: preserving stack traces when re-throwing, dumping to xml, and unwrapping <a href="http://msdn.microsoft.com/en-us/library/system.aggregateexception.aspx">AggregateExceptions</a>.</li>
-<li><b>FileSystemPaths</b> - A specialized string wrapper that provides a more OO/fluent API for <a href="http://msdn.microsoft.com/en-us/library/system.io.path.aspx">System.IO.Path</a>.</li>
+<li><b>Exceptions</b> - Extension methods for exceptions: preserving stack traces when re-throwing, dumping to xml, and unwrapping <a href="http://msdn.microsoft.com/en-us/library/system.aggregateexception.aspx?WT.mc_id=DT-MVP-5000058">AggregateExceptions</a>.</li>
+<li><b>FileSystemPaths</b> - A specialized string wrapper that provides a more OO/fluent API for <a href="http://msdn.microsoft.com/en-us/library/system.io.path.aspx?WT.mc_id=DT-MVP-5000058">System.IO.Path</a>.</li>
 <li></li>
 </ul>
 

@@ -34,15 +34,15 @@ These days, the situation is much improved. On modern OSes (not including the 9x
 
 One attack vector for malicious programs is a _privilege escalation_. This is a way for an untrusted program to trick the OS into trusting it more. One privilege escalation attack that has been discovered is called a [shatter attack](http://en.wikipedia.org/wiki/Shatter_attack). This "shatter attack" is based on Win32 message passing.
 
-In response, Microsoft made two changes starting in Vista: User Interface Privilege Isolation (see [New UAC Technologies for Windows Vista](http://msdn.microsoft.com/en-us/library/bb756960.aspx) ([webcite](http://www.webcitation.org/5yJMQ8H2i))); and Session 0 Isolation (see [this Application Compatibility blog post](http://blogs.technet.com/b/askperf/archive/2007/04/27/application-compatibility-session-0-isolation.aspx) ([webcite](http://www.webcitation.org/5yJcr5ySR)) or [this Word document](http://msdn.microsoft.com/en-us/windows/hardware/gg463353)).
+In response, Microsoft made two changes starting in Vista: User Interface Privilege Isolation (see [New UAC Technologies for Windows Vista](http://msdn.microsoft.com/en-us/library/bb756960.aspx?WT.mc_id=DT-MVP-5000058) ([webcite](http://www.webcitation.org/5yJMQ8H2i))); and Session 0 Isolation (see [this Application Compatibility blog post](http://blogs.technet.com/b/askperf/archive/2007/04/27/application-compatibility-session-0-isolation.aspx) ([webcite](http://www.webcitation.org/5yJcr5ySR)) or [this Word document](http://msdn.microsoft.com/en-us/windows/hardware/gg463353?WT.mc_id=DT-MVP-5000058)).
 
 User Interface Privilege Isolation is a simple system where less-trusted programs (such as Internet Explorer) are limited in which Win32 messages they may send to more-trusted programs (such as services). This doesn't prevent services from having UIs, but may trip up programmers if they try to communicate with their service via message passing.
 
 Session 0 Isolation is more surprising to most programmers, simply because most programmers are not aware of desktops or window stations. The following MSDN resources provide a good intro to the concept:
 
 - [Services, Desktops, and Window Stations (KB171890)](http://support.microsoft.com/kb/171890) ([webcite](http://www.webcitation.org/5yJMygiUo))
-- [Process Connection to a Window Station](http://msdn.microsoft.com/en-us/library/ms684859.aspx) ([webcite](http://www.webcitation.org/5yJN86Gvo))
-- [Thread Connection to a Desktop](http://msdn.microsoft.com/en-us/library/ms686744.aspx) ([webcite](http://www.webcitation.org/5yJNBEJc4))
+- [Process Connection to a Window Station](http://msdn.microsoft.com/en-us/library/ms684859.aspx?WT.mc_id=DT-MVP-5000058) ([webcite](http://www.webcitation.org/5yJN86Gvo))
+- [Thread Connection to a Desktop](http://msdn.microsoft.com/en-us/library/ms686744.aspx?WT.mc_id=DT-MVP-5000058) ([webcite](http://www.webcitation.org/5yJNBEJc4))
 
 In essence, the older versions of Windows (XP and earlier) would run services in the same session as the first user that logged on to the physical computer, and services displaying UIs would be seen by that user. Newer versions of Windows (Vista and later) run services in their own special session (Session 0), which has its own window station and desktop completely independent from anything the user sees.
 

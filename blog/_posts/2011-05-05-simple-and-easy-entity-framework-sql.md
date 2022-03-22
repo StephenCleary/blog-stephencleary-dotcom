@@ -2,7 +2,7 @@
 layout: post
 title: "Simple and Easy Entity Framework SQL Tracing"
 ---
-There's an easy way to [add tracing to an application]({% post_url 2010-12-30-simple-and-easy-tracing-in-net %}), but Entity Framework brings some special challenges. [ObjectQuery.ToTraceString](http://msdn.microsoft.com/en-us/library/system.data.objects.objectquery.totracestring.aspx) does allow tracing of SQL SELECT commands, but there's no built-in way to trace database updates.
+There's an easy way to [add tracing to an application]({% post_url 2010-12-30-simple-and-easy-tracing-in-net %}), but Entity Framework brings some special challenges. [ObjectQuery.ToTraceString](http://msdn.microsoft.com/en-us/library/system.data.objects.objectquery.totracestring.aspx?WT.mc_id=DT-MVP-5000058) does allow tracing of SQL SELECT commands, but there's no built-in way to trace database updates.
 
 However, there is an [Entity Framework Tracing Provider](http://efwrappers.codeplex.com/) that allows this. Follow the quick-start instructions on the home page, and you'll be off in no time!
 
@@ -43,5 +43,5 @@ resulting in this trace:
 
 As expected, the first command executes a single-row SELECT, followed by a DELETE that affects a single row. Note the use of the parameterized deletion query.
 
-Unfortunately, the Entity Framework Tracing Provider does not support everything; in particular, direct database commands (e.g., [ExecuteStoreCommand](http://msdn.microsoft.com/en-us/library/system.data.objects.objectcontext.executestorecommand.aspx)) are not supported.
+Unfortunately, the Entity Framework Tracing Provider does not support everything; in particular, direct database commands (e.g., [ExecuteStoreCommand](http://msdn.microsoft.com/en-us/library/system.data.objects.objectcontext.executestorecommand.aspx?WT.mc_id=DT-MVP-5000058)) are not supported.
 

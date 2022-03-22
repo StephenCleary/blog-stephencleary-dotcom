@@ -32,7 +32,7 @@ No class should be responsible for multiple unmanaged resources.
 
 No class should be responsible for both managed and unmanaged resources.
 
-This implementation of IDisposable should call an internal "CloseHandle" method and then end with a call to [GC.SuppressFinalize(this)](http://msdn.microsoft.com/en-us/library/system.gc.suppressfinalize.aspx).
+This implementation of IDisposable should call an internal "CloseHandle" method and then end with a call to [GC.SuppressFinalize(this)](http://msdn.microsoft.com/en-us/library/system.gc.suppressfinalize.aspx?WT.mc_id=DT-MVP-5000058).
 
 The internal "CloseHandle" method should close the handle if it is a valid value, and then set the handle to an invalid value. This makes "CloseHandle" (and therefore Dispose) safe to call multiple times.
 

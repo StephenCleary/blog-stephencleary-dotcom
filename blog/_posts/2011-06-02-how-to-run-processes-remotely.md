@@ -6,7 +6,7 @@ Today I'm going to delve deeply into something I discovered many years ago (c. 2
 
 When a process running on one computer needs to perform some operation on _another_ computer, the common solution is to actually have two processes that use interprocess communication. The one process sends its commands to the other process, which executes them on behalf of the first process. Normally, one must install a server on one computer and a client on the other. So, if someone needs to perform an operation on another computer, then that computer must _already have_ the software installed.
 
-However, there _is_ a way to send a program to a remote computer and run it, without having any special existing software on the target machine. This approach doesn't work in every situation, but it's useful to know. The command line programs in the famous [PSTools suite](http://technet.microsoft.com/en-us/sysinternals/bb896649) use the approach documented here to "inject" copies of themselves onto remote computers; this allows a simple form of remote administration. The white paper [PsExec Internals](http://www.ntkernel.com/?White_papers:PsExec_Internals) ([webcite](http://www.webcitation.org/5yUALT8gw)) includes the specific details for PsExec.
+However, there _is_ a way to send a program to a remote computer and run it, without having any special existing software on the target machine. This approach doesn't work in every situation, but it's useful to know. The command line programs in the famous [PSTools suite](http://technet.microsoft.com/en-us/sysinternals/bb896649?WT.mc_id=DT-MVP-5000058) use the approach documented here to "inject" copies of themselves onto remote computers; this allows a simple form of remote administration. The white paper [PsExec Internals](http://www.ntkernel.com/?White_papers:PsExec_Internals) ([webcite](http://www.webcitation.org/5yUALT8gw)) includes the specific details for PsExec.
 
 ## Step 1: Establish an Authenticated Connection
 
@@ -17,7 +17,7 @@ A user session on one computer may have network connections to other computers. 
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
-Network connections may be examined and modified using the [Windows Networking (WNet) API](http://msdn.microsoft.com/en-us/library/aa385406.aspx){:.alert-link} or the **net** command. Unfortunately, there are no .NET wrappers for this API in the BCL.
+Network connections may be examined and modified using the [Windows Networking (WNet) API](http://msdn.microsoft.com/en-us/library/aa385406.aspx?WT.mc_id=DT-MVP-5000058){:.alert-link} or the **net** command. Unfortunately, there are no .NET wrappers for this API in the BCL.
 </div>
 
 ### About Authentication
@@ -88,12 +88,12 @@ Just copy the program to **\\computer\ADMIN$**, right into the Windows directory
 
 ## Step 3: Register and Execute the Program
 
-This step makes use of the little-known fact that Win32 services may be _installed_ remotely. The [service configuration API](http://msdn.microsoft.com/en-us/library/ms685148(v=VS.85).aspx) can be used to install the service on the remote computer and then start it.
+This step makes use of the little-known fact that Win32 services may be _installed_ remotely. The [service configuration API](http://msdn.microsoft.com/en-us/library/ms685148(v=VS.85).aspx?WT.mc_id=DT-MVP-5000058) can be used to install the service on the remote computer and then start it.
 
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
-The .NET [ServiceController class](http://msdn.microsoft.com/en-us/library/system.serviceprocess.servicecontroller.aspx){:.alert-link} does expose remote _control_ of services (starting, stopping, etc), but it does not expose remote _installation_ of services.
+The .NET [ServiceController class](http://msdn.microsoft.com/en-us/library/system.serviceprocess.servicecontroller.aspx?WT.mc_id=DT-MVP-5000058){:.alert-link} does expose remote _control_ of services (starting, stopping, etc), but it does not expose remote _installation_ of services.
 </div>
 
 ## Step 4: Securely Communicate

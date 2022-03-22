@@ -6,7 +6,7 @@ title: "VS2010 WebDeploy and VS2010 Web Deployment Projects Beta 1"
 
 **VS2010 will overwrite SourceWebPhysicalPath when re-loading a solution containing a WDP, so the fix below will not work. It is kept on this site for historical purposes only.**
 
-VS2010 includes a [number of enhancements](http://live.visitmix.com/MIX10/Sessions/FT14) to web deployment, as [Scott](http://www.hanselman.com/blog/) points out. One of the coolest is the [web.config transformations](http://msdn.microsoft.com/en-us/library/dd465326(VS.100).aspx). They also included all kinds of functionality for automatically setting up IIS as part of a "deployment package" (getting pretty close to re-writing Windows Installer, actually).
+VS2010 includes a [number of enhancements](http://live.visitmix.com/MIX10/Sessions/FT14) to web deployment, as [Scott](http://www.hanselman.com/blog/) points out. One of the coolest is the [web.config transformations](http://msdn.microsoft.com/en-us/library/dd465326(VS.100).aspx?WT.mc_id=DT-MVP-5000058). They also included all kinds of functionality for automatically setting up IIS as part of a "deployment package" (getting pretty close to re-writing Windows Installer, actually).
 
 The end result is a really powerful solution that a mom-and-pop web guy like me doesn't really need. I would like the ability to precompile a web application, and this is one of the "blind spots" of VS2010.
 

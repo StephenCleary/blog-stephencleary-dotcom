@@ -83,7 +83,7 @@ public static void AssertXmldoc(XDocument xmldoc, string expectedValue, IMemberD
 }
 {% endhighlight %}
 
-This unit test is checking that the [Xmldoc Identifier](https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/xmldoc/processing-the-xml-file) calculated by DotNetApis is in fact what we expect it to be (`M:SampleClass.SampleMethod`) *and* that it matches what the C# compiler generated in the xml file. The `AssertXmldoc` helper is taking the Xmldoc Id from DotNetApis, looking it up in the *.xml file from the compiler, and asserting that the text we extract is what is expected.
+This unit test is checking that the [Xmldoc Identifier](https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/xmldoc/processing-the-xml-file?WT.mc_id=DT-MVP-5000058) calculated by DotNetApis is in fact what we expect it to be (`M:SampleClass.SampleMethod`) *and* that it matches what the C# compiler generated in the xml file. The `AssertXmldoc` helper is taking the Xmldoc Id from DotNetApis, looking it up in the *.xml file from the compiler, and asserting that the text we extract is what is expected.
 
 Sure, this example is pretty easy, but I've also started adding the more rare cases like methods that take an array of pointers by reference. There's a *lot* of more complex cases that are undocumented, and we have to rely on observed compiler behavior.
 

@@ -16,7 +16,7 @@ If you view a `Task` as a state machine, then the `Status` property represents t
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
-As usual, this post is just taking [what Stephen Toub already said](https://devblogs.microsoft.com/pfxteam/the-meaning-of-taskstatus/){:.alert-link}, expounding on it a bit, and drawing some ugly pictures. :)
+As usual, this post is just taking [what Stephen Toub already said](https://devblogs.microsoft.com/pfxteam/the-meaning-of-taskstatus/?WT.mc_id=DT-MVP-5000058){:.alert-link}, expounding on it a bit, and drawing some ugly pictures. :)
 </div>
 
 ### Delegate Tasks

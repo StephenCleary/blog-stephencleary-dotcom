@@ -100,7 +100,7 @@ If `Task.WaitAll` is rarely used, `Task.WaitAny` should hardly ever be used at a
 
 ## AsyncWaitHandle
 
-The `Task` type actually implements `IAsyncResult` for [easy interoperation with the (unfortunately named) Asynchronous Programming Model (APM)](http://msdn.microsoft.com/en-us/library/hh873178(v=vs.110).aspx#TapToApm). This means `Task` has a wait handle as one of its properties:
+The `Task` type actually implements `IAsyncResult` for [easy interoperation with the (unfortunately named) Asynchronous Programming Model (APM)](http://msdn.microsoft.com/en-us/library/hh873178(v=vs.110).aspx#TapToApm?WT.mc_id=DT-MVP-5000058). This means `Task` has a wait handle as one of its properties:
 
 {% highlight csharp %}
 WaitHandle IAsyncResult.AsyncWaitHandle { get; }
@@ -108,7 +108,7 @@ WaitHandle IAsyncResult.AsyncWaitHandle { get; }
 
 Note that this member is explicitly implemented, so consuming code _must_ cast the `Task` as `IAsyncResult` before reading it. The actual underlying wait handle is lazy-allocated.
 
-Code using `AsyncWaitHandle` should be extremely, _extremely_ rare. It only makes sense if you have tons of existing code that is built around `WaitHandle`. If you do read the `AsyncWaitHandle` property, strongly consider [disposing the task instance](https://devblogs.microsoft.com/pfxteam/do-i-need-to-dispose-of-tasks/).
+Code using `AsyncWaitHandle` should be extremely, _extremely_ rare. It only makes sense if you have tons of existing code that is built around `WaitHandle`. If you do read the `AsyncWaitHandle` property, strongly consider [disposing the task instance](https://devblogs.microsoft.com/pfxteam/do-i-need-to-dispose-of-tasks/?WT.mc_id=DT-MVP-5000058).
 
 ## Conclusion
 

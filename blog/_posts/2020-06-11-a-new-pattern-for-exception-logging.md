@@ -217,7 +217,7 @@ The important part of this behavior is that there are two distinct steps: *find,
 
 ## Exception Filters
 
-Exception filters have been around for a very long time; .NET 1.0 (2002) supported them, and [Structured Exception Handling](https://docs.microsoft.com/en-us/windows/win32/debug/structured-exception-handling) existed even way before that. C# only got exception filter capabilities in C# 6.0 (2015), and so far they haven't really become common in most codebases. That may change now, though.
+Exception filters have been around for a very long time; .NET 1.0 (2002) supported them, and [Structured Exception Handling](https://docs.microsoft.com/en-us/windows/win32/debug/structured-exception-handling?WT.mc_id=DT-MVP-5000058) existed even way before that. C# only got exception filter capabilities in C# 6.0 (2015), and so far they haven't really become common in most codebases. That may change now, though.
 
 Exception filters allow you to hook into the "find" part of "find, then unwind". By providing an exception filter, you can control whether a specific `catch` block matches the exception.
 

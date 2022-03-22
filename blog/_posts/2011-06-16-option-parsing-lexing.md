@@ -11,7 +11,7 @@ The first step in parsing a command line is _lexing_, which converts a single st
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
-The information in this section is derived from the TechNet articles [Command shell overview](http://technet.microsoft.com/en-us/library/bb490954.aspx){:.alert-link} ([webcite](http://www.webcitation.org/5ytzcAcrB){:.alert-link}) and [The Windows NT Command Shell](http://technet.microsoft.com/en-us/library/cc723564.aspx){:.alert-link} ([webcite](http://www.webcitation.org/5ytzuqd4h){:.alert-link}).
+The information in this section is derived from the TechNet articles [Command shell overview](http://technet.microsoft.com/en-us/library/bb490954.aspx?WT.mc_id=DT-MVP-5000058){:.alert-link} ([webcite](http://www.webcitation.org/5ytzcAcrB){:.alert-link}) and [The Windows NT Command Shell](http://technet.microsoft.com/en-us/library/cc723564.aspx?WT.mc_id=DT-MVP-5000058){:.alert-link} ([webcite](http://www.webcitation.org/5ytzuqd4h){:.alert-link}).
 </div>
 
 The command shell has these special characters: `&`, `|`, `(`, `)`, `<`, `>`, and `^`. There are two ways to pass these special characters on the command line: _escaping_ and _quoting_.
@@ -52,7 +52,7 @@ Shell escaping and quoting are applied to every process by the Command Shell; th
 
 ## Default .NET Lexing
 
-The command line is split up into a list of process arguments by the .NET runtime. The algorithm is described in the documentation for [Environment.GetCommandLineArgs](http://msdn.microsoft.com/en-us/library/system.environment.getcommandlineargs.aspx). The same results (except for the process name) are also passed as the single argument to the `Main` method, if present.
+The command line is split up into a list of process arguments by the .NET runtime. The algorithm is described in the documentation for [Environment.GetCommandLineArgs](http://msdn.microsoft.com/en-us/library/system.environment.getcommandlineargs.aspx?WT.mc_id=DT-MVP-5000058). The same results (except for the process name) are also passed as the single argument to the `Main` method, if present.
 
 The .NET lexing also uses a combination of escaping and quoting, but it has some surprising results because escaping is allowed inside quoting. The escape character is `\`, and the quote character is the double-quote.
 

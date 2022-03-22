@@ -10,7 +10,7 @@ To be clear, this series will show supported scenarios that both `BackgroundWork
 
 ## Scenarios Not Supported by BackgroundWorker
 
-One of the design problems of `BackgroundWorker` is that the semantics get surprising when nesting; if you create (and start) a `BackgroundWorker` from within another `BackgroundWorker`, the events on the inner `BackgroundWorker` are raised on the thread pool. I explain why this happens in my [SynchronizationContext article](http://msdn.microsoft.com/en-us/magazine/gg598924.aspx), complete with pretty pictures (don't laugh! I worked hard on those!).
+One of the design problems of `BackgroundWorker` is that the semantics get surprising when nesting; if you create (and start) a `BackgroundWorker` from within another `BackgroundWorker`, the events on the inner `BackgroundWorker` are raised on the thread pool. I explain why this happens in my [SynchronizationContext article](http://msdn.microsoft.com/en-us/magazine/gg598924.aspx?WT.mc_id=DT-MVP-5000058), complete with pretty pictures (don't laugh! I worked hard on those!).
 
 A similar problem is that `BackgroundWorker` doesn't work well with `async` code. An `async DoWork` handler will exit early, causing the `RunWorkerCompleted` to fire before the method is completed.
 

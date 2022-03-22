@@ -2,7 +2,7 @@
 layout: post
 title: "If PusleEvent is broken, what about Monitor.Pulse?"
 ---
-In a post not too long ago, I mentioned that [PulseEvent was broken]({% post_url 2009-09-16-iasyncresultasyncwaithandle-and %}). That got me to thinking: [Monitor](http://msdn.microsoft.com/en-us/library/system.threading.monitor.aspx) has Pulse/PulseAll methods; are they broken, too?
+In a post not too long ago, I mentioned that [PulseEvent was broken]({% post_url 2009-09-16-iasyncresultasyncwaithandle-and %}). That got me to thinking: [Monitor](http://msdn.microsoft.com/en-us/library/system.threading.monitor.aspx?WT.mc_id=DT-MVP-5000058) has Pulse/PulseAll methods; are they broken, too?
 
 Many years ago, when [Cygwin](http://www.cygwin.com/) was young, I recall reading several articles and mailing list discussions about the difficulty of implementing a monitor (a.k.a. condition variable) on Windows platforms. It turns out that the built-in manual-reset and auto-reset events are very different than a monitor, though they appear similar at first glance. Many wrong monitor implementations have been written around a simple mutex/event pairing (sometimes with a second event), using PulseEvent.
 

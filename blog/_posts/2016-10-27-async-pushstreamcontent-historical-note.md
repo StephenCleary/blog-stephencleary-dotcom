@@ -12,7 +12,7 @@ Today, `PushStreamContent` takes an [asynchronous delegate]({% post_url 2014-02-
 
 Historically, `PushStreamContent` was a lot weirder. It always supported asynchronous writing of the response stream, but the way it used to do so was odd, to say the least.
 
-When `PushStreamContent` was first introduced, it only allowed *synchronous* delegates (`Action<Stream, HttpContent, TransportContext>`). It wasn't really obvious, but it *did* actually support asynchronous usage. What you had to do was pass an asynchronous lambda expression, which would actually get converted to an `async void` method. One of the main [problems with `async void` methods](https://msdn.microsoft.com/en-us/magazine/jj991977.aspx) is that it's very difficult for the caller to know when the `async void` method has completed.
+When `PushStreamContent` was first introduced, it only allowed *synchronous* delegates (`Action<Stream, HttpContent, TransportContext>`). It wasn't really obvious, but it *did* actually support asynchronous usage. What you had to do was pass an asynchronous lambda expression, which would actually get converted to an `async void` method. One of the main [problems with `async void` methods](https://msdn.microsoft.com/en-us/magazine/jj991977.aspx?WT.mc_id=DT-MVP-5000058) is that it's very difficult for the caller to know when the `async void` method has completed.
 
 `PushStreamContent` used to solve this in an unusual way: [`PushStreamContent` would consider its callback "complete" when it closed the output stream](http://stackoverflow.com/questions/15060214/web-api-httpclient-an-asynchronous-module-or-handler-completed-while-an-async). "Interesting," indeed.
 

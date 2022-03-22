@@ -2,7 +2,7 @@
 layout: post
 title: "SynchronizationContext Odds and Ends"
 ---
-During my many adventures with SynchronizationContext, I ran into two rather interesting corner cases. Originally, these appeared as footnotes in [my article](http://msdn.microsoft.com/en-us/magazine/gg598924.aspx), but they were among the first things that I cut.
+During my many adventures with SynchronizationContext, I ran into two rather interesting corner cases. Originally, these appeared as footnotes in [my article](http://msdn.microsoft.com/en-us/magazine/gg598924.aspx?WT.mc_id=DT-MVP-5000058), but they were among the first things that I cut.
 
 Both of these corner cases deal with a "missing" SynchronizationContext; that is, **SynchronizationContext.Current** is **null** when it shouldn't be. In this case, the default SynchronizationContext is used, which invokes all of its callbacks on the ThreadPool thread. One common symptom of this problem is that **BackgroundWorker.RunWorkerCompleted** gets a cross-thread exception.
 

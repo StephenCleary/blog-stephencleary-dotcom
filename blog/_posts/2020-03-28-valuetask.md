@@ -28,7 +28,7 @@ Code consuming a `ValueTask<T>` should only consume it once, and after that the 
 
 ## ValueTask Restriction #2: Only Consume Asynchronously (or "No More Blocking Now, I Mean It!")
 
-Blocking on asynchronous code has [never been the ideal solution](https://msdn.microsoft.com/en-us/magazine/jj991977.aspx), but in some cases it is necessary. It is *possible* to block on reference tasks using `GetAwaiter().GetResult()` (or `Result` or `Wait()`).
+Blocking on asynchronous code has [never been the ideal solution](https://msdn.microsoft.com/en-us/magazine/jj991977.aspx?WT.mc_id=DT-MVP-5000058), but in some cases it is necessary. It is *possible* to block on reference tasks using `GetAwaiter().GetResult()` (or `Result` or `Wait()`).
 
 However, this will not work for value tasks. You simply **cannot** block on value tasks. If you *must* block (again, this is never ideal), then you'll need to convert the value task to a reference task by calling `AsTask`, and then block on that reference task.
 

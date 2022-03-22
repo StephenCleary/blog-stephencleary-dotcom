@@ -20,7 +20,7 @@ The reason is that the ASP.NET runtime has no idea that you've queued this work,
 
 ## HostingEnvironment.QueueBackgroundWorkItem
 
-`QueueBackgroundWorkItem` (QBWI) was added in .NET 4.5.2 to help mitigate loss of background work. [QBWI will register its background work with the ASP.NET runtime](https://devblogs.microsoft.com/aspnet/queuebackgroundworkitem-to-reliably-schedule-and-run-background-processes-in-asp-net/).
+`QueueBackgroundWorkItem` (QBWI) was added in .NET 4.5.2 to help mitigate loss of background work. [QBWI will register its background work with the ASP.NET runtime](https://devblogs.microsoft.com/aspnet/queuebackgroundworkitem-to-reliably-schedule-and-run-background-processes-in-asp-net/?WT.mc_id=DT-MVP-5000058).
 
 Since the ASP.NET runtime is aware of the background work, it will not immediately yank your AppDomain when it's time to recycle. However, this does not mean that the background work can just do whatever it wants!
 
@@ -30,7 +30,7 @@ So, QBWI is a step in the right direction. I would say it's the "minimum viable"
 
 ## IRegisteredObject
 
-The standard way to register with ASP.NET is via `IRegisteredObject`. The semantics aren't officially documented, but they're described in [this blog post under the third answer of question 5](https://docs.microsoft.com/en-us/archive/blogs/tmarq/performing-asynchronous-work-or-tasks-in-asp-net-applications):
+The standard way to register with ASP.NET is via `IRegisteredObject`. The semantics aren't officially documented, but they're described in [this blog post under the third answer of question 5](https://docs.microsoft.com/en-us/archive/blogs/tmarq/performing-asynchronous-work-or-tasks-in-asp-net-applications?WT.mc_id=DT-MVP-5000058):
 
 > You can create an object that implements the `IRegisteredObject` interface and call `HostingEnvironment.RegisterObject` to "register" it with ASP.NET.  When the AppDomain is about to be unloaded, we will call your implementation of `IRegisteredObject.Stop(bool immediate)`.  The `Stop` method is called twice by ASP.NET, once with the `immediate` parameter set to `false` and once again with that argument set to `true`.  You are supposed to call `HostingEnvironment.UnregisterObject` as soon as your registered object has stopped, so ASP.NET knows it doesn’t need to call your `Stop` method.  You can call it at anytime, but you definitely should call it before returning from `Stop` when it is called with `immediate` set to `true`, because that’s your final chance and if you’re still running after that you will be rudely aborted...  If you need to, you can hold up the unload as long as you like, because we won’t unload until your `Stop` method returns the second time.
 

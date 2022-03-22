@@ -41,13 +41,13 @@ The other main problem I've run into is deployment. Currently, Azure Functions h
 
 I am hopeful that this will be addressed in the near future, with some kind of output folder working for the continuous deployment process rather than assuming the code *is* the deployment.
 
-Finally, I wasn't able to get references working to [NuGet packages installed by the Azure Functions continuous deployment system](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-csharp#package-management). As a workaround, I just copy all the dlls from my project's output directory (except the [ones already preloaded by the Azure Functions runtime](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-csharp#referencing-external-assemblies)) into the `bin` folder of my function.
+Finally, I wasn't able to get references working to [NuGet packages installed by the Azure Functions continuous deployment system](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-csharp#package-management?WT.mc_id=DT-MVP-5000058). As a workaround, I just copy all the dlls from my project's output directory (except the [ones already preloaded by the Azure Functions runtime](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-csharp#referencing-external-assemblies?WT.mc_id=DT-MVP-5000058)) into the `bin` folder of my function.
 
 ## Tips
 
 There's a few tips that I've picked up when getting started with Azure Functions.
 
-- Ensure your [folder structure](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference#folder-structure) is correct, and don't forget your hosts.json file.
+- Ensure your [folder structure](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference#folder-structure?WT.mc_id=DT-MVP-5000058) is correct, and don't forget your hosts.json file.
 - The Azure Functions portal has some awesome shortcuts (that really should be in other portals too, I'm looking at you, App Services!). The dev console and Kudu are particularly useful when setting up deployment.
 - There are a few situations where restarting the Azure Functions host is necessary. For example, if you update a dll but do *not* update its version, then your Function won't "see" the updated dll. To force it to update, you can select "App Service Settings" from the Azure Functions portal and from there Restart your Azure Functions service.
 

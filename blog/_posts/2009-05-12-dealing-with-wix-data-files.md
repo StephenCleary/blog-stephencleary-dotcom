@@ -4,7 +4,7 @@ title: "Dealing with WiX data files"
 ---
 I am not an installer guru. The story below is how another company overcame one of their installer upgrade difficulties. The solution was found by their installer guru, a friend of mine.
 
-Splitting up an application into components is a pretty [straightforward process](http://msdn.microsoft.com/en-us/library/aa368269(VS.85).aspx) - usually, resource files are thrown into a directory-wide component. Apparently, the ideal setup for ".config" files is to be in the same component as their .exe, with their CompanionFile set to the .exe, like this: [http://wix.mindcapers.com/wiki/Companion_File](http://wix.mindcapers.com/wiki/Companion_File).
+Splitting up an application into components is a pretty [straightforward process](http://msdn.microsoft.com/en-us/library/aa368269(VS.85).aspx?WT.mc_id=DT-MVP-5000058) - usually, resource files are thrown into a directory-wide component. Apparently, the ideal setup for ".config" files is to be in the same component as their .exe, with their CompanionFile set to the .exe, like this: [http://wix.mindcapers.com/wiki/Companion_File](http://wix.mindcapers.com/wiki/Companion_File).
 
 That's nice. Now, what to do if your previous installs didn't do this?
 

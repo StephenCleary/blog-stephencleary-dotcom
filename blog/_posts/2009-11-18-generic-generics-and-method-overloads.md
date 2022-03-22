@@ -19,7 +19,7 @@ public void TestMethod1()
 }
 {% endhighlight %}
 
-The behavior is just as you'd expect; the correct overloaded method is chosen based on the [better conversion](http://msdn.microsoft.com/en-us/library/aa691339(VS.71).aspx) of the static types of the arguments.
+The behavior is just as you'd expect; the correct overloaded method is chosen based on the [better conversion](http://msdn.microsoft.com/en-us/library/aa691339(VS.71).aspx?WT.mc_id=DT-MVP-5000058) of the static types of the arguments.
 
 So far, so good. The problem that I came across is when generic generics are used:
 

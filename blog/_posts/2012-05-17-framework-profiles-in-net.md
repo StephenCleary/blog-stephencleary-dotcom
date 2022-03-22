@@ -2,13 +2,13 @@
 layout: post
 title: "Framework Profiles in .NET"
 ---
-There are a lot of different .NET runtimes. There's the desktop framework, Windows Phone, Silverlight, and Windows Store. There's also a number of lesser-known frameworks. You can download [targeting packs](http://msdn.microsoft.com/en-US/hh454951.aspx) to target different frameworks.
+There are a lot of different .NET runtimes. There's the desktop framework, Windows Phone, Silverlight, and Windows Store. There's also a number of lesser-known frameworks. You can download [targeting packs](http://msdn.microsoft.com/en-US/hh454951.aspx?WT.mc_id=DT-MVP-5000058) to target different frameworks.
 
 Every once in a while (usually while [working with NuGet](http://docs.nuget.org/docs/creating-packages/creating-and-publishing-a-package)), I find myself needing a refresher on the frameworks and profiles. It's a pain to look all this up again, so I'm collecting it here for future reference.
 
 ## FrameworkName and Version
 
-A target framework is indicated by a [FrameworkName](http://msdn.microsoft.com/en-us/library/system.runtime.versioning.frameworkname.aspx), which has three components: a required framework Identifier, a required framework [Version](http://msdn.microsoft.com/en-us/library/system.version.aspx), and an optional framework Profile.
+A target framework is indicated by a [FrameworkName](http://msdn.microsoft.com/en-us/library/system.runtime.versioning.frameworkname.aspx?WT.mc_id=DT-MVP-5000058), which has three components: a required framework Identifier, a required framework [Version](http://msdn.microsoft.com/en-us/library/system.version.aspx?WT.mc_id=DT-MVP-5000058), and an optional framework Profile.
 
 Both Identifier and Profile are always case-insensitive. The FrameworkName constructor allows some flexibility when it parses strings (and NuGet allows even more flexibility), but the canonical structure is as such: _Identifier_ ",Version=v" _Version_ [ ",Profile=" _Profile_ ].
 

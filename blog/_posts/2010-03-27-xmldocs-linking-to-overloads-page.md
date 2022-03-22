@@ -2,7 +2,7 @@
 layout: post
 title: "XmlDocs: Linking to the Overloads Page"
 ---
-XML documentation has a natural "link to code" element: the [\<see> tag](http://msdn.microsoft.com/en-us/library/acd0tfbe.aspx). When a function is overloaded, the resulting help file contains an "overloads" page [like this](http://msdn.microsoft.com/en-us/library/system.text.encoding.getstring.aspx), but getting the **see** element to link to the overloads page is not exactly straightforward.
+XML documentation has a natural "link to code" element: the [\<see> tag](http://msdn.microsoft.com/en-us/library/acd0tfbe.aspx?WT.mc_id=DT-MVP-5000058). When a function is overloaded, the resulting help file contains an "overloads" page [like this](http://msdn.microsoft.com/en-us/library/system.text.encoding.getstring.aspx?WT.mc_id=DT-MVP-5000058), but getting the **see** element to link to the overloads page is not exactly straightforward.
 
 The \<see> tag is one of the tags that is verified by the compiler, so it's not possible to just stick anything in there. The **see.cref** attribute must be a resolvable code element. The compiler doesn't allow you to resolve to a method group; it wants a single, unambiguous member reference.
 

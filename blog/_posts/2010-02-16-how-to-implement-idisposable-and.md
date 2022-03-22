@@ -9,7 +9,7 @@ I've decided to split off the matrix and flowchart from my original [How to Impl
 The flowchart and decision matrix below use these terms:
 
 - Managed resource - an instance of any class implementing IDisposable.
-- Unmanaged resource - a handle of some type representing a resource that requires a p/Invoke function to "free" the handle; OR an IntPtr allocated by one of the "allocation" functions in the [Marshal](http://msdn.microsoft.com/en-us/library/system.runtime.interopservices.marshal.aspx) class; OR a [GCHandle](http://msdn.microsoft.com/en-us/library/system.runtime.interopservices.gchandle.aspx) or its equivalent IntPtr.
+- Unmanaged resource - a handle of some type representing a resource that requires a p/Invoke function to "free" the handle; OR an IntPtr allocated by one of the "allocation" functions in the [Marshal](http://msdn.microsoft.com/en-us/library/system.runtime.interopservices.marshal.aspx?WT.mc_id=DT-MVP-5000058) class; OR a [GCHandle](http://msdn.microsoft.com/en-us/library/system.runtime.interopservices.gchandle.aspx?WT.mc_id=DT-MVP-5000058) or its equivalent IntPtr.
 - Own - a resource is "owned" by a class if the lifetime of the resource is scoped to an instance of that class. Some classes _share_ resources but do not own them.
 
 ### Decision Matrix as a Table

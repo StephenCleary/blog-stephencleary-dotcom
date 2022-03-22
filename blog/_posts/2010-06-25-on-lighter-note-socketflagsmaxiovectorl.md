@@ -4,7 +4,7 @@ title: "On A Lighter Note: SocketFlags.MaxIOVectorLength"
 ---
 Today I was just working along, minding my own business, when out of the blue my mind jumped back to something strange I had seen over a year ago. (Is anyone else insane like that, or is it just me?)
 
-The seldom-used [SocketFlags](http://msdn.microsoft.com/en-us/library/system.net.sockets.socketflags.aspx) enumeration serves a dual purpose: it can represent flags passed to the Send or Receive operation, and it also represents flags passed back from the Send or Receive operation.
+The seldom-used [SocketFlags](http://msdn.microsoft.com/en-us/library/system.net.sockets.socketflags.aspx?WT.mc_id=DT-MVP-5000058) enumeration serves a dual purpose: it can represent flags passed to the Send or Receive operation, and it also represents flags passed back from the Send or Receive operation.
 
 Reading through the enumeration values is pretty much straightforward: it's fairly obvious which ones are meant as "input" or "output" parameters, and what their meanings are. One value, however, is rather strange: MaxIOVectorLength, which (according to the MSDN documentation) "Provides a standard value for the number of WSABUF structures that are used to send and receive data."
 

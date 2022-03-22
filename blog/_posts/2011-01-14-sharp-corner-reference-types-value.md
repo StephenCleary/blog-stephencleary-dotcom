@@ -6,7 +6,7 @@ This week I was writing some code that had to respond differently depending on w
 
 During this exploration, I developed a few tests to evaluate the type system (code at the end of this post). The results are summarized below, along with some of my thoughts on the weirdos (types which are sort-of reference and sort-of value, depending on your definition of "reference" and "value").
 
-One way of defining a "reference type" is whether [Type.IsClass](http://msdn.microsoft.com/en-us/library/system.type.isclass.aspx) is true; another way of defining a "reference type" is whether it satisfies a [generic class constraint](http://msdn.microsoft.com/en-us/library/d5x73970.aspx) (e.g., _void Test\<T>() where T : class_). Likewise, value types have [Type.IsValueType](http://msdn.microsoft.com/en-us/library/system.type.isvaluetype.aspx) and generic struct constraints.
+One way of defining a "reference type" is whether [Type.IsClass](http://msdn.microsoft.com/en-us/library/system.type.isclass.aspx?WT.mc_id=DT-MVP-5000058) is true; another way of defining a "reference type" is whether it satisfies a [generic class constraint](http://msdn.microsoft.com/en-us/library/d5x73970.aspx?WT.mc_id=DT-MVP-5000058) (e.g., _void Test\<T>() where T : class_). Likewise, value types have [Type.IsValueType](http://msdn.microsoft.com/en-us/library/system.type.isvaluetype.aspx?WT.mc_id=DT-MVP-5000058) and generic struct constraints.
 
 The table below includes tests on a variety of types, grouped into "mostly reference types" and "mostly value types". The types that are more clearly reference/value types are at the top of each group, with the weirdos at the bottom.
 

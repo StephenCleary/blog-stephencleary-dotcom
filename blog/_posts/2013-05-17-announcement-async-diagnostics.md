@@ -12,7 +12,7 @@ I'll cut to the chase: the call stack is about _where you're going next_, not _w
 
 This is counter-intuitive to many developers because in the synchronous world, the call stack _is_ the causality stack. But in the asynchronous world, they are very different. Eric Lippert has some great SO answers ([1](http://stackoverflow.com/a/15368508/263693), [2](http://stackoverflow.com/a/6597522/263693)) that clarify what the call stack _really_ is.
 
-There's also a recent [MSDN article](http://msdn.microsoft.com/en-us/magazine/jj891052.aspx) that explains why call stacks aren't causality stacks. That article includes a fairly involved way to build causality chains that works for Windows Store applications but does not properly handle fork/join scenarios (e.g., `Task.WhenAll`).
+There's also a recent [MSDN article](http://msdn.microsoft.com/en-us/magazine/jj891052.aspx?WT.mc_id=DT-MVP-5000058) that explains why call stacks aren't causality stacks. That article includes a fairly involved way to build causality chains that works for Windows Store applications but does not properly handle fork/join scenarios (e.g., `Task.WhenAll`).
 
 ## Introducing Async Diagnostics
 
