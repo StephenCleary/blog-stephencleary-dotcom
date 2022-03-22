@@ -290,7 +290,7 @@ img.comment-author-profile-image {
   </header>
 
   <article>
-  <p>So far, we’ve been learning quite a bit about the core <code>async</code> / <code>await</code> support that was added to C# in VS2012. Today, we’ll start with a conceptual overview of the first large, useful library built with <code>async</code> in mind: <a href="http://msdn.microsoft.com/en-us/devlabs/gg585582.aspx">TPL Dataflow</a>.</p>
+  <p>So far, we’ve been learning quite a bit about the core <code>async</code> / <code>await</code> support that was added to C# in VS2012. Today, we’ll start with a conceptual overview of the first large, useful library built with <code>async</code> in mind: <a href="http://msdn.microsoft.com/en-us/devlabs/gg585582.aspx?WT.mc_id=DT-MVP-5000058">TPL Dataflow</a>.</p>
 
 <p>TPL Dataflow allows you to easily create a <em>mesh</em> through which your data flows. The simplest meshes are pipelines (very similar to pipelines in PowerShell). More complex meshes can split and join the data flows, and even contain data flow loops!</p>
 
@@ -306,9 +306,9 @@ img.comment-author-profile-image {
 
 <h2 id="basic-data-flow">Basic Data Flow</h2>
 
-<p>You can push data to a block by calling <a href="http://msdn.microsoft.com/en-us/library/hh194836.aspx"><code>Post(item)</code></a> or <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.dataflow.dataflowblock.sendasync.aspx"><code>await SendAsync(item)</code></a>. Normally, you could just use <code>Post(item)</code> to (synchronously) place the data into the block’s input buffer. However, it’s possible to throttle a block by limiting its buffer size; in this case, you could use <code>SendAsync</code> to (asynchronously) wait for space to be available and then place the data into the block’s input buffer.</p>
+<p>You can push data to a block by calling <a href="http://msdn.microsoft.com/en-us/library/hh194836.aspx?WT.mc_id=DT-MVP-5000058"><code>Post(item)</code></a> or <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.dataflow.dataflowblock.sendasync.aspx?WT.mc_id=DT-MVP-5000058"><code>await SendAsync(item)</code></a>. Normally, you could just use <code>Post(item)</code> to (synchronously) place the data into the block’s input buffer. However, it’s possible to throttle a block by limiting its buffer size; in this case, you could use <code>SendAsync</code> to (asynchronously) wait for space to be available and then place the data into the block’s input buffer.</p>
 
-<p>Getting data out at first appears pretty easy: you can call <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.dataflow.dataflowblock.receive.aspx"><code>Receive</code></a>, <a href="http://msdn.microsoft.com/en-us/library/hh194808.aspx"><code>TryReceive</code></a>, or <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.dataflow.dataflowblock.receiveasync.aspx"><code>ReceiveAsync</code></a> to retrieve the next item, and there’s an <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.dataflow.dataflowblock.outputavailableasync.aspx"><code>OutputAvailableAsync</code></a> that lets you know when the next item is ready to be retrieved. However, there are a couple of “gotchas”:</p>
+<p>Getting data out at first appears pretty easy: you can call <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.dataflow.dataflowblock.receive.aspx?WT.mc_id=DT-MVP-5000058"><code>Receive</code></a>, <a href="http://msdn.microsoft.com/en-us/library/hh194808.aspx?WT.mc_id=DT-MVP-5000058"><code>TryReceive</code></a>, or <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.dataflow.dataflowblock.receiveasync.aspx?WT.mc_id=DT-MVP-5000058"><code>ReceiveAsync</code></a> to retrieve the next item, and there’s an <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.dataflow.dataflowblock.outputavailableasync.aspx?WT.mc_id=DT-MVP-5000058"><code>OutputAvailableAsync</code></a> that lets you know when the next item is ready to be retrieved. However, there are a couple of “gotchas”:</p>
 
 <ol>
   <li>When a block finishes processing, <code>Receive</code> and <code>await ReceiveAsync</code> will both throw exceptions. This is not ideal.</li>
@@ -317,21 +317,21 @@ img.comment-author-profile-image {
 
 <p>From a procedural perspective, it would be great if we had a <code>Tuple&lt;bool, T&gt; TryReceiveAsync</code> that would either retrieve the item or return false, rather than raising an exception.</p>
 
-<p>But if you look at the problem from a <em>dataflow</em> perspective, there is already a solution: <a href="http://msdn.microsoft.com/en-us/library/hh194684.aspx"><code>ActionBlock&lt;T&gt;</code></a> will execute a callback for any data pushed to it. This is the “dataflowish” way of getting the results out of a dataflow mesh: just <em>link</em> your block to an <code>ActionBlock</code>.</p>
+<p>But if you look at the problem from a <em>dataflow</em> perspective, there is already a solution: <a href="http://msdn.microsoft.com/en-us/library/hh194684.aspx?WT.mc_id=DT-MVP-5000058"><code>ActionBlock&lt;T&gt;</code></a> will execute a callback for any data pushed to it. This is the “dataflowish” way of getting the results out of a dataflow mesh: just <em>link</em> your block to an <code>ActionBlock</code>.</p>
 
 <h2 id="linking">Linking</h2>
 
-<p>You can connect two blocks by linking them together. The actual negotiation of data transfer is fairly complex (to allow scenarios such as “join” blocks) - but you usually don’t have to think about it. Just link from source to target (<a href="http://msdn.microsoft.com/en-us/library/hh160311.aspx"><code>source.LinkTo(target);</code></a>), and the library takes care of propagating the data.</p>
+<p>You can connect two blocks by linking them together. The actual negotiation of data transfer is fairly complex (to allow scenarios such as “join” blocks) - but you usually don’t have to think about it. Just link from source to target (<a href="http://msdn.microsoft.com/en-us/library/hh160311.aspx?WT.mc_id=DT-MVP-5000058"><code>source.LinkTo(target);</code></a>), and the library takes care of propagating the data.</p>
 
 <p>There’s no limit to what you can link. It is possible to have a loop in your dataflow mesh.</p>
 
 <p>There are several options you have when setting up a link. You can have the link disengage after so many data items, or specify a filter so only certain data items will be propagated along the link, etc.</p>
 
-<p>A lot of my dataflow “meshes” end up being “pipelines”, so one option I use more than others is <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.dataflow.dataflowlinkoptions.propagatecompletion.aspx"><code>PropagateCompletion</code></a>, which propagates completion as well as data items.</p>
+<p>A lot of my dataflow “meshes” end up being “pipelines”, so one option I use more than others is <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.dataflow.dataflowlinkoptions.propagatecompletion.aspx?WT.mc_id=DT-MVP-5000058"><code>PropagateCompletion</code></a>, which propagates completion as well as data items.</p>
 
 <h2 id="completion">Completion</h2>
 
-<p>Eventually, you’re going to finish sending data to your dataflow mesh, and you’re going to want to know when the mesh is done processing it. Each block supports an asynchronous form of completion: you call <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.dataflow.idataflowblock.complete.aspx"><code>Complete</code></a> and some time later, the block’s <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.dataflow.idataflowblock.completion.aspx"><code>Completion</code></a> task will complete.</p>
+<p>Eventually, you’re going to finish sending data to your dataflow mesh, and you’re going to want to know when the mesh is done processing it. Each block supports an asynchronous form of completion: you call <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.dataflow.idataflowblock.complete.aspx?WT.mc_id=DT-MVP-5000058"><code>Complete</code></a> and some time later, the block’s <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.dataflow.idataflowblock.completion.aspx?WT.mc_id=DT-MVP-5000058"><code>Completion</code></a> task will complete.</p>
 
 <div class="alert alert-info">
   <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
@@ -341,7 +341,7 @@ img.comment-author-profile-image {
 
 <p>If you have a simple dataflow mesh (like a pipeline), then you can tell the blocks to propagate their completion when you link them together. Then when you’re finished, you can just complete the first block and await the completion of the last block.</p>
 
-<p>If your dataflow mesh is more complex, then you may have to propagate completion manually. The common tools for this are <a href="http://msdn.microsoft.com/en-us/library/hh160384.aspx"><code>Task.WhenAll</code></a> and <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.task.continuewith.aspx"><code>Task.ContinueWith</code></a>. If you do have to do this, I recommend that you wrap your dataflow mesh into a separate class (possibly exposing the blocks as properties) and implement your own <code>Complete</code> and <code>Completion</code> members just like a dataflow block does.</p>
+<p>If your dataflow mesh is more complex, then you may have to propagate completion manually. The common tools for this are <a href="http://msdn.microsoft.com/en-us/library/hh160384.aspx?WT.mc_id=DT-MVP-5000058"><code>Task.WhenAll</code></a> and <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.task.continuewith.aspx?WT.mc_id=DT-MVP-5000058"><code>Task.ContinueWith</code></a>. If you do have to do this, I recommend that you wrap your dataflow mesh into a separate class (possibly exposing the blocks as properties) and implement your own <code>Complete</code> and <code>Completion</code> members just like a dataflow block does.</p>
 
 <div class="alert alert-info">
   <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>

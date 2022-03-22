@@ -310,7 +310,7 @@ img.comment-author-profile-image {
 
 <h2 id="tasks-support-continuations">Tasks Support Continuations</h2>
 
-<p>A <strong>continuation</strong> is <a href="http://msdn.microsoft.com/en-us/library/ee372288.aspx">some code that is attached to a task and executed when that task completes</a>. Tasks have direct support for continuations via the ContinueWith method.</p>
+<p>A <strong>continuation</strong> is <a href="http://msdn.microsoft.com/en-us/library/ee372288.aspx?WT.mc_id=DT-MVP-5000058">some code that is attached to a task and executed when that task completes</a>. Tasks have direct support for continuations via the ContinueWith method.</p>
 
 <p>However, you usually do not need to call that method. The await keyword will use task continuations to schedule the remainder of the async method as necessary.</p>
 
@@ -320,7 +320,7 @@ img.comment-author-profile-image {
 
 <p>Under the TPL, the creation of a task and the scheduling of that task may be separate. It is possible to create a Task object and not start it until later. Under Async, every task is already in progress; its operation is started when the Task object is created. Because of this, you may have to call Task.Start on a Task returned from TPL code if you want to await it.</p>
 
-<p>TPL has a concept of parent and child tasks. Async tasks do not use this mechanism. There <em>is</em> a <em>logical</em> hierarchy among async tasks, but they do not use the <a href="http://msdn.microsoft.com/en-us/library/dd997417.aspx">parent/child relationship provided by the TPL</a>.</p>
+<p>TPL has a concept of parent and child tasks. Async tasks do not use this mechanism. There <em>is</em> a <em>logical</em> hierarchy among async tasks, but they do not use the <a href="http://msdn.microsoft.com/en-us/library/dd997417.aspx?WT.mc_id=DT-MVP-5000058">parent/child relationship provided by the TPL</a>.</p>
 
 <p>Each TPL task may have multiple errors. Even if a task only has one exception, it is wrapped in an AggregateException. Async tasks are only expected to have one error, so the await operator will avoid this AggregateException wrapper.</p>
 

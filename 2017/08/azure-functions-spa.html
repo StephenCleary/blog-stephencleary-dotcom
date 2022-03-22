@@ -348,7 +348,7 @@ img.comment-author-profile-image {
 
 <p>The <code>app</code> proxy will forward all remaining requests to the SPA.</p>
 
-<p>A brief note on priorities: Azure Functions Proxies use the same <a href="https://docs.microsoft.com/en-us/aspnet/web-api/overview/web-api-routing-and-actions/attribute-routing-in-web-api-2#route-order">route ordering rules as WebAPI 2 attribute routing</a>. So the <code>api</code> and <code>appResources</code> proxies are always evaluated before the <code>app</code> proxy because they start with constant path segment prefixes (the <code>api</code> proxy starts with an <code>/api/</code> path segment, and the <code>appResources</code> proxy starts with a <code>/static/</code> path segment). This way, the <code>app</code> proxy doesn’t intercept <code>/api</code> and <code>/static</code> requests.</p>
+<p>A brief note on priorities: Azure Functions Proxies use the same <a href="https://docs.microsoft.com/en-us/aspnet/web-api/overview/web-api-routing-and-actions/attribute-routing-in-web-api-2#route-order?WT.mc_id=DT-MVP-5000058">route ordering rules as WebAPI 2 attribute routing</a>. So the <code>api</code> and <code>appResources</code> proxies are always evaluated before the <code>app</code> proxy because they start with constant path segment prefixes (the <code>api</code> proxy starts with an <code>/api/</code> path segment, and the <code>appResources</code> proxy starts with a <code>/static/</code> path segment). This way, the <code>app</code> proxy doesn’t intercept <code>/api</code> and <code>/static</code> requests.</p>
 
 <h2 id="conclusion">Conclusion</h2>
 

@@ -319,7 +319,7 @@ img.comment-author-profile-image {
 
 <p>One attack vector for malicious programs is a <em>privilege escalation</em>. This is a way for an untrusted program to trick the OS into trusting it more. One privilege escalation attack that has been discovered is called a <a href="http://en.wikipedia.org/wiki/Shatter_attack">shatter attack</a>. This “shatter attack” is based on Win32 message passing.</p>
 
-<p>In response, Microsoft made two changes starting in Vista: User Interface Privilege Isolation (see <a href="http://msdn.microsoft.com/en-us/library/bb756960.aspx">New UAC Technologies for Windows Vista</a> (<a href="http://www.webcitation.org/5yJMQ8H2i">webcite</a>)); and Session 0 Isolation (see <a href="http://blogs.technet.com/b/askperf/archive/2007/04/27/application-compatibility-session-0-isolation.aspx">this Application Compatibility blog post</a> (<a href="http://www.webcitation.org/5yJcr5ySR">webcite</a>) or <a href="http://msdn.microsoft.com/en-us/windows/hardware/gg463353">this Word document</a>).</p>
+<p>In response, Microsoft made two changes starting in Vista: User Interface Privilege Isolation (see <a href="http://msdn.microsoft.com/en-us/library/bb756960.aspx?WT.mc_id=DT-MVP-5000058">New UAC Technologies for Windows Vista</a> (<a href="http://www.webcitation.org/5yJMQ8H2i">webcite</a>)); and Session 0 Isolation (see <a href="http://blogs.technet.com/b/askperf/archive/2007/04/27/application-compatibility-session-0-isolation.aspx">this Application Compatibility blog post</a> (<a href="http://www.webcitation.org/5yJcr5ySR">webcite</a>) or <a href="http://msdn.microsoft.com/en-us/windows/hardware/gg463353?WT.mc_id=DT-MVP-5000058">this Word document</a>).</p>
 
 <p>User Interface Privilege Isolation is a simple system where less-trusted programs (such as Internet Explorer) are limited in which Win32 messages they may send to more-trusted programs (such as services). This doesn’t prevent services from having UIs, but may trip up programmers if they try to communicate with their service via message passing.</p>
 
@@ -327,8 +327,8 @@ img.comment-author-profile-image {
 
 <ul>
   <li><a href="http://support.microsoft.com/kb/171890">Services, Desktops, and Window Stations (KB171890)</a> (<a href="http://www.webcitation.org/5yJMygiUo">webcite</a>)</li>
-  <li><a href="http://msdn.microsoft.com/en-us/library/ms684859.aspx">Process Connection to a Window Station</a> (<a href="http://www.webcitation.org/5yJN86Gvo">webcite</a>)</li>
-  <li><a href="http://msdn.microsoft.com/en-us/library/ms686744.aspx">Thread Connection to a Desktop</a> (<a href="http://www.webcitation.org/5yJNBEJc4">webcite</a>)</li>
+  <li><a href="http://msdn.microsoft.com/en-us/library/ms684859.aspx?WT.mc_id=DT-MVP-5000058">Process Connection to a Window Station</a> (<a href="http://www.webcitation.org/5yJN86Gvo">webcite</a>)</li>
+  <li><a href="http://msdn.microsoft.com/en-us/library/ms686744.aspx?WT.mc_id=DT-MVP-5000058">Thread Connection to a Desktop</a> (<a href="http://www.webcitation.org/5yJNBEJc4">webcite</a>)</li>
 </ul>
 
 <p>In essence, the older versions of Windows (XP and earlier) would run services in the same session as the first user that logged on to the physical computer, and services displaying UIs would be seen by that user. Newer versions of Windows (Vista and later) run services in their own special session (Session 0), which has its own window station and desktop completely independent from anything the user sees.</p>

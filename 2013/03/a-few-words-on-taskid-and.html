@@ -290,7 +290,7 @@ img.comment-author-profile-image {
   </header>
 
   <article>
-  <p>There are some <code>Id</code> properties in TPL types (notably <code>Task.Id</code> and <code>TaskScheduler.Id</code>); these “identifiers” follow the same pattern. I believe their primary use case is for <a href="http://msdn.microsoft.com/en-us/library/ee517329.aspx">ETW events</a>, though they may have other uses.</p>
+  <p>There are some <code>Id</code> properties in TPL types (notably <code>Task.Id</code> and <code>TaskScheduler.Id</code>); these “identifiers” follow the same pattern. I believe their primary use case is for <a href="http://msdn.microsoft.com/en-us/library/ee517329.aspx?WT.mc_id=DT-MVP-5000058">ETW events</a>, though they may have other uses.</p>
 
 <h2 id="generated-on-demand">Generated On-Demand</h2>
 
@@ -298,7 +298,7 @@ img.comment-author-profile-image {
 
 <h2 id="invalidunassigned-value">Invalid/Unassigned Value</h2>
 
-<p>The value <code>0</code> is never used. This is technically undocumented, but it’s pretty safe to assume. The ETW events all produce plain <code>int</code>s for task and task scheduler identifiers, and <a href="http://msdn.microsoft.com/en-us/library/ee517329.aspx">some ETW events</a> need a value for “none” (e.g., <code>OriginatingTaskId</code> needs to support a value meaning “there was no originating task”).</p>
+<p>The value <code>0</code> is never used. This is technically undocumented, but it’s pretty safe to assume. The ETW events all produce plain <code>int</code>s for task and task scheduler identifiers, and <a href="http://msdn.microsoft.com/en-us/library/ee517329.aspx?WT.mc_id=DT-MVP-5000058">some ETW events</a> need a value for “none” (e.g., <code>OriginatingTaskId</code> needs to support a value meaning “there was no originating task”).</p>
 
 <p>This means you’ll never actually see a zero value as an identifier. A task (or task scheduler) can internally have a zero identifier (meaning “unassigned”) but will generate an actual identifier if that value is ever read.</p>
 

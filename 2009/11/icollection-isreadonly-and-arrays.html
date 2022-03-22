@@ -299,7 +299,7 @@ img.comment-author-profile-image {
   <li>An update that changes the number of values in the collection, but does not change any of the values of the elements in the collection. e.g., <code>Add()</code>, <code>Clear()</code>, etc.</li>
 </ol>
 
-<p>I Googled for the proper semantics to use, and was able to find three decent sources of information: a <a href="http://stackoverflow.com/questions/1073522/contract-of-icollectiont-isreadonly">StackOverflow question on the Contract of <code>ICollection&lt;T&gt;.IsReadOnly</code></a>, a <a href="http://www.wintellect.com/CS/blogs/pgolde/archive/2005/05/12/ilist-icollection-and-isreadonly.aspx">blog post by Peter Golde titled “<code>IList</code>, <code>ICollection</code>, and <code>IsReadOnly</code>”</a>, and a <a href="https://docs.microsoft.com/en-us/archive/blogs/kcwalina/generic-interfaces-isreadonly-isfixedsize-and-array">blog post by Krzysztof Cwalina on “Generic interfaces, <code>IsReadOnly</code>, <code>IsFixedSize</code>, and array”</a>. From the (older) blog posts and some quick tests on array behavior, I’ve reached the conclusions below regarding the history and current state of the <code>IsReadOnly</code> property.</p>
+<p>I Googled for the proper semantics to use, and was able to find three decent sources of information: a <a href="http://stackoverflow.com/questions/1073522/contract-of-icollectiont-isreadonly">StackOverflow question on the Contract of <code>ICollection&lt;T&gt;.IsReadOnly</code></a>, a <a href="http://www.wintellect.com/CS/blogs/pgolde/archive/2005/05/12/ilist-icollection-and-isreadonly.aspx">blog post by Peter Golde titled “<code>IList</code>, <code>ICollection</code>, and <code>IsReadOnly</code>”</a>, and a <a href="https://docs.microsoft.com/en-us/archive/blogs/kcwalina/generic-interfaces-isreadonly-isfixedsize-and-array?WT.mc_id=DT-MVP-5000058">blog post by Krzysztof Cwalina on “Generic interfaces, <code>IsReadOnly</code>, <code>IsFixedSize</code>, and array”</a>. From the (older) blog posts and some quick tests on array behavior, I’ve reached the conclusions below regarding the history and current state of the <code>IsReadOnly</code> property.</p>
 
 <h2 id="the-traditional-interpretation">The Traditional Interpretation</h2>
 
@@ -345,11 +345,11 @@ img.comment-author-profile-image {
 <p>As of the time of blog post, the Microsoft documentation for <code>IList.IsReadOnly</code> and <code>ICollection&lt;T&gt;.IsReadOnly</code> are nearly identical, ignoring the fact that the semantics are quite different:</p>
 
 <ol>
-  <li><a href="http://msdn.microsoft.com/en-us/library/system.collections.ilist.isreadonly.aspx"><code>IList.IsReadOnly</code></a>: “A collection that is read-only does not allow the addition, removal, or modification of elements after the collection is created.”</li>
-  <li><a href="http://msdn.microsoft.com/en-us/library/0cfatk9t.aspx"><code>ICollection\&lt;T&gt;.IsReadOnly</code></a>: “A collection that is read-only does not allow the addition, removal, or modification of elements after the collection is created.”</li>
+  <li><a href="http://msdn.microsoft.com/en-us/library/system.collections.ilist.isreadonly.aspx?WT.mc_id=DT-MVP-5000058"><code>IList.IsReadOnly</code></a>: “A collection that is read-only does not allow the addition, removal, or modification of elements after the collection is created.”</li>
+  <li><a href="http://msdn.microsoft.com/en-us/library/0cfatk9t.aspx?WT.mc_id=DT-MVP-5000058"><code>ICollection\&lt;T&gt;.IsReadOnly</code></a>: “A collection that is read-only does not allow the addition, removal, or modification of elements after the collection is created.”</li>
 </ol>
 
-<p>Furthermore, the behavior of the common array class is confusing, especially in light of the current Microsoft documentation for <a href="http://msdn.microsoft.com/en-us/library/system.array.isreadonly.aspx"><code>Array.IsReadOnly</code></a>: “This property is always false for all arrays.”</p>
+<p>Furthermore, the behavior of the common array class is confusing, especially in light of the current Microsoft documentation for <a href="http://msdn.microsoft.com/en-us/library/system.array.isreadonly.aspx?WT.mc_id=DT-MVP-5000058"><code>Array.IsReadOnly</code></a>: “This property is always false for all arrays.”</p>
 
 <h2 id="conclusion-does-anyone-care">Conclusion: Does Anyone Care?</h2>
 

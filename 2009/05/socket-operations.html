@@ -292,45 +292,45 @@ img.comment-author-profile-image {
   <article>
   <p>There are a few logical operations that may be performed on a TCP/IP socket, regardless of whether the socket is synchronous or asynchronous. Each of the operations below is marked “immediate” (meaning it is completed immediately) or “delayed” (meaning it depends on the network for completion).</p>
 
-<p><strong>Constructing</strong> (immediate) - TCP/IP sockets use the InterNetwork (for IPv4) or InterNetworkV6 (for IPv6) <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.addressfamily.aspx">AddressFamily</a>, the Stream <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.sockettype.aspx">SocketType</a>, and the Tcp <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.protocoltype.aspx">ProtocolType</a>.</p>
+<p><strong>Constructing</strong> (immediate) - TCP/IP sockets use the InterNetwork (for IPv4) or InterNetworkV6 (for IPv6) <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.addressfamily.aspx?WT.mc_id=DT-MVP-5000058">AddressFamily</a>, the Stream <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.sockettype.aspx?WT.mc_id=DT-MVP-5000058">SocketType</a>, and the Tcp <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.protocoltype.aspx?WT.mc_id=DT-MVP-5000058">ProtocolType</a>.</p>
 
-<p>MSDN links: <a href="http://msdn.microsoft.com/en-us/library/2b86d684.aspx">Socket</a></p>
+<p>MSDN links: <a href="http://msdn.microsoft.com/en-us/library/2b86d684.aspx?WT.mc_id=DT-MVP-5000058">Socket</a></p>
 
 <p><strong>Binding</strong> (immediate) - A socket may be locally bound. This is normally done only on the server (listening) socket, and is how a server chooses the port it listens on. See <a href="/2009/05/using-socket-as-server-listening-socket.html">Using Socket as a Server (Listening) Socket</a> for details.</p>
 
-<p>MSDN links: <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.bind.aspx">Bind</a></p>
+<p>MSDN links: <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.bind.aspx?WT.mc_id=DT-MVP-5000058">Bind</a></p>
 
 <p><strong>Listening</strong> (immediate) - A bound socket notifies the OS that it is almost ready to receive connections by <em>listening</em>. In spite of the term “listening”, this operation only notifies the OS that the socket is <em>about</em> to accept connections; it does not actually begin accepting connections, though the OS may accept a connection on behalf of the socket. See <a href="/2009/05/using-socket-as-server-listening-socket.html">Using Socket as a Server (Listening) Socket</a> for details.</p>
 
-<p>MSDN links: <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.listen.aspx">Listen</a></p>
+<p>MSDN links: <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.listen.aspx?WT.mc_id=DT-MVP-5000058">Listen</a></p>
 
 <p><strong>Accepting</strong> (delayed) - A listening socket may accept an incoming connection. When an incoming connection is accepted, a new socket is created that is connected to the remote side; the listening socket continues listening. The new socket (which is connected) may be used for sending and receiving. See <a href="/2009/05/using-socket-as-server-listening-socket.html">Using Socket as a Server (Listening) Socket</a> for details.</p>
 
-<p>MSDN links: <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.accept.aspx">Accept</a>, <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.beginaccept.aspx">BeginAccept</a>, <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.endaccept.aspx">EndAccept</a>, <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.acceptasync.aspx">AcceptAsync</a></p>
+<p>MSDN links: <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.accept.aspx?WT.mc_id=DT-MVP-5000058">Accept</a>, <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.beginaccept.aspx?WT.mc_id=DT-MVP-5000058">BeginAccept</a>, <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.endaccept.aspx?WT.mc_id=DT-MVP-5000058">EndAccept</a>, <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.acceptasync.aspx?WT.mc_id=DT-MVP-5000058">AcceptAsync</a></p>
 
 <p><strong>Connecting</strong> (delayed) - A (client) socket may connect to a (server) socket. TCP has a three-way handshake to complete the connection, so this operation is not instantaneous. Once a socket is connected, it may be used for sending and receiving. See <a href="/2009/05/using-socket-as-client-socket.html">Using Socket as a Client Socket</a> for details.</p>
 
-<p>MSDN links: <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.connect.aspx">Connect</a>, <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.beginconnect.aspx">BeginConnect</a>, <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.endconnect.aspx">EndConnect</a>, <a href="http://msdn.microsoft.com/en-us/library/bb538102.aspx">ConnectAsync</a></p>
+<p>MSDN links: <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.connect.aspx?WT.mc_id=DT-MVP-5000058">Connect</a>, <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.beginconnect.aspx?WT.mc_id=DT-MVP-5000058">BeginConnect</a>, <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.endconnect.aspx?WT.mc_id=DT-MVP-5000058">EndConnect</a>, <a href="http://msdn.microsoft.com/en-us/library/bb538102.aspx?WT.mc_id=DT-MVP-5000058">ConnectAsync</a></p>
 
 <p><strong>Reading</strong> (delayed) - Connected sockets may perform a read operation. Reading takes incoming bytes from the stream and copies them into a buffer. A 0-byte read indicates a graceful closure from the remote side. See <a href="/2009/06/using-socket-as-connected-socket.html">Using Socket as a Connected Socket</a> for details.</p>
 
-<p>MSDN links: <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.receive.aspx">Receive</a>, <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.beginreceive.aspx">BeginReceive</a>, <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.endreceive.aspx">EndReceive</a>, <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.receiveasync.aspx">ReceiveAsync</a></p>
+<p>MSDN links: <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.receive.aspx?WT.mc_id=DT-MVP-5000058">Receive</a>, <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.beginreceive.aspx?WT.mc_id=DT-MVP-5000058">BeginReceive</a>, <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.endreceive.aspx?WT.mc_id=DT-MVP-5000058">EndReceive</a>, <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.receiveasync.aspx?WT.mc_id=DT-MVP-5000058">ReceiveAsync</a></p>
 
 <p><strong>Writing</strong> (delayed) - Connected sockets may perform a write operation. Writing places bytes in the outgoing stream. A successful write may complete before the remote OS acknowledges that the bytes were received. See <a href="/2009/06/using-socket-as-connected-socket.html">Using Socket as a Connected Socket</a> for details.</p>
 
-<p>MSDN links: <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.send.aspx">Send</a>, <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.beginsend.aspx">BeginSend</a>, <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.endsend.aspx">EndSend</a>, <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.sendasync.aspx">SendAsync</a></p>
+<p>MSDN links: <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.send.aspx?WT.mc_id=DT-MVP-5000058">Send</a>, <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.beginsend.aspx?WT.mc_id=DT-MVP-5000058">BeginSend</a>, <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.endsend.aspx?WT.mc_id=DT-MVP-5000058">EndSend</a>, <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.sendasync.aspx?WT.mc_id=DT-MVP-5000058">SendAsync</a></p>
 
 <p><strong>Disconnecting</strong> (delayed) - TCP/IP has a four-way handshake to terminate a connection gracefully: each side shuts down its own outgoing stream and receives an acknowledgment from the other side.</p>
 
-<p>MSDN links: <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.disconnect.aspx">Disconnect</a>, <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.begindisconnect.aspx">BeginDisconnect</a>, <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.enddisconnect.aspx">EndDisconnect</a>, <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.disconnectasync.aspx">DisconnectAsync</a></p>
+<p>MSDN links: <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.disconnect.aspx?WT.mc_id=DT-MVP-5000058">Disconnect</a>, <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.begindisconnect.aspx?WT.mc_id=DT-MVP-5000058">BeginDisconnect</a>, <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.enddisconnect.aspx?WT.mc_id=DT-MVP-5000058">EndDisconnect</a>, <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.disconnectasync.aspx?WT.mc_id=DT-MVP-5000058">DisconnectAsync</a></p>
 
 <p><strong>Shutting down</strong> (immediate) - Either the receiving stream or sending stream may be clamped shut. For receives, this is only a local operation; the other end of the connection is not notified. For sends, the outgoing stream is shut down (the same way Disconnect does it), and this is acknowledged by the other side; however, there is no notification of this operation completing.</p>
 
-<p>MSDN links: <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.shutdown.aspx">Shutdown</a></p>
+<p>MSDN links: <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.shutdown.aspx?WT.mc_id=DT-MVP-5000058">Shutdown</a></p>
 
 <p><strong>Closing</strong> (immediate or delayed) - The actual socket resources are reclaimed when the socket is disposed (or closed). Normally, this acts immediate but is actually delayed, performing a graceful disconnect in the background and then actually reclaiming the socket resources when the disconnect completes. Socket.LingerState may be set to change Close to be a synchronous disconnect (delayed, but always synchronous), or an immediate shutdown (always immediate).</p>
 
-<p>MSDN links: <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.close.aspx">Close</a>, <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.lingerstate.aspx">LingerState</a></p>
+<p>MSDN links: <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.close.aspx?WT.mc_id=DT-MVP-5000058">Close</a>, <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socket.lingerstate.aspx?WT.mc_id=DT-MVP-5000058">LingerState</a></p>
 
   </article>
     

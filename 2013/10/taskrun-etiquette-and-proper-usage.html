@@ -312,7 +312,7 @@ img.comment-author-profile-image {
 
 <p><strong>Use <code>Task.Run</code> to call CPU-bound methods.</strong> That is all.</p>
 
-<p>One common mistake is to try to make asynchronous “wrappers” around existing synchronous methods. Stephen Toub has a detailed blog post describing <a href="https://devblogs.microsoft.com/pfxteam/should-i-expose-asynchronous-wrappers-for-synchronous-methods/">why this is a bad idea</a>. I call such methods “fake-asynchronous methods” because they <em>look</em> asynchronous but are really just faking it by doing synchronous work on a background thread. In general, <strong>do not use <code>Task.Run</code> in the implementation of the method; instead, use <code>Task.Run</code> to <em>call</em> the method.</strong> There are two reasons for this guideline:</p>
+<p>One common mistake is to try to make asynchronous “wrappers” around existing synchronous methods. Stephen Toub has a detailed blog post describing <a href="https://devblogs.microsoft.com/pfxteam/should-i-expose-asynchronous-wrappers-for-synchronous-methods/?WT.mc_id=DT-MVP-5000058">why this is a bad idea</a>. I call such methods “fake-asynchronous methods” because they <em>look</em> asynchronous but are really just faking it by doing synchronous work on a background thread. In general, <strong>do not use <code>Task.Run</code> in the implementation of the method; instead, use <code>Task.Run</code> to <em>call</em> the method.</strong> There are two reasons for this guideline:</p>
 
 <ol>
   <li>Consumers of your code assume that if a method has an asynchronous signature, then it will act truly asynchronously. Faking asynchronicity by just doing synchronous work on a background thread is surprising behavior.</li>

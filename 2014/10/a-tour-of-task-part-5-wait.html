@@ -372,13 +372,13 @@ img.comment-author-profile-image {
 
 <h2 id="asyncwaithandle">AsyncWaitHandle</h2>
 
-<p>The <code>Task</code> type actually implements <code>IAsyncResult</code> for <a href="http://msdn.microsoft.com/en-us/library/hh873178(v=vs.110).aspx#TapToApm">easy interoperation with the (unfortunately named) Asynchronous Programming Model (APM)</a>. This means <code>Task</code> has a wait handle as one of its properties:</p>
+<p>The <code>Task</code> type actually implements <code>IAsyncResult</code> for <a href="http://msdn.microsoft.com/en-us/library/hh873178(v=vs.110).aspx#TapToApm?WT.mc_id=DT-MVP-5000058">easy interoperation with the (unfortunately named) Asynchronous Programming Model (APM)</a>. This means <code>Task</code> has a wait handle as one of its properties:</p>
 
 <figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">WaitHandle</span> <span class="n">IAsyncResult</span><span class="p">.</span><span class="n">AsyncWaitHandle</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span></code></pre></figure>
 
 <p>Note that this member is explicitly implemented, so consuming code <em>must</em> cast the <code>Task</code> as <code>IAsyncResult</code> before reading it. The actual underlying wait handle is lazy-allocated.</p>
 
-<p>Code using <code>AsyncWaitHandle</code> should be extremely, <em>extremely</em> rare. It only makes sense if you have tons of existing code that is built around <code>WaitHandle</code>. If you do read the <code>AsyncWaitHandle</code> property, strongly consider <a href="https://devblogs.microsoft.com/pfxteam/do-i-need-to-dispose-of-tasks/">disposing the task instance</a>.</p>
+<p>Code using <code>AsyncWaitHandle</code> should be extremely, <em>extremely</em> rare. It only makes sense if you have tons of existing code that is built around <code>WaitHandle</code>. If you do read the <code>AsyncWaitHandle</code> property, strongly consider <a href="https://devblogs.microsoft.com/pfxteam/do-i-need-to-dispose-of-tasks/?WT.mc_id=DT-MVP-5000058">disposing the task instance</a>.</p>
 
 <h2 id="conclusion">Conclusion</h2>
 

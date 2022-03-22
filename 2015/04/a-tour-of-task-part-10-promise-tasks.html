@@ -308,7 +308,7 @@ img.comment-author-profile-image {
 
 <p>Under the hood, <code>Delay</code> starts a timer and completes its returned task when that timer fires. Or, if the <code>CancellationToken</code> is signaled first, then <code>Delay</code> cancels its returned task.</p>
 
-<p>In real-world code, <code>Delay</code> is almost never used. Its primary use case is as a retry timeout, i.e., if an asynchronous operation failed, the code will (asynchronously) wait a period of time before trying again. Generally, retry logic is wrapped into a separate library (such as <a href="https://msdn.microsoft.com/en-us/library/hh675232.aspx">Transient Fault Handling</a> or <a href="https://github.com/michael-wolfenden/Polly">Polly</a>), and <code>Delay</code> is only used internally by those libraries, not directly by application code.</p>
+<p>In real-world code, <code>Delay</code> is almost never used. Its primary use case is as a retry timeout, i.e., if an asynchronous operation failed, the code will (asynchronously) wait a period of time before trying again. Generally, retry logic is wrapped into a separate library (such as <a href="https://msdn.microsoft.com/en-us/library/hh675232.aspx?WT.mc_id=DT-MVP-5000058">Transient Fault Handling</a> or <a href="https://github.com/michael-wolfenden/Polly">Polly</a>), and <code>Delay</code> is only used internally by those libraries, not directly by application code.</p>
 
 <h2 id="taskyield">Task.Yield</h2>
 

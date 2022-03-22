@@ -389,7 +389,7 @@ img.comment-author-profile-image {
 
 </div>
 
-<p>The table above ignores <code>async void</code> methods, which you <a href="http://msdn.microsoft.com/en-us/magazine/jj991977.aspx">should be avoiding anyway</a>. Async void methods are tricky because you <em>can</em> assign a lambda like <code>async () =&gt; { await Task.Yield(); }</code> to a variable of type <code>Action</code>, even though the <em>natural</em> type of that lambda is <code>Func&lt;Task&gt;</code>. Stephen Toub has written <a href="https://devblogs.microsoft.com/pfxteam/potential-pitfalls-to-avoid-when-passing-around-async-lambdas/">more about the pitfalls of async void lambdas</a>.</p>
+<p>The table above ignores <code>async void</code> methods, which you <a href="http://msdn.microsoft.com/en-us/magazine/jj991977.aspx?WT.mc_id=DT-MVP-5000058">should be avoiding anyway</a>. Async void methods are tricky because you <em>can</em> assign a lambda like <code>async () =&gt; { await Task.Yield(); }</code> to a variable of type <code>Action</code>, even though the <em>natural</em> type of that lambda is <code>Func&lt;Task&gt;</code>. Stephen Toub has written <a href="https://devblogs.microsoft.com/pfxteam/potential-pitfalls-to-avoid-when-passing-around-async-lambdas/?WT.mc_id=DT-MVP-5000058">more about the pitfalls of async void lambdas</a>.</p>
 
 <p>As a closing note, the C# compiler has been updated in VS2012 to correctly perform overload resolution in the presence of async lambdas. So, this kind of method declaration works fine:</p>
 

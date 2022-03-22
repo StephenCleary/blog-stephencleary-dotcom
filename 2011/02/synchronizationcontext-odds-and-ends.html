@@ -290,7 +290,7 @@ img.comment-author-profile-image {
   </header>
 
   <article>
-  <p>During my many adventures with SynchronizationContext, I ran into two rather interesting corner cases. Originally, these appeared as footnotes in <a href="http://msdn.microsoft.com/en-us/magazine/gg598924.aspx">my article</a>, but they were among the first things that I cut.</p>
+  <p>During my many adventures with SynchronizationContext, I ran into two rather interesting corner cases. Originally, these appeared as footnotes in <a href="http://msdn.microsoft.com/en-us/magazine/gg598924.aspx?WT.mc_id=DT-MVP-5000058">my article</a>, but they were among the first things that I cut.</p>
 
 <p>Both of these corner cases deal with a “missing” SynchronizationContext; that is, <strong>SynchronizationContext.Current</strong> is <strong>null</strong> when it shouldn’t be. In this case, the default SynchronizationContext is used, which invokes all of its callbacks on the ThreadPool thread. One common symptom of this problem is that <strong>BackgroundWorker.RunWorkerCompleted</strong> gets a cross-thread exception.</p>
 

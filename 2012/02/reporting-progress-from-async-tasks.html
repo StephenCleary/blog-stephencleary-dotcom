@@ -294,7 +294,7 @@ img.comment-author-profile-image {
 
 <h2 id="progress-reporter-abstraction">Progress Reporter Abstraction</h2>
 
-<p>When asynchronous methods report progress, they use an abstraction of the “progress reporter” concept: <a href="http://msdn.microsoft.com/en-us/library/hh138298(v=VS.110).aspx"><strong>IProgress&lt;in T&gt;</strong></a>. This interface has a single method: <strong>void Report(T value)</strong>. You can’t get much simpler than that!</p>
+<p>When asynchronous methods report progress, they use an abstraction of the “progress reporter” concept: <a href="http://msdn.microsoft.com/en-us/library/hh138298(v=VS.110).aspx?WT.mc_id=DT-MVP-5000058"><strong>IProgress&lt;in T&gt;</strong></a>. This interface has a single method: <strong>void Report(T value)</strong>. You can’t get much simpler than that!</p>
 
 <p>An asynchronous method that wants to report progress just takes an IProgress&lt;T&gt; parameter, with some appropriate type for T. There are two important things to keep in mind:</p>
 
@@ -317,7 +317,7 @@ img.comment-author-profile-image {
 
 <p>Now let’s look at the “receiving” side of progress reports. The caller of the asynchronous method passes in the progress reporter, so it has complete control of how progress reports are handled.</p>
 
-<p>There is one built-in progress reporter: <a href="http://msdn.microsoft.com/en-us/library/hh193692(v=vs.110).aspx">Progress&lt;T&gt;</a>. You can either pass an Action&lt;T&gt; into the constructor or handle the ProgressChanged event.</p>
+<p>There is one built-in progress reporter: <a href="http://msdn.microsoft.com/en-us/library/hh193692(v=vs.110).aspx?WT.mc_id=DT-MVP-5000058">Progress&lt;T&gt;</a>. You can either pass an Action&lt;T&gt; into the constructor or handle the ProgressChanged event.</p>
 
 <p>One important aspect of this class is that it invokes ProgressChanged (and the Action&lt;T&gt;) in the context in which it was constructed. So it’s natural to write UI updates:</p>
 
@@ -370,9 +370,9 @@ public void DoProcessing(IProgress&lt;int&gt; progress)
 <p>The callback-based Progress&lt;T&gt; is great for general use, but there’s no reason you couldn’t write your own IProgress&lt;T&gt; that works better with your own code base. Here are some implementations from the <a href="http://nitoasyncex.codeplex.com">AsyncEx library:</a></p>
 
 <ul>
-  <li><strong>PropertyProgress&lt;T&gt;</strong> has a property called Progress and implements <a href="http://msdn.microsoft.com/en-us/library/system.componentmodel.inotifypropertychanged.aspx">INotifyPropertyChanged</a>, so progress updates can update data bindings. This implementation also captures its context just like Progress&lt;T&gt;, which is expected for data binding updates.</li>
-  <li><strong>ObserverProgress&lt;T&gt;</strong> forwards progress updates to an <a href="http://msdn.microsoft.com/en-us/library/dd783449.aspx">IObserver&lt;T&gt;</a>, where they can be composed using Rx.</li>
-  <li><strong>ProducerProgress&lt;T&gt;</strong> and <strong>DataflowProgress&lt;T&gt;</strong> both place progress updates into containers (an <a href="http://msdn.microsoft.com/en-us/library/dd287147.aspx">IProducerConsumerCollection&lt;T&gt;</a> or an <a href="http://msdn.microsoft.com/en-us/library/hh194833(v=VS.110).aspx">ITargetBlock&lt;TInput&gt;</a>, respectively).</li>
+  <li><strong>PropertyProgress&lt;T&gt;</strong> has a property called Progress and implements <a href="http://msdn.microsoft.com/en-us/library/system.componentmodel.inotifypropertychanged.aspx?WT.mc_id=DT-MVP-5000058">INotifyPropertyChanged</a>, so progress updates can update data bindings. This implementation also captures its context just like Progress&lt;T&gt;, which is expected for data binding updates.</li>
+  <li><strong>ObserverProgress&lt;T&gt;</strong> forwards progress updates to an <a href="http://msdn.microsoft.com/en-us/library/dd783449.aspx?WT.mc_id=DT-MVP-5000058">IObserver&lt;T&gt;</a>, where they can be composed using Rx.</li>
+  <li><strong>ProducerProgress&lt;T&gt;</strong> and <strong>DataflowProgress&lt;T&gt;</strong> both place progress updates into containers (an <a href="http://msdn.microsoft.com/en-us/library/dd287147.aspx?WT.mc_id=DT-MVP-5000058">IProducerConsumerCollection&lt;T&gt;</a> or an <a href="http://msdn.microsoft.com/en-us/library/hh194833(v=VS.110).aspx?WT.mc_id=DT-MVP-5000058">ITargetBlock&lt;TInput&gt;</a>, respectively).</li>
 </ul>
 
 <h2 id="defining-progress">Defining “Progress”</h2>

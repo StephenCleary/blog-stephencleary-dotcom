@@ -316,7 +316,7 @@ img.comment-author-profile-image {
 
 <h2 id="tip-honoring-win32-service-exit-codes">Tip: Honoring Win32 Service Exit Codes</h2>
 
-<p>There is <a href="https://docs.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_failure_actions_flag">a flag</a> you can set that will cause SCM to honor the Win32 service exit code, treating a non-zero code as a “failure” and running its recovery actions. You can turn this flag on at the command line as such:</p>
+<p>There is <a href="https://docs.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_failure_actions_flag?WT.mc_id=DT-MVP-5000058">a flag</a> you can set that will cause SCM to honor the Win32 service exit code, treating a non-zero code as a “failure” and running its recovery actions. You can turn this flag on at the command line as such:</p>
 
 <figure class="highlight"><pre><code class="language-text" data-lang="text">sc failureflag &quot;My Service&quot; 1</code></pre></figure>
 
@@ -330,7 +330,7 @@ img.comment-author-profile-image {
 
 <h2 id="win32-service-exit-codes-and-windowsservicelifetime">Win32 Service Exit Codes and WindowsServiceLifetime</h2>
 
-<p>In <a href="https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/windows-service">.NET Core applications that are run as Win32 services</a>, it’s normal to call <code>IHostBuilder.UseWindowsService()</code>, which installs a <code>WindowsServiceLifetime</code> as the <code>IHostLifetime</code>, instead of the default <code>ConsoleLifetime</code>.</p>
+<p>In <a href="https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/windows-service?WT.mc_id=DT-MVP-5000058">.NET Core applications that are run as Win32 services</a>, it’s normal to call <code>IHostBuilder.UseWindowsService()</code>, which installs a <code>WindowsServiceLifetime</code> as the <code>IHostLifetime</code>, instead of the default <code>ConsoleLifetime</code>.</p>
 
 <p><code>WindowsServiceLifetime</code> lets the SCM control the starting and stopping of the .NET Core application. It <a href="https://github.com/dotnet/extensions/blob/4becf241089932aa1f1e7f3ab4155a437fd3dba1/src/Hosting/WindowsServices/src/WindowsServiceLifetime.cs#L14">derives from <code>ServiceBase</code></a>. Since <a href="https://github.com/aspnet/Hosting/issues/1401">multiple <code>IHostLifetime</code> instances aren’t supported</a>, this means that .NET Core workers do not naturally support multiple Win32 services in a single process. It may be possible to support that by creating a new type that derives from <code>ServiceBase</code> and <code>IHostedService</code>, along with some kind of coordinating <code>IHostLifetime</code> implementation, but I’m not aware of anyone doing that yet. For now, all the .NET Core Win32 services I know of use <code>WindowsServiceLifetime</code>.</p>
 

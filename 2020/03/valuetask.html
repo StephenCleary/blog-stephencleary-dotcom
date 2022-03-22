@@ -314,7 +314,7 @@ img.comment-author-profile-image {
 
 <h2 id="valuetask-restriction-2-only-consume-asynchronously-or-no-more-blocking-now-i-mean-it">ValueTask Restriction #2: Only Consume Asynchronously (or “No More Blocking Now, I Mean It!”)</h2>
 
-<p>Blocking on asynchronous code has <a href="https://msdn.microsoft.com/en-us/magazine/jj991977.aspx">never been the ideal solution</a>, but in some cases it is necessary. It is <em>possible</em> to block on reference tasks using <code>GetAwaiter().GetResult()</code> (or <code>Result</code> or <code>Wait()</code>).</p>
+<p>Blocking on asynchronous code has <a href="https://msdn.microsoft.com/en-us/magazine/jj991977.aspx?WT.mc_id=DT-MVP-5000058">never been the ideal solution</a>, but in some cases it is necessary. It is <em>possible</em> to block on reference tasks using <code>GetAwaiter().GetResult()</code> (or <code>Result</code> or <code>Wait()</code>).</p>
 
 <p>However, this will not work for value tasks. You simply <strong>cannot</strong> block on value tasks. If you <em>must</em> block (again, this is never ideal), then you’ll need to convert the value task to a reference task by calling <code>AsTask</code>, and then block on that reference task.</p>
 

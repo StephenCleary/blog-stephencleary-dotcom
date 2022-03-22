@@ -302,7 +302,7 @@ img.comment-author-profile-image {
 
 <p>However, it’s important to point out that each of these gains are absolutely minimal. There’s one fewer type, a handful of small objects saved from GC, and only a few CPU instructions skipped. The vast majority of the time, <code>async</code> is dealing with I/O, which completely dwarfs any performance gains. In almost every scenario, eliding <code>async</code> and <code>await</code> doesn’t make any difference to the running time of your application.</p>
 
-<p>For a thorough overview of the efficiency benefits of eliding <code>async</code> and <code>await</code>, see Stephen Toub’s classic video <a href="https://channel9.msdn.com/Events/Build/BUILD2011/TOOL-829T">The Zen of Async</a> or <a href="https://msdn.microsoft.com/en-us/magazine/hh456402.aspx">his MSDN article on the subject</a>.</p>
+<p>For a thorough overview of the efficiency benefits of eliding <code>async</code> and <code>await</code>, see Stephen Toub’s classic video <a href="https://channel9.msdn.com/Events/Build/BUILD2011/TOOL-829T?WT.mc_id=DT-MVP-5000058">The Zen of Async</a> or <a href="https://msdn.microsoft.com/en-us/magazine/hh456402.aspx?WT.mc_id=DT-MVP-5000058">his MSDN article on the subject</a>.</p>
 
 <p>When I started writing about <code>async</code>, I would always recommend eliding <code>async</code> and <code>await</code>, but I’ve modified that stand in recent years. There are just too many pitfalls to recommend eliding as a default decision. These days I recommend keeping the <code>async</code> and <code>await</code> keywords around except for a few scenarios, because of the drawbacks described in the rest of this blog post.</p>
 

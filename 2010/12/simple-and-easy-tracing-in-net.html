@@ -294,11 +294,11 @@ img.comment-author-profile-image {
 
 <h2 id="define-the-tracesource">Define the TraceSource</h2>
 
-<p>One <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.tracesource.aspx">TraceSource</a> should be defined per “component.” The “component” is up to you; it’s a group of trace statements that can be enabled or disabled together.</p>
+<p>One <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.tracesource.aspx?WT.mc_id=DT-MVP-5000058">TraceSource</a> should be defined per “component.” The “component” is up to you; it’s a group of trace statements that can be enabled or disabled together.</p>
 
-<p>A <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.tracesource.aspx">TraceSource</a> needs a name, and that name should be globally unique. Something like “MyCompany.MyProduct.MyComponent” should suffice.</p>
+<p>A <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.tracesource.aspx?WT.mc_id=DT-MVP-5000058">TraceSource</a> needs a name, and that name should be globally unique. Something like “MyCompany.MyProduct.MyComponent” should suffice.</p>
 
-<p>You usually want to define the <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.tracesource.aspx">TraceSource</a> as a <strong>static</strong> member of a class being traced. The example code below uses a <strong>private static</strong> <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.tracesource.aspx">TraceSource</a>, but if other classes use the same source, you may prefer <strong>internal static</strong>:</p>
+<p>You usually want to define the <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.tracesource.aspx?WT.mc_id=DT-MVP-5000058">TraceSource</a> as a <strong>static</strong> member of a class being traced. The example code below uses a <strong>private static</strong> <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.tracesource.aspx?WT.mc_id=DT-MVP-5000058">TraceSource</a>, but if other classes use the same source, you may prefer <strong>internal static</strong>:</p>
 
 <pre><code>public class MyComponentClass
 {
@@ -309,7 +309,7 @@ img.comment-author-profile-image {
 
 <h2 id="use-the-tracesource">Use the TraceSource</h2>
 
-<p>Add calls to <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.tracesource.aspx">TraceSource</a> methods where you want tracing to take place:</p>
+<p>Add calls to <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.tracesource.aspx?WT.mc_id=DT-MVP-5000058">TraceSource</a> methods where you want tracing to take place:</p>
 
 <figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">void</span> <span class="nf">Frob</span><span class="p">(</span><span class="kt">string</span> <span class="n">arg</span><span class="p">)</span>
 <span class="p">{</span>
@@ -317,9 +317,9 @@ img.comment-author-profile-image {
   <span class="p">...</span>
 <span class="p">}</span></code></pre></figure>
 
-<p>The <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.tracesource.aspx">TraceSource</a> class provides several tracing methods; the most common are <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.tracesource.traceinformation.aspx">TraceInformation</a> (used for informational message) and <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.tracesource.traceevent.aspx">TraceEvent</a> (used for any type of message).</p>
+<p>The <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.tracesource.aspx?WT.mc_id=DT-MVP-5000058">TraceSource</a> class provides several tracing methods; the most common are <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.tracesource.traceinformation.aspx?WT.mc_id=DT-MVP-5000058">TraceInformation</a> (used for informational message) and <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.tracesource.traceevent.aspx?WT.mc_id=DT-MVP-5000058">TraceEvent</a> (used for any type of message).</p>
 
-<p>The types of messages <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.traceeventtype.aspx">include</a> (in increasing order of severity): Verbose, Information, Warning, Error, and Critical.</p>
+<p>The types of messages <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.traceeventtype.aspx?WT.mc_id=DT-MVP-5000058">include</a> (in increasing order of severity): Verbose, Information, Warning, Error, and Critical.</p>
 
 <h2 id="enable-the-tracesource">Enable the TraceSource</h2>
 
@@ -336,7 +336,7 @@ img.comment-author-profile-image {
 &lt;/configuration&gt;
 </code></pre>
 
-<p>The switchValue attribute <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.sourcelevels.aspx">may be set to</a> Off, Critical, Error, Warning, Information, Verbose, or All. This setting interacts with the TraceEvent message types exactly as you’d expect:</p>
+<p>The switchValue attribute <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.sourcelevels.aspx?WT.mc_id=DT-MVP-5000058">may be set to</a> Off, Critical, Error, Warning, Information, Verbose, or All. This setting interacts with the TraceEvent message types exactly as you’d expect:</p>
 
 <div class="panel panel-default">
 
@@ -423,7 +423,7 @@ img.comment-author-profile-image {
 
 <ul>
   <li>If you run the application in the Visual Studio Debugger, all enabled trace output is written to the Output window.</li>
-  <li>If you’re running in production (or for some other reason can’t use the debugger), a free Microsoft tool called <a href="http://technet.microsoft.com/en-us/sysinternals/bb896647">DebugView</a> may be used to view the traces in real-time (and optionally log them to a file). Tip: uncheck “Options” “Force Carriage Returns” to make the trace output line up correctly.</li>
+  <li>If you’re running in production (or for some other reason can’t use the debugger), a free Microsoft tool called <a href="http://technet.microsoft.com/en-us/sysinternals/bb896647?WT.mc_id=DT-MVP-5000058">DebugView</a> may be used to view the traces in real-time (and optionally log them to a file). Tip: uncheck “Options” “Force Carriage Returns” to make the trace output line up correctly.</li>
 </ul>
 
 <h2 id="more-power">More Power!</h2>
@@ -435,14 +435,14 @@ img.comment-author-profile-image {
   <li>You can add trace switches. Our simple tracing just sets a single switchValue for each TraceSource. It’s possible to add trace switches that are shared between multiple trace sources. In addition, you can define your own <em>type</em> of trace switch.</li>
   <li>You can add trace filters. For example, it’s possible to put in a trace filter that sends some messages to one trace listener and other messages to another trace listener. You can also define your own trace filter type, if the built-in ones aren’t sufficient.</li>
   <li>There are additional types of messages that fall under “ActivityTracing”: Start, Stop, etc. These can be used in addition to the existing Verbose to Critical hierarchy.</li>
-  <li>There’s a <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.trace.correlationmanager.aspx">Trace.CorrelationManager</a> class that enables “grouping” of traces into logical operations. This is used in conjection with the ActivityTracing messages to relate traces together that would otherwise get intermixed with other traces.</li>
+  <li>There’s a <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.trace.correlationmanager.aspx?WT.mc_id=DT-MVP-5000058">Trace.CorrelationManager</a> class that enables “grouping” of traces into logical operations. This is used in conjection with the ActivityTracing messages to relate traces together that would otherwise get intermixed with other traces.</li>
 </ul>
 
-<p>For more information, see <a href="http://stackoverflow.com/questions/576185/logging-best-practices/939944#939944">this SO answer</a> and the <a href="http://msdn.microsoft.com/en-us/library/zs6s4h68.aspx">MSDN documentation</a>. Also, check out <a href="http://essentialdiagnostics.codeplex.com/">Essential Diagnostics</a> on CodePlex before writing your own extensions; the most useful things have already been done.</p>
+<p>For more information, see <a href="http://stackoverflow.com/questions/576185/logging-best-practices/939944#939944">this SO answer</a> and the <a href="http://msdn.microsoft.com/en-us/library/zs6s4h68.aspx?WT.mc_id=DT-MVP-5000058">MSDN documentation</a>. Also, check out <a href="http://essentialdiagnostics.codeplex.com/">Essential Diagnostics</a> on CodePlex before writing your own extensions; the most useful things have already been done.</p>
 
 <h2 id="other-tracesources">Other TraceSources</h2>
 
-<p>Many people aren’t aware that a lot of the .NET built-in libraries have already been instrumented with their own TraceSources. <a href="http://msdn.microsoft.com/en-us/library/ty48b824(v=VS.100).aspx">Network activity</a>, for example, or <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.presentationtracesources.aspx">tons of tracing for WPF</a>. The two that I’ve found most useful are <strong>System.Net.Sockets</strong> for TCP/IP sockets and <strong>System.Windows.Data</strong> for debugging data binding errors. There are probably many more out there…</p>
+<p>Many people aren’t aware that a lot of the .NET built-in libraries have already been instrumented with their own TraceSources. <a href="http://msdn.microsoft.com/en-us/library/ty48b824(v=VS.100).aspx?WT.mc_id=DT-MVP-5000058">Network activity</a>, for example, or <a href="http://msdn.microsoft.com/en-us/library/system.diagnostics.presentationtracesources.aspx?WT.mc_id=DT-MVP-5000058">tons of tracing for WPF</a>. The two that I’ve found most useful are <strong>System.Net.Sockets</strong> for TCP/IP sockets and <strong>System.Windows.Data</strong> for debugging data binding errors. There are probably many more out there…</p>
 
 
   </article>

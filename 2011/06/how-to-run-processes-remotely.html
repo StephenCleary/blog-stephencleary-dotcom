@@ -294,7 +294,7 @@ img.comment-author-profile-image {
 
 <p>When a process running on one computer needs to perform some operation on <em>another</em> computer, the common solution is to actually have two processes that use interprocess communication. The one process sends its commands to the other process, which executes them on behalf of the first process. Normally, one must install a server on one computer and a client on the other. So, if someone needs to perform an operation on another computer, then that computer must <em>already have</em> the software installed.</p>
 
-<p>However, there <em>is</em> a way to send a program to a remote computer and run it, without having any special existing software on the target machine. This approach doesn’t work in every situation, but it’s useful to know. The command line programs in the famous <a href="http://technet.microsoft.com/en-us/sysinternals/bb896649">PSTools suite</a> use the approach documented here to “inject” copies of themselves onto remote computers; this allows a simple form of remote administration. The white paper <a href="http://www.ntkernel.com/?White_papers:PsExec_Internals">PsExec Internals</a> (<a href="http://www.webcitation.org/5yUALT8gw">webcite</a>) includes the specific details for PsExec.</p>
+<p>However, there <em>is</em> a way to send a program to a remote computer and run it, without having any special existing software on the target machine. This approach doesn’t work in every situation, but it’s useful to know. The command line programs in the famous <a href="http://technet.microsoft.com/en-us/sysinternals/bb896649?WT.mc_id=DT-MVP-5000058">PSTools suite</a> use the approach documented here to “inject” copies of themselves onto remote computers; this allows a simple form of remote administration. The white paper <a href="http://www.ntkernel.com/?White_papers:PsExec_Internals">PsExec Internals</a> (<a href="http://www.webcitation.org/5yUALT8gw">webcite</a>) includes the specific details for PsExec.</p>
 
 <h2 id="step-1-establish-an-authenticated-connection">Step 1: Establish an Authenticated Connection</h2>
 
@@ -305,7 +305,7 @@ img.comment-author-profile-image {
 <div class="alert alert-info">
   <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
 
-  <p>Network connections may be examined and modified using the <a href="http://msdn.microsoft.com/en-us/library/aa385406.aspx" class="alert-link">Windows Networking (WNet) API</a> or the <strong>net</strong> command. Unfortunately, there are no .NET wrappers for this API in the BCL.</p>
+  <p>Network connections may be examined and modified using the <a href="http://msdn.microsoft.com/en-us/library/aa385406.aspx?WT.mc_id=DT-MVP-5000058" class="alert-link">Windows Networking (WNet) API</a> or the <strong>net</strong> command. Unfortunately, there are no .NET wrappers for this API in the BCL.</p>
 </div>
 
 <h3 id="about-authentication">About Authentication</h3>
@@ -380,12 +380,12 @@ img.comment-author-profile-image {
 
 <h2 id="step-3-register-and-execute-the-program">Step 3: Register and Execute the Program</h2>
 
-<p>This step makes use of the little-known fact that Win32 services may be <em>installed</em> remotely. The <a href="http://msdn.microsoft.com/en-us/library/ms685148(v=VS.85).aspx">service configuration API</a> can be used to install the service on the remote computer and then start it.</p>
+<p>This step makes use of the little-known fact that Win32 services may be <em>installed</em> remotely. The <a href="http://msdn.microsoft.com/en-us/library/ms685148(v=VS.85).aspx?WT.mc_id=DT-MVP-5000058">service configuration API</a> can be used to install the service on the remote computer and then start it.</p>
 
 <div class="alert alert-info">
   <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
 
-  <p>The .NET <a href="http://msdn.microsoft.com/en-us/library/system.serviceprocess.servicecontroller.aspx" class="alert-link">ServiceController class</a> does expose remote <em>control</em> of services (starting, stopping, etc), but it does not expose remote <em>installation</em> of services.</p>
+  <p>The .NET <a href="http://msdn.microsoft.com/en-us/library/system.serviceprocess.servicecontroller.aspx?WT.mc_id=DT-MVP-5000058" class="alert-link">ServiceController class</a> does expose remote <em>control</em> of services (starting, stopping, etc), but it does not expose remote <em>installation</em> of services.</p>
 </div>
 
 <h2 id="step-4-securely-communicate">Step 4: Securely Communicate</h2>

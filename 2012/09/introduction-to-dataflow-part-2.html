@@ -294,7 +294,7 @@ img.comment-author-profile-image {
 
 <h2 id="bufferblock-a-queue">BufferBlock: A Queue</h2>
 
-<p>One of the simplest blocks is just a basic FIFO buffer, <a href="http://msdn.microsoft.com/en-us/library/hh160414.aspx"><code>BufferBlock&lt;T&gt;</code></a>. The data that comes in is the data that goes out.</p>
+<p>One of the simplest blocks is just a basic FIFO buffer, <a href="http://msdn.microsoft.com/en-us/library/hh160414.aspx?WT.mc_id=DT-MVP-5000058"><code>BufferBlock&lt;T&gt;</code></a>. The data that comes in is the data that goes out.</p>
 
 <p>With a block this simple, you might wonder why you would even need it. <code>BufferBlock</code> is useful on its own as an <code>async</code>-compatible queue. It’s also useful in a dataflow mesh when combined with different options (such as throttling) that we’ll cover in next week’s post.</p>
 
@@ -302,7 +302,7 @@ img.comment-author-profile-image {
 
 <h2 id="actionblock-foreach">ActionBlock: Foreach</h2>
 
-<p>Possibly even simpler than <code>BufferBlock</code>, <a href="http://msdn.microsoft.com/en-us/library/hh194684.aspx"><code>ActionBlock&lt;T&gt;</code></a> is just an input buffer combined with a processing task, which executes a delegate for each input item. Conceptually, it’s like running a “foreach” loop over the data passing through the block.</p>
+<p>Possibly even simpler than <code>BufferBlock</code>, <a href="http://msdn.microsoft.com/en-us/library/hh194684.aspx?WT.mc_id=DT-MVP-5000058"><code>ActionBlock&lt;T&gt;</code></a> is just an input buffer combined with a processing task, which executes a delegate for each input item. Conceptually, it’s like running a “foreach” loop over the data passing through the block.</p>
 
 <p>A very useful feature of <code>ActionBlock</code> is that its delegate may be <code>async</code>. By default, the <code>ActionBlock</code> will run the delegate to completion for one data item at a time. (We’ll take a look next week at how to change these defaults).</p>
 
@@ -310,13 +310,13 @@ img.comment-author-profile-image {
 
 <h2 id="nulltarget-devnull">NullTarget: /dev/null</h2>
 
-<p>OK, <a href="http://msdn.microsoft.com/en-us/library/hh462765.aspx"><code>NullTarget&lt;T&gt;</code></a> has got to be the simplest block. It just accepts all data items and ignores them.</p>
+<p>OK, <a href="http://msdn.microsoft.com/en-us/library/hh462765.aspx?WT.mc_id=DT-MVP-5000058"><code>NullTarget&lt;T&gt;</code></a> has got to be the simplest block. It just accepts all data items and ignores them.</p>
 
-<p>So why would you use it? Imagine you have a <code>BufferBlock</code> linked to an <code>ActionBlock</code>, but you <a href="http://msdn.microsoft.com/en-us/library/hh160311.aspx">applied a filter when you called <code>LinkTo</code></a>. If a data item came along not matching the filter, the <code>ActionBlock</code> would refuse to take it, but then the <code>BufferBlock</code> would hold onto it. The data item would stick there, gumming up the whole system. An easy way to fix this is to link the <code>BufferBlock</code> to a second block (<code>NullTarget</code>), which would get any leftover data items (the ones rejected by the <code>ActionBlock</code>), and ignore them.</p>
+<p>So why would you use it? Imagine you have a <code>BufferBlock</code> linked to an <code>ActionBlock</code>, but you <a href="http://msdn.microsoft.com/en-us/library/hh160311.aspx?WT.mc_id=DT-MVP-5000058">applied a filter when you called <code>LinkTo</code></a>. If a data item came along not matching the filter, the <code>ActionBlock</code> would refuse to take it, but then the <code>BufferBlock</code> would hold onto it. The data item would stick there, gumming up the whole system. An easy way to fix this is to link the <code>BufferBlock</code> to a second block (<code>NullTarget</code>), which would get any leftover data items (the ones rejected by the <code>ActionBlock</code>), and ignore them.</p>
 
 <h2 id="transformblock-select">TransformBlock: Select</h2>
 
-<p><a href="http://msdn.microsoft.com/en-us/library/hh194782.aspx"><code>TransformBlock&lt;TInput, TOutput&gt;</code></a> is like a LINQ <code>Select</code> method: conceptually, it is a one-to-one mapping for data items.</p>
+<p><a href="http://msdn.microsoft.com/en-us/library/hh194782.aspx?WT.mc_id=DT-MVP-5000058"><code>TransformBlock&lt;TInput, TOutput&gt;</code></a> is like a LINQ <code>Select</code> method: conceptually, it is a one-to-one mapping for data items.</p>
 
 <p>You define the mapping function yourself in a delegate. Like <code>ActionBlock</code>, this delegate may be <code>async</code>. Also like <code>ActionBlock</code>, <code>TransformBlock</code> will only process one item at a time by default.</p>
 
@@ -324,7 +324,7 @@ img.comment-author-profile-image {
 
 <h2 id="transformmanyblock-selectmany">TransformManyBlock: SelectMany</h2>
 
-<p><a href="http://msdn.microsoft.com/en-us/library/hh194784.aspx"><code>TransformManyBlock&lt;TInput, TOutput&gt;</code></a> is very similar to <code>TransformBlock</code>, except it’s a one-to-n mapping for data items. So it’s like LINQ’s <code>SelectMany</code>, where a single input item may result in zero, one, or any number of output items. The results of this mapping are “flattened”, just like LINQ’s <code>SelectMany</code>.</p>
+<p><a href="http://msdn.microsoft.com/en-us/library/hh194784.aspx?WT.mc_id=DT-MVP-5000058"><code>TransformManyBlock&lt;TInput, TOutput&gt;</code></a> is very similar to <code>TransformBlock</code>, except it’s a one-to-n mapping for data items. So it’s like LINQ’s <code>SelectMany</code>, where a single input item may result in zero, one, or any number of output items. The results of this mapping are “flattened”, just like LINQ’s <code>SelectMany</code>.</p>
 
 <p>Again, you define the mapping function in a delegate, which may be <code>async</code>. And <code>TransformManyBlock</code> also processes only one input item at a time by default.</p>
 
@@ -335,14 +335,14 @@ img.comment-author-profile-image {
 <p>The blocks described above are a good starting point for playing around with TPL Dataflow, but the library offers much more (which I won’t be covering in these intro posts):</p>
 
 <ul>
-  <li><a href="http://msdn.microsoft.com/en-us/library/hh194820.aspx"><code>WriteOnceBlock&lt;T&gt;</code></a> - Memorizes its first data item and passes out copies of it as its output. Ignores all other data items.</li>
-  <li><a href="http://msdn.microsoft.com/en-us/library/hh194745.aspx"><code>BatchBlock&lt;T&gt;</code></a> - Groups a certain number of sequential data items into collections of data items.</li>
-  <li><a href="http://msdn.microsoft.com/en-us/library/hh160447.aspx"><code>BroadcastBlock&lt;T&gt;</code></a> - Passes out copies of data items as its output. This block is just like <code>BufferBlock</code> except that a <code>BufferBlock</code> will only send a particular data item to a single block; <code>BroadcastBlock</code> will copy the item and send the copies to every block that it’s linked to.</li>
-  <li><a href="http://msdn.microsoft.com/en-us/library/hh194869.aspx"><code>JoinBlock&lt;T1, T2&gt;</code></a> and <a href="http://msdn.microsoft.com/en-us/library/hh160286.aspx"><code>JoinBlock&lt;T1, T2, T3&gt;</code></a> - Collects two or three inputs and combines them into a <code>Tuple</code>.</li>
-  <li><a href="http://msdn.microsoft.com/en-us/library/hh194683.aspx"><code>BatchedJoinBlock&lt;T1, T2&gt;</code></a> and <a href="http://msdn.microsoft.com/en-us/library/hh160326.aspx"><code>BatchedJoinBlock&lt;T1, T2, T3&gt;</code></a> - Collects a certain number of total items from two or three inputs and groups them into a <code>Tuple</code> of collections of data items.</li>
+  <li><a href="http://msdn.microsoft.com/en-us/library/hh194820.aspx?WT.mc_id=DT-MVP-5000058"><code>WriteOnceBlock&lt;T&gt;</code></a> - Memorizes its first data item and passes out copies of it as its output. Ignores all other data items.</li>
+  <li><a href="http://msdn.microsoft.com/en-us/library/hh194745.aspx?WT.mc_id=DT-MVP-5000058"><code>BatchBlock&lt;T&gt;</code></a> - Groups a certain number of sequential data items into collections of data items.</li>
+  <li><a href="http://msdn.microsoft.com/en-us/library/hh160447.aspx?WT.mc_id=DT-MVP-5000058"><code>BroadcastBlock&lt;T&gt;</code></a> - Passes out copies of data items as its output. This block is just like <code>BufferBlock</code> except that a <code>BufferBlock</code> will only send a particular data item to a single block; <code>BroadcastBlock</code> will copy the item and send the copies to every block that it’s linked to.</li>
+  <li><a href="http://msdn.microsoft.com/en-us/library/hh194869.aspx?WT.mc_id=DT-MVP-5000058"><code>JoinBlock&lt;T1, T2&gt;</code></a> and <a href="http://msdn.microsoft.com/en-us/library/hh160286.aspx?WT.mc_id=DT-MVP-5000058"><code>JoinBlock&lt;T1, T2, T3&gt;</code></a> - Collects two or three inputs and combines them into a <code>Tuple</code>.</li>
+  <li><a href="http://msdn.microsoft.com/en-us/library/hh194683.aspx?WT.mc_id=DT-MVP-5000058"><code>BatchedJoinBlock&lt;T1, T2&gt;</code></a> and <a href="http://msdn.microsoft.com/en-us/library/hh160326.aspx?WT.mc_id=DT-MVP-5000058"><code>BatchedJoinBlock&lt;T1, T2, T3&gt;</code></a> - Collects a certain number of total items from two or three inputs and groups them into a <code>Tuple</code> of collections of data items.</li>
 </ul>
 
-<p>Please read the <a href="http://www.microsoft.com/en-us/download/details.aspx?id=14782">official “Introduction to TPL Dataflow” document</a> for more details on these block types; that document covers information like the <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.dataflow.groupingdataflowblockoptions.greedy.aspx">option for greedy behavior</a>, which is important for some batching and joining scenarios. Finally, if you’re using the advanced blocks, I also recommend also hanging out on the <a href="http://social.msdn.microsoft.com/Forums/en/tpldataflow/threads">TPL Dataflow forum</a>.</p>
+<p>Please read the <a href="http://www.microsoft.com/en-us/download/details.aspx?id=14782">official “Introduction to TPL Dataflow” document</a> for more details on these block types; that document covers information like the <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.dataflow.groupingdataflowblockoptions.greedy.aspx?WT.mc_id=DT-MVP-5000058">option for greedy behavior</a>, which is important for some batching and joining scenarios. Finally, if you’re using the advanced blocks, I also recommend also hanging out on the <a href="http://social.msdn.microsoft.com/Forums/en/tpldataflow/threads?WT.mc_id=DT-MVP-5000058">TPL Dataflow forum</a>.</p>
 
 <div class="alert alert-info">
   <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>

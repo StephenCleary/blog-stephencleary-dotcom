@@ -351,7 +351,7 @@ img.comment-author-profile-image {
 
 <p>In the first case, this context is a UI context (which applies to <em>any</em> UI except Console applications). In the second case, this context is an ASP.NET request context.</p>
 
-<p>One other important point: an ASP.NET request context is not tied to a specific thread (like the UI context is), but it <em>does</em> only allow one thread in <em>at a time</em>. This interesting aspect is not officially documented anywhere AFAIK, but it is mentioned in <a href="http://msdn.microsoft.com/en-us/magazine/gg598924.aspx">my MSDN article about SynchronizationContext</a>.</p>
+<p>One other important point: an ASP.NET request context is not tied to a specific thread (like the UI context is), but it <em>does</em> only allow one thread in <em>at a time</em>. This interesting aspect is not officially documented anywhere AFAIK, but it is mentioned in <a href="http://msdn.microsoft.com/en-us/magazine/gg598924.aspx?WT.mc_id=DT-MVP-5000058">my MSDN article about SynchronizationContext</a>.</p>
 
 <p>So this is what happens, starting with the top-level method (Button1_Click for UI / MyController.Get for ASP.NET):</p>
 
@@ -394,7 +394,7 @@ img.comment-author-profile-image {
 <div class="alert alert-info">
   <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
 
-  <p>Using <code>ConfigureAwait(false)</code> to avoid deadlocks is a dangerous practice. You would have to use <code>ConfigureAwait(false)</code> for <em>every</em> <code>await</code> in the transitive closure of all methods called by the blocking code, <em>including all third- and second-party code</em>. Using <code>ConfigureAwait(false)</code> to avoid deadlock is at best <a href="https://msdn.microsoft.com/en-us/magazine/mt238404.aspx" class="alert-link">just a hack</a>).</p>
+  <p>Using <code>ConfigureAwait(false)</code> to avoid deadlocks is a dangerous practice. You would have to use <code>ConfigureAwait(false)</code> for <em>every</em> <code>await</code> in the transitive closure of all methods called by the blocking code, <em>including all third- and second-party code</em>. Using <code>ConfigureAwait(false)</code> to avoid deadlock is at best <a href="https://msdn.microsoft.com/en-us/magazine/mt238404.aspx?WT.mc_id=DT-MVP-5000058" class="alert-link">just a hack</a>).</p>
 
   <p>As the title of this post points out, the better solution is “Don’t block on async code”.</p>
 </div>
@@ -424,14 +424,14 @@ img.comment-author-profile-image {
 
 <ul>
   <li>My <a href="/2012/02/async-and-await.html">introduction to async/await</a> is a good starting point.</li>
-  <li>Stephen Toub’s blog post <a href="https://devblogs.microsoft.com/pfxteam/await-and-ui-and-deadlocks-oh-my/">Await, and UI, and deadlocks! Oh, my!</a> covers this exact type of deadlock (in January of 2011, no less!).</li>
-  <li>If you prefer videos, <a href="https://channel9.msdn.com/Events/BUILD/BUILD2011/TOOL-829T">Stephen Toub demoed this deadlock live</a> (39:40 - 42:50, but the whole presentation is great!).</li>
-  <li>The <a href="https://devblogs.microsoft.com/pfxteam/asyncawait-faq/">Async/Await FAQ</a> goes into detail on exactly when contexts are captured and used for continuations.</li>
+  <li>Stephen Toub’s blog post <a href="https://devblogs.microsoft.com/pfxteam/await-and-ui-and-deadlocks-oh-my/?WT.mc_id=DT-MVP-5000058">Await, and UI, and deadlocks! Oh, my!</a> covers this exact type of deadlock (in January of 2011, no less!).</li>
+  <li>If you prefer videos, <a href="https://channel9.msdn.com/Events/BUILD/BUILD2011/TOOL-829T?WT.mc_id=DT-MVP-5000058">Stephen Toub demoed this deadlock live</a> (39:40 - 42:50, but the whole presentation is great!).</li>
+  <li>The <a href="https://devblogs.microsoft.com/pfxteam/asyncawait-faq/?WT.mc_id=DT-MVP-5000058">Async/Await FAQ</a> goes into detail on exactly when contexts are captured and used for continuations.</li>
 </ul>
 
 <p>This kind of deadlock is always the result of mixing synchronous with asynchronous code. Usually this is because people are just trying out async with one small piece of code and use synchronous code everywhere else. Unfortunately, partially-asynchronous code is much more complex and tricky than just making everything asynchronous.</p>
 
-<p>If you <em>do</em> need to maintain a partially-asynchronous code base, then be sure to check out two more of Stephen Toub’s blog posts: <a href="https://devblogs.microsoft.com/pfxteam/should-i-expose-asynchronous-wrappers-for-synchronous-methods/">Asynchronous Wrappers for Synchronous Methods</a> and <a href="https://devblogs.microsoft.com/pfxteam/should-i-expose-synchronous-wrappers-for-asynchronous-methods/">Synchronous Wrappers for Asynchronous Methods</a>, as well as my <a href="http://nitoasyncex.codeplex.com/">AsyncEx library</a>.</p>
+<p>If you <em>do</em> need to maintain a partially-asynchronous code base, then be sure to check out two more of Stephen Toub’s blog posts: <a href="https://devblogs.microsoft.com/pfxteam/should-i-expose-asynchronous-wrappers-for-synchronous-methods/?WT.mc_id=DT-MVP-5000058">Asynchronous Wrappers for Synchronous Methods</a> and <a href="https://devblogs.microsoft.com/pfxteam/should-i-expose-synchronous-wrappers-for-asynchronous-methods/?WT.mc_id=DT-MVP-5000058">Synchronous Wrappers for Asynchronous Methods</a>, as well as my <a href="http://nitoasyncex.codeplex.com/">AsyncEx library</a>.</p>
 
 <h2 id="answered-questions">Answered Questions</h2>
 
@@ -440,7 +440,7 @@ img.comment-author-profile-image {
 <div class="alert alert-info">
   <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
 
-  <p>Update (2014-12-01): For more details, see my <a href="https://docs.microsoft.com/en-us/archive/msdn-magazine/2013/march/async-await-best-practices-in-asynchronous-programming" class="alert-link">MSDN article on asynchronous best practices</a> or Section 1.2 in my <a href="https://stephencleary.com/book/" class="alert-link">Concurrency Cookbook</a>.</p>
+  <p>Update (2014-12-01): For more details, see my <a href="https://docs.microsoft.com/en-us/archive/msdn-magazine/2013/march/async-await-best-practices-in-asynchronous-programming?WT.mc_id=DT-MVP-5000058" class="alert-link">MSDN article on asynchronous best practices</a> or Section 1.2 in my <a href="https://stephencleary.com/book/" class="alert-link">Concurrency Cookbook</a>.</p>
 </div>
 
   </article>

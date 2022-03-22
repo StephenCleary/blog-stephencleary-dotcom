@@ -290,7 +290,7 @@ img.comment-author-profile-image {
   </header>
 
   <article>
-  <p>Cancellation is a topic that I haven’t written on much yet, because the <a href="https://docs.microsoft.com/en-us/dotnet/standard/threading/cancellation-in-managed-threads">Microsoft documentation</a> is quite good. But after answering many questions for many years, I thought it would be a good topic to cover once, exhaustively.</p>
+  <p>Cancellation is a topic that I haven’t written on much yet, because the <a href="https://docs.microsoft.com/en-us/dotnet/standard/threading/cancellation-in-managed-threads?WT.mc_id=DT-MVP-5000058">Microsoft documentation</a> is quite good. But after answering many questions for many years, I thought it would be a good topic to cover once, exhaustively.</p>
 
 <h2 id="cooperative-cancellation">Cooperative Cancellation</h2>
 
@@ -320,7 +320,7 @@ img.comment-author-profile-image {
 
 <h2 id="the-cancellation-contract-method-signature">The Cancellation Contract: Method Signature</h2>
 
-<p><a href="https://docs.microsoft.com/en-us/dotnet/standard/asynchronous-programming-patterns/task-based-asynchronous-pattern-tap#cancellation-optional">By convention</a>, the <code>CancellationToken</code> parameter is usually the last parameter unless an <code>IProgress&lt;T&gt;</code> parameter is present. It is common to provide an overload or default parameter so that callers do not <em>have</em> to provide a <code>CancellationToken</code> if they do not have one; the <code>default</code> value of a <code>CancellationToken</code> is the same as <code>CancellationToken.None</code>, i.e., a cancellation token that will never be canceled.</p>
+<p><a href="https://docs.microsoft.com/en-us/dotnet/standard/asynchronous-programming-patterns/task-based-asynchronous-pattern-tap#cancellation-optional?WT.mc_id=DT-MVP-5000058">By convention</a>, the <code>CancellationToken</code> parameter is usually the last parameter unless an <code>IProgress&lt;T&gt;</code> parameter is present. It is common to provide an overload or default parameter so that callers do not <em>have</em> to provide a <code>CancellationToken</code> if they do not have one; the <code>default</code> value of a <code>CancellationToken</code> is the same as <code>CancellationToken.None</code>, i.e., a cancellation token that will never be canceled.</p>
 
 <figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">data</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="n">DoSomethingAsync</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">CancellationToken</span><span class="p">.</span><span class="n">None</span><span class="p">);</span>
 <span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="kt">int</span> <span class="n">data</span><span class="p">,</span> <span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>

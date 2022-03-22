@@ -298,7 +298,7 @@ img.comment-author-profile-image {
 
 <h2 id="supporting-sqlite-from-a-net-40-project">Supporting SQLite from a .NET 4.0 Project</h2>
 
-<p>By default, a .NET 4.0 process will happily load a .NET 2.0-3.5 managed DLL, but will refuse to load a .NET 2.0-3.5 mixed-mode DLL. This is a problem for SQLite, since it is a .NET 2.0 mixed-mode DLL. A full description of this problem and its solution is <a href="http://www.marklio.com/marklio/PermaLink,guid,ecc34c3c-be44-4422-86b7-900900e451f9.aspx">available online</a>, but the short answer is to set <a href="http://msdn.microsoft.com/en-us/library/bbx34a2h.aspx">useLegacyV2RuntimeActivationPolicy</a> to true in your app.config.</p>
+<p>By default, a .NET 4.0 process will happily load a .NET 2.0-3.5 managed DLL, but will refuse to load a .NET 2.0-3.5 mixed-mode DLL. This is a problem for SQLite, since it is a .NET 2.0 mixed-mode DLL. A full description of this problem and its solution is <a href="http://www.marklio.com/marklio/PermaLink,guid,ecc34c3c-be44-4422-86b7-900900e451f9.aspx">available online</a>, but the short answer is to set <a href="http://msdn.microsoft.com/en-us/library/bbx34a2h.aspx?WT.mc_id=DT-MVP-5000058">useLegacyV2RuntimeActivationPolicy</a> to true in your app.config.</p>
 
 <h2 id="opening-alternative-data-files">Opening Alternative Data Files</h2>
 
@@ -343,7 +343,7 @@ img.comment-author-profile-image {
 
 <h2 id="the-entity-frameworks-database-connection">The Entity Framework’s Database Connection</h2>
 
-<p>The Entity Framework is actually an ADO.NET data provider that is itself wrapping an ADO.NET data provider (SQLite, to be specific). <a href="http://msdn.microsoft.com/en-us/library/bb896325.aspx">Normally, the Entity Framework will open a database connection whenever it needs one; these automatically-opened connections are automatically closed when the Entity Framework is finished with it.</a> This default behavior works well with SQL Server due to its ADO.NET provider’s connection pooling. However, it does not work well with SQLite, due to various “properties” existing on the SQLite connection itself. One example is “PRAGMA foreign_keys = ON”, which enforces foreign keys only for that SQLite database connection. If the Entity Framework opens and closes its connections at will, then SQLite PRAGMAs such as these are lost.</p>
+<p>The Entity Framework is actually an ADO.NET data provider that is itself wrapping an ADO.NET data provider (SQLite, to be specific). <a href="http://msdn.microsoft.com/en-us/library/bb896325.aspx?WT.mc_id=DT-MVP-5000058">Normally, the Entity Framework will open a database connection whenever it needs one; these automatically-opened connections are automatically closed when the Entity Framework is finished with it.</a> This default behavior works well with SQL Server due to its ADO.NET provider’s connection pooling. However, it does not work well with SQLite, due to various “properties” existing on the SQLite connection itself. One example is “PRAGMA foreign_keys = ON”, which enforces foreign keys only for that SQLite database connection. If the Entity Framework opens and closes its connections at will, then SQLite PRAGMAs such as these are lost.</p>
 
 <p>As a general rule, you should explicitly call “Connection.Open()” for any ObjectContext. You must also ensure that the ObjectContext is disposed, so that the database connection is cleanly closed. Once “Connection.Open()” has been called, the Entity Framework will no longer open and close its own transient connections.</p>
 
@@ -379,7 +379,7 @@ img.comment-author-profile-image {
 
 <h2 id="entity-framework-transactions">Entity Framework Transactions</h2>
 
-<p>The <a href="http://msdn.microsoft.com/en-us/library/bb896325.aspx">official Entity Framework documentation</a> recommends using generic transactions (e.g., TransactionScope). This has some benefits; it can be easily promoted to a distributed transaction, etc.</p>
+<p>The <a href="http://msdn.microsoft.com/en-us/library/bb896325.aspx?WT.mc_id=DT-MVP-5000058">official Entity Framework documentation</a> recommends using generic transactions (e.g., TransactionScope). This has some benefits; it can be easily promoted to a distributed transaction, etc.</p>
 
 <p>However, it has a timeout scheme that is not very friendly (I <a href="/2010/06/transactionscope-has-default-timeout.html">mentioned this</a> a few weeks ago). In my situation, I had to potentially spend quite a bit of time upgrading the client’s database on first run.</p>
 
@@ -424,7 +424,7 @@ img.comment-author-profile-image {
   <li>Click OK. The foreign key association is now completed.</li>
 </ol>
 
-<p>Thanks to the Entity Framework Design team for their <a href="https://docs.microsoft.com/en-us/archive/blogs/efdesign/foreign-keys-in-the-entity-framework">blog post on FK Associations</a>; my instructions above are derived from that post.</p>
+<p>Thanks to the Entity Framework Design team for their <a href="https://docs.microsoft.com/en-us/archive/blogs/efdesign/foreign-keys-in-the-entity-framework?WT.mc_id=DT-MVP-5000058">blog post on FK Associations</a>; my instructions above are derived from that post.</p>
 
 <h3 id="foreign-keys-m-to-n">Foreign Keys: M to N</h3>
 

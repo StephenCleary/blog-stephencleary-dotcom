@@ -292,7 +292,7 @@ img.comment-author-profile-image {
   <article>
   <p>This week, we take a break from the option parsing posts to bring you an interesting corner case from the BCL.</p>
 
-<p>The <a href="http://msdn.microsoft.com/en-us/library/1k93acx8.aspx">System.Threading.Timer constructor</a> has several overloads; all except one take a <em>state</em> parameter which is passed to the <em>TimerCallback</em> delegate when the timer fires.</p>
+<p>The <a href="http://msdn.microsoft.com/en-us/library/1k93acx8.aspx?WT.mc_id=DT-MVP-5000058">System.Threading.Timer constructor</a> has several overloads; all except one take a <em>state</em> parameter which is passed to the <em>TimerCallback</em> delegate when the timer fires.</p>
 
 <p>It turns out that this <em>state</em> parameter (and the <em>TimerCallback</em> delegate) have an interesting effect on garbage collection: if neither of them reference the System.Threading.Timer object, it may be garbage collected, causing it to stop. This is because both the <em>TimerCallback</em> delegate and the <em>state</em> parameter are wrapped into a <strong>GCHandle</strong>. If neither of them reference the timer object, it may be eligible for GC, freeing the <strong>GCHandle</strong> from its finalizer.</p>
 

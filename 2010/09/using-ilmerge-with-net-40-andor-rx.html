@@ -309,7 +309,7 @@ img.comment-author-profile-image {
 
 <p>As of now, the Google search “ilmerge Unresolved assembly reference not allowed: System.Core” has a first hit of <a href="http://geekswithblogs.net/michelotti/archive/2010/06/02/ilmerge---unresolved-assembly-reference-not-allowed-system.core.aspx">this blog entry</a>, which suggests adding a /lib option with the “C:\Windows\Microsoft.NET\Framework\v4.0.30319” argument, or supplying an ILMerge config file to force it to use the 4.0 runtime. Unfortunately, this approach will not work in all situations.</p>
 
-<p>To be specific, it does not work when trying to merge with <a href="http://msdn.microsoft.com/en-us/devlabs/ee794896.aspx">Microsoft’s Rx library</a>. In fact, ILMerge will crash with a StackOverflowException.</p>
+<p>To be specific, it does not work when trying to merge with <a href="http://msdn.microsoft.com/en-us/devlabs/ee794896.aspx?WT.mc_id=DT-MVP-5000058">Microsoft’s Rx library</a>. In fact, ILMerge will crash with a StackOverflowException.</p>
 
 <p>The ILMerge page itself recommends using the /targetplatform switch instead of the /lib switch (passing “C:\Windows\Microsoft.NET\Framework\v4.0.30319”), and this does work for some situations (e.g., if you’re only using System.Interactive.dll from Rx). However, it will still not work for any assembly referring to WPF. In particular, Rx’s System.Reactive.dll has a reference to WindowsBase (to schedule observable streams to a Dispatcher), so ILMerge will fail with a familiar error message: <em>Unresolved assembly reference not allowed: WindowsBase.</em></p>
 

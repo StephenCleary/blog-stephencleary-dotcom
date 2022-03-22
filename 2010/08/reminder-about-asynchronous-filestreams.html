@@ -292,7 +292,7 @@ img.comment-author-profile-image {
   <article>
   <p>Still on my Rx kick…</p>
 
-<p>The Rx team published a great blog post regarding using Rx on the server with <a href="https://docs.microsoft.com/en-us/archive/blogs/jeffva/rx-on-the-server-part-1-of-n-asynchronous-system-io-stream-reading">asynchronous Streams</a>. When doing this, you do need to make sure that the FileStream is actually asynchronous. (I believe the Rx team is fully aware of this caveat, but neglected to mention it in their blog post because it’s not directly relevant to Rx).</p>
+<p>The Rx team published a great blog post regarding using Rx on the server with <a href="https://docs.microsoft.com/en-us/archive/blogs/jeffva/rx-on-the-server-part-1-of-n-asynchronous-system-io-stream-reading?WT.mc_id=DT-MVP-5000058">asynchronous Streams</a>. When doing this, you do need to make sure that the FileStream is actually asynchronous. (I believe the Rx team is fully aware of this caveat, but neglected to mention it in their blog post because it’s not directly relevant to Rx).</p>
 
 <p>To create a FileStream that is asynchronous, one <em>must</em> either use the constructor that takes an <strong>isAsync</strong> boolean paramter (passing <strong>true</strong>), or use the constructor that takes the <strong>FileOptions</strong> parameter (passing a value including <strong>FileOptions.Asynchronous</strong>). Some of the static methods on the File class also take a <strong>FileOptions</strong> parameter, so these can also be used to create an asynchronous FileStream.</p>
 

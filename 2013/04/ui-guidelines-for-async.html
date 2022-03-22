@@ -304,7 +304,7 @@ img.comment-author-profile-image {
 
 <p>It’s usually a good idea to use <code>ConfigureAwait(false)</code> in your library code, and only run continuations on the UI thread if they actually need a UI context. But how many continuations can the UI thread really be expected to handle?</p>
 
-<p>At least on the WinRT platform, “the guidance is that just a hundred or so awaits resuming on the UI thread per second will be fine, but a thousand per second will be bad” (Lucian Wischik, <a href="https://docs.microsoft.com/en-us/archive/blogs/lucian/talk-the-new-async-design-patterns">Async Design Patterns</a>). Naturally, this is assuming that the continuations do not block for any substantial period of time.</p>
+<p>At least on the WinRT platform, “the guidance is that just a hundred or so awaits resuming on the UI thread per second will be fine, but a thousand per second will be bad” (Lucian Wischik, <a href="https://docs.microsoft.com/en-us/archive/blogs/lucian/talk-the-new-async-design-patterns?WT.mc_id=DT-MVP-5000058">Async Design Patterns</a>). Naturally, this is assuming that the continuations do not block for any substantial period of time.</p>
 
 <h2 id="caveats">Caveats</h2>
 

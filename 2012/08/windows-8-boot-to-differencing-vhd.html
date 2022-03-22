@@ -296,7 +296,7 @@ img.comment-author-profile-image {
 
 <h2 id="considering-hyper-v">Considering Hyper-V</h2>
 
-<p>One of the (many) hallmarks of Windows 8 is that <a href="https://docs.microsoft.com/en-us/archive/blogs/b8/bringing-hyper-v-to-windows-8">Microsoft is providing client Hyper-V</a>. Using Hyper-V, I could run multiple virtual computers at the same time. Hyper-V (like every virtualization system) also has a nice “snapshot” feature. However, I decided not to go with Hyper-V because it’s not a very seamless experience - e.g., for USB devices to work, you have to actually remote desktop into the VM.</p>
+<p>One of the (many) hallmarks of Windows 8 is that <a href="https://docs.microsoft.com/en-us/archive/blogs/b8/bringing-hyper-v-to-windows-8?WT.mc_id=DT-MVP-5000058">Microsoft is providing client Hyper-V</a>. Using Hyper-V, I could run multiple virtual computers at the same time. Hyper-V (like every virtualization system) also has a nice “snapshot” feature. However, I decided not to go with Hyper-V because it’s not a very seamless experience - e.g., for USB devices to work, you have to actually remote desktop into the VM.</p>
 
 <p>I made the decision to boot from VHD instead. With this approach, only one OS can be running at a time - the only thing virtualized is the disk access, and it’s virtualized within the OS itself, not by another full layer (like Hyper-V). So, boot from VHD runs faster and you get full access to hardware, but you lose the multiple-VMs-running-at-once that you can get from Hyper-V. Also, you can use snapshots with boot-from-VHD, but they’re not as easy to use as snapshots in Hyper-V.</p>
 
@@ -330,7 +330,7 @@ img.comment-author-profile-image {
 
 <h2 id="step-2---use-convert-windowsimage">Step 2 - Use Convert-WindowsImage</h2>
 
-<p>Once you have Windows 8 installed (virtually, if necessary), download the excellent <a href="http://gallery.technet.microsoft.com/scriptcenter/Convert-WindowsImageps1-0fe23a8f">Convert-WindowsImage</a> PowerShell script (remember to <a href="http://support.microsoft.com/kb/883260">unblock</a> it and <a href="http://technet.microsoft.com/en-us/library/ee176961.aspx">Set-ExecutionPolicy RemoteSigned</a>, or the OS won’t let you run it).</p>
+<p>Once you have Windows 8 installed (virtually, if necessary), download the excellent <a href="http://gallery.technet.microsoft.com/scriptcenter/Convert-WindowsImageps1-0fe23a8f?WT.mc_id=DT-MVP-5000058">Convert-WindowsImage</a> PowerShell script (remember to <a href="http://support.microsoft.com/kb/883260">unblock</a> it and <a href="http://technet.microsoft.com/en-us/library/ee176961.aspx?WT.mc_id=DT-MVP-5000058">Set-ExecutionPolicy RemoteSigned</a>, or the OS won’t let you run it).</p>
 
 <p>I like to run Convert-WindowsImage with a user interface. To do this, hit the Windows key, type “powershell”, right-click PowerShell and choose “Run as Administrator”. Then you can change to the directory containing the script file and execute “.\Convert-WindowsImage.ps1 -ShowUI”.</p>
 
@@ -344,7 +344,7 @@ img.comment-author-profile-image {
 
 <p>Once you have the VHD (which I placed at “C:\vhd\Win8-base.vhd”), you’re ready to go! For myself, I’m going to create the first differencing VHD before proceeding. I have a tendency to really mess stuff up, and keeping that initial VHD absolutely pure gives me a nice retreat in case something goes wrong.</p>
 
-<p>Creating a differencing VHD is not difficult, but it’s not particularly easy, either. Just run the following <a href="http://technet.microsoft.com/en-us/library/cc770877">diskpart</a> commands in an elevated command prompt (this can be done in Windows 7, too):</p>
+<p>Creating a differencing VHD is not difficult, but it’s not particularly easy, either. Just run the following <a href="http://technet.microsoft.com/en-us/library/cc770877?WT.mc_id=DT-MVP-5000058">diskpart</a> commands in an elevated command prompt (this can be done in Windows 7, too):</p>
 
 <pre><code>&gt; diskpart
 &gt; create vdisk file=C:\vhd\Win8.vhd parent=C:\vhd\Win8-base.vhd
@@ -359,7 +359,7 @@ img.comment-author-profile-image {
 
 <p>So the first thing we do (of course) is backup our current BCD so that we can restore it later when… er… <strong>if</strong> we mess anything up.</p>
 
-<p>Back to the elevated command prompt, using <a href="http://technet.microsoft.com/en-us/library/cc731662.aspx">bcdedit</a> (again, Windows 7 can do this part):</p>
+<p>Back to the elevated command prompt, using <a href="http://technet.microsoft.com/en-us/library/cc731662.aspx?WT.mc_id=DT-MVP-5000058">bcdedit</a> (again, Windows 7 can do this part):</p>
 
 <pre><code>&gt; bcdedit /export C:\vhd\bcdbackup
 </code></pre>

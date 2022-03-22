@@ -306,7 +306,7 @@ img.comment-author-profile-image {
 
 <h2 id="hostingenvironmentqueuebackgroundworkitem">HostingEnvironment.QueueBackgroundWorkItem</h2>
 
-<p><code>QueueBackgroundWorkItem</code> (QBWI) was added in .NET 4.5.2 to help mitigate loss of background work. <a href="https://devblogs.microsoft.com/aspnet/queuebackgroundworkitem-to-reliably-schedule-and-run-background-processes-in-asp-net/">QBWI will register its background work with the ASP.NET runtime</a>.</p>
+<p><code>QueueBackgroundWorkItem</code> (QBWI) was added in .NET 4.5.2 to help mitigate loss of background work. <a href="https://devblogs.microsoft.com/aspnet/queuebackgroundworkitem-to-reliably-schedule-and-run-background-processes-in-asp-net/?WT.mc_id=DT-MVP-5000058">QBWI will register its background work with the ASP.NET runtime</a>.</p>
 
 <p>Since the ASP.NET runtime is aware of the background work, it will not immediately yank your AppDomain when it’s time to recycle. However, this does not mean that the background work can just do whatever it wants!</p>
 
@@ -316,7 +316,7 @@ img.comment-author-profile-image {
 
 <h2 id="iregisteredobject">IRegisteredObject</h2>
 
-<p>The standard way to register with ASP.NET is via <code>IRegisteredObject</code>. The semantics aren’t officially documented, but they’re described in <a href="https://docs.microsoft.com/en-us/archive/blogs/tmarq/performing-asynchronous-work-or-tasks-in-asp-net-applications">this blog post under the third answer of question 5</a>:</p>
+<p>The standard way to register with ASP.NET is via <code>IRegisteredObject</code>. The semantics aren’t officially documented, but they’re described in <a href="https://docs.microsoft.com/en-us/archive/blogs/tmarq/performing-asynchronous-work-or-tasks-in-asp-net-applications?WT.mc_id=DT-MVP-5000058">this blog post under the third answer of question 5</a>:</p>
 
 <blockquote>
   <p>You can create an object that implements the <code>IRegisteredObject</code> interface and call <code>HostingEnvironment.RegisterObject</code> to “register” it with ASP.NET.  When the AppDomain is about to be unloaded, we will call your implementation of <code>IRegisteredObject.Stop(bool immediate)</code>.  The <code>Stop</code> method is called twice by ASP.NET, once with the <code>immediate</code> parameter set to <code>false</code> and once again with that argument set to <code>true</code>.  You are supposed to call <code>HostingEnvironment.UnregisterObject</code> as soon as your registered object has stopped, so ASP.NET knows it doesn’t need to call your <code>Stop</code> method.  You can call it at anytime, but you definitely should call it before returning from <code>Stop</code> when it is called with <code>immediate</code> set to <code>true</code>, because that’s your final chance and if you’re still running after that you will be rudely aborted…  If you need to, you can hold up the unload as long as you like, because we won’t unload until your <code>Stop</code> method returns the second time.</p>

@@ -326,14 +326,14 @@ img.comment-author-profile-image {
 
 <p>I am hopeful that this will be addressed in the near future, with some kind of output folder working for the continuous deployment process rather than assuming the code <em>is</em> the deployment.</p>
 
-<p>Finally, I wasn’t able to get references working to <a href="https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-csharp#package-management">NuGet packages installed by the Azure Functions continuous deployment system</a>. As a workaround, I just copy all the dlls from my project’s output directory (except the <a href="https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-csharp#referencing-external-assemblies">ones already preloaded by the Azure Functions runtime</a>) into the <code>bin</code> folder of my function.</p>
+<p>Finally, I wasn’t able to get references working to <a href="https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-csharp#package-management?WT.mc_id=DT-MVP-5000058">NuGet packages installed by the Azure Functions continuous deployment system</a>. As a workaround, I just copy all the dlls from my project’s output directory (except the <a href="https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-csharp#referencing-external-assemblies?WT.mc_id=DT-MVP-5000058">ones already preloaded by the Azure Functions runtime</a>) into the <code>bin</code> folder of my function.</p>
 
 <h2 id="tips">Tips</h2>
 
 <p>There’s a few tips that I’ve picked up when getting started with Azure Functions.</p>
 
 <ul>
-  <li>Ensure your <a href="https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference#folder-structure">folder structure</a> is correct, and don’t forget your hosts.json file.</li>
+  <li>Ensure your <a href="https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference#folder-structure?WT.mc_id=DT-MVP-5000058">folder structure</a> is correct, and don’t forget your hosts.json file.</li>
   <li>The Azure Functions portal has some awesome shortcuts (that really should be in other portals too, I’m looking at you, App Services!). The dev console and Kudu are particularly useful when setting up deployment.</li>
   <li>There are a few situations where restarting the Azure Functions host is necessary. For example, if you update a dll but do <em>not</em> update its version, then your Function won’t “see” the updated dll. To force it to update, you can select “App Service Settings” from the Azure Functions portal and from there Restart your Azure Functions service.</li>
 </ul>

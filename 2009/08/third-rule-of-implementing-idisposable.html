@@ -301,7 +301,7 @@ img.comment-author-profile-image {
 <div class="alert alert-info">
   <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
 
-  <p>Note: a lot of the really overly-complex Microsoft IDisposable documentation is because they assume your class will want to handle both managed and unmanaged resources. This is a holdover from .NET 1.0, and it’s kept only for backwards compatibility. Take a clue from Microsoft: their own classes don’t even follow that old pattern (they were changed in .NET 2.0 to follow the pattern described in this blog post). FxCop will yell at you because you need to <a href="http://msdn.microsoft.com/en-us/library/ms244737.aspx" class="alert-link">implement IDisposable “correctly”</a> (i.e., using the old pattern); ignore it - FxCop is wrong.</p>
+  <p>Note: a lot of the really overly-complex Microsoft IDisposable documentation is because they assume your class will want to handle both managed and unmanaged resources. This is a holdover from .NET 1.0, and it’s kept only for backwards compatibility. Take a clue from Microsoft: their own classes don’t even follow that old pattern (they were changed in .NET 2.0 to follow the pattern described in this blog post). FxCop will yell at you because you need to <a href="http://msdn.microsoft.com/en-us/library/ms244737.aspx?WT.mc_id=DT-MVP-5000058" class="alert-link">implement IDisposable “correctly”</a> (i.e., using the old pattern); ignore it - FxCop is wrong.</p>
 </div>
 
 <p>The class should look something like this:</p>
@@ -364,7 +364,7 @@ img.comment-author-profile-image {
     <span class="k">internal</span> <span class="k">static</span> <span class="k">extern</span> <span class="kt">bool</span> <span class="nf">CloseWindowStation</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hWinSta</span><span class="p">);</span>
 <span class="p">}</span></code></pre></figure>
 
-<p>IDisposable.Dispose ends with a call to <a href="http://msdn.microsoft.com/en-us/library/system.gc.suppressfinalize.aspx">GC.SuppressFinalize(this)</a>. This ensures that the object will remain live until after its finalizer has been suppressed.</p>
+<p>IDisposable.Dispose ends with a call to <a href="http://msdn.microsoft.com/en-us/library/system.gc.suppressfinalize.aspx?WT.mc_id=DT-MVP-5000058">GC.SuppressFinalize(this)</a>. This ensures that the object will remain live until after its finalizer has been suppressed.</p>
 
 <p>If Dispose is not explicitly invoked, then the finalizer will eventually be invoked, which calls CloseHandle directly.</p>
 
@@ -374,7 +374,7 @@ img.comment-author-profile-image {
 
 <p><strong>Important!</strong> The WindowStationHandle class does <em>not</em> obtain a window station handle; it knows nothing of creating or opening window stations. That responsibility (along with all the other window station-related methods) belongs in another class (presumably named “WindowStation”). This helps create a correct implementation, because every finalizer must be able to execute without error on a partially-constructed object if the constructor throws; in practice, this is very difficult, and this is another reason why a wrapper class should be split into a “handle closer” class and a “proper wrapper” class.</p>
 
-<p>Note: this is the simplest possible solution, and it does have some very obscure resource leaks (e.g., if a thread is aborted immediately after returning from a resource allocation function). If you’re developing on the full framework, and are wrapping an IntPtr handle (such as the window station example above), then it is better to derive from <a href="http://msdn.microsoft.com/en-us/library/system.runtime.interopservices.safehandle.aspx">SafeHandle</a>. If you need to go a step further and support reliable resource deallocation, things get <a href="http://www.codeproject.com/KB/dotnet/idisposable.aspx">very complex very quickly!</a></p>
+<p>Note: this is the simplest possible solution, and it does have some very obscure resource leaks (e.g., if a thread is aborted immediately after returning from a resource allocation function). If you’re developing on the full framework, and are wrapping an IntPtr handle (such as the window station example above), then it is better to derive from <a href="http://msdn.microsoft.com/en-us/library/system.runtime.interopservices.safehandle.aspx?WT.mc_id=DT-MVP-5000058">SafeHandle</a>. If you need to go a step further and support reliable resource deallocation, things get <a href="http://www.codeproject.com/KB/dotnet/idisposable.aspx">very complex very quickly!</a></p>
 
   </article>
     

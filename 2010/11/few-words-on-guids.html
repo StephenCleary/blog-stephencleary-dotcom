@@ -310,7 +310,7 @@ img.comment-author-profile-image {
 
 <p>Today, the most common type of GUIDs are Variant 2, Version 4 RFC 4122 GUIDs, also known as “random GUIDs”. Aside from the Variant and Version fields, all other bits in the GUID are random. In particular, random GUIDs do <em>not</em> expose a MAC address.</p>
 
-<p>The .NET Framework <a href="http://msdn.microsoft.com/en-us/library/system.guid.newguid.aspx">Guid.NewGuid</a> static method generates a random GUID. The “Create GUID” tool (guidgen.exe) included in Visual Studio and the Windows SDK also generates random GUIDs, as does the uuidgen.exe tool in the SDK.</p>
+<p>The .NET Framework <a href="http://msdn.microsoft.com/en-us/library/system.guid.newguid.aspx?WT.mc_id=DT-MVP-5000058">Guid.NewGuid</a> static method generates a random GUID. The “Create GUID” tool (guidgen.exe) included in Visual Studio and the Windows SDK also generates random GUIDs, as does the uuidgen.exe tool in the SDK.</p>
 
 <h2 id="likelihood-of-collision">Likelihood of Collision</h2>
 
@@ -331,7 +331,7 @@ img.comment-author-profile-image {
 <div class="alert alert-info">
   <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
 
-  <p>Note: using a random value instead of the MAC address is not currently supported by Microsoft’s Win32 API. This means that any GUID generation done using <a href="http://msdn.microsoft.com/en-us/library/aa379322(VS.85).aspx" class="alert-link">UuidCreateSequential</a> <em>will</em> expose the MAC address.</p>
+  <p>Note: using a random value instead of the MAC address is not currently supported by Microsoft’s Win32 API. This means that any GUID generation done using <a href="http://msdn.microsoft.com/en-us/library/aa379322(VS.85).aspx?WT.mc_id=DT-MVP-5000058" class="alert-link">UuidCreateSequential</a> <em>will</em> expose the MAC address.</p>
 </div>
 
 <p>The Clock Sequence field is initialized to a random value and incremented whenever the system clock has moved backward since the last generated GUID (e.g., if the computer corrects its time with a time server, or if it lost its date and thinks it’s 1980). This allows 16,384 clock resets without any danger of a collision. If the GUIDs are being generated so quickly that the system clock has not moved <em>forward</em> since the last GUID’s timestamp, then the GUID generation algorithm will generally stall until the system clock increments the timestamp.</p>
@@ -340,21 +340,21 @@ img.comment-author-profile-image {
 
 <p>It’s important to note that the likelihood of collisions of sequential GUIDs is extremely small. The Clock Sequence and Timestamp almost certainly uniquely identify a point in time, and the Node Identifier almost certainly identifies a unique source.</p>
 
-<p>Sequential GUIDs can be created by the Win32 function <a href="http://msdn.microsoft.com/en-us/library/aa379322(VS.85).aspx">UuidCreateSequential</a> or by using uuidgen.exe from the Windows SDK passing the -x parameter.</p>
+<p>Sequential GUIDs can be created by the Win32 function <a href="http://msdn.microsoft.com/en-us/library/aa379322(VS.85).aspx?WT.mc_id=DT-MVP-5000058">UuidCreateSequential</a> or by using uuidgen.exe from the Windows SDK passing the -x parameter.</p>
 
 <h2 id="microsofts-change">Microsoft’s Change</h2>
 
-<p>The primary method for creating GUIDs on Windows is the <a href="http://msdn.microsoft.com/en-us/library/aa379205(VS.85).aspx">UuidCreate</a> function. Before Windows 2000 (e.g., Windows NT and the 9x line), GUIDs created by this function were time-based (version 1) GUIDs. This was changed in Windows 2000 to return random (version 4) GUIDs due to privacy concerns regarding the exposure of the MAC address in Version 1 GUIDs.</p>
+<p>The primary method for creating GUIDs on Windows is the <a href="http://msdn.microsoft.com/en-us/library/aa379205(VS.85).aspx?WT.mc_id=DT-MVP-5000058">UuidCreate</a> function. Before Windows 2000 (e.g., Windows NT and the 9x line), GUIDs created by this function were time-based (version 1) GUIDs. This was changed in Windows 2000 to return random (version 4) GUIDs due to privacy concerns regarding the exposure of the MAC address in Version 1 GUIDs.</p>
 
-<p>Note that “the” GUID algorithm did not change. Microsoft simply changed which GUID algorithm they were using to implement that function. Both the old and new implementations are RFC 4122 compliant, and “old” GUIDs will not conflict with “new” GUIDs. “Old” (Version 1) GUIDs can still be created by calling <a href="http://msdn.microsoft.com/en-us/library/aa379322(VS.85).aspx">UuidCreateSequential</a>.</p>
+<p>Note that “the” GUID algorithm did not change. Microsoft simply changed which GUID algorithm they were using to implement that function. Both the old and new implementations are RFC 4122 compliant, and “old” GUIDs will not conflict with “new” GUIDs. “Old” (Version 1) GUIDs can still be created by calling <a href="http://msdn.microsoft.com/en-us/library/aa379322(VS.85).aspx?WT.mc_id=DT-MVP-5000058">UuidCreateSequential</a>.</p>
 
 <h2 id="the-database-problems">The Database Problem(s)</h2>
 
 <p>Database indexes do not work well with random values; the on-disk search trees end up very wide because the indexes do not cluster well. So, when using GUIDs for keys, it helps to use a more… <em>sequential…</em> solution.</p>
 
-<p>However, there’s another problem with GUIDs as database keys: the order in which the database compares GUIDs. Remember that sequential GUIDs aren’t really <em>sequential</em> because the Timestamp field is not at the end of the GUID structure. Furthermore, some databases compare GUID values in strange ways (I’m looking at you, <a href="https://docs.microsoft.com/en-us/archive/blogs/sqlprogrammability/how-are-guids-compared-in-sql-server-2005">SQL Server</a> (<a href="http://www.webcitation.org/5ylIiAwyb">webcite</a>)).</p>
+<p>However, there’s another problem with GUIDs as database keys: the order in which the database compares GUIDs. Remember that sequential GUIDs aren’t really <em>sequential</em> because the Timestamp field is not at the end of the GUID structure. Furthermore, some databases compare GUID values in strange ways (I’m looking at you, <a href="https://docs.microsoft.com/en-us/archive/blogs/sqlprogrammability/how-are-guids-compared-in-sql-server-2005?WT.mc_id=DT-MVP-5000058">SQL Server</a> (<a href="http://www.webcitation.org/5ylIiAwyb">webcite</a>)).</p>
 
-<p>So, when Microsoft added <a href="http://msdn.microsoft.com/en-us/library/ms189786.aspx">newsequentialid()</a> to SQL Server, they did not just return a regular sequential GUID. They <a href="http://www.jorriss.net/blog/jorriss/archive/2008/04/24/unraveling-the-mysteries-of-newsequentialid.aspx">shuffled some of the bytes</a> (<a href="http://www.webcitation.org/5ylItnhAb">webcite</a>) to make index clustering more efficient.</p>
+<p>So, when Microsoft added <a href="http://msdn.microsoft.com/en-us/library/ms189786.aspx?WT.mc_id=DT-MVP-5000058">newsequentialid()</a> to SQL Server, they did not just return a regular sequential GUID. They <a href="http://www.jorriss.net/blog/jorriss/archive/2008/04/24/unraveling-the-mysteries-of-newsequentialid.aspx">shuffled some of the bytes</a> (<a href="http://www.webcitation.org/5ylItnhAb">webcite</a>) to make index clustering more efficient.</p>
 
 <p>Unfortunately, the shuffled bytes include the Version field. This means that <strong>newsequentialid() GUIDs are not RFC 4122 compliant!</strong> As a result, GUIDs from newsequentialid() have a higher likelihood of colliding with RFC 4122 compliant GUIDs such as sequential or random GUIDs.</p>
 

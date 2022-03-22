@@ -296,7 +296,7 @@ img.comment-author-profile-image {
 
 <h2 id="scenarios-not-supported-by-backgroundworker">Scenarios Not Supported by BackgroundWorker</h2>
 
-<p>One of the design problems of <code>BackgroundWorker</code> is that the semantics get surprising when nesting; if you create (and start) a <code>BackgroundWorker</code> from within another <code>BackgroundWorker</code>, the events on the inner <code>BackgroundWorker</code> are raised on the thread pool. I explain why this happens in my <a href="http://msdn.microsoft.com/en-us/magazine/gg598924.aspx">SynchronizationContext article</a>, complete with pretty pictures (don’t laugh! I worked hard on those!).</p>
+<p>One of the design problems of <code>BackgroundWorker</code> is that the semantics get surprising when nesting; if you create (and start) a <code>BackgroundWorker</code> from within another <code>BackgroundWorker</code>, the events on the inner <code>BackgroundWorker</code> are raised on the thread pool. I explain why this happens in my <a href="http://msdn.microsoft.com/en-us/magazine/gg598924.aspx?WT.mc_id=DT-MVP-5000058">SynchronizationContext article</a>, complete with pretty pictures (don’t laugh! I worked hard on those!).</p>
 
 <p>A similar problem is that <code>BackgroundWorker</code> doesn’t work well with <code>async</code> code. An <code>async DoWork</code> handler will exit early, causing the <code>RunWorkerCompleted</code> to fire before the method is completed.</p>
 
