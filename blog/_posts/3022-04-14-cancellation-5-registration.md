@@ -6,7 +6,7 @@ seriesTitle: "Registration"
 description: "Responding to cancellation requests by using registration."
 ---
 
-Last time I talked about how to respond to cancellation requests by polling for them. That's a common approach for synchronous or CPU-bound code. In this post, I'm covering a pattern more common for asynchronous code: registration.
+Last time in this series I talked about how to respond to cancellation requests by polling for them. That's a common approach for synchronous or CPU-bound code. In this post, I'm covering a pattern more common for asynchronous code: registration.
 
 Registration is a way for your code to get a callback immediately when cancellation is requested. This callback can then perform some operation (often calling a different API) to cancel the asynchronous operation.
 
