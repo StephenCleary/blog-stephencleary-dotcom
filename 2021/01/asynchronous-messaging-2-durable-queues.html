@@ -350,7 +350,7 @@ img.comment-author-profile-image {
 
 <p>Using an ACID database as a durable queue allows you to use the Outbox Pattern. When a service wants to publish a message <em>if and only if</em> a particular database transaction succeeds, then it writes that message to the database <em>as part of that transaction</em>. It can’t publish the message before doing the database update, because the database update may fail; and it can’t publish the message after doing the database update, because if there’s some problem reaching the durable queue then the message wouldn’t be published. So, by using the database itself as a durable queue, then the service guarantees that the message will be published if and only if the database update takes place.</p>
 
-<p>The Outbox Pattern gets its name because there’s usually a separate “outbox” table that just holds messages that are published. It’s possible to have the queue consumer read the outbox table directly, but a more common solution is to have the outbox table just act as temporary storage for messages on their way to another durable queue - usually one that is used by the rest of the application, e.g., a cloud queue or on-premises durable queue. In that case, the publishing service (or another service) has a polling job that reads the messages from the outbox table, sends then to the durable queue, and then deletes those messages from the outbox table. This provides an at-least-once delivery of the messages stored in the outbox table.</p>
+<p>The Outbox Pattern gets its name because there’s usually a separate “outbox” table that just holds messages that are published. It’s possible to have the queue consumer read the outbox table directly, but a more common solution is to have the outbox table just act as temporary storage for messages on their way to another durable queue - usually one that is used by the rest of the application, e.g., a cloud queue or on-premises durable queue. In that case, the publishing service (or another service) has a polling job that reads the messages from the outbox table, sends them to the durable queue, and then deletes those messages from the outbox table. This provides an at-least-once delivery of the messages stored in the outbox table.</p>
 
   </article>
     
@@ -401,7 +401,7 @@ img.comment-author-profile-image {
                 <div class="panel-body center">
                     <div><a href="https://stephencleary.com/book/"><img src="https://stephencleary.com/www.assets/Book-2nd-small.jpg"/></a></div>
                     <div>Available from <a href="http://www.jdoqocy.com/click-7489747-11290546?url=http%3A%2F%2Fshop.oreilly.com%2Fproduct%2F0636920266624.do%3Fcmp%3Daf-code-books-video-product_cj_0636920266624_%25zp&cjsku=0636920266624">O'Reilly (Safari)</a>, <a href="https://amzn.to/2kYzcEY">Amazon (print/Kindle)</a>, or <a href="https://www.ebooks.com/cj.asp?IID=209766469&cjsku=209766469">eBooks.com (PDF/epub)</a>.</div>
-                    <div>Also available in <a href="https://www.labirint.ru/books/745595/">Russian</a> and <a href="https://item.jd.com/12769567.html">Chinese</a>.</div>
+                    <div>Also available in <a href="https://www.labirint.ru/books/745595/">Russian</a>, <a href="https://item.jd.com/12769567.html">Chinese</a>, and <a href="https://www.aladin.co.kr/m/mproduct.aspx?itemid=270818316">Korean</a>.</div>
                 </div>
             </div>
             <div class="panel panel-default">

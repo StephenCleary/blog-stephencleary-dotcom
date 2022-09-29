@@ -8,6 +8,105 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>Modern C# Techniques, Part 1: Curiously Recurring Generic Pattern</title>
+        <description>&lt;p&gt;I’m starting a new series today looking at some modern C# techniques. Part of what I like about C# is that the language is always improving, and those improvements bring newer code patterns with them.&lt;/p&gt;
+
+&lt;p&gt;Today’s topic is not actually &lt;em&gt;new&lt;/em&gt;, but many developers haven’t seen it before, so it’s worth taking a look at. As with many of the techniques I’ll be discussing, I’m not sure if this one has a name, so I am just calling it whatever I call it in my head.&lt;/p&gt;
+
+&lt;h2 id=&quot;the-curiously-recurring-generic-pattern&quot;&gt;The Curiously Recurring Generic Pattern&lt;/h2&gt;
+
+&lt;div class=&quot;alert alert-info&quot;&gt;
+  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
+
+  &lt;p&gt;The “curious” name for this pattern comes from the C++ world, where it was called the Curiously Recurring Template Pattern. So in C# I just call it the Curiously Recurring Generic Pattern, since it’s essentially the same thing but with generics instead of templates. &lt;a href=&quot;https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern&quot; class=&quot;alert-link&quot;&gt;According to Wikipedia&lt;/a&gt;, it’s actually “F-bound polymorphism”, but I’m not going to remember that.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;p&gt;The Curiously Recurring Generic Pattern is when an interface (or base type) takes a generic parameter that is its own derived type. A simple example looks like this:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&quot;language-C#&quot;&gt;interface IExample&amp;lt;TDerived&amp;gt;
+{
+}
+
+class MyExample : IExample&amp;lt;MyExample&amp;gt;
+{
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&quot;but-why-tho&quot;&gt;But Why Tho?&lt;/h2&gt;
+
+&lt;p&gt;It essentially comes down to typing. If an interface (or base type) wants to use the &lt;em&gt;full, derived type&lt;/em&gt; as a method parameter or return value, then it can define those methods itself without putting any burdern on the derived type.&lt;/p&gt;
+
+&lt;p&gt;Consider a familiar example from the .NET BCL: &lt;code&gt;IEquatable&amp;lt;T&amp;gt;&lt;/code&gt;. &lt;code&gt;IEquatable&amp;lt;T&amp;gt;&lt;/code&gt; &lt;a href=&quot;https://learn.microsoft.com/en-us/dotnet/api/system.iequatable-1?view=net-6.0&amp;amp;WT.mc_id=DT-MVP-5000058&quot;&gt;is defined&lt;/a&gt; as thus:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&quot;language-C#&quot;&gt;public interface IEquatable&amp;lt;T&amp;gt;
+{
+  bool Equals(T? other);
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;And it is used as such:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&quot;language-C#&quot;&gt;sealed class MyEquatable : IEquatable&amp;lt;MyEquatable&amp;gt;
+{
+  public bool Equals(MyEquatable? other) { ... }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The thing to note here is that &lt;code&gt;MyEquatable.Equals&lt;/code&gt; implements &lt;code&gt;IEquatable&amp;lt;T&amp;gt;.Equals&lt;/code&gt; with a &lt;em&gt;strongly-typed&lt;/em&gt; &lt;code&gt;MyEquatable&lt;/code&gt; argument. If the Curiously Recurring Generic Pattern wasn’t used, then &lt;code&gt;IEquatable&amp;lt;T&amp;gt;&lt;/code&gt; would just be &lt;code&gt;IEquatable&lt;/code&gt; (taking an &lt;code&gt;object&lt;/code&gt; argument), losing type safety and efficiency.&lt;/p&gt;
+
+&lt;h2 id=&quot;adding-a-generic-constraint&quot;&gt;Adding a Generic Constraint&lt;/h2&gt;
+
+&lt;p&gt;The interface (or base type) may also use itself as a generic constraint. It doesn’t &lt;em&gt;have&lt;/em&gt; to (the examples above don’t), but sometimes it’s useful, particularly for base types. The Curiously Recurring Generic Pattern with generic constraints looks like this:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&quot;language-C#&quot;&gt;abstract class ExampleBase&amp;lt;TDerived&amp;gt;
+    where TDerived : ExampleBase&amp;lt;TDerived&amp;gt;
+{
+  // Methods in here can use `(TDerived)this` freely.
+  // This is particularly useful if this interface wants to *return* a value of TDerived.
+  public virtual TDerived Something() =&amp;gt; (TDerived)this;
+}
+
+class AnotherExample : ExampleBase&amp;lt;AnotherExample&amp;gt;
+{
+  // Implicitly has `public AnotherExample Something();` defined.
+  // The base class method already has the correct return type.
+  // (Can still override if desired).
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;As noted in the comments above, this approach is useful if &lt;code&gt;TDerived&lt;/code&gt; is used as a &lt;em&gt;return&lt;/em&gt; type. As one example, this is common with fluent APIs.&lt;/p&gt;
+
+&lt;p&gt;More generally, the generic constraint is needed in either of these situations:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;The base type needs to treat a &lt;code&gt;ExampleBase&amp;lt;TDerived&amp;gt;&lt;/code&gt; instance (e.g., &lt;code&gt;this&lt;/code&gt;) as its derived type (i.e., &lt;code&gt;(TDerived)this&lt;/code&gt;). This can also come up when passing &lt;code&gt;this&lt;/code&gt; to other methods.&lt;/li&gt;
+  &lt;li&gt;The base type needs to treat a &lt;code&gt;TDerived&lt;/code&gt; as a &lt;code&gt;ExampleBase&amp;lt;TDerived&amp;gt;&lt;/code&gt;, e.g., calling private base methods on an instance of type &lt;code&gt;TDerived&lt;/code&gt; &lt;em&gt;other&lt;/em&gt; than &lt;code&gt;this&lt;/code&gt;. In this case no explicit cast is necessary.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&quot;crgp-and-default-interface-methods&quot;&gt;CRGP and Default Interface Methods&lt;/h2&gt;
+
+&lt;p&gt;Similar to regular interface methods, the Curiously Recurring Generic Pattern can enhance the type safety of &lt;a href=&quot;https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-8.0/default-interface-methods?WT.mc_id=DT-MVP-5000058&quot;&gt;default interface methods&lt;/a&gt; if necessary. This is similar to using CRGP with base types, except interfaces cannot have state. Put another way, this enables strongly-typed traits, but falls short of mixins.&lt;/p&gt;
+
+&lt;h2 id=&quot;crgp-and-static-interface-methods-and-operators&quot;&gt;CRGP and Static Interface Methods (and Operators)&lt;/h2&gt;
+
+&lt;p&gt;One possibility for CRGP with &lt;a href=&quot;https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/tutorials/static-virtual-interface-members?WT.mc_id=DT-MVP-5000058&quot;&gt;static interface methods&lt;/a&gt; is to define operators (or other static methods) with the proper type signatures. Previously, CRGP required a base type to define operators (e.g., &lt;a href=&quot;https://github.com/StephenCleary/Comparers/blob/48cd202db5d7ea7209cc4248bf6a531d3752f170/src/Nito.Comparers.Core/EquatableBaseWithOperators.cs&quot;&gt;&lt;code&gt;EquatableBaseWithOperators&amp;lt;TDerived&amp;gt;&lt;/code&gt; in my Nito.Comparers library&lt;/a&gt;), but using CRGP with static interface methods allows strong typing for operator signatures (e.g., &lt;a href=&quot;https://learn.microsoft.com/en-us/dotnet/api/system.numerics.iunarynegationoperators-2?view=net-7.0&amp;amp;WT.mc_id=DT-MVP-5000058&quot;&gt;&lt;code&gt;IUnaryNegationOperators&amp;lt;TSelf, TResult&amp;gt;&lt;/code&gt;&lt;/a&gt; is an interface that defines &lt;code&gt;operator-&lt;/code&gt; with the proper type signature).&lt;/p&gt;
+
+&lt;h2 id=&quot;misuse&quot;&gt;Misuse&lt;/h2&gt;
+
+&lt;p&gt;Like other code patterns, the CRGP can be misused. IMO the most common misuse of this pattern is &lt;em&gt;overuse&lt;/em&gt;. Bear in mind CRGP isn’t powerful enough to provide mixins - even with default interface methods (which provide traits, not mixins).&lt;/p&gt;
+
+&lt;p&gt;Also, CRGP tends to make the code more complex. There’s a tradeoff there, and you need to keep maintainability in mind.&lt;/p&gt;
+
+&lt;h2 id=&quot;summary&quot;&gt;Summary&lt;/h2&gt;
+
+&lt;p&gt;The Curiously Recurring Generic Pattern isn’t actually new, and it isn’t often necessary, but it’s a nice tool to have when you do need it.&lt;/p&gt;
+</description>
+        <pubDate>Thu, 29 Sep 2022 00:00:00 +0000</pubDate>
+        <link>https://blog.stephencleary.com/2022/09/modern-csharp-techniques-1-curiously-recurring-generic-pattern.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2022/09/modern-csharp-techniques-1-curiously-recurring-generic-pattern.html</guid>
+      </item>
+    
+      <item>
         <title>Cancellation, Part 4: Polling</title>
         <description>&lt;p&gt;So far in this series, I’ve talked about how to request and detect cancellation, but for the next couple of posts I’ll be switching perspectives and discussing ways to respond to cancellation.&lt;/p&gt;
 
@@ -399,7 +498,7 @@
     
       <item>
         <title>Cancellation, Part 1: Overview</title>
-        <description>&lt;p&gt;Cancellation is a topic that I haven’t written on much yet, because the &lt;a href=&quot;https://docs.microsoft.com/en-us/dotnet/standard/threading/cancellation-in-managed-threads&quot;&gt;Microsoft documentation&lt;/a&gt; is quite good. But after answering many questions for many years, I thought it would be a good topic to cover once, exhaustively.&lt;/p&gt;
+        <description>&lt;p&gt;Cancellation is a topic that I haven’t written on much yet, because the &lt;a href=&quot;https://docs.microsoft.com/en-us/dotnet/standard/threading/cancellation-in-managed-threads?WT.mc_id=DT-MVP-5000058&quot;&gt;Microsoft documentation&lt;/a&gt; is quite good. But after answering many questions for many years, I thought it would be a good topic to cover once, exhaustively.&lt;/p&gt;
 
 &lt;h2 id=&quot;cooperative-cancellation&quot;&gt;Cooperative Cancellation&lt;/h2&gt;
 
@@ -429,7 +528,7 @@
 
 &lt;h2 id=&quot;the-cancellation-contract-method-signature&quot;&gt;The Cancellation Contract: Method Signature&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&quot;https://docs.microsoft.com/en-us/dotnet/standard/asynchronous-programming-patterns/task-based-asynchronous-pattern-tap#cancellation-optional&quot;&gt;By convention&lt;/a&gt;, the &lt;code&gt;CancellationToken&lt;/code&gt; parameter is usually the last parameter unless an &lt;code&gt;IProgress&amp;lt;T&amp;gt;&lt;/code&gt; parameter is present. It is common to provide an overload or default parameter so that callers do not &lt;em&gt;have&lt;/em&gt; to provide a &lt;code&gt;CancellationToken&lt;/code&gt; if they do not have one; the &lt;code&gt;default&lt;/code&gt; value of a &lt;code&gt;CancellationToken&lt;/code&gt; is the same as &lt;code&gt;CancellationToken.None&lt;/code&gt;, i.e., a cancellation token that will never be canceled.&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://docs.microsoft.com/en-us/dotnet/standard/asynchronous-programming-patterns/task-based-asynchronous-pattern-tap#cancellation-optional?WT.mc_id=DT-MVP-5000058&quot;&gt;By convention&lt;/a&gt;, the &lt;code&gt;CancellationToken&lt;/code&gt; parameter is usually the last parameter unless an &lt;code&gt;IProgress&amp;lt;T&amp;gt;&lt;/code&gt; parameter is present. It is common to provide an overload or default parameter so that callers do not &lt;em&gt;have&lt;/em&gt; to provide a &lt;code&gt;CancellationToken&lt;/code&gt; if they do not have one; the &lt;code&gt;default&lt;/code&gt; value of a &lt;code&gt;CancellationToken&lt;/code&gt; is the same as &lt;code&gt;CancellationToken.None&lt;/code&gt;, i.e., a cancellation token that will never be canceled.&lt;/p&gt;
 
 &lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
 &lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
@@ -619,9 +718,9 @@
 
 &lt;p&gt;Just like durable queues, my go-to solutions for backend services are cloud solutions, specifically Functions as a Service (FaaS). FaaS is a perfect fit for background services, and even more so if you’re using a cloud-based durable queue. All the major cloud providers have built-in support for combining their durable queues with their FaaS offerings. This includes scaling logic: each cloud provider will auto-scale FaaS consumers based on their queue messages.&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&quot;https://azure.microsoft.com/en-us/services/storage/queues/&quot;&gt;Azure Storage Queues&lt;/a&gt; pair with &lt;a href=&quot;https://azure.microsoft.com/en-us/services/functions/&quot;&gt;Azure Functions&lt;/a&gt;; &lt;a href=&quot;https://aws.amazon.com/sqs/&quot;&gt;Amazon Simple Queue Service (SQS) queues&lt;/a&gt; pair with &lt;a href=&quot;https://aws.amazon.com/lambda/&quot;&gt;AWS Lambdas&lt;/a&gt;; and &lt;a href=&quot;https://cloud.google.com/tasks&quot;&gt;Google Cloud Task queues&lt;/a&gt; pair with &lt;a href=&quot;https://cloud.google.com/functions&quot;&gt;Google Cloud Functions&lt;/a&gt;. Cloud pairs such as these are the easiest way to implement a full asynchronous messaging solution.&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://azure.microsoft.com/en-us/services/storage/queues/?WT.mc_id=DT-MVP-5000058&quot;&gt;Azure Storage Queues&lt;/a&gt; pair with &lt;a href=&quot;https://azure.microsoft.com/en-us/services/functions/?WT.mc_id=DT-MVP-5000058&quot;&gt;Azure Functions&lt;/a&gt;; &lt;a href=&quot;https://aws.amazon.com/sqs/&quot;&gt;Amazon Simple Queue Service (SQS) queues&lt;/a&gt; pair with &lt;a href=&quot;https://aws.amazon.com/lambda/&quot;&gt;AWS Lambdas&lt;/a&gt;; and &lt;a href=&quot;https://cloud.google.com/tasks&quot;&gt;Google Cloud Task queues&lt;/a&gt; pair with &lt;a href=&quot;https://cloud.google.com/functions&quot;&gt;Google Cloud Functions&lt;/a&gt;. Cloud pairs such as these are the easiest way to implement a full asynchronous messaging solution.&lt;/p&gt;
 
-&lt;p&gt;For on-premises solutions, one natural approach is a &lt;a href=&quot;https://docs.microsoft.com/en-us/windows/win32/services/services&quot;&gt;Win32 service&lt;/a&gt; (if on Windows) or a &lt;a href=&quot;https://www.man7.org/linux/man-pages/man7/daemon.7.html&quot;&gt;Linux daemon&lt;/a&gt; (if on Linux). These are background services that run all the time the server machine is on, regardless of whether a user is logged in. They are headless processes that do not permit direct user interaction. This makes background services a natural choice for both HTTP applications and the background processing services.&lt;/p&gt;
+&lt;p&gt;For on-premises solutions, one natural approach is a &lt;a href=&quot;https://docs.microsoft.com/en-us/windows/win32/services/services?WT.mc_id=DT-MVP-5000058&quot;&gt;Win32 service&lt;/a&gt; (if on Windows) or a &lt;a href=&quot;https://www.man7.org/linux/man-pages/man7/daemon.7.html&quot;&gt;Linux daemon&lt;/a&gt; (if on Linux). These are background services that run all the time the server machine is on, regardless of whether a user is logged in. They are headless processes that do not permit direct user interaction. This makes background services a natural choice for both HTTP applications and the background processing services.&lt;/p&gt;
 
 &lt;p&gt;Another possible solution is a regular Console application wrapped in a Docker container. Docker containers can be deployed either on-premise or in the cloud. This is a similar approach to the Win32 service / Linux daemon approach, but has better support for scaling out. Right now, Docker orchestrators are getting more support for scaling based on queue messages; setting up an autoscaler based on RabbitMQ messages is tedious but possible.&lt;/p&gt;
 
@@ -688,9 +787,9 @@
 
 &lt;p&gt;I tend to prefer cloud queues whenever possible, because the cloud provider manages them, they scale really well, and they give you knobs for controlling how paranoid you want your durability to be.&lt;/p&gt;
 
-&lt;p&gt;For this reason, my top go-tos for durable queues are &lt;a href=&quot;https://azure.microsoft.com/en-us/services/storage/queues/&quot;&gt;Azure Storage Queue&lt;/a&gt;, &lt;a href=&quot;https://aws.amazon.com/sqs/&quot;&gt;Amazon Simple Queue Service (SQS)&lt;/a&gt;, and &lt;a href=&quot;https://cloud.google.com/tasks&quot;&gt;Google Cloud Tasks&lt;/a&gt;. I’m most familiar with Azure’s queueing, though I have also used Amazon’s in production systems. All cloud queueing systems provide durable queues that can scale out automatically.&lt;/p&gt;
+&lt;p&gt;For this reason, my top go-tos for durable queues are &lt;a href=&quot;https://azure.microsoft.com/en-us/services/storage/queues/?WT.mc_id=DT-MVP-5000058&quot;&gt;Azure Storage Queue&lt;/a&gt;, &lt;a href=&quot;https://aws.amazon.com/sqs/&quot;&gt;Amazon Simple Queue Service (SQS)&lt;/a&gt;, and &lt;a href=&quot;https://cloud.google.com/tasks&quot;&gt;Google Cloud Tasks&lt;/a&gt;. I’m most familiar with Azure’s queueing, though I have also used Amazon’s in production systems. All cloud queueing systems provide durable queues that can scale out automatically.&lt;/p&gt;
 
-&lt;p&gt;As much as I like cloud solutions, on-premises queueing systems are perfectly viable. It’s not possible to get the same scaling capabilities as a cloud solution, but you can get lower latencies. The most common on-premises durable queues these days are &lt;a href=&quot;https://www.rabbitmq.com/&quot;&gt;RabbitMQ&lt;/a&gt; and &lt;a href=&quot;https://kafka.apache.org/documentation/&quot;&gt;Kafka&lt;/a&gt;. I’ve also used &lt;a href=&quot;https://www.ibm.com/products/mq&quot;&gt;IBM MQ&lt;/a&gt; (called WebSphere MQ at the time). For older Windows systems, &lt;a href=&quot;https://docs.microsoft.com/en-us/previous-versions/windows/desktop/msmq/ms711472(v=vs.85)&quot;&gt;Microsoft Message Queueing (MSMQ)&lt;/a&gt; was common, though that is no longer recommended these days. Note that some on-premises queueing solutions do not use durable messages by default, so some configuration is necessary to make them actually durable (I’m looking at you, &lt;a href=&quot;https://www.rabbitmq.com/queues.html#durability&quot;&gt;RabbitMQ&lt;/a&gt;).&lt;/p&gt;
+&lt;p&gt;As much as I like cloud solutions, on-premises queueing systems are perfectly viable. It’s not possible to get the same scaling capabilities as a cloud solution, but you can get lower latencies. The most common on-premises durable queues these days are &lt;a href=&quot;https://www.rabbitmq.com/&quot;&gt;RabbitMQ&lt;/a&gt; and &lt;a href=&quot;https://kafka.apache.org/documentation/&quot;&gt;Kafka&lt;/a&gt;. I’ve also used &lt;a href=&quot;https://www.ibm.com/products/mq&quot;&gt;IBM MQ&lt;/a&gt; (called WebSphere MQ at the time). For older Windows systems, &lt;a href=&quot;https://docs.microsoft.com/en-us/previous-versions/windows/desktop/msmq/ms711472(v=vs.85)?WT.mc_id=DT-MVP-5000058&quot;&gt;Microsoft Message Queueing (MSMQ)&lt;/a&gt; was common, though that is no longer recommended these days. Note that some on-premises queueing solutions do not use durable messages by default, so some configuration is necessary to make them actually durable (I’m looking at you, &lt;a href=&quot;https://www.rabbitmq.com/queues.html#durability&quot;&gt;RabbitMQ&lt;/a&gt;).&lt;/p&gt;
 
 &lt;p&gt;There are other solutions for both cloud and on-premises. The ones mentioned here are just ones I’ve had experience with, and which appear to be the most common.&lt;/p&gt;
 
@@ -700,7 +799,7 @@
 
 &lt;p&gt;Using an ACID database as a durable queue allows you to use the Outbox Pattern. When a service wants to publish a message &lt;em&gt;if and only if&lt;/em&gt; a particular database transaction succeeds, then it writes that message to the database &lt;em&gt;as part of that transaction&lt;/em&gt;. It can’t publish the message before doing the database update, because the database update may fail; and it can’t publish the message after doing the database update, because if there’s some problem reaching the durable queue then the message wouldn’t be published. So, by using the database itself as a durable queue, then the service guarantees that the message will be published if and only if the database update takes place.&lt;/p&gt;
 
-&lt;p&gt;The Outbox Pattern gets its name because there’s usually a separate “outbox” table that just holds messages that are published. It’s possible to have the queue consumer read the outbox table directly, but a more common solution is to have the outbox table just act as temporary storage for messages on their way to another durable queue - usually one that is used by the rest of the application, e.g., a cloud queue or on-premises durable queue. In that case, the publishing service (or another service) has a polling job that reads the messages from the outbox table, sends then to the durable queue, and then deletes those messages from the outbox table. This provides an at-least-once delivery of the messages stored in the outbox table.&lt;/p&gt;
+&lt;p&gt;The Outbox Pattern gets its name because there’s usually a separate “outbox” table that just holds messages that are published. It’s possible to have the queue consumer read the outbox table directly, but a more common solution is to have the outbox table just act as temporary storage for messages on their way to another durable queue - usually one that is used by the rest of the application, e.g., a cloud queue or on-premises durable queue. In that case, the publishing service (or another service) has a polling job that reads the messages from the outbox table, sends them to the durable queue, and then deletes those messages from the outbox table. This provides an at-least-once delivery of the messages stored in the outbox table.&lt;/p&gt;
 </description>
         <pubDate>Thu, 14 Jan 2021 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2021/01/asynchronous-messaging-2-durable-queues.html</link>
@@ -760,160 +859,6 @@
         <pubDate>Thu, 07 Jan 2021 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2021/01/asynchronous-messaging-1-basic-distributed-architecture.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2021/01/asynchronous-messaging-1-basic-distributed-architecture.html</guid>
-      </item>
-    
-      <item>
-        <title>Win32 Service Gotcha: Recovery Actions</title>
-        <description>&lt;h2 id=&quot;win32-services-and-recovery-actions&quot;&gt;Win32 Services and Recovery Actions&lt;/h2&gt;
-
-&lt;p&gt;This blog post doesn’t have to do with &lt;code&gt;BackgroundService&lt;/code&gt; specifically, but it is an issue that can come up with .NET Core workers that are run as Win32 Services. In some ways, this blog post has more to do with &lt;a href=&quot;/2013/10/managed-services-roundup.html&quot;&gt;managed services&lt;/a&gt;, but I decided to put it with the &lt;code&gt;BackgroundService&lt;/code&gt; series because it is a problem with &lt;code&gt;BackgroundService&lt;/code&gt;s run as Win32 services.&lt;/p&gt;
-
-&lt;h2 id=&quot;background-recovery-actions&quot;&gt;Background: Recovery Actions&lt;/h2&gt;
-
-&lt;p&gt;The Win32 Service Control Manager (SCM) is responsible for starting and stopping services on Windows machines. It’s also responsible for restarting Win32 services when they fail:&lt;/p&gt;
-
-&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/win32-service-recovery.png&quot;&gt;&lt;img src=&quot;/assets/win32-service-recovery.png&quot; alt=&quot;Win32 Service Recovery Action Settings&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;However, it can be a bit confusing to think about what “fail” actually &lt;em&gt;means&lt;/em&gt;.&lt;/p&gt;
-
-&lt;h2 id=&quot;background-win32-service-failure&quot;&gt;Background: Win32 Service Failure&lt;/h2&gt;
-
-&lt;p&gt;It’s pretty clear that if a Win32 application crashes, that indicates “failure”. Normally, Win32 services communicate with the SCM and let it know what their state is. The most common states are “stopped” and “started”, along with transitional states like “stopping” and “starting”. So, if a Win32 application exits (or crashes) without telling the SCM it is “stopped”, then the SCM treats that as a failure.&lt;/p&gt;
-
-&lt;p&gt;What’s much less clear is how exit codes are handled.&lt;/p&gt;
-
-&lt;p&gt;The first thing to keep in mind is that each Win32 service has its own exit code. A single Win32 process can contain &lt;em&gt;multiple&lt;/em&gt; different Win32 services within that single process, and each of those Win32 services has its &lt;em&gt;own&lt;/em&gt; exit code. As far as I can tell, the exit code of the process itself is completely ignored.&lt;/p&gt;
-
-&lt;p&gt;What’s more, if the Win32 service does report that it is “stopped” to the SCM, the SCM will ignore the Win32 service exit code, too! The SCM assumes that if the service has reported it is “stopped”, then the service has stopped successfully, and there is no need to restart the service.&lt;/p&gt;
-
-&lt;p&gt;This means that if you have a Win32 service and it reports a non-zero exit code (either for the process exit code or the Win32 service exit code), and if that Win32 service exits cleanly after setting its non-zero exit code, then that exit code will be ignored and the service will not be restarted.&lt;/p&gt;
-
-&lt;h2 id=&quot;tip-honoring-win32-service-exit-codes&quot;&gt;Tip: Honoring Win32 Service Exit Codes&lt;/h2&gt;
-
-&lt;p&gt;There is &lt;a href=&quot;https://docs.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_failure_actions_flag&quot;&gt;a flag&lt;/a&gt; you can set that will cause SCM to honor the Win32 service exit code, treating a non-zero code as a “failure” and running its recovery actions. You can turn this flag on at the command line as such:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;sc failureflag &amp;quot;My Service&amp;quot; 1&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;Setting that flag checks this checkbox, which has the rather difficult-to-understand wording of “Enable actions for stops with errors.”:&lt;/p&gt;
-
-&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/win32-service-recovery-highlight.png&quot;&gt;&lt;img src=&quot;/assets/win32-service-recovery-highlight.png&quot; alt=&quot;Win32 Service Recovery Action Settings&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&quot;win32-service-exit-codes-and-servicebase&quot;&gt;Win32 Service Exit Codes and ServiceBase&lt;/h2&gt;
-
-&lt;p&gt;For .NET applications, the &lt;code&gt;Environment.ExitCode&lt;/code&gt; property manages the exit code for the &lt;em&gt;process&lt;/em&gt;. As far as I know, this value is always ignored when the process is run as a service. The Win32 service exit code is managed by the &lt;code&gt;ServiceBase.ExitCode&lt;/code&gt; property. Remember, there can be multiple Win32 services in a single process.&lt;/p&gt;
-
-&lt;h2 id=&quot;win32-service-exit-codes-and-windowsservicelifetime&quot;&gt;Win32 Service Exit Codes and WindowsServiceLifetime&lt;/h2&gt;
-
-&lt;p&gt;In &lt;a href=&quot;https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/windows-service&quot;&gt;.NET Core applications that are run as Win32 services&lt;/a&gt;, it’s normal to call &lt;code&gt;IHostBuilder.UseWindowsService()&lt;/code&gt;, which installs a &lt;code&gt;WindowsServiceLifetime&lt;/code&gt; as the &lt;code&gt;IHostLifetime&lt;/code&gt;, instead of the default &lt;code&gt;ConsoleLifetime&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;WindowsServiceLifetime&lt;/code&gt; lets the SCM control the starting and stopping of the .NET Core application. It &lt;a href=&quot;https://github.com/dotnet/extensions/blob/4becf241089932aa1f1e7f3ab4155a437fd3dba1/src/Hosting/WindowsServices/src/WindowsServiceLifetime.cs#L14&quot;&gt;derives from &lt;code&gt;ServiceBase&lt;/code&gt;&lt;/a&gt;. Since &lt;a href=&quot;https://github.com/aspnet/Hosting/issues/1401&quot;&gt;multiple &lt;code&gt;IHostLifetime&lt;/code&gt; instances aren’t supported&lt;/a&gt;, this means that .NET Core workers do not naturally support multiple Win32 services in a single process. It may be possible to support that by creating a new type that derives from &lt;code&gt;ServiceBase&lt;/code&gt; and &lt;code&gt;IHostedService&lt;/code&gt;, along with some kind of coordinating &lt;code&gt;IHostLifetime&lt;/code&gt; implementation, but I’m not aware of anyone doing that yet. For now, all the .NET Core Win32 services I know of use &lt;code&gt;WindowsServiceLifetime&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;One important note is that &lt;code&gt;WindowsServiceLifetime&lt;/code&gt; stops cleanly. If the .NET Core application is shutdown, then &lt;code&gt;WindowsServiceLifetime&lt;/code&gt; reports to the SCM that the service is “stopped”, and this means that the SCM will not restart the service.&lt;/p&gt;
-
-&lt;p&gt;You can write code that will set the Win32 service exit code on failure by accessing &lt;code&gt;ServiceBase.ExitCode&lt;/code&gt; as such:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;MyBackgroundService&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;BackgroundService&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;readonly&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IHostLifetime&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_hostLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;MyBackgroundService&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IHostLifetime&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;hostLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt;
-      &lt;span class=&quot;n&quot;&gt;_hostLifetime&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;hostLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-
-  &lt;span class=&quot;k&quot;&gt;protected&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ExecuteAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;stoppingToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-      &lt;span class=&quot;c1&quot;&gt;// Implementation&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Exception&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-      &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_hostLifetime&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;is&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ServiceBase&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;serviceLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-        &lt;span class=&quot;n&quot;&gt;serviceLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExitCode&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-      &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;
-        &lt;span class=&quot;n&quot;&gt;Environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExitCode&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;However, as noted above, you have to also set the &lt;code&gt;failureflag&lt;/code&gt; on the service, or else the SCM will ignore the non-zero exit code.&lt;/p&gt;
-
-&lt;p&gt;If desired, you can write a custom &lt;code&gt;WindowsServiceLifetime&lt;/code&gt; that will treat non-zero &lt;code&gt;Environment.ExitCode&lt;/code&gt; values as non-zero Win32 service exit codes:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;MyWindowsServiceLifetime&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;WindowsServiceLifetime&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;MyWindowsServiceLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IHostApplicationLifetime&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IHostEnvironment&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ILoggerFactory&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;loggerFactory&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;HostOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;options&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-      &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;base&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;loggerFactory&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;options&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-
-  &lt;span class=&quot;k&quot;&gt;protected&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;OnStop&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;c1&quot;&gt;// Take the process ExitCode if there isn&amp;#39;t one for our Win32 service&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExitCode&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExitCode&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-      &lt;span class=&quot;n&quot;&gt;ExitCode&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExitCode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    
-    &lt;span class=&quot;k&quot;&gt;base&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;OnStop&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;This can be installed by adding this service (&lt;code&gt;services.AddSingleton&amp;lt;IHostLifetime, MyWindowsServiceLifetime&amp;gt;()&lt;/code&gt;) after calling &lt;code&gt;UseWindowsService&lt;/code&gt;; the .NET Core dependency injection will just take the last registered &lt;code&gt;IHostLifetime&lt;/code&gt;.&lt;/p&gt;
-
-&lt;h2 id=&quot;crashing-windowsservicelifetime&quot;&gt;Crashing WindowsServiceLifetime&lt;/h2&gt;
-
-&lt;p&gt;It is also possible to create a custom derived &lt;code&gt;WindowsServiceLifetime&lt;/code&gt; that can detect application failures and will prevent &lt;code&gt;ServiceBase&lt;/code&gt; from sending the “stopped” message to the SCM. That way, your service will be restarted regardless of the &lt;code&gt;failureflag&lt;/code&gt; setting, because any failures will cause the process to crash.&lt;/p&gt;
-
-&lt;p&gt;We don’t want to crash the process immediately; instead, we want to shut down the .NET Core host and then terminate, so that the SCM knows the process failed. The &lt;code&gt;WindowsServiceLifetime&lt;/code&gt; type has &lt;a href=&quot;https://github.com/dotnet/extensions/blob/4becf241089932aa1f1e7f3ab4155a437fd3dba1/src/Hosting/WindowsServices/src/WindowsServiceLifetime.cs#L105&quot;&gt;some similar behavior&lt;/a&gt;: if the SCM requests the service to stop, then it will shut down the .NET Core host and wait for it to stop. We can do the same thing in our custom lifetime type:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;MyWindowsServiceLifetime&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;WindowsServiceLifetime&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;readonly&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IHostApplicationLifetime&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;readonly&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ManualResetEventSlim&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_shutdownComplete&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;readonly&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationTokenRegistration&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_applicationStoppedRegistration&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-
-  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;MyWindowsServiceLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IHostApplicationLifetime&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IHostEnvironment&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ILoggerFactory&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;loggerFactory&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;HostOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;options&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-      &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;base&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;loggerFactory&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;options&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;_hostApplicationLifetime&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;_shutdownComplete&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ManualResetEventSlim&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;_applicationStoppedRegistration&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ApplicationStopped&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Register&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_shutdownComplete&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Set&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;());&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-
-  &lt;span class=&quot;k&quot;&gt;protected&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;OnStop&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;c1&quot;&gt;// Take the process ExitCode if there isn&amp;#39;t one for our Win32 service&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExitCode&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExitCode&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-      &lt;span class=&quot;n&quot;&gt;ExitCode&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExitCode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    
-    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExitCode&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-      &lt;span class=&quot;c1&quot;&gt;// Wait for application to shut down.&lt;/span&gt;
-      &lt;span class=&quot;n&quot;&gt;_hostApplicationLifetime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;StopApplication&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-      &lt;span class=&quot;n&quot;&gt;_shutdownComplete&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Wait&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-
-      &lt;span class=&quot;c1&quot;&gt;// Terminate app. Do not call base.OnStop().&lt;/span&gt;
-      &lt;span class=&quot;n&quot;&gt;Environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Exit&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExitCode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-
-    &lt;span class=&quot;c1&quot;&gt;// If we&amp;#39;re exiting normally, just let WindowsServiceLifetime do its job.&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;base&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;OnStop&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-
-  &lt;span class=&quot;k&quot;&gt;protected&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Dispose&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;disposing&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;disposing&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-      &lt;span class=&quot;n&quot;&gt;_shutdownComplete&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Set&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-      &lt;span class=&quot;n&quot;&gt;_applicationStoppedRegistration&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Dispose&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-
-    &lt;span class=&quot;k&quot;&gt;base&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Dispose&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;disposing&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;This kind of &lt;code&gt;MyWindowsServiceLifetime&lt;/code&gt; implementation will work whether or not you set the &lt;code&gt;failureflag&lt;/code&gt; on your service.&lt;/p&gt;
-</description>
-        <pubDate>Thu, 18 Jun 2020 00:00:00 +0000</pubDate>
-        <link>https://blog.stephencleary.com/2020/06/servicebase-gotcha-recovery-actions.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2020/06/servicebase-gotcha-recovery-actions.html</guid>
       </item>
     
   </channel>

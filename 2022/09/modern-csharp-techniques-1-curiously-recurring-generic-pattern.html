@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Nito.WeakReference and Nito.WeakCollection</title>
+    <title>Modern C# Techniques, Part 1: Curiously Recurring Generic Pattern</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="A Replacement for System.WeakReference" />
-    <link rel="canonical" href="https://blog.stephencleary.com/2009/07/nitoweakreference-and.html" />
+    <meta name="description" content="The curiously recurring generic pattern, where a base type or interface has its derived type as a generic parameter. Part of a series looking at modern C# code techniques." />
+    <link rel="canonical" href="https://blog.stephencleary.com/2022/09/modern-csharp-techniques-1-curiously-recurring-generic-pattern.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -275,8 +275,8 @@ img.comment-author-profile-image {
 
   <header>
       <div class="page-header">
-          <h1>Nito.WeakReference and Nito.WeakCollection</h1>
-          <small><time datetime="2009-07-10">Jul 10, 2009</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
+          <h1>Modern C# Techniques, Part 1: Curiously Recurring Generic Pattern</h1>
+          <small><time datetime="2022-09-29">Sep 29, 2022</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
       </div>
   </header>
 
@@ -290,42 +290,111 @@ img.comment-author-profile-image {
   </header>
 
   <article>
-  <h2 id="a-replacement-for-systemweakreference">A Replacement for System.WeakReference</h2>
+  <p>I’m starting a new series today looking at some modern C# techniques. Part of what I like about C# is that the language is always improving, and those improvements bring newer code patterns with them.</p>
 
-<p>There are two minor problems with the <a href="http://msdn.microsoft.com/en-us/library/system.weakreference.aspx?WT.mc_id=DT-MVP-5000058">System.WeakReference</a> class: type safety and garbage collection.</p>
+<p>Today’s topic is not actually <em>new</em>, but many developers haven’t seen it before, so it’s worth taking a look at. As with many of the techniques I’ll be discussing, I’m not sure if this one has a name, so I am just calling it whatever I call it in my head.</p>
 
-<p>The first one is a simple problem; <code>System.WeakReference</code> only deals with instances of type <code>object</code>. However, it is not difficult to write a type-safe wrapper for <code>System.WeakReference</code> that provides type safety.</p>
+<h2 id="the-curiously-recurring-generic-pattern">The Curiously Recurring Generic Pattern</h2>
 
-<p>The second problem is a little more subtle. A weak reference is a wrapper around a <a href="http://msdn.microsoft.com/en-us/library/system.runtime.interopservices.gchandle.aspx?WT.mc_id=DT-MVP-5000058"><code>System.Runtime.InteropServices.GCHandle</code></a>. The core <code>GCHandle</code> type is both powerful and dangerous; it is halfway unmanaged. <code>System.WeakReference</code> provides a safer class that only uses <code>GCHandle</code> as a weak reference.</p>
+<div class="alert alert-info">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
 
-<p>The problem is that a <code>GCHandle</code> actually represents an entry in the runtime’s GCHandle table. This table interacts with the garbage collector, preventing some objects from being GC’ed or moved. It is also used to create and track weak references. Logically, allocated GCHandles are unmanaged resources, and <code>System.WeakReference</code> does clean up its GCHandle correctly in its finalizer.</p>
+  <p>The “curious” name for this pattern comes from the C++ world, where it was called the Curiously Recurring Template Pattern. So in C# I just call it the Curiously Recurring Generic Pattern, since it’s essentially the same thing but with generics instead of templates. <a href="https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern" class="alert-link">According to Wikipedia</a>, it’s actually “F-bound polymorphism”, but I’m not going to remember that.</p>
+</div>
 
-<p>However, <code>System.WeakReference</code> does not implement <a href="http://msdn.microsoft.com/en-us/library/system.idisposable.aspx?WT.mc_id=DT-MVP-5000058"><code>System.IDisposable</code></a>. This is not the end of the world, but it does place additional pressure on the garbage collector. It forces every <code>System.WeakReference</code> into an extra generation, holds the GCHandle table entry longer than necessary (possibly causing extra work for the garbage collector, since it must update the GCHandle table entry when that object is collected), and requires the finalizer thread to actually release the resource.</p>
+<p>The Curiously Recurring Generic Pattern is when an interface (or base type) takes a generic parameter that is its own derived type. A simple example looks like this:</p>
 
-<p><a href="http://nitomvvm.codeplex.com/sourcecontrol/changeset/view/27265?projectName=NitoMVVM#453686"><code>Nito.WeakReference&lt;T&gt;</code></a> is a strongly-typed, disposable replacement for <code>System.WeakReference</code>. [Note, however, that <code>Nito.WeakReference&lt;T&gt;</code> does not support resurrection, which is a complex use case that is only required in very rare situations.]</p>
+<pre><code class="language-C#">interface IExample&lt;TDerived&gt;
+{
+}
 
-<h2 id="a-simple-weak-collection">A Simple Weak Collection</h2>
+class MyExample : IExample&lt;MyExample&gt;
+{
+}
+</code></pre>
 
-<p>A weak collection (or more properly, a collection of weak references) at any given time may contain references to both live (referenced) and dead (garbage collected) objects. Removing all the dead objects is called a “purge”. It’s convenient to be able to enumerate the collection both with and without a purge. The <a href="http://nitomvvm.codeplex.com/sourcecontrol/changeset/view/27265?projectName=NitoMVVM#453683"><code>Nito.IWeakCollection&lt;T&gt;</code></a> defines an interface for enumerable collections of weak references, and includes methods for enumerating or counting the collection both with and without purging. Some of its members include:</p>
+<h2 id="but-why-tho">But Why Tho?</h2>
 
-<ul>
-  <li><code>CompleteList</code> - Gets a complete sequence of objects from the collection (null entries represent dead objects).</li>
-  <li><code>LiveList</code> - Gets a sequence of live objects from the collection, causing a purge.</li>
-  <li><code>CompleteCount</code> - Gets the number of live and dead entries in the collection. O(1).</li>
-  <li><code>LiveCount</code> - Gets the number of live entries in the collection, causing a purge. O(n).</li>
-</ul>
+<p>It essentially comes down to typing. If an interface (or base type) wants to use the <em>full, derived type</em> as a method parameter or return value, then it can define those methods itself without putting any burdern on the derived type.</p>
 
-<p><a href="http://nitomvvm.codeplex.com/sourcecontrol/changeset/view/27265?projectName=NitoMVVM#453683"><code>Nito.WeakCollection&lt;T&gt;</code></a> is a <code>List</code>-based implementation of a weak collection. It is used by the Nito MVVM library to track weak events, but it should be useful in other situations as well.</p>
+<p>Consider a familiar example from the .NET BCL: <code>IEquatable&lt;T&gt;</code>. <code>IEquatable&lt;T&gt;</code> <a href="https://learn.microsoft.com/en-us/dotnet/api/system.iequatable-1?view=net-6.0&amp;WT.mc_id=DT-MVP-5000058">is defined</a> as thus:</p>
 
+<pre><code class="language-C#">public interface IEquatable&lt;T&gt;
+{
+  bool Equals(T? other);
+}
+</code></pre>
+
+<p>And it is used as such:</p>
+
+<pre><code class="language-C#">sealed class MyEquatable : IEquatable&lt;MyEquatable&gt;
+{
+  public bool Equals(MyEquatable? other) { ... }
+}
+</code></pre>
+
+<p>The thing to note here is that <code>MyEquatable.Equals</code> implements <code>IEquatable&lt;T&gt;.Equals</code> with a <em>strongly-typed</em> <code>MyEquatable</code> argument. If the Curiously Recurring Generic Pattern wasn’t used, then <code>IEquatable&lt;T&gt;</code> would just be <code>IEquatable</code> (taking an <code>object</code> argument), losing type safety and efficiency.</p>
+
+<h2 id="adding-a-generic-constraint">Adding a Generic Constraint</h2>
+
+<p>The interface (or base type) may also use itself as a generic constraint. It doesn’t <em>have</em> to (the examples above don’t), but sometimes it’s useful, particularly for base types. The Curiously Recurring Generic Pattern with generic constraints looks like this:</p>
+
+<pre><code class="language-C#">abstract class ExampleBase&lt;TDerived&gt;
+    where TDerived : ExampleBase&lt;TDerived&gt;
+{
+  // Methods in here can use `(TDerived)this` freely.
+  // This is particularly useful if this interface wants to *return* a value of TDerived.
+  public virtual TDerived Something() =&gt; (TDerived)this;
+}
+
+class AnotherExample : ExampleBase&lt;AnotherExample&gt;
+{
+  // Implicitly has `public AnotherExample Something();` defined.
+  // The base class method already has the correct return type.
+  // (Can still override if desired).
+}
+</code></pre>
+
+<p>As noted in the comments above, this approach is useful if <code>TDerived</code> is used as a <em>return</em> type. As one example, this is common with fluent APIs.</p>
+
+<p>More generally, the generic constraint is needed in either of these situations:</p>
+
+<ol>
+  <li>The base type needs to treat a <code>ExampleBase&lt;TDerived&gt;</code> instance (e.g., <code>this</code>) as its derived type (i.e., <code>(TDerived)this</code>). This can also come up when passing <code>this</code> to other methods.</li>
+  <li>The base type needs to treat a <code>TDerived</code> as a <code>ExampleBase&lt;TDerived&gt;</code>, e.g., calling private base methods on an instance of type <code>TDerived</code> <em>other</em> than <code>this</code>. In this case no explicit cast is necessary.</li>
+</ol>
+
+<h2 id="crgp-and-default-interface-methods">CRGP and Default Interface Methods</h2>
+
+<p>Similar to regular interface methods, the Curiously Recurring Generic Pattern can enhance the type safety of <a href="https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-8.0/default-interface-methods?WT.mc_id=DT-MVP-5000058">default interface methods</a> if necessary. This is similar to using CRGP with base types, except interfaces cannot have state. Put another way, this enables strongly-typed traits, but falls short of mixins.</p>
+
+<h2 id="crgp-and-static-interface-methods-and-operators">CRGP and Static Interface Methods (and Operators)</h2>
+
+<p>One possibility for CRGP with <a href="https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/tutorials/static-virtual-interface-members?WT.mc_id=DT-MVP-5000058">static interface methods</a> is to define operators (or other static methods) with the proper type signatures. Previously, CRGP required a base type to define operators (e.g., <a href="https://github.com/StephenCleary/Comparers/blob/48cd202db5d7ea7209cc4248bf6a531d3752f170/src/Nito.Comparers.Core/EquatableBaseWithOperators.cs"><code>EquatableBaseWithOperators&lt;TDerived&gt;</code> in my Nito.Comparers library</a>), but using CRGP with static interface methods allows strong typing for operator signatures (e.g., <a href="https://learn.microsoft.com/en-us/dotnet/api/system.numerics.iunarynegationoperators-2?view=net-7.0&amp;WT.mc_id=DT-MVP-5000058"><code>IUnaryNegationOperators&lt;TSelf, TResult&gt;</code></a> is an interface that defines <code>operator-</code> with the proper type signature).</p>
+
+<h2 id="misuse">Misuse</h2>
+
+<p>Like other code patterns, the CRGP can be misused. IMO the most common misuse of this pattern is <em>overuse</em>. Bear in mind CRGP isn’t powerful enough to provide mixins - even with default interface methods (which provide traits, not mixins).</p>
+
+<p>Also, CRGP tends to make the code more complex. There’s a tradeoff there, and you need to keep maintainability in mind.</p>
+
+<h2 id="summary">Summary</h2>
+
+<p>The Curiously Recurring Generic Pattern isn’t actually new, and it isn’t often necessary, but it’s a nice tool to have when you do need it.</p>
 
   </article>
     
     <footer class="hidden-print">
         
+            <ul class="pager">
+                
+                
+            </ul>
+        
         
         <ul class="pager">
-            <li class="previous"><a href="/2009/07/xml-over-tcpip.html" title="XML over TCP/IP">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2009/07/interpreting-notifycollectionchangedeve.html" title="Interpreting NotifyCollectionChangedEventArgs">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2022/03/cancellation-4-polling.html" title="Cancellation, Part 4: Polling">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="comments"></div>
@@ -334,6 +403,14 @@ img.comment-author-profile-image {
         </div>
         <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
+                <div class="panel panel-primary">
+                    <div class="panel-heading">Modern C# Techniques</div>
+                    <div class="panel-body sidenav">
+                        <ul class="nav nav-pills nav-stacked">
+                                    <li class="active sidenavitem"><a href="/2022/09/modern-csharp-techniques-1-curiously-recurring-generic-pattern.html">Curiously Recurring Generic Pattern</a></li>
+                        </ul>
+                    </div>
+                </div>
             
         </div>
         <div class="col-sm-2 sidebar hidden-print">
@@ -426,6 +503,17 @@ img.comment-author-profile-image {
 
 <!-- Scroll the sidebar into view (if necessary) -->
 
+<script src="/lib/jquery.scrollTo.min.js"></script>
+<script type="text/javascript">
+    (function ($) {
+        $(function () {
+            var container = $('.affix').filter(function() { return $(this).css('position') == 'fixed'; });
+            var target = container.find('.active');
+            container.scrollTo(target, { offset: - (container.height() / 2 - target.height() / 2) });
+        });
+    })(window.jQuery);
+</script>
+
 
 <!-- Moment -->
 <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.6.0/moment.min.js"></script>
@@ -473,7 +561,7 @@ img.comment-author-profile-image {
 
 <script type="text/javascript">
 
-var pageUrl = "https://blog.stephencleary.com" + "/2009/07/nitoweakreference-and.html";
+var pageUrl = "https://blog.stephencleary.com" + "/2022/09/modern-csharp-techniques-1-curiously-recurring-generic-pattern.html";
 
 // (unnecessary) 1) If the URL starts with http://, replace with https://
 
