@@ -8,6 +8,106 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>Modern C# Techniques, Part 2: Value Records</title>
+        <description>&lt;p&gt;Today I’ll cover another technique for modern C# that isn’t exactly &lt;em&gt;new&lt;/em&gt;, but which the language supports much better than it used to.&lt;/p&gt;
+
+&lt;p&gt;I’m calling today’s technique Value Records, which are a form of the more general “value object” pattern that is specific to modern C#. But before we dive into the solution, let’s look at the problem.&lt;/p&gt;
+
+&lt;h2 id=&quot;primitive-obsession&quot;&gt;Primitive Obsession&lt;/h2&gt;
+
+&lt;p&gt;The name of the antipattern we’re trying to remove is Primitive Obsession. This is a highly searchable term with some great descriptions out there.&lt;/p&gt;
+
+&lt;p&gt;Essentially, Primitive Obsession is when a developer (over)uses primitives (&lt;code&gt;string&lt;/code&gt;, &lt;code&gt;int&lt;/code&gt;, &lt;code&gt;Guid&lt;/code&gt;, &lt;code&gt;decimal&lt;/code&gt;, etc) to represent business or domain concepts. One classic example is entity ids. There are a couple of problems with using primitives like this:&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;The primitives are not type-safe. In other words, it’s easy to accidentally pass a &lt;code&gt;customerId&lt;/code&gt; to a method expecting a &lt;code&gt;resourceId&lt;/code&gt;. Or, say, if a method needs &lt;em&gt;both&lt;/em&gt; a &lt;code&gt;customerId&lt;/code&gt; and &lt;code&gt;resourceId&lt;/code&gt;, it’s easy to pass the parameters in the wrong order.&lt;/li&gt;
+  &lt;li&gt;Primitives support operations that don’t make sense. For example, if a &lt;code&gt;customerId&lt;/code&gt; is an &lt;code&gt;int&lt;/code&gt;, the compiler will happily let you divide it by 2, but that makes no business sense at all. A related problem is when you have &lt;em&gt;units&lt;/em&gt;, such as &lt;code&gt;distanceInFeet&lt;/code&gt; and &lt;code&gt;distanceInMeters&lt;/code&gt;; the lack of units in the type system allow these values to be (incorrectly) added together.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&quot;solving-primitive-obsesesion-with-value-objects&quot;&gt;Solving Primitive Obsesesion with Value Objects&lt;/h2&gt;
+
+&lt;p&gt;Value Objects are the general solution to Primitive Obsession. The idea is that you define a (simple) domain object that wraps the primitive type inside a type-safe wrapper type. In some cases, this wrapper type may have some limited domain behavior (such as validation), but in many cases Value Objects are so-called “anemic domain models”, and that’s OK. Value Objects inhabit a middle ground between primitives and full-blown domain objects.&lt;/p&gt;
+
+&lt;p&gt;Value Objects tend to behave similarly to the primitives they replace:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Value Objects are usually immutable.&lt;/li&gt;
+  &lt;li&gt;Value Objects usually have value semantics.&lt;/li&gt;
+  &lt;li&gt;If a primitive has a useful operation (e.g., string concatenation, integer addition, or even &lt;code&gt;ToString&lt;/code&gt; or &lt;code&gt;GetHashCode&lt;/code&gt; support) that also makes sense for the domain object, then Value Objects usually support those operations.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Following these patterns allows Value Objects to essentially be type-safe replacements for primitives. Occasionally some business rules are added (e.g., validation), but just plain old Value Objects work quite well on their own, too.&lt;/p&gt;
+
+&lt;h2 id=&quot;c-and-value-records&quot;&gt;C# and Value Records&lt;/h2&gt;
+
+&lt;p&gt;The modern C# technique for Value Objects is what I call Value Records, and looks like this:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&quot;language-C#&quot;&gt;public readonly struct record CustomerId(string Value);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Yes, that’s the whole type.&lt;/p&gt;
+
+&lt;p&gt;Breaking it down:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Records provide value semantics, complete with equality, hash code, and &lt;code&gt;ToString&lt;/code&gt; support.&lt;/li&gt;
+  &lt;li&gt;Struct records provide a value-type wrapper, avoiding heap allocation (the size of the wrapper &lt;em&gt;is&lt;/em&gt; the size of the wrapped value).&lt;/li&gt;
+  &lt;li&gt;Readonly struct records provide immutability.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;I prefer to use a single property named &lt;code&gt;Value&lt;/code&gt;, which is similar to &lt;code&gt;Nullable&amp;lt;T&amp;gt;.Value&lt;/code&gt;, except a Value Record &lt;em&gt;always&lt;/em&gt; has a valid &lt;code&gt;Value&lt;/code&gt;. Since the type definition is just a single line, it seems silly to have them follow the one-type-per-file rule; I tend to collect Value Record types and include them in a single source file, usually called &lt;code&gt;Primitives.cs&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;guidelines-for-use&quot;&gt;Guidelines for Use&lt;/h2&gt;
+
+&lt;h3 id=&quot;avoid-sharp-edges&quot;&gt;Avoid Sharp Edges&lt;/h3&gt;
+
+&lt;p&gt;I’ve used Value Records in a few projects now, and I think they work best as internal types. I don’t mean &lt;code&gt;internal&lt;/code&gt;; I mean as types that are created and unwrapped by your own code at the “edges” of your app. Then the core of your app &lt;em&gt;only&lt;/em&gt; deals with the Value Records.&lt;/p&gt;
+
+&lt;p&gt;This way you don’t have to deal with any kind of serialization, which can be a real headache. I recommend you completely ignore Newtonsoft.Json / System.Text.Json / Xml, ASP.NET parameter binding / output formatting, WPF bindings, Entity Framework value conversions, and all other forms of serialization. Instead of trying to automatically support these, just have your own code create the Value Record wrappers when reading the values from an external source (e.g., &lt;code&gt;CustomerId customerId = new(customerIdIntValue)&lt;/code&gt;), and unwrap them when writing values to an external source (e.g., &lt;code&gt;int customerIdIntValue = customerId.Value;&lt;/code&gt;).&lt;/p&gt;
+
+&lt;h3 id=&quot;choosing-primitives-to-replace&quot;&gt;Choosing Primitives to Replace&lt;/h3&gt;
+
+&lt;p&gt;Not all primitives &lt;em&gt;need&lt;/em&gt; to be Value Records. Choosing which primitives &lt;em&gt;should&lt;/em&gt; be Value Records is a skill, one which everyone is developing right now, and there are no masters of this skill yet AFAIK.&lt;/p&gt;
+
+&lt;p&gt;In my experience, I would say to use primitives by default, but use Value Records in the following situations:&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;Use Value Records whenever you have similar value types that are used together.
+    &lt;ul&gt;
+      &lt;li&gt;“Similar” here can mean &lt;em&gt;conceptually&lt;/em&gt; similar or just having a similar &lt;em&gt;name&lt;/em&gt;.&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;Use Value Records whenever you have to &lt;em&gt;guarantee&lt;/em&gt; that a critical value type &lt;em&gt;must&lt;/em&gt; be used only in a particular way.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;The classic example of the first situation (similar types) is using Value Records for entity identifiers (&lt;code&gt;CustomerId&lt;/code&gt; and friends). Entity identifiers are conceptually similar &lt;em&gt;and&lt;/em&gt; have similar names, and usually there are multiple methods that deal with different kinds of identifiers at the same time.&lt;/p&gt;
+
+&lt;p&gt;The second situation (critical types) is more of a judgement call. I can at least give an example, though: one of my projects sends emails to users, but also has to deal with users that type in an email address that may or may not be theirs. And there are some severe repercussions for sending emails to people who haven’t asked for them; there’s actual laws in my country about that kind of behavior. So, I created a &lt;code&gt;ValidatedEmail&lt;/code&gt; Value Record for this critical type. In my model, a user has a &lt;code&gt;ValidatedEmail&lt;/code&gt; (whose value may be &lt;code&gt;null&lt;/code&gt;), and the code component that sends emails &lt;em&gt;only&lt;/em&gt; accepts a &lt;code&gt;ValidatedEmail&lt;/code&gt;. It’s comforting to know that the type system itself is enforcing the business rule “only send emails to validated email addresses”.&lt;/p&gt;
+
+&lt;h2 id=&quot;misuse&quot;&gt;Misuse&lt;/h2&gt;
+
+&lt;p&gt;Similar to last week’s technique, the primary misuse of the Value Record technique is &lt;em&gt;overuse&lt;/em&gt;. Once you start feeling the benefits of the stronger type safety from Value Records, you’ll start wanting it everywhere. You may end up temporarily suffering from “Primitive Obsession Obsession”, if you will.&lt;/p&gt;
+
+&lt;p&gt;There’s a maintenance tradeoff with using Value Records: Value Records increase the code complexity. Speficially, Value Records increase the mental burden when reading the code. Put simply: every developer knows what a &lt;code&gt;string&lt;/code&gt; is, but if they see a &lt;code&gt;CustomerId&lt;/code&gt; type, then they need to look that up. Remember, techniques like Value Records are easy to write because they’re in &lt;em&gt;your&lt;/em&gt; head &lt;em&gt;now&lt;/em&gt;, but the resulting code is more difficult to maintain (whether maintained by &lt;em&gt;others&lt;/em&gt; or yourself &lt;em&gt;later&lt;/em&gt;).&lt;/p&gt;
+
+&lt;p&gt;After all, it’s not like primitives are evil or anything like that. Primitives are a perfectly fine solution for a lot of data. &lt;code&gt;string CustomerName&lt;/code&gt; is probably just fine; it wouldn’t have any real validation and is unlikely to be confused with something else. Well, that’s true unless your domain has a ton of “names”, in which case maybe it &lt;em&gt;can&lt;/em&gt; be easily confused with another kind of name and &lt;em&gt;should&lt;/em&gt; be a Value Record.&lt;/p&gt;
+
+&lt;h2 id=&quot;history&quot;&gt;History&lt;/h2&gt;
+
+&lt;p&gt;Until records were added to the language, immutable objects were always a bit of a pain, with some going so far as to &lt;a href=&quot;https://github.com/AArnott/ImmutableObjectGraph&quot;&gt;create libraries just to help write immutable types&lt;/a&gt;. The Value Object pattern was used only when absolutely necessary, since it resulted in much more complex code (with a naturally higher probability of containing bugs).&lt;/p&gt;
+
+&lt;p&gt;If you haven’t read it yet, &lt;a href=&quot;https://andrewlock.net/series/using-strongly-typed-entity-ids-to-avoid-primitive-obsession/&quot;&gt;Andrew Lock has a great blog series on using strongly-typed entity IDs to avoid primitive obsession&lt;/a&gt;. I think overall it’s a good series conceptually, but do note that the implementation details are quite dated at this point. Also note how much the complexity is increased by trying to handle only a couple forms of serialization.&lt;/p&gt;
+
+&lt;p&gt;Record types brought immutability to C# as a first-class citizen. The initial record types were class records (reference types), which works great for many immutable types, but tends to be a heavyweight solution for Value Objects. E.g., when wrapping &lt;code&gt;int&lt;/code&gt; values, a &lt;code&gt;class record&lt;/code&gt; wrapper essentially acts as an always-boxed &lt;code&gt;int&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;These days we have readonly struct records, which are immutable &lt;em&gt;and&lt;/em&gt; lightweight, and a perfect fit for the Value Object pattern.&lt;/p&gt;
+
+&lt;h2 id=&quot;summary&quot;&gt;Summary&lt;/h2&gt;
+
+&lt;p&gt;Carefully replacing some primitive types with Value Records will increase the type safety, correctness, and maintainability of your code.&lt;/p&gt;
+</description>
+        <pubDate>Thu, 06 Oct 2022 00:00:00 +0000</pubDate>
+        <link>https://blog.stephencleary.com/2022/10/modern-csharp-techniques-2-value-records.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2022/10/modern-csharp-techniques-2-value-records.html</guid>
+      </item>
+    
+      <item>
         <title>Modern C# Techniques, Part 1: Curiously Recurring Generic Pattern</title>
         <description>&lt;p&gt;I’m starting a new series today looking at some modern C# techniques. Part of what I like about C# is that the language is always improving, and those improvements bring newer code patterns with them.&lt;/p&gt;
 
@@ -804,61 +904,6 @@ class AnotherExample : ExampleBase&amp;lt;AnotherExample&amp;gt;
         <pubDate>Thu, 14 Jan 2021 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2021/01/asynchronous-messaging-2-durable-queues.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2021/01/asynchronous-messaging-2-durable-queues.html</guid>
-      </item>
-    
-      <item>
-        <title>Asynchronous Messaging, Part 1: Basic Distributed Architecture</title>
-        <description>&lt;p&gt;This is the first of a short series of blog posts on Asynchronous Messaging. This is not a new problem at all, but it’s something I’ve observed becoming more and more common over the last few years. Also, this is the kind of a problem that is difficult to solve quickly - or even &lt;em&gt;describe&lt;/em&gt; the solution quickly, so I think a blog (series) is appropriate.&lt;/p&gt;
-
-&lt;p&gt;A bit of a side note, here: I primarily develop in the .NET stack these days (for the backend, at least). So some of my details will discuss ASP.NET-specific technologies and solutions. However, the general problem and solution is applicable to &lt;strong&gt;all&lt;/strong&gt; technology stacks. I’ll call out the ASP.NET-specific parts as I cover them.&lt;/p&gt;
-
-&lt;h2 id=&quot;the-problem&quot;&gt;The Problem&lt;/h2&gt;
-
-&lt;p&gt;The problem usually manifests in a desire to &lt;strong&gt;return early&lt;/strong&gt; from an HTTP request. So, once the request has been received, the developer wants the server-side API application to &lt;strong&gt;not wait&lt;/strong&gt; for the processing to complete, and instead send the response back immediately.&lt;/p&gt;
-
-&lt;p&gt;A common term for this is &lt;strong&gt;fire and forget&lt;/strong&gt;, in the sense that the developer wants to start (“fire”) some background work but then not wait for it to complete (“forget”).&lt;/p&gt;
-
-&lt;p&gt;The goal is to have the HTTP call just &lt;strong&gt;start a workflow&lt;/strong&gt;. This workflow then runs on the server side without further input from the client application. It’s a form of &lt;strong&gt;long-running operation&lt;/strong&gt;.&lt;/p&gt;
-
-&lt;p&gt;I’ve decided to call this “request-extrinsic code”, because it sounds fancy. “Request-extrinsic” means that it’s code that runs &lt;em&gt;outside&lt;/em&gt; of a request. This is fundamentally dangerous, which is why the solution is more complex than at first seems necessary.&lt;/p&gt;
-
-&lt;div class=&quot;alert alert-info&quot;&gt;
-  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
-
-  &lt;p&gt;&lt;strong&gt;ASP.NET-specific:&lt;/strong&gt; In ASP.NET pre-Core, there is an exception that developers may trigger with the message “An asynchronous module or handler completed while an asynchronous operation was still pending.” This is a “safety net” exception that indicates there’s some request-extrinsic code (which is dangerous). Unfortunately, ASP.NET Core does not have this “safety net” check, even though request-extrinsic code is just as bad on ASP.NET Core as it was on ASP.NET pre-Core.&lt;/p&gt;
-&lt;/div&gt;
-
-&lt;h2 id=&quot;the-solution&quot;&gt;The Solution&lt;/h2&gt;
-
-&lt;p&gt;The proper solution for request-extrinsic code is &lt;strong&gt;asynchronous messaging&lt;/strong&gt;.&lt;/p&gt;
-
-&lt;div class=&quot;alert alert-info&quot;&gt;
-  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
-
-  &lt;p&gt;My blog often deals with “asynchronous” in the sense of the &lt;code&gt;async&lt;/code&gt;/&lt;code&gt;await&lt;/code&gt; keywords. This blog series is on &lt;em&gt;asynchronous messaging&lt;/em&gt;, which is a completely different thing. &lt;code&gt;async&lt;/code&gt;/&lt;code&gt;await&lt;/code&gt; deal with asynchrony within the scope of a single process; asynchronous messaging deals with asynchrony across two processes (client and server). The two uses of “asynchronous” are similar at the 10,000 foot view, but completely different on the ground.&lt;/p&gt;
-&lt;/div&gt;
-
-&lt;p&gt;Asynchronous messaging has two parts (with an optional third part):&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;A &lt;em&gt;durable queue&lt;/em&gt;. By “durable”, I mean a queue that at least flushes to disk on writes. In other words, the &lt;em&gt;messages&lt;/em&gt; sent to the queue are durable. An in-memory &lt;code&gt;Queue&amp;lt;T&amp;gt;&lt;/code&gt; or &lt;code&gt;BlockingCollection&amp;lt;T&amp;gt;&lt;/code&gt; or &lt;code&gt;ChannelWriter&amp;lt;T&amp;gt;&lt;/code&gt; is not a “durable queue” by this definition.&lt;/li&gt;
-  &lt;li&gt;A &lt;em&gt;backend service&lt;/em&gt;. This is an independent service that reads from that durable queue and processes the items in it (i.e., executes the long-running operation).&lt;/li&gt;
-  &lt;li&gt;(optional) Some method to &lt;em&gt;retrieve results&lt;/em&gt;. If the client needs to know the outcome of the long-running operation, then this is the part that provides that outcome to the client.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;One common example is sending emails. If an API wants to send an email but does not want to wait for the email to be sent before returning to the client, then the API should add a message to the durable queue describing the email to be sent and then return. Since this is a durable queue, the queue message (containing the email details) is flushed to disk before the HTTP response is sent to the client. Then a separate backend service reading from that queue retrieves the queue message and sends the actual email.&lt;/p&gt;
-
-&lt;p&gt;Another common example is database writes. Sometimes there are situations where the API knows what to write to the database but doesn’t want to make the client wait for it. In that case, the API should write the information to a durable queue and then return to the client. Then a separate backend service reading from that queue retrieves the information and performs the actual database update.&lt;/p&gt;
-
-&lt;p&gt;Retrieving results is often not necessary. E.g., the email itself usually &lt;em&gt;is&lt;/em&gt; the result of sending an email, and database writes will show up eventually as the user navigates/refreshes. But sometimes you do need the client to be notified of results; this is possible either using polling or a proactive notification using a messaging technology like WebSockets.&lt;/p&gt;
-
-&lt;p&gt;In the rest of this series, I’ll dive more into each parts of the solution, and discuss specific approaches in more detail. But the description above is usually all that’s needed.&lt;/p&gt;
-
-&lt;p&gt;The proper solution for request-extrinsic code is &lt;strong&gt;asynchronous messaging&lt;/strong&gt;, which is accomplished by adding a &lt;strong&gt;durable queue&lt;/strong&gt; coupled with a &lt;strong&gt;backend service&lt;/strong&gt;.&lt;/p&gt;
-</description>
-        <pubDate>Thu, 07 Jan 2021 00:00:00 +0000</pubDate>
-        <link>https://blog.stephencleary.com/2021/01/asynchronous-messaging-1-basic-distributed-architecture.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2021/01/asynchronous-messaging-1-basic-distributed-architecture.html</guid>
       </item>
     
   </channel>

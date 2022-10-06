@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Modern C# Techniques, Part 1: Curiously Recurring Generic Pattern</title>
+    <title>Modern C# Techniques, Part 2: Value Records</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="The curiously recurring generic pattern, where a base type or interface has its derived type as a generic parameter. Part of a series looking at modern C# code techniques." />
-    <link rel="canonical" href="https://blog.stephencleary.com/2022/09/modern-csharp-techniques-1-curiously-recurring-generic-pattern.html" />
+    <meta name="description" content="Using value records (i.e., value objects) to overcome primitive obsession. Part of a series looking at modern C# code techniques." />
+    <link rel="canonical" href="https://blog.stephencleary.com/2022/10/modern-csharp-techniques-2-value-records.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -275,8 +275,8 @@ img.comment-author-profile-image {
 
   <header>
       <div class="page-header">
-          <h1>Modern C# Techniques, Part 1: Curiously Recurring Generic Pattern</h1>
-          <small><time datetime="2022-09-29">Sep 29, 2022</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
+          <h1>Modern C# Techniques, Part 2: Value Records</h1>
+          <small><time datetime="2022-10-06">Oct 6, 2022</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
       </div>
   </header>
 
@@ -290,111 +290,112 @@ img.comment-author-profile-image {
   </header>
 
   <article>
-  <p>I’m starting a new series today looking at some modern C# techniques. Part of what I like about C# is that the language is always improving, and those improvements bring newer code patterns with them.</p>
+  <p>Today I’ll cover another technique for modern C# that isn’t exactly <em>new</em>, but which the language supports much better than it used to.</p>
 
-<p>Today’s topic is not actually <em>new</em>, but many developers haven’t seen it before, so it’s worth taking a look at. As with many of the techniques I’ll be discussing, I’m not sure if this one has a name, so I am just calling it whatever I call it in my head.</p>
+<p>I’m calling today’s technique Value Records, which are a form of the more general “value object” pattern that is specific to modern C#. But before we dive into the solution, let’s look at the problem.</p>
 
-<h2 id="the-curiously-recurring-generic-pattern">The Curiously Recurring Generic Pattern</h2>
+<h2 id="primitive-obsession">Primitive Obsession</h2>
 
-<div class="alert alert-info">
-  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+<p>The name of the antipattern we’re trying to remove is Primitive Obsession. This is a highly searchable term with some great descriptions out there.</p>
 
-  <p>The “curious” name for this pattern comes from the C++ world, where it was called the Curiously Recurring Template Pattern. So in C# I just call it the Curiously Recurring Generic Pattern, since it’s essentially the same thing but with generics instead of templates. <a href="https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern" class="alert-link">According to Wikipedia</a>, it’s actually “F-bound polymorphism”, but I’m not going to remember that.</p>
-</div>
-
-<p>The Curiously Recurring Generic Pattern is when an interface (or base type) takes a generic parameter that is its own derived type. A simple example looks like this:</p>
-
-<pre><code class="language-C#">interface IExample&lt;TDerived&gt;
-{
-}
-
-class MyExample : IExample&lt;MyExample&gt;
-{
-}
-</code></pre>
-
-<h2 id="but-why-tho">But Why Tho?</h2>
-
-<p>It essentially comes down to typing. If an interface (or base type) wants to use the <em>full, derived type</em> as a method parameter or return value, then it can define those methods itself without putting any burdern on the derived type.</p>
-
-<p>Consider a familiar example from the .NET BCL: <code>IEquatable&lt;T&gt;</code>. <code>IEquatable&lt;T&gt;</code> <a href="https://learn.microsoft.com/en-us/dotnet/api/system.iequatable-1?view=net-6.0&amp;WT.mc_id=DT-MVP-5000058">is defined</a> as thus:</p>
-
-<pre><code class="language-C#">public interface IEquatable&lt;T&gt;
-{
-  bool Equals(T? other);
-}
-</code></pre>
-
-<p>And it is used as such:</p>
-
-<pre><code class="language-C#">sealed class MyEquatable : IEquatable&lt;MyEquatable&gt;
-{
-  public bool Equals(MyEquatable? other) { ... }
-}
-</code></pre>
-
-<p>The thing to note here is that <code>MyEquatable.Equals</code> implements <code>IEquatable&lt;T&gt;.Equals</code> with a <em>strongly-typed</em> <code>MyEquatable</code> argument. If the Curiously Recurring Generic Pattern wasn’t used, then <code>IEquatable&lt;T&gt;</code> would just be <code>IEquatable</code> (taking an <code>object</code> argument), losing type safety and efficiency.</p>
-
-<h2 id="adding-a-generic-constraint">Adding a Generic Constraint</h2>
-
-<p>The interface (or base type) may also use itself as a generic constraint. It doesn’t <em>have</em> to (the examples above don’t), but sometimes it’s useful, particularly for base types. The Curiously Recurring Generic Pattern with generic constraints looks like this:</p>
-
-<pre><code class="language-C#">abstract class ExampleBase&lt;TDerived&gt;
-    where TDerived : ExampleBase&lt;TDerived&gt;
-{
-  // Methods in here can use `(TDerived)this` freely.
-  // This is particularly useful if this interface wants to *return* a value of TDerived.
-  public virtual TDerived Something() =&gt; (TDerived)this;
-}
-
-class AnotherExample : ExampleBase&lt;AnotherExample&gt;
-{
-  // Implicitly has `public AnotherExample Something();` defined.
-  // The base class method already has the correct return type.
-  // (Can still override if desired).
-}
-</code></pre>
-
-<p>As noted in the comments above, this approach is useful if <code>TDerived</code> is used as a <em>return</em> type. As one example, this is common with fluent APIs.</p>
-
-<p>More generally, the generic constraint is needed in either of these situations:</p>
-
+<p>Essentially, Primitive Obsession is when a developer (over)uses primitives (<code>string</code>, <code>int</code>, <code>Guid</code>, <code>decimal</code>, etc) to represent business or domain concepts. One classic example is entity ids. There are a couple of problems with using primitives like this:</p>
 <ol>
-  <li>The base type needs to treat a <code>ExampleBase&lt;TDerived&gt;</code> instance (e.g., <code>this</code>) as its derived type (i.e., <code>(TDerived)this</code>). This can also come up when passing <code>this</code> to other methods.</li>
-  <li>The base type needs to treat a <code>TDerived</code> as a <code>ExampleBase&lt;TDerived&gt;</code>, e.g., calling private base methods on an instance of type <code>TDerived</code> <em>other</em> than <code>this</code>. In this case no explicit cast is necessary.</li>
+  <li>The primitives are not type-safe. In other words, it’s easy to accidentally pass a <code>customerId</code> to a method expecting a <code>resourceId</code>. Or, say, if a method needs <em>both</em> a <code>customerId</code> and <code>resourceId</code>, it’s easy to pass the parameters in the wrong order.</li>
+  <li>Primitives support operations that don’t make sense. For example, if a <code>customerId</code> is an <code>int</code>, the compiler will happily let you divide it by 2, but that makes no business sense at all. A related problem is when you have <em>units</em>, such as <code>distanceInFeet</code> and <code>distanceInMeters</code>; the lack of units in the type system allow these values to be (incorrectly) added together.</li>
 </ol>
 
-<h2 id="crgp-and-default-interface-methods">CRGP and Default Interface Methods</h2>
+<h2 id="solving-primitive-obsesesion-with-value-objects">Solving Primitive Obsesesion with Value Objects</h2>
 
-<p>Similar to regular interface methods, the Curiously Recurring Generic Pattern can enhance the type safety of <a href="https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-8.0/default-interface-methods?WT.mc_id=DT-MVP-5000058">default interface methods</a> if necessary. This is similar to using CRGP with base types, except interfaces cannot have state. Put another way, this enables strongly-typed traits, but falls short of mixins.</p>
+<p>Value Objects are the general solution to Primitive Obsession. The idea is that you define a (simple) domain object that wraps the primitive type inside a type-safe wrapper type. In some cases, this wrapper type may have some limited domain behavior (such as validation), but in many cases Value Objects are so-called “anemic domain models”, and that’s OK. Value Objects inhabit a middle ground between primitives and full-blown domain objects.</p>
 
-<h2 id="crgp-and-static-interface-methods-and-operators">CRGP and Static Interface Methods (and Operators)</h2>
+<p>Value Objects tend to behave similarly to the primitives they replace:</p>
+<ul>
+  <li>Value Objects are usually immutable.</li>
+  <li>Value Objects usually have value semantics.</li>
+  <li>If a primitive has a useful operation (e.g., string concatenation, integer addition, or even <code>ToString</code> or <code>GetHashCode</code> support) that also makes sense for the domain object, then Value Objects usually support those operations.</li>
+</ul>
 
-<p>One possibility for CRGP with <a href="https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/tutorials/static-virtual-interface-members?WT.mc_id=DT-MVP-5000058">static interface methods</a> is to define operators (or other static methods) with the proper type signatures. Previously, CRGP required a base type to define operators (e.g., <a href="https://github.com/StephenCleary/Comparers/blob/48cd202db5d7ea7209cc4248bf6a531d3752f170/src/Nito.Comparers.Core/EquatableBaseWithOperators.cs"><code>EquatableBaseWithOperators&lt;TDerived&gt;</code> in my Nito.Comparers library</a>), but using CRGP with static interface methods allows strong typing for operator signatures (e.g., <a href="https://learn.microsoft.com/en-us/dotnet/api/system.numerics.iunarynegationoperators-2?view=net-7.0&amp;WT.mc_id=DT-MVP-5000058"><code>IUnaryNegationOperators&lt;TSelf, TResult&gt;</code></a> is an interface that defines <code>operator-</code> with the proper type signature).</p>
+<p>Following these patterns allows Value Objects to essentially be type-safe replacements for primitives. Occasionally some business rules are added (e.g., validation), but just plain old Value Objects work quite well on their own, too.</p>
+
+<h2 id="c-and-value-records">C# and Value Records</h2>
+
+<p>The modern C# technique for Value Objects is what I call Value Records, and looks like this:</p>
+
+<pre><code class="language-C#">public readonly struct record CustomerId(string Value);
+</code></pre>
+
+<p>Yes, that’s the whole type.</p>
+
+<p>Breaking it down:</p>
+<ul>
+  <li>Records provide value semantics, complete with equality, hash code, and <code>ToString</code> support.</li>
+  <li>Struct records provide a value-type wrapper, avoiding heap allocation (the size of the wrapper <em>is</em> the size of the wrapped value).</li>
+  <li>Readonly struct records provide immutability.</li>
+</ul>
+
+<p>I prefer to use a single property named <code>Value</code>, which is similar to <code>Nullable&lt;T&gt;.Value</code>, except a Value Record <em>always</em> has a valid <code>Value</code>. Since the type definition is just a single line, it seems silly to have them follow the one-type-per-file rule; I tend to collect Value Record types and include them in a single source file, usually called <code>Primitives.cs</code>.</p>
+
+<h2 id="guidelines-for-use">Guidelines for Use</h2>
+
+<h3 id="avoid-sharp-edges">Avoid Sharp Edges</h3>
+
+<p>I’ve used Value Records in a few projects now, and I think they work best as internal types. I don’t mean <code>internal</code>; I mean as types that are created and unwrapped by your own code at the “edges” of your app. Then the core of your app <em>only</em> deals with the Value Records.</p>
+
+<p>This way you don’t have to deal with any kind of serialization, which can be a real headache. I recommend you completely ignore Newtonsoft.Json / System.Text.Json / Xml, ASP.NET parameter binding / output formatting, WPF bindings, Entity Framework value conversions, and all other forms of serialization. Instead of trying to automatically support these, just have your own code create the Value Record wrappers when reading the values from an external source (e.g., <code>CustomerId customerId = new(customerIdIntValue)</code>), and unwrap them when writing values to an external source (e.g., <code>int customerIdIntValue = customerId.Value;</code>).</p>
+
+<h3 id="choosing-primitives-to-replace">Choosing Primitives to Replace</h3>
+
+<p>Not all primitives <em>need</em> to be Value Records. Choosing which primitives <em>should</em> be Value Records is a skill, one which everyone is developing right now, and there are no masters of this skill yet AFAIK.</p>
+
+<p>In my experience, I would say to use primitives by default, but use Value Records in the following situations:</p>
+<ol>
+  <li>Use Value Records whenever you have similar value types that are used together.
+    <ul>
+      <li>“Similar” here can mean <em>conceptually</em> similar or just having a similar <em>name</em>.</li>
+    </ul>
+  </li>
+  <li>Use Value Records whenever you have to <em>guarantee</em> that a critical value type <em>must</em> be used only in a particular way.</li>
+</ol>
+
+<p>The classic example of the first situation (similar types) is using Value Records for entity identifiers (<code>CustomerId</code> and friends). Entity identifiers are conceptually similar <em>and</em> have similar names, and usually there are multiple methods that deal with different kinds of identifiers at the same time.</p>
+
+<p>The second situation (critical types) is more of a judgement call. I can at least give an example, though: one of my projects sends emails to users, but also has to deal with users that type in an email address that may or may not be theirs. And there are some severe repercussions for sending emails to people who haven’t asked for them; there’s actual laws in my country about that kind of behavior. So, I created a <code>ValidatedEmail</code> Value Record for this critical type. In my model, a user has a <code>ValidatedEmail</code> (whose value may be <code>null</code>), and the code component that sends emails <em>only</em> accepts a <code>ValidatedEmail</code>. It’s comforting to know that the type system itself is enforcing the business rule “only send emails to validated email addresses”.</p>
 
 <h2 id="misuse">Misuse</h2>
 
-<p>Like other code patterns, the CRGP can be misused. IMO the most common misuse of this pattern is <em>overuse</em>. Bear in mind CRGP isn’t powerful enough to provide mixins - even with default interface methods (which provide traits, not mixins).</p>
+<p>Similar to last week’s technique, the primary misuse of the Value Record technique is <em>overuse</em>. Once you start feeling the benefits of the stronger type safety from Value Records, you’ll start wanting it everywhere. You may end up temporarily suffering from “Primitive Obsession Obsession”, if you will.</p>
 
-<p>Also, CRGP tends to make the code more complex. There’s a tradeoff there, and you need to keep maintainability in mind.</p>
+<p>There’s a maintenance tradeoff with using Value Records: Value Records increase the code complexity. Speficially, Value Records increase the mental burden when reading the code. Put simply: every developer knows what a <code>string</code> is, but if they see a <code>CustomerId</code> type, then they need to look that up. Remember, techniques like Value Records are easy to write because they’re in <em>your</em> head <em>now</em>, but the resulting code is more difficult to maintain (whether maintained by <em>others</em> or yourself <em>later</em>).</p>
+
+<p>After all, it’s not like primitives are evil or anything like that. Primitives are a perfectly fine solution for a lot of data. <code>string CustomerName</code> is probably just fine; it wouldn’t have any real validation and is unlikely to be confused with something else. Well, that’s true unless your domain has a ton of “names”, in which case maybe it <em>can</em> be easily confused with another kind of name and <em>should</em> be a Value Record.</p>
+
+<h2 id="history">History</h2>
+
+<p>Until records were added to the language, immutable objects were always a bit of a pain, with some going so far as to <a href="https://github.com/AArnott/ImmutableObjectGraph">create libraries just to help write immutable types</a>. The Value Object pattern was used only when absolutely necessary, since it resulted in much more complex code (with a naturally higher probability of containing bugs).</p>
+
+<p>If you haven’t read it yet, <a href="https://andrewlock.net/series/using-strongly-typed-entity-ids-to-avoid-primitive-obsession/">Andrew Lock has a great blog series on using strongly-typed entity IDs to avoid primitive obsession</a>. I think overall it’s a good series conceptually, but do note that the implementation details are quite dated at this point. Also note how much the complexity is increased by trying to handle only a couple forms of serialization.</p>
+
+<p>Record types brought immutability to C# as a first-class citizen. The initial record types were class records (reference types), which works great for many immutable types, but tends to be a heavyweight solution for Value Objects. E.g., when wrapping <code>int</code> values, a <code>class record</code> wrapper essentially acts as an always-boxed <code>int</code>.</p>
+
+<p>These days we have readonly struct records, which are immutable <em>and</em> lightweight, and a perfect fit for the Value Object pattern.</p>
 
 <h2 id="summary">Summary</h2>
 
-<p>The Curiously Recurring Generic Pattern isn’t actually new, and it isn’t often necessary, but it’s a nice tool to have when you do need it.</p>
+<p>Carefully replacing some primitive types with Value Records will increase the type safety, correctness, and maintainability of your code.</p>
 
   </article>
     
     <footer class="hidden-print">
         
             <ul class="pager">
+                <li class="previous"><a href="/2022/09/modern-csharp-techniques-1-curiously-recurring-generic-pattern.html" title="Modern C# Techniques, Part 1: Curiously Recurring Generic Pattern">&larr; Previous in Modern C# Techniques</a></li>
                 
-                <li class="next"><a href="/2022/10/modern-csharp-techniques-2-value-records.html" title="Modern C# Techniques, Part 2: Value Records">Next in Modern C# Techniques &rarr;</a></li>
             </ul>
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2022/03/cancellation-4-polling.html" title="Cancellation, Part 4: Polling">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2022/10/modern-csharp-techniques-2-value-records.html" title="Modern C# Techniques, Part 2: Value Records">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2022/09/modern-csharp-techniques-1-curiously-recurring-generic-pattern.html" title="Modern C# Techniques, Part 1: Curiously Recurring Generic Pattern">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="comments"></div>
@@ -407,8 +408,8 @@ class AnotherExample : ExampleBase&lt;AnotherExample&gt;
                     <div class="panel-heading">Modern C# Techniques</div>
                     <div class="panel-body sidenav">
                         <ul class="nav nav-pills nav-stacked">
-                                    <li class="active sidenavitem"><a href="/2022/09/modern-csharp-techniques-1-curiously-recurring-generic-pattern.html">Curiously Recurring Generic Pattern</a></li>
-                                    <li class="sidenavitem"><a href="/2022/10/modern-csharp-techniques-2-value-records.html">Value Records</a></li>
+                                    <li class="sidenavitem"><a href="/2022/09/modern-csharp-techniques-1-curiously-recurring-generic-pattern.html">Curiously Recurring Generic Pattern</a></li>
+                                    <li class="active sidenavitem"><a href="/2022/10/modern-csharp-techniques-2-value-records.html">Value Records</a></li>
                         </ul>
                     </div>
                 </div>
@@ -562,7 +563,7 @@ class AnotherExample : ExampleBase&lt;AnotherExample&gt;
 
 <script type="text/javascript">
 
-var pageUrl = "https://blog.stephencleary.com" + "/2022/09/modern-csharp-techniques-1-curiously-recurring-generic-pattern.html";
+var pageUrl = "https://blog.stephencleary.com" + "/2022/10/modern-csharp-techniques-2-value-records.html";
 
 // (unnecessary) 1) If the URL starts with http://, replace with https://
 
