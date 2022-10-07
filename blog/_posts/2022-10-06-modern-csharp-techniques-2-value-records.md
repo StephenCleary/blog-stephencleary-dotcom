@@ -18,7 +18,7 @@ Essentially, Primitive Obsession is when a developer (over)uses primitives (`str
 1. The primitives are not type-safe. In other words, it's easy to accidentally pass a `customerId` to a method expecting a `resourceId`. Or, say, if a method needs *both* a `customerId` and `resourceId`, it's easy to pass the parameters in the wrong order.
 2. Primitives support operations that don't make sense. For example, if a `customerId` is an `int`, the compiler will happily let you divide it by 2, but that makes no business sense at all. A related problem is when you have *units*, such as `distanceInFeet` and `distanceInMeters`; the lack of units in the type system allow these values to be (incorrectly) added together.
 
-## Solving Primitive Obsesesion with Value Objects
+## Solving Primitive Obsession with Value Objects
 
 Value Objects are the general solution to Primitive Obsession. The idea is that you define a (simple) domain object that wraps the primitive type inside a type-safe wrapper type. In some cases, this wrapper type may have some limited domain behavior (such as validation), but in many cases Value Objects are so-called "anemic domain models", and that's OK. Value Objects inhabit a middle ground between primitives and full-blown domain objects.
 
