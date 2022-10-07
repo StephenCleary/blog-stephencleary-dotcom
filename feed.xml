@@ -23,7 +23,7 @@
   &lt;li&gt;Primitives support operations that don’t make sense. For example, if a &lt;code&gt;customerId&lt;/code&gt; is an &lt;code&gt;int&lt;/code&gt;, the compiler will happily let you divide it by 2, but that makes no business sense at all. A related problem is when you have &lt;em&gt;units&lt;/em&gt;, such as &lt;code&gt;distanceInFeet&lt;/code&gt; and &lt;code&gt;distanceInMeters&lt;/code&gt;; the lack of units in the type system allow these values to be (incorrectly) added together.&lt;/li&gt;
 &lt;/ol&gt;
 
-&lt;h2 id=&quot;solving-primitive-obsesesion-with-value-objects&quot;&gt;Solving Primitive Obsesesion with Value Objects&lt;/h2&gt;
+&lt;h2 id=&quot;solving-primitive-obsession-with-value-objects&quot;&gt;Solving Primitive Obsession with Value Objects&lt;/h2&gt;
 
 &lt;p&gt;Value Objects are the general solution to Primitive Obsession. The idea is that you define a (simple) domain object that wraps the primitive type inside a type-safe wrapper type. In some cases, this wrapper type may have some limited domain behavior (such as validation), but in many cases Value Objects are so-called “anemic domain models”, and that’s OK. Value Objects inhabit a middle ground between primitives and full-blown domain objects.&lt;/p&gt;
 
