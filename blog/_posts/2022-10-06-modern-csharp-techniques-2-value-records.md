@@ -34,7 +34,7 @@ Following these patterns allows Value Objects to essentially be type-safe replac
 The modern C# technique for Value Objects is what I call Value Records, and looks like this:
 
 ```C#
-public readonly struct record CustomerId(string Value);
+public readonly record struct CustomerId(string Value);
 ```
 
 Yes, that's the whole type.
