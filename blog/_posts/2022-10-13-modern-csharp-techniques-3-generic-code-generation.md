@@ -30,7 +30,7 @@ In other words, C# generics do *not* undergo monomorphization... except...
 
 C# generics do *not* undergo monomorphization for reference types; there's only one copy of the type/method implementation that is shared between all reference types. However, C# generics *do* undergo monomorphization for value types!
 
-This makes sense; if a method `Something<T>` defines a local variable `T value;`, the compiler needs to know how big that `T` is. The size of all references are the same regardless of the type being referred to, but the size of value type values can vary.
+This makes sense; if a method `Something<T>` defines a local variable `T value;`, the compiler needs to know how big that `T` is. The size of a reference is the same regardless of the type being referred to, but the size of value type values can vary.
 
 So, it turns out that C# generics *do* have monomorphization. They just don't do it for *all* generic arguments, only the ones that are value types. And monomorphization isn't done by the C# compiler; it's done by the JIT compiler (at runtime).
 
@@ -71,7 +71,7 @@ Function<Sample13>();
 
 The C# compiler just treats `Function` like an ordinary generic function. The JIT compiler will create *two separate copies* of `Function`; because `Sample7` and `Sample13` are both value types, monomorphization occurs and the JIT compiler generates *two* copies of the method. In both copies, the `default(T).Setting` code is emmitted as a constrained virtual call.
 
-Then, each copy of the method has a high likelihood of being optimized. After all, the compiler knows the type of `T` for each copy. When it optimizes `Function<Sample7>`, it *knows* that the `default(T).Setting` is calling the `ISample.get_Setting` method on the `Sample7` type. The `Sample7` implementation of `ISample.Setting` is trivial and is likely going to be inlined, which means that the `if` statement can be precomputed. It is extremely likely that both copies of `Function<T>` only end up having a single `Console.WriteLine` call, without any `if` statement at all!
+Then, each copy of the method has a high likelihood of being optimized. After all, the compiler knows the type of `T` for each copy. When it optimizes `Function<Sample7>`, it *knows* that the `default(T).Setting` is calling the `ISample.get_Setting` method on the `Sample7` type. The `Sample7` implementation of `ISample.Setting` is trivial and is likely going to be inlined, which means that the `if` branch can be precomputed. It is extremely likely that both copies of `Function<T>` only end up having a single `Console.WriteLine` call, without any `if` statement at all!
 
 At this point, we have real code generation using C# generics!
 
@@ -193,7 +193,7 @@ public Task<string> GetAsync() => GetCoreAsync<AsynchronousDelay>();
 
 The core implementation (`GetCoreAsync`) is simplified and is more obviously correct. The public interface (`Get` and `GetAsync`) didn't change at all. And at runtime, if only one path is used, then only one path will be JITted. If both paths are used, then two copies of `GetCoreAsync` are created by the JITter, each one optimized for its own situation (asynchronous or synchronous). This is a particularly useful technique for libraries, which may need to provide both forms of methods, but have a high likelihood of only one of them being used.
 
-Stephen Toub discusses how the BCL uses this technique [in a recent blog post](https://devblogs.microsoft.com/dotnet/performance_improvements_in_net_7/?WT.mc_id=DT-MVP-5000058#networking:%7E:text=One%20final%20change%20related%20to%20reading%20and%20writing%20performance).
+Stephen Toub discusses how the BCL uses this technique [in a recent blog post](https://devblogs.microsoft.com/dotnet/performance_improvements_in_net_7/?WT.mc_id=DT-MVP-5000058#:~:text=One%20final%20change%20related%20to%20reading%20and%20writing%20performance).
 
 ## Summary
 
