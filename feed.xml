@@ -8,6 +8,202 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>Modern C# Techniques, Part 3: Generic Code Generation</title>
+        <description>&lt;p&gt;This technique really excites me! We’re in for a good ride today…&lt;/p&gt;
+
+&lt;h2 id=&quot;c-templates-and-code-generation&quot;&gt;C++ Templates and Code Generation&lt;/h2&gt;
+
+&lt;p&gt;Before we take a look at C# generics, first I’ll take a brief look at how C++ templates are used for code generation.&lt;/p&gt;
+
+&lt;p&gt;Templates (and generics) are both forms of polymorphic functions; that is, you define one type (or method) that takes a type parameter, and the generic type/method is able to change its behavior based on the type passed in.&lt;/p&gt;
+
+&lt;p&gt;C++ templates are purely a compile-time construct; they instruct the compiler how to generate the code for the template type/method. Specifically, the compiler performs a transformation called &lt;a href=&quot;https://en.wikipedia.org/wiki/Monomorphization&quot;&gt;monomorphization&lt;/a&gt;; for each of the template arguments actually passed to the type/method, the compiler generates a new copy of the type/method specifically for that template argument.&lt;/p&gt;
+
+&lt;p&gt;Monomorphization is what enables C++ templates to be used as code generators.&lt;/p&gt;
+
+&lt;h2 id=&quot;c-generics&quot;&gt;C# Generics&lt;/h2&gt;
+
+&lt;p&gt;C# generics are a run-time construct; the compiler actually outputs the generic type/method itself into the IL (intermediate language). At runtime, the implementation of a generic type/method is shared between the generic arguments.&lt;/p&gt;
+
+&lt;p&gt;In other words, C# generics do &lt;em&gt;not&lt;/em&gt; undergo monomorphization… except…&lt;/p&gt;
+
+&lt;h3 id=&quot;generics-and-value-types&quot;&gt;Generics and Value Types&lt;/h3&gt;
+
+&lt;p&gt;…except when used with value types!&lt;/p&gt;
+
+&lt;p&gt;C# generics do &lt;em&gt;not&lt;/em&gt; undergo monomorphization for reference types; there’s only one copy of the type/method implementation that is shared between all reference types. However, C# generics &lt;em&gt;do&lt;/em&gt; undergo monomorphization for value types!&lt;/p&gt;
+
+&lt;p&gt;This makes sense; if a method &lt;code&gt;Something&amp;lt;T&amp;gt;&lt;/code&gt; defines a local variable &lt;code&gt;T value;&lt;/code&gt;, the compiler needs to know how big that &lt;code&gt;T&lt;/code&gt; is. The size of a reference is the same regardless of the type being referred to, but the size of value type values can vary.&lt;/p&gt;
+
+&lt;p&gt;So, it turns out that C# generics &lt;em&gt;do&lt;/em&gt; have monomorphization. They just don’t do it for &lt;em&gt;all&lt;/em&gt; generic arguments, only the ones that are value types. And monomorphization isn’t done by the C# compiler; it’s done by the JIT compiler (at runtime).&lt;/p&gt;
+
+&lt;h3 id=&quot;generics-and-constrained-value-types&quot;&gt;Generics and Constrained Value Types&lt;/h3&gt;
+
+&lt;p&gt;Monomorphization is fine for &lt;code&gt;List&amp;lt;T&amp;gt;&lt;/code&gt; and friends, which don’t actually &lt;em&gt;do&lt;/em&gt; anything with the &lt;code&gt;T&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;For code generation, though, monomorphization is most useful if you also constrain the generics to a specific interface. A simple (and rather silly) example will make this more clear:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&quot;language-C#&quot;&gt;interface ISample
+{
+  int Setting { get; }
+}
+
+void Function&amp;lt;T&amp;gt;()
+    where T : struct, ISample
+{
+  if (default(T).Setting == 13)
+    Console.WriteLine(&quot;Ah, my favorite number!&quot;);
+  else
+    Console.WriteLine($&quot;You passed {default(T).Setting}.&quot;);
+}
+
+readonly struct Sample7 : ISample
+{
+  public int Setting =&amp;gt; 7;
+}
+
+readonly struct Sample13 : ISample
+{
+  public int Setting =&amp;gt; 13;
+}
+
+Function&amp;lt;Sample7&amp;gt;();
+Function&amp;lt;Sample13&amp;gt;();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The C# compiler just treats &lt;code&gt;Function&lt;/code&gt; like an ordinary generic function. The JIT compiler will create &lt;em&gt;two separate copies&lt;/em&gt; of &lt;code&gt;Function&lt;/code&gt;; because &lt;code&gt;Sample7&lt;/code&gt; and &lt;code&gt;Sample13&lt;/code&gt; are both value types, monomorphization occurs and the JIT compiler generates &lt;em&gt;two&lt;/em&gt; copies of the method. In both copies, the &lt;code&gt;default(T).Setting&lt;/code&gt; code is emmitted as a constrained virtual call.&lt;/p&gt;
+
+&lt;p&gt;Then, each copy of the method has a high likelihood of being optimized. After all, the compiler knows the type of &lt;code&gt;T&lt;/code&gt; for each copy. When it optimizes &lt;code&gt;Function&amp;lt;Sample7&amp;gt;&lt;/code&gt;, it &lt;em&gt;knows&lt;/em&gt; that the &lt;code&gt;default(T).Setting&lt;/code&gt; is calling the &lt;code&gt;ISample.get_Setting&lt;/code&gt; method on the &lt;code&gt;Sample7&lt;/code&gt; type. The &lt;code&gt;Sample7&lt;/code&gt; implementation of &lt;code&gt;ISample.Setting&lt;/code&gt; is trivial and is likely going to be inlined, which means that the &lt;code&gt;if&lt;/code&gt; branch can be precomputed. It is extremely likely that both copies of &lt;code&gt;Function&amp;lt;T&amp;gt;&lt;/code&gt; only end up having a single &lt;code&gt;Console.WriteLine&lt;/code&gt; call, without any &lt;code&gt;if&lt;/code&gt; statement at all!&lt;/p&gt;
+
+&lt;p&gt;At this point, we have real code generation using C# generics!&lt;/p&gt;
+
+&lt;h3 id=&quot;generics-and-constrained-value-types-with-static-abstract-interface-methods&quot;&gt;Generics and Constrained Value Types with Static Abstract Interface Methods&lt;/h3&gt;
+
+&lt;p&gt;Static abstract interface methods allow us to clean this up even a bit more. Instead of defining &lt;code&gt;Setting&lt;/code&gt; as an instance method, it can now be a static method, as such:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&quot;language-C#&quot;&gt;interface ISample
+{
+  static abstract int Setting { get; }
+}
+
+void Function&amp;lt;T&amp;gt;()
+    where T : struct, ISample
+{
+  if (T.Setting == 13)
+    Console.WriteLine(&quot;Ah, my favorite number!&quot;);
+  else
+    Console.WriteLine($&quot;You passed {default(T).Setting}.&quot;);
+}
+
+readonly struct Sample7 : ISample
+{
+  public static int Setting =&amp;gt; 7;
+}
+
+readonly struct Sample13 : ISample
+{
+  public static int Setting =&amp;gt; 13;
+}
+
+Function&amp;lt;Sample7&amp;gt;();
+Function&amp;lt;Sample13&amp;gt;();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now there’s no need for a &lt;code&gt;default(T)&lt;/code&gt; value inside &lt;code&gt;Function&amp;lt;T&amp;gt;&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;warnings-and-limitations&quot;&gt;Warnings and Limitations&lt;/h2&gt;
+
+&lt;p&gt;By using C# generics with value types, we can ensure monomorphization takes place; however, the rest of the behavior is not guaranteed.&lt;/p&gt;
+
+&lt;h3 id=&quot;no-guarantees&quot;&gt;No Guarantees&lt;/h3&gt;
+
+&lt;p&gt;The JIT compiler doesn’t actually &lt;em&gt;guarantee&lt;/em&gt; that any particular methods are inlined, or that any kind of optimization takes place (e.g., removing the &lt;code&gt;if&lt;/code&gt; statement in our example). It’s reasonable to assume that &lt;em&gt;some&lt;/em&gt; optimization will take place, and with modern tiered optimization, you can also expect that the method will become &lt;em&gt;more&lt;/em&gt; optimized if it is called a lot.&lt;/p&gt;
+
+&lt;p&gt;With C++ templates (and other compile-time-only monomorphization systems), you can &lt;em&gt;know&lt;/em&gt; that the resulting code will be fully optimized. With C# generics, the optimization happens at runtime, so the runtime has to balance between executing the code &lt;em&gt;now&lt;/em&gt; and speeding it up for &lt;em&gt;later&lt;/em&gt;. At the end of the day, the best you can do is hope.&lt;/p&gt;
+
+&lt;h3 id=&quot;limited-to-interfaces&quot;&gt;Limited to Interfaces&lt;/h3&gt;
+
+&lt;p&gt;When doing this kind of code generation, you’re limited to only what can be expressed as interface members. You can define methods and properties, but not &lt;code&gt;const&lt;/code&gt; values or nested types. It’s not a &lt;em&gt;complete&lt;/em&gt; code generation solution like C++ templates, but it’s certainly useful nonetheless.&lt;/p&gt;
+
+&lt;h2 id=&quot;applications&quot;&gt;Applications&lt;/h2&gt;
+
+&lt;h3 id=&quot;more-efficient-general-algortihms&quot;&gt;More Efficient General Algortihms&lt;/h3&gt;
+
+&lt;p&gt;There are some algorithms that take parameters that often don’t change for a given program. To take an example I’m familiar with, CRC32 hashes are actually a &lt;em&gt;class&lt;/em&gt; of hash algorithms with different values for polynomials, initializers, and a few other parameters. Usually, a program that uses a CRC32 hash only uses &lt;em&gt;one&lt;/em&gt; of these algorithms (one specific polynomial with a specific initializer value, etc). If the CRC32 implementation uses code generation, that will allow the JIT compiler to optimize just for that specific CRC32 hash algorithm.&lt;/p&gt;
+
+&lt;h3 id=&quot;more-general-algortihms&quot;&gt;More General Algortihms&lt;/h3&gt;
+
+&lt;p&gt;It’s also possible to make one algorithm even more generic, especially due to the static interface methods. For a similar example to the above, CRC16 is &lt;em&gt;another&lt;/em&gt; class of hash algorithms that is practically the same as CRC32 except it uses 16-bit integers instead of 32-bit integers. Static interface methods would allow a single unified “CRC” algorithm that can handle &lt;a href=&quot;https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/tutorials/static-virtual-interface-members?WT.mc_id=DT-MVP-5000058#generic-math&quot;&gt;any numeric type with generic math constraints&lt;/a&gt;. So our CRC32 and CRC16 implementations can be combined.&lt;/p&gt;
+
+&lt;h3 id=&quot;replacing-constant-arguments&quot;&gt;Replacing Constant Arguments&lt;/h3&gt;
+
+&lt;p&gt;There are a few situations in code where certain method arguments are always constant values. This is usually an indication that the method should be split into two methods, but sometimes there are maintenance concerns that are sufficiently strong, keeping the methods as a single implementation.&lt;/p&gt;
+
+&lt;p&gt;The example that I’m most familiar with here is the &lt;a href=&quot;https://learn.microsoft.com/en-us/archive/msdn-magazine/2015/july/async-programming-brownfield-async-development?WT.mc_id=DT-MVP-5000058#the-flag-argument-hack&quot;&gt;boolean argument hack&lt;/a&gt; for providing both synchronous and asynchronous versions of a method, which looks like this:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&quot;language-C#&quot;&gt;private Task&amp;lt;string&amp;gt; GetCoreAsync(bool sync)
+{
+  if (sync)
+    Thread.Sleep(TimeSpan.FromSeconds(1));
+  else
+    await Task.Delay(TimeSpan.FromSeconds(1));
+  return &quot;Hi!&quot;;
+}
+
+public string Get() =&amp;gt; GetCoreAsync(sync: true).GetAwaiter().GetResult();
+public Task&amp;lt;string&amp;gt; GetAsync() =&amp;gt; GetCoreAsync(sync: false);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;In the code above, &lt;code&gt;GetCoreAsync&lt;/code&gt; has a &lt;code&gt;sync&lt;/code&gt; argument that is &lt;em&gt;always&lt;/em&gt; a constant. Really, it &lt;em&gt;should&lt;/em&gt; be two different methods, but if we pretend that &lt;code&gt;GetCoreAsync&lt;/code&gt; is much longer and more complex, then making it two different methods does cause a maintenance burden.&lt;/p&gt;
+
+&lt;p&gt;So, let’s use generic code generation to &lt;em&gt;generate&lt;/em&gt; two different methods!&lt;/p&gt;
+
+&lt;p&gt;First, we’d extract the code differences (&lt;code&gt;Thread.Sleep&lt;/code&gt; vs &lt;code&gt;Task.Delay&lt;/code&gt;). These are going to need a definition in our interface, and they’ll be implemented by each value type. Since we’re talking about code that may be synchronous or asynchronous, we’ll use value tasks as the return type. (Reminder: any time you have a method whose implementation &lt;em&gt;may&lt;/em&gt; be asynchronous, then it should have an asynchronous signature). Then, &lt;code&gt;GetCoreAsync&lt;/code&gt; can just invoke those interface methods. We end up with something like this:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&quot;language-C#&quot;&gt;private interface IDelay
+{
+  static abstract ValueTask DelayAsync(TimeSpan delay);
+}
+
+private readonly struct SynchronousDelay : IDelay
+{
+  static ValueTask DelayAsync(TimeSpan delay)
+  {
+    Thread.Sleep(delay);
+    return new();
+  }
+}
+
+private readonly struct AsynchronousDelay : IDelay
+{
+  static async ValueTask DelayAsync(TimeSpan delay) =&amp;gt; await Task.Delay(delay);
+}
+
+private Task&amp;lt;string&amp;gt; GetCoreAsync&amp;lt;TDelay&amp;gt;()
+    where TDelay: struct, IDelay
+{
+  await TDelay.DelayAsync(TimeSpan.FromSeconds(1));
+  return &quot;Hi!&quot;;
+}
+
+public string Get() =&amp;gt; GetCoreAsync&amp;lt;SynchronousDelay&amp;gt;().GetAwaiter().GetResult();
+public Task&amp;lt;string&amp;gt; GetAsync() =&amp;gt; GetCoreAsync&amp;lt;AsynchronousDelay&amp;gt;();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The core implementation (&lt;code&gt;GetCoreAsync&lt;/code&gt;) is simplified and is more obviously correct. The public interface (&lt;code&gt;Get&lt;/code&gt; and &lt;code&gt;GetAsync&lt;/code&gt;) didn’t change at all. And at runtime, if only one path is used, then only one path will be JITted. If both paths are used, then two copies of &lt;code&gt;GetCoreAsync&lt;/code&gt; are created by the JITter, each one optimized for its own situation (asynchronous or synchronous). This is a particularly useful technique for libraries, which may need to provide both forms of methods, but have a high likelihood of only one of them being used.&lt;/p&gt;
+
+&lt;p&gt;Stephen Toub discusses how the BCL uses this technique &lt;a href=&quot;https://devblogs.microsoft.com/dotnet/performance_improvements_in_net_7/?WT.mc_id=DT-MVP-5000058#:~:text=One%20final%20change%20related%20to%20reading%20and%20writing%20performance&quot;&gt;in a recent blog post&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;summary&quot;&gt;Summary&lt;/h2&gt;
+
+&lt;p&gt;Generic code generation provides a limited form of code generation in C#, because value types cause monomorphization. Static interface members provide an even nicer way to do generic code generation.&lt;/p&gt;
+</description>
+        <pubDate>Thu, 13 Oct 2022 00:00:00 +0000</pubDate>
+        <link>https://blog.stephencleary.com/2022/10/modern-csharp-techniques-3-generic-code-generation.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2022/10/modern-csharp-techniques-3-generic-code-generation.html</guid>
+      </item>
+    
+      <item>
         <title>Modern C# Techniques, Part 2: Value Records</title>
         <description>&lt;p&gt;Today I’ll cover another technique for modern C# that isn’t exactly &lt;em&gt;new&lt;/em&gt;, but which the language supports much better than it used to.&lt;/p&gt;
 
@@ -835,75 +1031,6 @@ class AnotherExample : ExampleBase&amp;lt;AnotherExample&amp;gt;
         <pubDate>Thu, 21 Jan 2021 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2021/01/asynchronous-messaging-3-backend-processor.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2021/01/asynchronous-messaging-3-backend-processor.html</guid>
-      </item>
-    
-      <item>
-        <title>Asynchronous Messaging, Part 2: Durable Queues</title>
-        <description>&lt;p&gt;Last time I concluded that the proper solution for request-extrinsic code is asynchronous messaging, which has two primary parts: a durable queue and a backend service. Today I’m going to discuss durable queues.&lt;/p&gt;
-
-&lt;h2 id=&quot;the-definition-of-durable&quot;&gt;The Definition of “Durable”&lt;/h2&gt;
-
-&lt;p&gt;When I suggest the asynchronous messaging solution, I try to use the term “durable” or “reliable”, and the emphasis is on the “durable” in “durable queue”. But what do “durable” or “reliable” really mean? There’s a range of meanings, from what I would consider “minimum viable” to “paranoid”.&lt;/p&gt;
-
-&lt;p&gt;A durable queue must &lt;em&gt;at least&lt;/em&gt; write the new item to disk when it is placed into the queue. In other words, a durable queue is one that stores &lt;strong&gt;durable messages&lt;/strong&gt;. This is the minimum viable behavior for a durable queue: messages must survive shutdowns. Asynchronous messaging &lt;em&gt;must&lt;/em&gt; use a queue whose messages survive shutdown. This is good enough for many (most?) applications.&lt;/p&gt;
-
-&lt;p&gt;A &lt;em&gt;more&lt;/em&gt; durable (or more reliable) queue would be one that writes to &lt;em&gt;multiple&lt;/em&gt; disks. This allows the messages to also survive a single disk failure. An even more durable queue would be one that writes to disks on multiple &lt;em&gt;servers&lt;/em&gt;; this allows the messages to survive a complete server failure. Finally, the most paranoid durable queues write to multiple servers in distinct geographical locations; this allows the message to survive the destruction of an entire data center. Most applications do not require that level of durability.&lt;/p&gt;
-
-&lt;p&gt;But it’s important to note that the minimum acceptable reliability is writing to disk. In-memory queues are &lt;em&gt;not&lt;/em&gt; reliable enough for asynchronous messaging; this includes &lt;code&gt;Queue&amp;lt;T&amp;gt;&lt;/code&gt;, &lt;code&gt;Channel&amp;lt;T&amp;gt;&lt;/code&gt;, and &lt;code&gt;BlockingCollection&amp;lt;T&amp;gt;&lt;/code&gt;, the three most common in-memory queues. When I say they are not “reliable”, I don’t mean that they can’t be used as in-memory queues; they’re perfectly fine for that scenario. However, since their messages are not durable (i.e., will not survive shutdown), they do not provide sufficient reliability for use with asynchronous messaging.&lt;/p&gt;
-
-&lt;h2 id=&quot;the-problem-with-in-memory-queues&quot;&gt;The Problem with In-Memory Queues&lt;/h2&gt;
-
-&lt;p&gt;I’m going to dive into this in a bit of detail, because this is a common point of confusion. I’ve defined “durable” as meaning at least “on disk”, and I’ve used the reasoning that “asynchronous messages must survive shutdown”. This section will go into more detail of the reasoning behind this restriction.&lt;/p&gt;
-
-&lt;p&gt;I think it’s easiest to understand this by contemplating one question: “When is it safe for an HTTP service to shut down?”&lt;/p&gt;
-
-&lt;p&gt;The HTTP protocol is ubiquitous; it’s used by all kinds of APIs and web services. And there’s a seemingly endless number of conventions and standards built on top of HTTP. With all these details and abstractions, sometimes one critical truth is forgotten: &lt;strong&gt;the HTTP protocol is a request/response protocol&lt;/strong&gt;. In other words, for every request there is exactly one response. From the HTTP service’s perspective, a request arrives, and then some time later the response is sent and that request is completed.&lt;/p&gt;
-
-&lt;p&gt;Back to that question: “When is it safe for an HTTP service to shut down?” The easiest possible answer is “when a response for each request has been sent.” Or to word the same idea a different way: “when there are no more outstanding requests.”&lt;/p&gt;
-
-&lt;p&gt;This is such a natural answer to the question that &lt;em&gt;every&lt;/em&gt; HTTP server has this as its default answer. It doesn’t matter if you’re on ASP.NET, Node.js, Ruby on Rails, … &lt;em&gt;Every&lt;/em&gt; HTTP server framework keeps track of how many outstanding requests it has, and considers itself “safe to shut down” when that number reaches zero. This also holds true for load balancers and proxies: “When is it safe to remove this HTTP server from my list?” - “When it has no more requests waiting for responses.” It doesn’t matter if you’re using nginx, HAProxy, Kubernetes’ apiserver proxy, … &lt;em&gt;Every&lt;/em&gt; HTTP proxy application keeps track of the number of outstanding requests, and considers HTTP servers “done” when they have sent out responses for all of their requests.&lt;/p&gt;
-
-&lt;p&gt;This is why request-extrinsic code is dangerous: all of this default behavior is suddenly wrong. The HTTP service says it’s safe to shut down when it’s not safe to shut down; all the proxies and load balancers say it’s safe to take that machine out of rotation when it’s not.&lt;/p&gt;
-
-&lt;h3 id=&quot;shutdowns-are-normal&quot;&gt;Shutdowns Are Normal&lt;/h3&gt;
-
-&lt;p&gt;Often developers react to this by trying to force alternative solutions. All HTTP server frameworks answer “When is it safe to shut down?” with “When there are no more outstanding requests” &lt;em&gt;by default&lt;/em&gt;, but many of them allow overriding that default so the application itself can answer “It’s only safe to shut down when I say it’s safe to shut down.”&lt;/p&gt;
-
-&lt;p&gt;One of the problems with trying to force that alternative solution is that it only changes the answer at the HTTP service level; proxies and load balancers &lt;em&gt;also&lt;/em&gt; need to have their default logic changed (assuming that changing the default is even possible). Even if you get that working, there’s an unending maintenance problem: your HTTP server farm now handles shutdowns &lt;em&gt;completely differently&lt;/em&gt; than all other HTTP server farms.&lt;/p&gt;
-
-&lt;p&gt;When developers begin down this path, it is usually because the developer wants to keep their HTTP application running indefinitely. And this is a major misunderstanding: in reality, systems are more resilient if servers do &lt;em&gt;not&lt;/em&gt; run indefinitely. In fact, shutdowns are &lt;em&gt;normal&lt;/em&gt;, and we need to accept shutdowns as a normal part of life.&lt;/p&gt;
-
-&lt;p&gt;One example is rolling updates. When a new version of an HTTP application is developed, it needs to replace the old versions of that application. The normal way to do this is via rolling updates: for each server, the upstream proxy will stop forwarding new requests, wait until the service has no more outstanding requests, shut it down, install the update, start it up, and start forwarding new requests. Shutdowns are necessary to perform rolling updates.&lt;/p&gt;
-
-&lt;p&gt;Another example is applying operating system or runtime patches. This is similar to rolling updates, but in this case it is the lower layers that is being updated, so it’s machine-wide. The same steps apply, though: stop forwarding new requests to all services on that machine, wait until the machine has no outstanding requests, shut down all the services, install the patches (rebooting if necessary), start up all the services, and start forwarding new requests. This kind of shutdown occurs regularly, even for HTTP services that are not in active development.&lt;/p&gt;
-
-&lt;p&gt;A final example is that some frameworks and host processes just do periodic application restarts just to keep things clean. For example, Apache’s &lt;code&gt;MaxConnectionsPerChild&lt;/code&gt; or IIS’s &lt;code&gt;periodicRestart&lt;/code&gt; can recycle child processes periodically. This is primarily useful for managing memory leaks in applications, frameworks, and/or libraries. Apache no longer recycles by default, but IIS still does. Again, this is based on the number of outstanding requests: the server will recycle its child application when it has no outstanding requests.&lt;/p&gt;
-
-&lt;p&gt;The reasonable conclusion is that &lt;em&gt;shutdowns are normal&lt;/em&gt;. All HTTP applications must work correctly when shutdowns occur. Corollary: All software that assumes it will never shut down is inherently buggy.&lt;/p&gt;
-
-&lt;p&gt;Finally, we return to what “durable” means. In-memory queues cannot survive shutdowns. Therefore, “minimum acceptable reliability” means that the queue of work survives shutdowns, which are normal and common.&lt;/p&gt;
-
-&lt;h2 id=&quot;examples-of-durable-queues&quot;&gt;Examples of Durable Queues&lt;/h2&gt;
-
-&lt;p&gt;I tend to prefer cloud queues whenever possible, because the cloud provider manages them, they scale really well, and they give you knobs for controlling how paranoid you want your durability to be.&lt;/p&gt;
-
-&lt;p&gt;For this reason, my top go-tos for durable queues are &lt;a href=&quot;https://azure.microsoft.com/en-us/services/storage/queues/?WT.mc_id=DT-MVP-5000058&quot;&gt;Azure Storage Queue&lt;/a&gt;, &lt;a href=&quot;https://aws.amazon.com/sqs/&quot;&gt;Amazon Simple Queue Service (SQS)&lt;/a&gt;, and &lt;a href=&quot;https://cloud.google.com/tasks&quot;&gt;Google Cloud Tasks&lt;/a&gt;. I’m most familiar with Azure’s queueing, though I have also used Amazon’s in production systems. All cloud queueing systems provide durable queues that can scale out automatically.&lt;/p&gt;
-
-&lt;p&gt;As much as I like cloud solutions, on-premises queueing systems are perfectly viable. It’s not possible to get the same scaling capabilities as a cloud solution, but you can get lower latencies. The most common on-premises durable queues these days are &lt;a href=&quot;https://www.rabbitmq.com/&quot;&gt;RabbitMQ&lt;/a&gt; and &lt;a href=&quot;https://kafka.apache.org/documentation/&quot;&gt;Kafka&lt;/a&gt;. I’ve also used &lt;a href=&quot;https://www.ibm.com/products/mq&quot;&gt;IBM MQ&lt;/a&gt; (called WebSphere MQ at the time). For older Windows systems, &lt;a href=&quot;https://docs.microsoft.com/en-us/previous-versions/windows/desktop/msmq/ms711472(v=vs.85)?WT.mc_id=DT-MVP-5000058&quot;&gt;Microsoft Message Queueing (MSMQ)&lt;/a&gt; was common, though that is no longer recommended these days. Note that some on-premises queueing solutions do not use durable messages by default, so some configuration is necessary to make them actually durable (I’m looking at you, &lt;a href=&quot;https://www.rabbitmq.com/queues.html#durability&quot;&gt;RabbitMQ&lt;/a&gt;).&lt;/p&gt;
-
-&lt;p&gt;There are other solutions for both cloud and on-premises. The ones mentioned here are just ones I’ve had experience with, and which appear to be the most common.&lt;/p&gt;
-
-&lt;h3 id=&quot;database-as-a-durable-queue&quot;&gt;Database As a Durable Queue&lt;/h3&gt;
-
-&lt;p&gt;One other solution that is sometimes used is an actual database. Usually, this needs to be a database that guarantees ACID. Some NoSql databases can also be used as durable queues, as long as they actually have durable writes; but be aware that some NoSql databases can lose writes, in which case they do not qualify as durable queues. In my experience, most databases used as durable queues are fully ACID (i.e., transactional).&lt;/p&gt;
-
-&lt;p&gt;Using an ACID database as a durable queue allows you to use the Outbox Pattern. When a service wants to publish a message &lt;em&gt;if and only if&lt;/em&gt; a particular database transaction succeeds, then it writes that message to the database &lt;em&gt;as part of that transaction&lt;/em&gt;. It can’t publish the message before doing the database update, because the database update may fail; and it can’t publish the message after doing the database update, because if there’s some problem reaching the durable queue then the message wouldn’t be published. So, by using the database itself as a durable queue, then the service guarantees that the message will be published if and only if the database update takes place.&lt;/p&gt;
-
-&lt;p&gt;The Outbox Pattern gets its name because there’s usually a separate “outbox” table that just holds messages that are published. It’s possible to have the queue consumer read the outbox table directly, but a more common solution is to have the outbox table just act as temporary storage for messages on their way to another durable queue - usually one that is used by the rest of the application, e.g., a cloud queue or on-premises durable queue. In that case, the publishing service (or another service) has a polling job that reads the messages from the outbox table, sends them to the durable queue, and then deletes those messages from the outbox table. This provides an at-least-once delivery of the messages stored in the outbox table.&lt;/p&gt;
-</description>
-        <pubDate>Thu, 14 Jan 2021 00:00:00 +0000</pubDate>
-        <link>https://blog.stephencleary.com/2021/01/asynchronous-messaging-2-durable-queues.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2021/01/asynchronous-messaging-2-durable-queues.html</guid>
       </item>
     
   </channel>

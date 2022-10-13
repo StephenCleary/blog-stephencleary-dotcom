@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Modern C# Techniques, Part 2: Value Records</title>
+    <title>Modern C# Techniques, Part 3: Generic Code Generation</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Using value records (i.e., value objects) to overcome primitive obsession. Part of a series looking at modern C# code techniques." />
-    <link rel="canonical" href="https://blog.stephencleary.com/2022/10/modern-csharp-techniques-2-value-records.html" />
+    <meta name="description" content="Using structs as generic arguments with interface constraints to force code generation. Part of a series looking at modern C# code techniques." />
+    <link rel="canonical" href="https://blog.stephencleary.com/2022/10/modern-csharp-techniques-3-generic-code-generation.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -275,8 +275,8 @@ img.comment-author-profile-image {
 
   <header>
       <div class="page-header">
-          <h1>Modern C# Techniques, Part 2: Value Records</h1>
-          <small><time datetime="2022-10-06">Oct 6, 2022</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
+          <h1>Modern C# Techniques, Part 3: Generic Code Generation</h1>
+          <small><time datetime="2022-10-13">Oct 13, 2022</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
       </div>
   </header>
 
@@ -290,112 +290,208 @@ img.comment-author-profile-image {
   </header>
 
   <article>
-  <p>Today I’ll cover another technique for modern C# that isn’t exactly <em>new</em>, but which the language supports much better than it used to.</p>
+  <p>This technique really excites me! We’re in for a good ride today…</p>
 
-<p>I’m calling today’s technique Value Records, which are a form of the more general “value object” pattern that is specific to modern C#. But before we dive into the solution, let’s look at the problem.</p>
+<h2 id="c-templates-and-code-generation">C++ Templates and Code Generation</h2>
 
-<h2 id="primitive-obsession">Primitive Obsession</h2>
+<p>Before we take a look at C# generics, first I’ll take a brief look at how C++ templates are used for code generation.</p>
 
-<p>The name of the antipattern we’re trying to remove is Primitive Obsession. This is a highly searchable term with some great descriptions out there.</p>
+<p>Templates (and generics) are both forms of polymorphic functions; that is, you define one type (or method) that takes a type parameter, and the generic type/method is able to change its behavior based on the type passed in.</p>
 
-<p>Essentially, Primitive Obsession is when a developer (over)uses primitives (<code>string</code>, <code>int</code>, <code>Guid</code>, <code>decimal</code>, etc) to represent business or domain concepts. One classic example is entity ids. There are a couple of problems with using primitives like this:</p>
-<ol>
-  <li>The primitives are not type-safe. In other words, it’s easy to accidentally pass a <code>customerId</code> to a method expecting a <code>resourceId</code>. Or, say, if a method needs <em>both</em> a <code>customerId</code> and <code>resourceId</code>, it’s easy to pass the parameters in the wrong order.</li>
-  <li>Primitives support operations that don’t make sense. For example, if a <code>customerId</code> is an <code>int</code>, the compiler will happily let you divide it by 2, but that makes no business sense at all. A related problem is when you have <em>units</em>, such as <code>distanceInFeet</code> and <code>distanceInMeters</code>; the lack of units in the type system allow these values to be (incorrectly) added together.</li>
-</ol>
+<p>C++ templates are purely a compile-time construct; they instruct the compiler how to generate the code for the template type/method. Specifically, the compiler performs a transformation called <a href="https://en.wikipedia.org/wiki/Monomorphization">monomorphization</a>; for each of the template arguments actually passed to the type/method, the compiler generates a new copy of the type/method specifically for that template argument.</p>
 
-<h2 id="solving-primitive-obsession-with-value-objects">Solving Primitive Obsession with Value Objects</h2>
+<p>Monomorphization is what enables C++ templates to be used as code generators.</p>
 
-<p>Value Objects are the general solution to Primitive Obsession. The idea is that you define a (simple) domain object that wraps the primitive type inside a type-safe wrapper type. In some cases, this wrapper type may have some limited domain behavior (such as validation), but in many cases Value Objects are so-called “anemic domain models”, and that’s OK. Value Objects inhabit a middle ground between primitives and full-blown domain objects.</p>
+<h2 id="c-generics">C# Generics</h2>
 
-<p>Value Objects tend to behave similarly to the primitives they replace:</p>
-<ul>
-  <li>Value Objects are usually immutable.</li>
-  <li>Value Objects usually have value semantics.</li>
-  <li>If a primitive has a useful operation (e.g., string concatenation, integer addition, or even <code>ToString</code> or <code>GetHashCode</code> support) that also makes sense for the domain object, then Value Objects usually support those operations.</li>
-</ul>
+<p>C# generics are a run-time construct; the compiler actually outputs the generic type/method itself into the IL (intermediate language). At runtime, the implementation of a generic type/method is shared between the generic arguments.</p>
 
-<p>Following these patterns allows Value Objects to essentially be type-safe replacements for primitives. Occasionally some business rules are added (e.g., validation), but just plain old Value Objects work quite well on their own, too.</p>
+<p>In other words, C# generics do <em>not</em> undergo monomorphization… except…</p>
 
-<h2 id="c-and-value-records">C# and Value Records</h2>
+<h3 id="generics-and-value-types">Generics and Value Types</h3>
 
-<p>The modern C# technique for Value Objects is what I call Value Records, and looks like this:</p>
+<p>…except when used with value types!</p>
 
-<pre><code class="language-C#">public readonly record struct CustomerId(string Value);
+<p>C# generics do <em>not</em> undergo monomorphization for reference types; there’s only one copy of the type/method implementation that is shared between all reference types. However, C# generics <em>do</em> undergo monomorphization for value types!</p>
+
+<p>This makes sense; if a method <code>Something&lt;T&gt;</code> defines a local variable <code>T value;</code>, the compiler needs to know how big that <code>T</code> is. The size of a reference is the same regardless of the type being referred to, but the size of value type values can vary.</p>
+
+<p>So, it turns out that C# generics <em>do</em> have monomorphization. They just don’t do it for <em>all</em> generic arguments, only the ones that are value types. And monomorphization isn’t done by the C# compiler; it’s done by the JIT compiler (at runtime).</p>
+
+<h3 id="generics-and-constrained-value-types">Generics and Constrained Value Types</h3>
+
+<p>Monomorphization is fine for <code>List&lt;T&gt;</code> and friends, which don’t actually <em>do</em> anything with the <code>T</code>.</p>
+
+<p>For code generation, though, monomorphization is most useful if you also constrain the generics to a specific interface. A simple (and rather silly) example will make this more clear:</p>
+
+<pre><code class="language-C#">interface ISample
+{
+  int Setting { get; }
+}
+
+void Function&lt;T&gt;()
+    where T : struct, ISample
+{
+  if (default(T).Setting == 13)
+    Console.WriteLine("Ah, my favorite number!");
+  else
+    Console.WriteLine($"You passed {default(T).Setting}.");
+}
+
+readonly struct Sample7 : ISample
+{
+  public int Setting =&gt; 7;
+}
+
+readonly struct Sample13 : ISample
+{
+  public int Setting =&gt; 13;
+}
+
+Function&lt;Sample7&gt;();
+Function&lt;Sample13&gt;();
 </code></pre>
 
-<p>Yes, that’s the whole type.</p>
+<p>The C# compiler just treats <code>Function</code> like an ordinary generic function. The JIT compiler will create <em>two separate copies</em> of <code>Function</code>; because <code>Sample7</code> and <code>Sample13</code> are both value types, monomorphization occurs and the JIT compiler generates <em>two</em> copies of the method. In both copies, the <code>default(T).Setting</code> code is emmitted as a constrained virtual call.</p>
 
-<p>Breaking it down:</p>
-<ul>
-  <li>Records provide value semantics, complete with equality, hash code, and <code>ToString</code> support.</li>
-  <li>Struct records provide a value-type wrapper, avoiding heap allocation (the size of the wrapper <em>is</em> the size of the wrapped value).</li>
-  <li>Readonly struct records provide immutability.</li>
-</ul>
+<p>Then, each copy of the method has a high likelihood of being optimized. After all, the compiler knows the type of <code>T</code> for each copy. When it optimizes <code>Function&lt;Sample7&gt;</code>, it <em>knows</em> that the <code>default(T).Setting</code> is calling the <code>ISample.get_Setting</code> method on the <code>Sample7</code> type. The <code>Sample7</code> implementation of <code>ISample.Setting</code> is trivial and is likely going to be inlined, which means that the <code>if</code> branch can be precomputed. It is extremely likely that both copies of <code>Function&lt;T&gt;</code> only end up having a single <code>Console.WriteLine</code> call, without any <code>if</code> statement at all!</p>
 
-<p>I prefer to use a single property named <code>Value</code>, which is similar to <code>Nullable&lt;T&gt;.Value</code>, except a Value Record <em>always</em> has a valid <code>Value</code>. Since the type definition is just a single line, it seems silly to have them follow the one-type-per-file rule; I tend to collect Value Record types and include them in a single source file, usually called <code>Primitives.cs</code>.</p>
+<p>At this point, we have real code generation using C# generics!</p>
 
-<h2 id="guidelines-for-use">Guidelines for Use</h2>
+<h3 id="generics-and-constrained-value-types-with-static-abstract-interface-methods">Generics and Constrained Value Types with Static Abstract Interface Methods</h3>
 
-<h3 id="avoid-sharp-edges">Avoid Sharp Edges</h3>
+<p>Static abstract interface methods allow us to clean this up even a bit more. Instead of defining <code>Setting</code> as an instance method, it can now be a static method, as such:</p>
 
-<p>I’ve used Value Records in a few projects now, and I think they work best as internal types. I don’t mean <code>internal</code>; I mean as types that are created and unwrapped by your own code at the “edges” of your app. Then the core of your app <em>only</em> deals with the Value Records.</p>
+<pre><code class="language-C#">interface ISample
+{
+  static abstract int Setting { get; }
+}
 
-<p>This way you don’t have to deal with any kind of serialization, which can be a real headache. I recommend you completely ignore Newtonsoft.Json / System.Text.Json / Xml, ASP.NET parameter binding / output formatting, WPF bindings, Entity Framework value conversions, and all other forms of serialization. Instead of trying to automatically support these, just have your own code create the Value Record wrappers when reading the values from an external source (e.g., <code>CustomerId customerId = new(customerIdIntValue)</code>), and unwrap them when writing values to an external source (e.g., <code>int customerIdIntValue = customerId.Value;</code>).</p>
+void Function&lt;T&gt;()
+    where T : struct, ISample
+{
+  if (T.Setting == 13)
+    Console.WriteLine("Ah, my favorite number!");
+  else
+    Console.WriteLine($"You passed {default(T).Setting}.");
+}
 
-<h3 id="choosing-primitives-to-replace">Choosing Primitives to Replace</h3>
+readonly struct Sample7 : ISample
+{
+  public static int Setting =&gt; 7;
+}
 
-<p>Not all primitives <em>need</em> to be Value Records. Choosing which primitives <em>should</em> be Value Records is a skill, one which everyone is developing right now, and there are no masters of this skill yet AFAIK.</p>
+readonly struct Sample13 : ISample
+{
+  public static int Setting =&gt; 13;
+}
 
-<p>In my experience, I would say to use primitives by default, but use Value Records in the following situations:</p>
-<ol>
-  <li>Use Value Records whenever you have similar value types that are used together.
-    <ul>
-      <li>“Similar” here can mean <em>conceptually</em> similar or just having a similar <em>name</em>.</li>
-    </ul>
-  </li>
-  <li>Use Value Records whenever you have to <em>guarantee</em> that a critical value type <em>must</em> be used only in a particular way.</li>
-</ol>
+Function&lt;Sample7&gt;();
+Function&lt;Sample13&gt;();
+</code></pre>
 
-<p>The classic example of the first situation (similar types) is using Value Records for entity identifiers (<code>CustomerId</code> and friends). Entity identifiers are conceptually similar <em>and</em> have similar names, and usually there are multiple methods that deal with different kinds of identifiers at the same time.</p>
+<p>Now there’s no need for a <code>default(T)</code> value inside <code>Function&lt;T&gt;</code>.</p>
 
-<p>The second situation (critical types) is more of a judgement call. I can at least give an example, though: one of my projects sends emails to users, but also has to deal with users that type in an email address that may or may not be theirs. And there are some severe repercussions for sending emails to people who haven’t asked for them; there’s actual laws in my country about that kind of behavior. So, I created a <code>ValidatedEmail</code> Value Record for this critical type. In my model, a user has a <code>ValidatedEmail</code> (whose value may be <code>null</code>), and the code component that sends emails <em>only</em> accepts a <code>ValidatedEmail</code>. It’s comforting to know that the type system itself is enforcing the business rule “only send emails to validated email addresses”.</p>
+<h2 id="warnings-and-limitations">Warnings and Limitations</h2>
 
-<h2 id="misuse">Misuse</h2>
+<p>By using C# generics with value types, we can ensure monomorphization takes place; however, the rest of the behavior is not guaranteed.</p>
 
-<p>Similar to last week’s technique, the primary misuse of the Value Record technique is <em>overuse</em>. Once you start feeling the benefits of the stronger type safety from Value Records, you’ll start wanting it everywhere. You may end up temporarily suffering from “Primitive Obsession Obsession”, if you will.</p>
+<h3 id="no-guarantees">No Guarantees</h3>
 
-<p>There’s a maintenance tradeoff with using Value Records: Value Records increase the code complexity. Speficially, Value Records increase the mental burden when reading the code. Put simply: every developer knows what a <code>string</code> is, but if they see a <code>CustomerId</code> type, then they need to look that up. Remember, techniques like Value Records are easy to write because they’re in <em>your</em> head <em>now</em>, but the resulting code is more difficult to maintain (whether maintained by <em>others</em> or yourself <em>later</em>).</p>
+<p>The JIT compiler doesn’t actually <em>guarantee</em> that any particular methods are inlined, or that any kind of optimization takes place (e.g., removing the <code>if</code> statement in our example). It’s reasonable to assume that <em>some</em> optimization will take place, and with modern tiered optimization, you can also expect that the method will become <em>more</em> optimized if it is called a lot.</p>
 
-<p>After all, it’s not like primitives are evil or anything like that. Primitives are a perfectly fine solution for a lot of data. <code>string CustomerName</code> is probably just fine; it wouldn’t have any real validation and is unlikely to be confused with something else. Well, that’s true unless your domain has a ton of “names”, in which case maybe it <em>can</em> be easily confused with another kind of name and <em>should</em> be a Value Record.</p>
+<p>With C++ templates (and other compile-time-only monomorphization systems), you can <em>know</em> that the resulting code will be fully optimized. With C# generics, the optimization happens at runtime, so the runtime has to balance between executing the code <em>now</em> and speeding it up for <em>later</em>. At the end of the day, the best you can do is hope.</p>
 
-<h2 id="history">History</h2>
+<h3 id="limited-to-interfaces">Limited to Interfaces</h3>
 
-<p>Until records were added to the language, immutable objects were always a bit of a pain, with some going so far as to <a href="https://github.com/AArnott/ImmutableObjectGraph">create libraries just to help write immutable types</a>. The Value Object pattern was used only when absolutely necessary, since it resulted in much more complex code (with a naturally higher probability of containing bugs).</p>
+<p>When doing this kind of code generation, you’re limited to only what can be expressed as interface members. You can define methods and properties, but not <code>const</code> values or nested types. It’s not a <em>complete</em> code generation solution like C++ templates, but it’s certainly useful nonetheless.</p>
 
-<p>If you haven’t read it yet, <a href="https://andrewlock.net/series/using-strongly-typed-entity-ids-to-avoid-primitive-obsession/">Andrew Lock has a great blog series on using strongly-typed entity IDs to avoid primitive obsession</a>. I think overall it’s a good series conceptually, but do note that the implementation details are quite dated at this point. Also note how much the complexity is increased by trying to handle only a couple forms of serialization.</p>
+<h2 id="applications">Applications</h2>
 
-<p>Record types brought immutability to C# as a first-class citizen. The initial record types were class records (reference types), which works great for many immutable types, but tends to be a heavyweight solution for Value Objects. E.g., when wrapping <code>int</code> values, a <code>class record</code> wrapper essentially acts as an always-boxed <code>int</code>.</p>
+<h3 id="more-efficient-general-algortihms">More Efficient General Algortihms</h3>
 
-<p>These days we have readonly struct records, which are immutable <em>and</em> lightweight, and a perfect fit for the Value Object pattern.</p>
+<p>There are some algorithms that take parameters that often don’t change for a given program. To take an example I’m familiar with, CRC32 hashes are actually a <em>class</em> of hash algorithms with different values for polynomials, initializers, and a few other parameters. Usually, a program that uses a CRC32 hash only uses <em>one</em> of these algorithms (one specific polynomial with a specific initializer value, etc). If the CRC32 implementation uses code generation, that will allow the JIT compiler to optimize just for that specific CRC32 hash algorithm.</p>
+
+<h3 id="more-general-algortihms">More General Algortihms</h3>
+
+<p>It’s also possible to make one algorithm even more generic, especially due to the static interface methods. For a similar example to the above, CRC16 is <em>another</em> class of hash algorithms that is practically the same as CRC32 except it uses 16-bit integers instead of 32-bit integers. Static interface methods would allow a single unified “CRC” algorithm that can handle <a href="https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/tutorials/static-virtual-interface-members?WT.mc_id=DT-MVP-5000058#generic-math">any numeric type with generic math constraints</a>. So our CRC32 and CRC16 implementations can be combined.</p>
+
+<h3 id="replacing-constant-arguments">Replacing Constant Arguments</h3>
+
+<p>There are a few situations in code where certain method arguments are always constant values. This is usually an indication that the method should be split into two methods, but sometimes there are maintenance concerns that are sufficiently strong, keeping the methods as a single implementation.</p>
+
+<p>The example that I’m most familiar with here is the <a href="https://learn.microsoft.com/en-us/archive/msdn-magazine/2015/july/async-programming-brownfield-async-development?WT.mc_id=DT-MVP-5000058#the-flag-argument-hack">boolean argument hack</a> for providing both synchronous and asynchronous versions of a method, which looks like this:</p>
+
+<pre><code class="language-C#">private Task&lt;string&gt; GetCoreAsync(bool sync)
+{
+  if (sync)
+    Thread.Sleep(TimeSpan.FromSeconds(1));
+  else
+    await Task.Delay(TimeSpan.FromSeconds(1));
+  return "Hi!";
+}
+
+public string Get() =&gt; GetCoreAsync(sync: true).GetAwaiter().GetResult();
+public Task&lt;string&gt; GetAsync() =&gt; GetCoreAsync(sync: false);
+</code></pre>
+
+<p>In the code above, <code>GetCoreAsync</code> has a <code>sync</code> argument that is <em>always</em> a constant. Really, it <em>should</em> be two different methods, but if we pretend that <code>GetCoreAsync</code> is much longer and more complex, then making it two different methods does cause a maintenance burden.</p>
+
+<p>So, let’s use generic code generation to <em>generate</em> two different methods!</p>
+
+<p>First, we’d extract the code differences (<code>Thread.Sleep</code> vs <code>Task.Delay</code>). These are going to need a definition in our interface, and they’ll be implemented by each value type. Since we’re talking about code that may be synchronous or asynchronous, we’ll use value tasks as the return type. (Reminder: any time you have a method whose implementation <em>may</em> be asynchronous, then it should have an asynchronous signature). Then, <code>GetCoreAsync</code> can just invoke those interface methods. We end up with something like this:</p>
+
+<pre><code class="language-C#">private interface IDelay
+{
+  static abstract ValueTask DelayAsync(TimeSpan delay);
+}
+
+private readonly struct SynchronousDelay : IDelay
+{
+  static ValueTask DelayAsync(TimeSpan delay)
+  {
+    Thread.Sleep(delay);
+    return new();
+  }
+}
+
+private readonly struct AsynchronousDelay : IDelay
+{
+  static async ValueTask DelayAsync(TimeSpan delay) =&gt; await Task.Delay(delay);
+}
+
+private Task&lt;string&gt; GetCoreAsync&lt;TDelay&gt;()
+    where TDelay: struct, IDelay
+{
+  await TDelay.DelayAsync(TimeSpan.FromSeconds(1));
+  return "Hi!";
+}
+
+public string Get() =&gt; GetCoreAsync&lt;SynchronousDelay&gt;().GetAwaiter().GetResult();
+public Task&lt;string&gt; GetAsync() =&gt; GetCoreAsync&lt;AsynchronousDelay&gt;();
+</code></pre>
+
+<p>The core implementation (<code>GetCoreAsync</code>) is simplified and is more obviously correct. The public interface (<code>Get</code> and <code>GetAsync</code>) didn’t change at all. And at runtime, if only one path is used, then only one path will be JITted. If both paths are used, then two copies of <code>GetCoreAsync</code> are created by the JITter, each one optimized for its own situation (asynchronous or synchronous). This is a particularly useful technique for libraries, which may need to provide both forms of methods, but have a high likelihood of only one of them being used.</p>
+
+<p>Stephen Toub discusses how the BCL uses this technique <a href="https://devblogs.microsoft.com/dotnet/performance_improvements_in_net_7/?WT.mc_id=DT-MVP-5000058#:~:text=One%20final%20change%20related%20to%20reading%20and%20writing%20performance">in a recent blog post</a>.</p>
 
 <h2 id="summary">Summary</h2>
 
-<p>Carefully replacing some primitive types with Value Records will increase the type safety, correctness, and maintainability of your code.</p>
+<p>Generic code generation provides a limited form of code generation in C#, because value types cause monomorphization. Static interface members provide an even nicer way to do generic code generation.</p>
 
   </article>
     
     <footer class="hidden-print">
         
             <ul class="pager">
-                <li class="previous"><a href="/2022/09/modern-csharp-techniques-1-curiously-recurring-generic-pattern.html" title="Modern C# Techniques, Part 1: Curiously Recurring Generic Pattern">&larr; Previous in Modern C# Techniques</a></li>
-                <li class="next"><a href="/2022/10/modern-csharp-techniques-3-generic-code-generation.html" title="Modern C# Techniques, Part 3: Generic Code Generation">Next in Modern C# Techniques &rarr;</a></li>
+                <li class="previous"><a href="/2022/10/modern-csharp-techniques-2-value-records.html" title="Modern C# Techniques, Part 2: Value Records">&larr; Previous in Modern C# Techniques</a></li>
+                
             </ul>
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2022/09/modern-csharp-techniques-1-curiously-recurring-generic-pattern.html" title="Modern C# Techniques, Part 1: Curiously Recurring Generic Pattern">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2022/10/modern-csharp-techniques-3-generic-code-generation.html" title="Modern C# Techniques, Part 3: Generic Code Generation">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2022/10/modern-csharp-techniques-2-value-records.html" title="Modern C# Techniques, Part 2: Value Records">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="comments"></div>
@@ -409,8 +505,8 @@ img.comment-author-profile-image {
                     <div class="panel-body sidenav">
                         <ul class="nav nav-pills nav-stacked">
                                     <li class="sidenavitem"><a href="/2022/09/modern-csharp-techniques-1-curiously-recurring-generic-pattern.html">Curiously Recurring Generic Pattern</a></li>
-                                    <li class="active sidenavitem"><a href="/2022/10/modern-csharp-techniques-2-value-records.html">Value Records</a></li>
-                                    <li class="sidenavitem"><a href="/2022/10/modern-csharp-techniques-3-generic-code-generation.html">Generic Code Generation</a></li>
+                                    <li class="sidenavitem"><a href="/2022/10/modern-csharp-techniques-2-value-records.html">Value Records</a></li>
+                                    <li class="active sidenavitem"><a href="/2022/10/modern-csharp-techniques-3-generic-code-generation.html">Generic Code Generation</a></li>
                         </ul>
                     </div>
                 </div>
@@ -564,7 +660,7 @@ img.comment-author-profile-image {
 
 <script type="text/javascript">
 
-var pageUrl = "https://blog.stephencleary.com" + "/2022/10/modern-csharp-techniques-2-value-records.html";
+var pageUrl = "https://blog.stephencleary.com" + "/2022/10/modern-csharp-techniques-3-generic-code-generation.html";
 
 // (unnecessary) 1) If the URL starts with http://, replace with https://
 
