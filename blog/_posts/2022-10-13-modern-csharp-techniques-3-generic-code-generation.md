@@ -91,7 +91,7 @@ void Function<T>()
   if (T.Setting == 13)
     Console.WriteLine("Ah, my favorite number!");
   else
-    Console.WriteLine($"You passed {default(T).Setting}.");
+    Console.WriteLine($"You passed {T.Setting}.");
 }
 
 readonly struct Sample7 : ISample
