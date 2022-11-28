@@ -566,21 +566,19 @@ function commentId(id) { return "comment-" + id; }
 
 function $commentForm(hideForm, comment) {
     var $previewDiv = $('<div/>');
-    var $authorEmailEncrypted = $('<input type="hidden" name="fields[authorEmailEncrypted]">');
-    var $authorEmailMD5 = $('<input type="hidden" name="fields[authorEmailMD5]">');
+    var $authorEmailEncrypted = $('<input type="hidden" name="authorEmailEncrypted">');
+    var $authorEmailMD5 = $('<input type="hidden" name="authorEmailMD5">');
     var $email = $('<input type="email" name="email" class="form-control" placeholder="Email">');
-    var $name = $('<input type="text" name="fields[authorName]" class="form-control" placeholder="Name">');
-    var $url = $('<input type="url" name="fields[authorUri]" class="form-control" placeholder="Url">');
-    var $message = $('<textarea name="fields[message]" class="form-control" placeholder="Message"/></textarea>');
+    var $name = $('<input type="text" name="authorName" class="form-control" placeholder="Name">');
+    var $url = $('<input type="url" name="authorUri" class="form-control" placeholder="Url">');
+    var $message = $('<textarea name="message" class="form-control" placeholder="Message"/></textarea>');
     autosize($message);
-    var $replyTo = $('<input type="hidden" name="fields[replyTo]">').val("");
+    var $replyTo = $('<input type="hidden" name="replyTo">').val("");
     var $recaptcha = $('<div class="g-recaptcha" data-sitekey="6LfSaV8UAAAAAEFq-7HeUDiSQCkCtLtO_yc_SOi_"></div>');
     var $buttonBar = $('<div class="comment-form-buttonbar"/>').append($('<button type="submit" class="btn btn-primary pull-right">Submit</button>'), $recaptcha);
-    var $form = $('<form method="POST" action="https://stephencleary-comments.herokuapp.com/v2/entry/StephenCleary/comments.stephencleary.com/master"/>')
-        .append($('<input type="hidden" name="fields[postId]">').val(postId))
-        .append($('<input type="hidden" name="fields[postUri]">').val(location.href.replace(/#.*/, '')))
-        .append($('<input type="hidden" name="options[reCaptcha][siteKey]" value="6LfSaV8UAAAAAEFq-7HeUDiSQCkCtLtO_yc_SOi_">'))
-        .append($('<input type="hidden" name="options[reCaptcha][secret]" value="rlAivB9udiXQ8MQx3HNJ2Cw/qA2OJI1noljbySzRpNLKmdaS7LtDRT4T3hZcQswRl5sajt5dr+Txj46K2oEGH2HiStNdMMxCchBg0T6YcbZoAP7Zvax+6/C293ClnzMYq8Ozk4bMDbXEHC11FvHR2eaBKqTgAmQSQ3+N2NU5Aaw4Cqfgsj55Br+lKyK0Ydll6SF9+IjQnGJ6S9QV7rHopROdV3RCaeSsSrhsqyGjhvPRgSdl23npJbZt8R0e4oGd6ogH+VDhkj+S3LFPL+R7h6BiHuUDNuJheaJKYTJtjWt80esZgFYywTyTWnqkNBHxOXyH8+AN4PGI0trvlXzdsGvNYRP+dlV6AQyShI3zimSmB4mqcAnuNhGNvLIsfgTKRT1gmxgG1uxUMPjRq1L3R2wQMSQ1/cEuX2wiLI3UrtT8N+QUEptMQ1jsR7rg28OxqIVhbd2+LeAS90PxbxJ9h3mKAxQ493TmCIxRLbh9RNLl+jy8NsRwz2RikzKLJDZsfB7n/Z30nSDZkOTtT7fMzS3g4eJzT0sZStFQsW7Gis6MVs8hXUYgiuIseALKvAzmobnlycD/rqlCpZ5rYC2xQToc4ZDczfZ0bCP8/R5Op4J8LhI4l0JfR1pZSD9V9xTyQ6MTuTT63Ra72ANxn/0idxveWPJS7WMKbKoGmuTNji4=">'))
+    var $form = $('<form method="POST" action="https://blogcomments.azurewebsites.net/api/Function1"/>')
+        .append($('<input type="hidden" name="postId">').val(postId))
+        .append($('<input type="hidden" name="postUri">').val(location.href.replace(/#.*/, '')))
         .append($replyTo)
         .append($authorEmailEncrypted)
         .append($authorEmailMD5)
@@ -591,11 +589,16 @@ function $commentForm(hideForm, comment) {
     if (comment) {
         $replyTo.val(comment._id);
     }
+    const serialize_form = form => JSON.stringify(
+        Array.from(new FormData(form).entries())
+            .reduce((m, [ key, value ]) => Object.assign(m, { [key]: value }), {})
+    );
     $form.submit(function (e) {
         e.preventDefault();
         hideForm();
         var postAction = $form.attr('action');
-        var postBody = $form.serialize();
+        var postBody = serialize_form($form.get(0));
+        console.log(postBody);
         var retries = 5;
 
         function postIt() {
