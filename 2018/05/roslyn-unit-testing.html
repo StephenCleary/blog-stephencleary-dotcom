@@ -326,7 +326,7 @@ img.comment-author-profile-image {
 
   <span class="c1">// Parse and compile the C# code into a *.dll and *.xml file in-memory</span>
   <span class="kt">var</span> <span class="n">tree</span> <span class="p">=</span> <span class="n">CSharpSyntaxTree</span><span class="p">.</span><span class="n">ParseText</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">parseOptions</span><span class="p">);</span>
-  <span class="kt">var</span> <span class="n">compilation</span> <span class="p">=</span> <span class="n">compilation</span><span class="p">.</span><span class="n">AddSyntaxTrees</span><span class="p">(</span><span class="n">tree</span><span class="p">);</span>
+  <span class="n">compilation</span> <span class="p">=</span> <span class="n">compilation</span><span class="p">.</span><span class="n">AddSyntaxTrees</span><span class="p">(</span><span class="n">tree</span><span class="p">);</span>
   <span class="kt">var</span> <span class="n">peStream</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MemoryStream</span><span class="p">();</span>
   <span class="kt">var</span> <span class="n">xmlStream</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MemoryStream</span><span class="p">();</span>
   <span class="kt">var</span> <span class="n">emitResult</span> <span class="p">=</span> <span class="n">compilation</span><span class="p">.</span><span class="n">Emit</span><span class="p">(</span><span class="n">peStream</span><span class="p">,</span> <span class="n">xmlDocumentationStream</span><span class="p">:</span> <span class="n">xmlStream</span><span class="p">);</span>
