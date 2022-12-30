@@ -141,7 +141,7 @@ Function&amp;lt;Sample13&amp;gt;();
 
 &lt;p&gt;The example that I’m most familiar with here is the &lt;a href=&quot;https://learn.microsoft.com/en-us/archive/msdn-magazine/2015/july/async-programming-brownfield-async-development?WT.mc_id=DT-MVP-5000058#the-flag-argument-hack&quot;&gt;boolean argument hack&lt;/a&gt; for providing both synchronous and asynchronous versions of a method, which looks like this:&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&quot;language-C#&quot;&gt;private Task&amp;lt;string&amp;gt; GetCoreAsync(bool sync)
+&lt;pre&gt;&lt;code class=&quot;language-C#&quot;&gt;private async Task&amp;lt;string&amp;gt; GetCoreAsync(bool sync)
 {
   if (sync)
     Thread.Sleep(TimeSpan.FromSeconds(1));
@@ -179,7 +179,7 @@ private readonly struct AsynchronousDelay : IDelay
   static async ValueTask DelayAsync(TimeSpan delay) =&amp;gt; await Task.Delay(delay);
 }
 
-private Task&amp;lt;string&amp;gt; GetCoreAsync&amp;lt;TDelay&amp;gt;()
+private async Task&amp;lt;string&amp;gt; GetCoreAsync&amp;lt;TDelay&amp;gt;()
     where TDelay: struct, IDelay
 {
   await TDelay.DelayAsync(TimeSpan.FromSeconds(1));
