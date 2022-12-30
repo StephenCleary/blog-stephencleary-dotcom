@@ -141,7 +141,7 @@ There are a few situations in code where certain method arguments are always con
 The example that I'm most familiar with here is the [boolean argument hack](https://learn.microsoft.com/en-us/archive/msdn-magazine/2015/july/async-programming-brownfield-async-development?WT.mc_id=DT-MVP-5000058#the-flag-argument-hack) for providing both synchronous and asynchronous versions of a method, which looks like this:
 
 ```C#
-private Task<string> GetCoreAsync(bool sync)
+private async Task<string> GetCoreAsync(bool sync)
 {
   if (sync)
     Thread.Sleep(TimeSpan.FromSeconds(1));
@@ -180,7 +180,7 @@ private readonly struct AsynchronousDelay : IDelay
   static async ValueTask DelayAsync(TimeSpan delay) => await Task.Delay(delay);
 }
 
-private Task<string> GetCoreAsync<TDelay>()
+private async Task<string> GetCoreAsync<TDelay>()
     where TDelay: struct, IDelay
 {
   await TDelay.DelayAsync(TimeSpan.FromSeconds(1));
