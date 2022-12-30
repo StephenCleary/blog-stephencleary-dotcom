@@ -42,7 +42,7 @@ public static (AssemblyDefinition Dll, XDocument Xml) Compile(string code)
 
   // Parse and compile the C# code into a *.dll and *.xml file in-memory
   var tree = CSharpSyntaxTree.ParseText(code, parseOptions);
-  var compilation = compilation.AddSyntaxTrees(tree);
+  compilation = compilation.AddSyntaxTrees(tree);
   var peStream = new MemoryStream();
   var xmlStream = new MemoryStream();
   var emitResult = compilation.Emit(peStream, xmlDocumentationStream: xmlStream);
