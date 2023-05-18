@@ -8,6 +8,70 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>Grounded ChatGPT</title>
+        <description>&lt;p&gt;So, there’s this thing you may have heard of called ChatGPT. A lot of people (myself included) have thought “OK, nice toy. It’s pretty good at producing human-sounding text. But I want to run it &lt;em&gt;on my own data&lt;/em&gt; without becoming a data scientist and spending a few hundred thousand dollars in training costs.”&lt;/p&gt;
+
+&lt;p&gt;Then someone pointed out to me there’s already a technique for this called Retrieval Augmented Generation, and in fact there’s some &lt;a href=&quot;https://github.com/Azure-Samples/azure-search-openai-demo&quot;&gt;sample code right there&lt;/a&gt; showing how to do it.&lt;/p&gt;
+
+&lt;h2 id=&quot;retrieval-augmented-generation&quot;&gt;Retrieval Augmented Generation&lt;/h2&gt;
+
+&lt;p&gt;To save you a Google search (or ChatGPT query?), here’s my super-simple description of this technique: when the user asks a question, instead of just giving it to ChatGPT directly, first do a &lt;em&gt;search&lt;/em&gt; for that question over your own data, and combine the search results &lt;em&gt;along with&lt;/em&gt; the user’s question as the ChatGPT input.&lt;/p&gt;
+
+&lt;p&gt;This technique “grounds” ChatGPT, giving it your own data alongside the user’s question. If you structure your input properly, you can influence ChatGPT to produce relevant results, even including source references. With this technique, ChatGPT is able to produce much better results, without the need for training or even fine-tuning the model itself.&lt;/p&gt;
+
+&lt;h2 id=&quot;sample-code&quot;&gt;Sample Code&lt;/h2&gt;
+
+&lt;p&gt;The official sample referenced above is in Python. And I love Python. As a language, I mean. But it’s been… um… 25 years or so since I’ve used it. Definitely rusty. So I decided to write my own sample (heavily influenced by the official one) in C#. And using local Docker containers as much as possible instead of creating a bunch of Azure resources.&lt;/p&gt;
+
+&lt;p&gt;You can find my &lt;a href=&quot;https://github.com/StephenCleary/grounded-chatgpt&quot;&gt;C# Retrieval Augmented Generation code on GitHub&lt;/a&gt;. It’s not production-ready, but it gets the general point across. You can use it pretty easily to “teach” ChatGPT about modern events or your own custom data. It uses Elasticsearch and Seq (both in local Docker containers), preserving its data in local Docker volumes. And it has exhaustive logging out of the box, so you can always review what APIs were called and how exactly they work. My code does use the Azure OpenAI API to talk to ChatGPT, but everything else is in local Docker containers.&lt;/p&gt;
+
+&lt;h2 id=&quot;more-implementation-details&quot;&gt;More Implementation Details&lt;/h2&gt;
+
+&lt;p&gt;When you use this sample code to do a retrieval-augmented generation, what actually happens is this:&lt;/p&gt;
+
+&lt;p&gt;The user’s question is sent to ChatGPT to extract search keywords, using this template:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;Below is a question asked by the user that needs to be answered by searching.
+Generate a search query based on names and concepts extracted from the question.
+
+### Question:
+{question}
+
+### Search query:
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;ChatGPT is pretty good at generating a search query from a user question; I set the &lt;code&gt;temperature&lt;/code&gt; to zero to ensure there’s no randomness in this call.&lt;/p&gt;
+
+&lt;p&gt;Next, this ChatGPT response is sent to Elasticsearch (just as a &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-simple-query-string-query.html&quot;&gt;simple query string&lt;/a&gt;).&lt;/p&gt;
+
+&lt;p&gt;The results of the Elasticsearch search are then formatted and injected into a ChatGPT prompt that looks like this:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;Answer the following question. You may include multiple answers, but each answer may only use the data provided in the References below.
+Each Reference has a number followed by tab and then its data.
+Use square brakets to indicate which Reference was used, e.g. [7]
+Don't combine References; list each Reference separately, e.g. [1][2]
+If you cannot answer using the References below, say you don't know. Only provide answers that include at least one Reference name.
+If asking a clarifying question to the user would help, ask the question.
+Do not comment on unused References.
+
+### References:
+{sources}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The result is then post-processed to extract the quoted references and change them to hyperlinks.&lt;/p&gt;
+
+&lt;h2 id=&quot;have-fun&quot;&gt;Have Fun!&lt;/h2&gt;
+
+&lt;p&gt;I’ve been pretty pleased with the results, even though I’m using very simplistic source processing, and a lexical search instead of a more proper semantic/vector search. Even with those limitations, the results are pretty impressive!&lt;/p&gt;
+
+&lt;p&gt;That’s all I have to say for now. Have fun!&lt;/p&gt;
+</description>
+        <pubDate>Thu, 18 May 2023 00:00:00 +0000</pubDate>
+        <link>https://blog.stephencleary.com/2023/05/grounded-chatgpt.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2023/05/grounded-chatgpt.html</guid>
+      </item>
+    
+      <item>
         <title>Modern C# Techniques, Part 3: Generic Code Generation</title>
         <description>&lt;p&gt;This technique really excites me! We’re in for a good ride today…&lt;/p&gt;
 
@@ -980,57 +1044,6 @@ class AnotherExample : ExampleBase&amp;lt;AnotherExample&amp;gt;
         <pubDate>Thu, 28 Jan 2021 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2021/01/asynchronous-messaging-4-retrieve-results.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2021/01/asynchronous-messaging-4-retrieve-results.html</guid>
-      </item>
-    
-      <item>
-        <title>Asynchronous Messaging, Part 3: Backend Service</title>
-        <description>&lt;p&gt;The proper solution for request-extrinsic code is asynchronous messaging, which has two primary parts: a durable queue and a backend service. Today I’m going to discuss the backend service.&lt;/p&gt;
-
-&lt;h2 id=&quot;backend-services&quot;&gt;Backend Services&lt;/h2&gt;
-
-&lt;p&gt;The purpose of the background service is to process the queue messages. When the HTTP application wants to return before the processing is complete, it queues a message to the durable queue and then returns. The background service is the other side of that pipe; the HTTP application is the producer putting messages into the queue, and the background service is the consumer retrieving messages from the queue and processing them.&lt;/p&gt;
-
-&lt;p&gt;I usually recommend that the background service is &lt;strong&gt;independent&lt;/strong&gt; from the HTTP application, but it doesn’t strictly have to be.&lt;/p&gt;
-
-&lt;p&gt;One reason for having a separate service is that they can be scaled independently; if they were in the same application, then scaling out the HTTP application means the background service is also scaled out. Independent services means each one can be scaled as needed: the HTTP application scales based on HTTP requests, and the background service scales based on queue messages.&lt;/p&gt;
-
-&lt;p&gt;Another reason for having a separate service is that having an independent service &lt;em&gt;requires&lt;/em&gt; the use of an external queue. If the background service is in the same process as the HTTP application, it’s not obvious that an in-memory queue is an inappropriate solution, and a future code maintainer may change the queue to be in-memory as an attempted optimization.&lt;/p&gt;
-
-&lt;p&gt;A final reason for having an independent background service is that the background service itself affects how the HTTP application can be shut down. The background service consists entirely of request-extrinsic code, so special care must be taken to allow proper shutdowns.&lt;/p&gt;
-
-&lt;p&gt;For all these reasons, I recommend that background services are separate, independent services. But regardless of whether the background service is independent or sharing the same process as the HTTP application, it must process its messages idempotently.&lt;/p&gt;
-
-&lt;h2 id=&quot;idempotency&quot;&gt;Idempotency&lt;/h2&gt;
-
-&lt;p&gt;An operation is &lt;strong&gt;idempotent&lt;/strong&gt; if it can be applied multiple times and produce the same result each time. In other words, once an idempotent operation has been applied, then future applications of that same operation are noops. Ideally, the background service should process its messages idempotently.&lt;/p&gt;
-
-&lt;p&gt;This is necessary just due to the realities of durable queues. The CAP theorem has all the details, but the takeaway for modern distributed computing is that durable queues will deliver their durable messages &lt;strong&gt;at least once&lt;/strong&gt;. This means that the background service may get the same message more than once.&lt;/p&gt;
-
-&lt;p&gt;Ideally, you should try to structure your processing code so that receiving the same message more than once is a noop. Sometimes this means capturing more of the “state” of the system at the time the message is queued, and including that additional state in the queue messages.&lt;/p&gt;
-
-&lt;p&gt;Sometimes idempotency just isn’t possible. Or easy, at least. In that case, you can use &lt;strong&gt;de-duplication&lt;/strong&gt; to explicitly check for duplicate messages over a reasonable time period. Idempotent processing is best, and de-duplication is a reasonable fallback.&lt;/p&gt;
-
-&lt;h2 id=&quot;examples-of-backend-services&quot;&gt;Examples of Backend Services&lt;/h2&gt;
-
-&lt;p&gt;Just like durable queues, my go-to solutions for backend services are cloud solutions, specifically Functions as a Service (FaaS). FaaS is a perfect fit for background services, and even more so if you’re using a cloud-based durable queue. All the major cloud providers have built-in support for combining their durable queues with their FaaS offerings. This includes scaling logic: each cloud provider will auto-scale FaaS consumers based on their queue messages.&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://azure.microsoft.com/en-us/services/storage/queues/?WT.mc_id=DT-MVP-5000058&quot;&gt;Azure Storage Queues&lt;/a&gt; pair with &lt;a href=&quot;https://azure.microsoft.com/en-us/services/functions/?WT.mc_id=DT-MVP-5000058&quot;&gt;Azure Functions&lt;/a&gt;; &lt;a href=&quot;https://aws.amazon.com/sqs/&quot;&gt;Amazon Simple Queue Service (SQS) queues&lt;/a&gt; pair with &lt;a href=&quot;https://aws.amazon.com/lambda/&quot;&gt;AWS Lambdas&lt;/a&gt;; and &lt;a href=&quot;https://cloud.google.com/tasks&quot;&gt;Google Cloud Task queues&lt;/a&gt; pair with &lt;a href=&quot;https://cloud.google.com/functions&quot;&gt;Google Cloud Functions&lt;/a&gt;. Cloud pairs such as these are the easiest way to implement a full asynchronous messaging solution.&lt;/p&gt;
-
-&lt;p&gt;For on-premises solutions, one natural approach is a &lt;a href=&quot;https://docs.microsoft.com/en-us/windows/win32/services/services?WT.mc_id=DT-MVP-5000058&quot;&gt;Win32 service&lt;/a&gt; (if on Windows) or a &lt;a href=&quot;https://www.man7.org/linux/man-pages/man7/daemon.7.html&quot;&gt;Linux daemon&lt;/a&gt; (if on Linux). These are background services that run all the time the server machine is on, regardless of whether a user is logged in. They are headless processes that do not permit direct user interaction. This makes background services a natural choice for both HTTP applications and the background processing services.&lt;/p&gt;
-
-&lt;p&gt;Another possible solution is a regular Console application wrapped in a Docker container. Docker containers can be deployed either on-premise or in the cloud. This is a similar approach to the Win32 service / Linux daemon approach, but has better support for scaling out. Right now, Docker orchestrators are getting more support for scaling based on queue messages; setting up an autoscaler based on RabbitMQ messages is tedious but possible.&lt;/p&gt;
-
-&lt;p&gt;The final - and least recommended solution - is to have the backend service run as a part of the HTTP application. As noted above, there are a few disadvantages to this approach: it cannot scale independently, the resulting architecture implies that an in-memory queue is acceptable, and it complicates shutdown handling. However, some teams do choose this option in spite of the drawbacks. When putting the backend service in the same process as the HTTP application, the host &lt;em&gt;must&lt;/em&gt; be notified of the background work, or else work may be lost. Also, any “upstream” systems like HTTP proxies, load balancers, and deployment scripts may require changes so that they are also aware of the non-standard shutdown rules.&lt;/p&gt;
-
-&lt;div class=&quot;alert alert-info&quot;&gt;
-  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
-
-  &lt;p&gt;&lt;strong&gt;ASP.NET-specific:&lt;/strong&gt; In ASP.NET Core, use &lt;code&gt;IHostedService&lt;/code&gt;, or &lt;code&gt;IHostApplicationLifetime&lt;/code&gt; to detect and block HTTP application shutdown. &lt;code&gt;BackgroundService&lt;/code&gt; can also be used, but be aware that work may be lost if the host shutdown times out. In ASP.NET pre-Core, use &lt;code&gt;HostingEnvironment.QueueBackgroundWorkItem&lt;/code&gt; or &lt;code&gt;IRegisteredObject&lt;/code&gt;. Again, this is for the &lt;em&gt;least recommended solution&lt;/em&gt; and you’ll &lt;em&gt;also&lt;/em&gt; need to consider the impact on proxies, load balancers, and deployment systems. A far better solution would be to make the backend processing service independent (in its own process), and not change the HTTP shutdown rules at all.&lt;/p&gt;
-&lt;/div&gt;
-</description>
-        <pubDate>Thu, 21 Jan 2021 00:00:00 +0000</pubDate>
-        <link>https://blog.stephencleary.com/2021/01/asynchronous-messaging-3-backend-processor.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2021/01/asynchronous-messaging-3-backend-processor.html</guid>
       </item>
     
   </channel>
