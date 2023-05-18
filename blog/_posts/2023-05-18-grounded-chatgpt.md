@@ -4,15 +4,15 @@ title: "Grounded ChatGPT"
 description: "Grounding ChatGPT on your own data to prevent hallucination and enable source references."
 ---
 
-So, there's this thing you may have heard of called ChatGPT. A lot of people (myself included) thought "OK, nice toy. It's pretty good at producing human-sounding text. But I want to run it *on my own data* without spending a few hundred thousand dollars and becoming a data scientist."
+So, there's this thing you may have heard of called ChatGPT. A lot of people (myself included) have thought "OK, nice toy. It's pretty good at producing human-sounding text. But I want to run it *on my own data* without becoming a data scientist and spending a few hundred thousand dollars in training costs."
 
-Then someone pointed out there's already a technique for this called Retrieval Augmented Generation, and in fact there's some [sample code right there](https://github.com/Azure-Samples/azure-search-openai-demo) showing how to do it.
+Then someone pointed out to me there's already a technique for this called Retrieval Augmented Generation, and in fact there's some [sample code right there](https://github.com/Azure-Samples/azure-search-openai-demo) showing how to do it.
 
 ## Retrieval Augmented Generation
 
-To save you a Google search (or ChatGPT query?), here's my super-simple description of this technique: when the user asks a question, instead of just giving it to ChatGPT directly, first do a *search* for that question, and combine the search results *along with* the user's question as the ChatGPT input.
+To save you a Google search (or ChatGPT query?), here's my super-simple description of this technique: when the user asks a question, instead of just giving it to ChatGPT directly, first do a *search* for that question over your own data, and combine the search results *along with* the user's question as the ChatGPT input.
 
-This technique "grounds" ChatGPT, giving it your own data alongside the user's question. If you structure your input properly, you can influence ChatGPT to produce relevant results, even including source references.
+This technique "grounds" ChatGPT, giving it your own data alongside the user's question. If you structure your input properly, you can influence ChatGPT to produce relevant results, even including source references. With this technique, ChatGPT is able to produce much better results, without the need for training or even fine-tuning the model itself.
 
 ## Sample Code
 
