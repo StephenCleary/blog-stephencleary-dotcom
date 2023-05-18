@@ -51,7 +51,7 @@ If you cannot answer using the References below, say you don't know. Only provid
 If asking a clarifying question to the user would help, ask the question.
 Do not comment on unused References.
 
-###	References:
+### References:
 {sources}
 ```
 
