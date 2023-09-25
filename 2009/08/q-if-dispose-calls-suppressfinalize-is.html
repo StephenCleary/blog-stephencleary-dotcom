@@ -281,14 +281,6 @@ img.comment-author-profile-image {
       </div>
   </header>
 
-  <header>
-    <div class="alert alert-info" markdown="1">
-        <i class="fa fa-hand-o-right fa-2x pull-left"></i>
-        
-        <div>Has this blog been helpful? Please consider <a href="https://github.com/sponsors/StephenCleary" class="alert-link">supporting this blog (and my open-source libraries).</a> Thanks!</div>
-    </div>
-  </header>
-
   <article>
   <h2 id="question-if-we-include-a-call-to-gcsuppressfinalizethis-in-dispose-is-the-the-call-to-gckeepalivethis-still-required">Question: If we include a call to GC.SuppressFinalize(this) in Dispose, is the the call to GC.KeepAlive(this) still required?</h2>
 
@@ -468,6 +460,12 @@ Thread 1: Returning from Main
   </article>
     
     <footer class="hidden-print">
+        <div class="alert alert-info" markdown="1">
+            <i class="fa fa-hand-o-right fa-2x pull-left"></i>
+            
+            <div>Has this blog been helpful? Please consider <a href="https://github.com/sponsors/StephenCleary" class="alert-link">supporting this blog (and my open-source libraries).</a> Thanks!</div>
+        </div>
+
         
             <ul class="pager">
                 <li class="previous"><a href="/2009/08/q-is-call-to-gckeepalivethis-required.html" title="Q&amp;A: Is a call to GC.KeepAlive(this) required in Dispose?">&larr; Previous in IDisposable and Finalizers</a></li>
@@ -693,7 +691,7 @@ var nofollowLinkExtension = {
     type: 'output',
     regex: /(<a[^<]+<\/a>)/g,
     replace: (match, $1, $2) => {
-        var result = $('<div/>').append($($1).attr('rel', 'nofollow noopener')).html();
+        var result = $('<div/>').append($($1).attr('rel', 'nofollow noopener ugc')).html();
         return result;
     }
 };
@@ -720,7 +718,7 @@ var sanitizeOptions = {
             {
                 name: 'rel',
                 multiple: true,
-                values: ['nofollow', 'noopener']
+                values: ['nofollow', 'noopener', 'ugc']
             }
         ],
         img: [ 'src' ]
@@ -879,7 +877,7 @@ function $comment(includeForm, comment) {
     var publicationDate = moment(comment.date);
     var $author = $('<div class="comment-author"/>').append($('<span class="comment-author-name"/>').text(comment.authorName));
     if (comment.authorUri !== "")
-        $author.append($('<span> • </span>'), $('<a class="comment-author-uri" rel="nofollow noopener"/>').attr('href', comment.authorUri).text(comment.authorUri));
+        $author.append($('<span> • </span>'), $('<a class="comment-author-uri" rel="nofollow noopener ugc"/>').attr('href', comment.authorUri).text(comment.authorUri));
     var $headerDiv = $('<div class="comment-header"/>').append(
         $('<div class="comment-author-profile" style="float:left;"/>').append($('<img class="comment-author-profile-image" src="' + avatarUri(comment.authorEmailMD5) + '"/>')),
         $author,

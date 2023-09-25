@@ -287,14 +287,6 @@ img.comment-author-profile-image {
       </div>
   </header>
 
-  <header>
-    <div class="alert alert-info" markdown="1">
-        <i class="fa fa-hand-o-right fa-2x pull-left"></i>
-        
-        <div>Has this blog been helpful? Please consider <a href="https://github.com/sponsors/StephenCleary" class="alert-link">supporting this blog (and my open-source libraries).</a> Thanks!</div>
-    </div>
-  </header>
-
   <article>
   <p>There is a three-way handshake to open a TCP/IP connection, and a four-way handshake to close it. However, once the connection has been established, if neither side sends any data, then no packets are sent over the connection. TCP is an “idle” protocol, happy to assume that the connection is active until proven otherwise.</p>
 
@@ -396,6 +388,12 @@ img.comment-author-profile-image {
   </article>
     
     <footer class="hidden-print">
+        <div class="alert alert-info" markdown="1">
+            <i class="fa fa-hand-o-right fa-2x pull-left"></i>
+            
+            <div>Has this blog been helpful? Please consider <a href="https://github.com/sponsors/StephenCleary" class="alert-link">supporting this blog (and my open-source libraries).</a> Thanks!</div>
+        </div>
+
         
             <ul class="pager">
                 <li class="previous"><a href="/2009/04/message-framing.html" title="Message Framing">&larr; Previous in TCP/IP .NET Sockets FAQ</a></li>
@@ -626,7 +624,7 @@ var nofollowLinkExtension = {
     type: 'output',
     regex: /(<a[^<]+<\/a>)/g,
     replace: (match, $1, $2) => {
-        var result = $('<div/>').append($($1).attr('rel', 'nofollow noopener')).html();
+        var result = $('<div/>').append($($1).attr('rel', 'nofollow noopener ugc')).html();
         return result;
     }
 };
@@ -653,7 +651,7 @@ var sanitizeOptions = {
             {
                 name: 'rel',
                 multiple: true,
-                values: ['nofollow', 'noopener']
+                values: ['nofollow', 'noopener', 'ugc']
             }
         ],
         img: [ 'src' ]
@@ -812,7 +810,7 @@ function $comment(includeForm, comment) {
     var publicationDate = moment(comment.date);
     var $author = $('<div class="comment-author"/>').append($('<span class="comment-author-name"/>').text(comment.authorName));
     if (comment.authorUri !== "")
-        $author.append($('<span> • </span>'), $('<a class="comment-author-uri" rel="nofollow noopener"/>').attr('href', comment.authorUri).text(comment.authorUri));
+        $author.append($('<span> • </span>'), $('<a class="comment-author-uri" rel="nofollow noopener ugc"/>').attr('href', comment.authorUri).text(comment.authorUri));
     var $headerDiv = $('<div class="comment-header"/>').append(
         $('<div class="comment-author-profile" style="float:left;"/>').append($('<img class="comment-author-profile-image" src="' + avatarUri(comment.authorEmailMD5) + '"/>')),
         $author,

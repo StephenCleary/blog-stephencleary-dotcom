@@ -281,14 +281,6 @@ img.comment-author-profile-image {
       </div>
   </header>
 
-  <header>
-    <div class="alert alert-info" markdown="1">
-        <i class="fa fa-hand-o-right fa-2x pull-left"></i>
-        
-        <div>Has this blog been helpful? Please consider <a href="https://github.com/sponsors/StephenCleary" class="alert-link">supporting this blog (and my open-source libraries).</a> Thanks!</div>
-    </div>
-  </header>
-
   <article>
   <p>If you’ve ever consumed <a href="http://msdn.microsoft.com/en-us/library/system.collections.specialized.inotifycollectionchanged.collectionchanged.aspx?WT.mc_id=DT-MVP-5000058"><code>INotifyCollectionChanged.CollectionChanged</code></a>, then you’ve run into some inadequate documentation for <a href="http://msdn.microsoft.com/en-us/library/system.collections.specialized.notifycollectionchangedeventargs.aspx?WT.mc_id=DT-MVP-5000058"><code>NotifyCollectionChangedEventArgs</code></a>. I’ve added the following information to the MSDN “community extensions” (my first contribution), but others have had problems with the stability of community extensions, so the results of my research and Reflector spelunking are also in this blog entry.</p>
 
@@ -312,6 +304,12 @@ img.comment-author-profile-image {
   </article>
     
     <footer class="hidden-print">
+        <div class="alert alert-info" markdown="1">
+            <i class="fa fa-hand-o-right fa-2x pull-left"></i>
+            
+            <div>Has this blog been helpful? Please consider <a href="https://github.com/sponsors/StephenCleary" class="alert-link">supporting this blog (and my open-source libraries).</a> Thanks!</div>
+        </div>
+
         
         
         <ul class="pager">
@@ -505,7 +503,7 @@ var nofollowLinkExtension = {
     type: 'output',
     regex: /(<a[^<]+<\/a>)/g,
     replace: (match, $1, $2) => {
-        var result = $('<div/>').append($($1).attr('rel', 'nofollow noopener')).html();
+        var result = $('<div/>').append($($1).attr('rel', 'nofollow noopener ugc')).html();
         return result;
     }
 };
@@ -532,7 +530,7 @@ var sanitizeOptions = {
             {
                 name: 'rel',
                 multiple: true,
-                values: ['nofollow', 'noopener']
+                values: ['nofollow', 'noopener', 'ugc']
             }
         ],
         img: [ 'src' ]
@@ -691,7 +689,7 @@ function $comment(includeForm, comment) {
     var publicationDate = moment(comment.date);
     var $author = $('<div class="comment-author"/>').append($('<span class="comment-author-name"/>').text(comment.authorName));
     if (comment.authorUri !== "")
-        $author.append($('<span> • </span>'), $('<a class="comment-author-uri" rel="nofollow noopener"/>').attr('href', comment.authorUri).text(comment.authorUri));
+        $author.append($('<span> • </span>'), $('<a class="comment-author-uri" rel="nofollow noopener ugc"/>').attr('href', comment.authorUri).text(comment.authorUri));
     var $headerDiv = $('<div class="comment-header"/>').append(
         $('<div class="comment-author-profile" style="float:left;"/>').append($('<img class="comment-author-profile-image" src="' + avatarUri(comment.authorEmailMD5) + '"/>')),
         $author,

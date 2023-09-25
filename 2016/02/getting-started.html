@@ -281,14 +281,6 @@ img.comment-author-profile-image {
       </div>
   </header>
 
-  <header>
-    <div class="alert alert-info" markdown="1">
-        <i class="fa fa-hand-o-right fa-2x pull-left"></i>
-        
-        <div>Has this blog been helpful? Please consider <a href="https://github.com/sponsors/StephenCleary" class="alert-link">supporting this blog (and my open-source libraries).</a> Thanks!</div>
-    </div>
-  </header>
-
   <article>
   <p>Let’s introduce some React! The <code>react</code> package contains almost everything, and the <code>react-dom</code> package is the piece that injects our React application into the browser DOM.</p>
 
@@ -361,6 +353,12 @@ window.onload = () =&gt; render(Main(), document.getElementById('app'));
   </article>
     
     <footer class="hidden-print">
+        <div class="alert alert-info" markdown="1">
+            <i class="fa fa-hand-o-right fa-2x pull-left"></i>
+            
+            <div>Has this blog been helpful? Please consider <a href="https://github.com/sponsors/StephenCleary" class="alert-link">supporting this blog (and my open-source libraries).</a> Thanks!</div>
+        </div>
+
         
             <ul class="pager">
                 <li class="previous"><a href="/2016/02/language-and-tooling.html" title="React/Redux TodoMVC, Part 1: Language and Tooling">&larr; Previous in React/Redux TodoMVC</a></li>
@@ -585,7 +583,7 @@ var nofollowLinkExtension = {
     type: 'output',
     regex: /(<a[^<]+<\/a>)/g,
     replace: (match, $1, $2) => {
-        var result = $('<div/>').append($($1).attr('rel', 'nofollow noopener')).html();
+        var result = $('<div/>').append($($1).attr('rel', 'nofollow noopener ugc')).html();
         return result;
     }
 };
@@ -612,7 +610,7 @@ var sanitizeOptions = {
             {
                 name: 'rel',
                 multiple: true,
-                values: ['nofollow', 'noopener']
+                values: ['nofollow', 'noopener', 'ugc']
             }
         ],
         img: [ 'src' ]
@@ -771,7 +769,7 @@ function $comment(includeForm, comment) {
     var publicationDate = moment(comment.date);
     var $author = $('<div class="comment-author"/>').append($('<span class="comment-author-name"/>').text(comment.authorName));
     if (comment.authorUri !== "")
-        $author.append($('<span> • </span>'), $('<a class="comment-author-uri" rel="nofollow noopener"/>').attr('href', comment.authorUri).text(comment.authorUri));
+        $author.append($('<span> • </span>'), $('<a class="comment-author-uri" rel="nofollow noopener ugc"/>').attr('href', comment.authorUri).text(comment.authorUri));
     var $headerDiv = $('<div class="comment-header"/>').append(
         $('<div class="comment-author-profile" style="float:left;"/>').append($('<img class="comment-author-profile-image" src="' + avatarUri(comment.authorEmailMD5) + '"/>')),
         $author,

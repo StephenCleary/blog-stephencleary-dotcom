@@ -281,14 +281,6 @@ img.comment-author-profile-image {
       </div>
   </header>
 
-  <header>
-    <div class="alert alert-info" markdown="1">
-        <i class="fa fa-hand-o-right fa-2x pull-left"></i>
-        
-        <div>Has this blog been helpful? Please consider <a href="https://github.com/sponsors/StephenCleary" class="alert-link">supporting this blog (and my open-source libraries).</a> Thanks!</div>
-    </div>
-  </header>
-
   <article>
   <p>A connected socket is one which has a connection to the remote side. When a client socket connects to a listening server socket, the result is two connected sockets: the client socket becomes connected, and the listening server creates a new socket that is connected. For more details about establishing or listening for socket connections, see <a href="/2009/05/using-socket-as-client-socket.html">Using Socket as a Client Socket</a> and <a href="/2009/05/using-socket-as-server-listening-socket.html">Using Socket as a Server (Listening) Socket</a>.</p>
 
@@ -351,6 +343,12 @@ img.comment-author-profile-image {
   </article>
     
     <footer class="hidden-print">
+        <div class="alert alert-info" markdown="1">
+            <i class="fa fa-hand-o-right fa-2x pull-left"></i>
+            
+            <div>Has this blog been helpful? Please consider <a href="https://github.com/sponsors/StephenCleary" class="alert-link">supporting this blog (and my open-source libraries).</a> Thanks!</div>
+        </div>
+
         
             <ul class="pager">
                 <li class="previous"><a href="/2009/05/using-socket-as-server-listening-socket.html" title="Using Socket as a Server (Listening) Socket">&larr; Previous in TCP/IP .NET Sockets FAQ</a></li>
@@ -581,7 +579,7 @@ var nofollowLinkExtension = {
     type: 'output',
     regex: /(<a[^<]+<\/a>)/g,
     replace: (match, $1, $2) => {
-        var result = $('<div/>').append($($1).attr('rel', 'nofollow noopener')).html();
+        var result = $('<div/>').append($($1).attr('rel', 'nofollow noopener ugc')).html();
         return result;
     }
 };
@@ -608,7 +606,7 @@ var sanitizeOptions = {
             {
                 name: 'rel',
                 multiple: true,
-                values: ['nofollow', 'noopener']
+                values: ['nofollow', 'noopener', 'ugc']
             }
         ],
         img: [ 'src' ]
@@ -767,7 +765,7 @@ function $comment(includeForm, comment) {
     var publicationDate = moment(comment.date);
     var $author = $('<div class="comment-author"/>').append($('<span class="comment-author-name"/>').text(comment.authorName));
     if (comment.authorUri !== "")
-        $author.append($('<span> • </span>'), $('<a class="comment-author-uri" rel="nofollow noopener"/>').attr('href', comment.authorUri).text(comment.authorUri));
+        $author.append($('<span> • </span>'), $('<a class="comment-author-uri" rel="nofollow noopener ugc"/>').attr('href', comment.authorUri).text(comment.authorUri));
     var $headerDiv = $('<div class="comment-header"/>').append(
         $('<div class="comment-author-profile" style="float:left;"/>').append($('<img class="comment-author-profile-image" src="' + avatarUri(comment.authorEmailMD5) + '"/>')),
         $author,
