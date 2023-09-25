@@ -110,15 +110,15 @@ private struct Data
 }
 {% endhighlight %}
 
-I was curious to know if this approach worked, and it does. I don't really recommend it, since you have to explicitly lay out your entire struct. Also, there's no "bonus round", since there isn't a good way of referencing the padding.
+I was curious to know if this approach worked, and it does. I don't really recommend it, since you have to explicitly lay out your entire struct. Also, there isn't a good way of referencing the padding.
 
 ## Marshalling (Doesn't Work)
 
 Just as a side note, _marshalling_ directives don't work. For example:
 
 {% highlight csharp %}
-[StructLayout(LayoutKind.Sequential)]
 // Does not work!
+[StructLayout(LayoutKind.Sequential)]
 private struct Data
 {
   private int _first;

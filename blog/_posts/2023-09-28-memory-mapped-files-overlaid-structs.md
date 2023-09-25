@@ -16,8 +16,10 @@ In C#, mapping a file into memory isn't terribly complex. First, you open the fi
 This code will create a new file, a file mapping (specifying 1000 bytes as the length of the file; the file is immediately grown to this size), and a single view over the entire file:
 
 {% highlight csharp %}
-using FileStream file = new FileStream(@"tmp.dat", FileMode.Create, FileAccess.ReadWrite, FileShare.None, 4096, FileOptions.RandomAccess);
-using MemoryMappedFile mapping = MemoryMappedFile.CreateFromFile(file, null, 1000, MemoryMappedFileAccess.ReadWrite, HandleInheritability.None, leaveOpen: true);
+using FileStream file = new FileStream(@"tmp.dat", FileMode.Create, FileAccess.ReadWrite,
+    FileShare.None, 4096, FileOptions.RandomAccess);
+using MemoryMappedFile mapping = MemoryMappedFile.CreateFromFile(file, null, 1000,
+    MemoryMappedFileAccess.ReadWrite, HandleInheritability.None, leaveOpen: true);
 using MemoryMappedViewAccessor view = mapping.CreateViewAccessor();
 {% endhighlight %}
 
@@ -88,8 +90,10 @@ public struct Data
 {% endhighlight %}
 
 {% highlight csharp %}
-using FileStream file = new FileStream(@"tmp.dat", FileMode.Create, FileAccess.ReadWrite, FileShare.None, 4096, FileOptions.RandomAccess);
-using MemoryMappedFile mapping = MemoryMappedFile.CreateFromFile(file, null, 1000, MemoryMappedFileAccess.ReadWrite, HandleInheritability.None, leaveOpen: true);
+using FileStream file = new FileStream(@"tmp.dat", FileMode.Create, FileAccess.ReadWrite,
+    FileShare.None, 4096, FileOptions.RandomAccess);
+using MemoryMappedFile mapping = MemoryMappedFile.CreateFromFile(file, null, 1000,
+    MemoryMappedFileAccess.ReadWrite, HandleInheritability.None, leaveOpen: true);
 using MemoryMappedViewAccessor view = mapping.CreateViewAccessor();
 using Overlay overlay = new Overlay(view);
 ref Data data = ref overlay.As<Data>();
@@ -97,7 +101,7 @@ data.First = 1;
 data.Second = 2;
 {% endhighlight %}
 
-Run the code above, and you'll end up with a `tmp.dat` file 1000 bytes long, with the first four bytes having the value of `First` (1) and the second four bytes having the value of `Second` (2). Note that since you're reading/writing structures in memory, whatever endianness your machine is will determine the endianness of the binary file. Go ahead and pop it open in a hex editor (there are tons of free ones like [ImHex](https://github.com/WerWolv/ImHex)), and take a look at the binary file itself.
+Run the code above (works in LINQPad!), and you'll end up with a `tmp.dat` file 1000 bytes long, with the first four bytes having the value of `First` (1) and the second four bytes having the value of `Second` (2). Note that since you're reading/writing structures in memory, whatever endianness your machine is will determine the endianness of the binary file. Go ahead and pop it open in a hex editor (there's an online one called [HexEd.it](https://hexed.it/)), and take a look at the binary file itself.
 
 ## Endianness
 
@@ -106,10 +110,14 @@ If you're working with portable file formats, handling endianness is a necessity
 {% highlight csharp %}
 public static class OverlayHelpers
 {
-  public static int ReadBigEndian(int bigEndian) => BitConverter.IsLittleEndian ? BinaryPrimitives.ReverseEndianness(bigEndian) : bigEndian;
-  public static void WriteBigEndian(out int bigEndian, int value) => bigEndian = BitConverter.IsLittleEndian ? BinaryPrimitives.ReverseEndianness(value) : value;
-  public static int ReadLittleEndian(int littleEndian) => BitConverter.IsLittleEndian ? littleEndian : BinaryPrimitives.ReverseEndianness(bigEndian);
-  public static void WriteLittleEndian(out int littleEndian, int value) => littleEndian = BitConverter.IsLittleEndian ? value : BinaryPrimitives.ReverseEndianness(value);
+  public static int ReadBigEndian(int bigEndian) =>
+      BitConverter.IsLittleEndian ? BinaryPrimitives.ReverseEndianness(bigEndian) : bigEndian;
+  public static void WriteBigEndian(out int bigEndian, int value) =>
+      bigEndian = BitConverter.IsLittleEndian ? BinaryPrimitives.ReverseEndianness(value) : value;
+  public static int ReadLittleEndian(int littleEndian) =>
+      BitConverter.IsLittleEndian ? littleEndian : BinaryPrimitives.ReverseEndianness(littleEndian);
+  public static void WriteLittleEndian(out int littleEndian, int value) =>
+      littleEndian = BitConverter.IsLittleEndian ? value : BinaryPrimitives.ReverseEndianness(value);
 }
 {% endhighlight %}
 
@@ -140,8 +148,10 @@ Now the same program as above will always write the "first" and "second" fields 
 
 {% highlight csharp %}
 // (this is the same code as above)
-using FileStream file = new FileStream(@"tmp.dat", FileMode.Create, FileAccess.ReadWrite, FileShare.None, 4096, FileOptions.RandomAccess);
-using MemoryMappedFile mapping = MemoryMappedFile.CreateFromFile(file, null, 1000, MemoryMappedFileAccess.ReadWrite, HandleInheritability.None, leaveOpen: true);
+using FileStream file = new FileStream(@"tmp.dat", FileMode.Create, FileAccess.ReadWrite,
+    FileShare.None, 4096, FileOptions.RandomAccess);
+using MemoryMappedFile mapping = MemoryMappedFile.CreateFromFile(file, null, 1000,
+    MemoryMappedFileAccess.ReadWrite, HandleInheritability.None, leaveOpen: true);
 using MemoryMappedViewAccessor view = mapping.CreateViewAccessor();
 using Overlay overlay = new Overlay(view);
 ref Data data = ref overlay.As<Data>();
