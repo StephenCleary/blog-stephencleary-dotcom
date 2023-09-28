@@ -323,7 +323,7 @@ img.comment-author-profile-image {
 
 <h2 id="required-reading">Required Reading</h2>
 
-<p>Most of this post relies heavily on Jeffrey Richter’s awesome book <a href="http://www.amazon.com/gp/product/0735627045?ie=UTF8&amp;tag=stepheclearys-20&amp;linkCode=as2&amp;camp=1789&amp;creative=390957&amp;creativeASIN=0735627045">CLR via C#</a>. Unfortunately, even though the 3rd edition is out, I only have the 2nd; so all page numbers in this blog post are for the 2nd edition. The section “The Garbage Collection Algorithm” (pg 461) covers GC in general, and the section “Garbage Collections and Debugging” (pg 465) is particularly useful when considering this question.</p>
+<p>Most of this post relies heavily on Jeffrey Richter’s awesome book <a href="http://www.amazon.com/gp/product/0735627045?ie=UTF8&amp;tag=stepheclearys-20&amp;linkCode=as2&amp;camp=1789&amp;creative=390957&amp;creativeASIN=0735627045" rel="nofollow">CLR via C#</a>. Unfortunately, even though the 3rd edition is out, I only have the 2nd; so all page numbers in this blog post are for the 2nd edition. The section “The Garbage Collection Algorithm” (pg 461) covers GC in general, and the section “Garbage Collections and Debugging” (pg 465) is particularly useful when considering this question.</p>
 
 <h2 id="determining-root-objects">Determining Root Objects</h2>
 
@@ -337,7 +337,7 @@ img.comment-author-profile-image {
 
 <p>Method-local variables (including parameters and the implicit “this” reference) are much tricker: they are <em>sometimes</em> root objects.</p>
 
-<p>As described in <a href="http://www.amazon.com/gp/product/0735627045?ie=UTF8&amp;tag=stepheclearys-20&amp;linkCode=as2&amp;camp=1789&amp;creative=390957&amp;creativeASIN=0735627045">CLR via C#</a>, the JIT compiler for a method will determine which native code blocks reference which variables by building a “root table” for the method. It’s important to note that this table is quite accurate (though not 100% accurate - it <em>may</em> “hold onto” references slightly longer than necessary if it simplifies the table). Examine the simple code below:</p>
+<p>As described in <a href="http://www.amazon.com/gp/product/0735627045?ie=UTF8&amp;tag=stepheclearys-20&amp;linkCode=as2&amp;camp=1789&amp;creative=390957&amp;creativeASIN=0735627045" rel="nofollow">CLR via C#</a>, the JIT compiler for a method will determine which native code blocks reference which variables by building a “root table” for the method. It’s important to note that this table is quite accurate (though not 100% accurate - it <em>may</em> “hold onto” references slightly longer than necessary if it simplifies the table). Examine the simple code below:</p>
 
 <figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">static</span> <span class="kt">object</span> <span class="nf">CheckType</span><span class="p">(</span><span class="kt">object</span> <span class="n">a</span><span class="p">,</span> <span class="n">Type</span> <span class="n">b</span><span class="p">)</span>
 <span class="p">{</span>
@@ -460,8 +460,8 @@ img.comment-author-profile-image {
                 <div class="panel-heading">My book</div>
                 <div class="panel-body center">
                     <div><a href="https://stephencleary.com/book/"><img src="https://stephencleary.com/www.assets/Book-2nd-small.jpg"/></a></div>
-                    <div>Available from <a href="https://amzn.to/2kYzcEY">Amazon (print/Kindle)</a>, <a href="https://learning.oreilly.com/library/view/concurrency-in-c/9781492054498/">O'Reilly (Safari)</a>, or <a href="https://www.ebooks.com/cj.asp?IID=209766469&cjsku=209766469">eBooks.com (PDF/epub)</a>.</div>
-                    <div>Also available in <a href="https://www.labirint.ru/books/745595/">Russian</a>, <a href="https://item.jd.com/12769567.html">Chinese</a>, and <a href="https://www.aladin.co.kr/shop/wproduct.aspx?ItemId=270818316">Korean</a>.</div>
+                    <div>Available from <a href="https://www.amazon.com/dp/149205450x/ref=as_li_ss_tl?&ref=pd_sl_a04BABB1D18C7F2658168FF785&linkCode=sl1&tag=stepheclearys-20&linkId=fb22bb126d6e60f305fecddf3d4ecbd8" rel="nofollow">Amazon (print/Kindle)</a>, <a href="https://learning.oreilly.com/library/view/concurrency-in-c/9781492054498/" rel="nofollow">O'Reilly (Safari)</a>, or <a href="https://www.ebooks.com/cj.asp?IID=209766469&cjsku=209766469" rel="nofollow">eBooks.com (PDF/epub)</a>.</div>
+                    <div>Also available in <a href="https://www.labirint.ru/books/745595/" rel="nofollow">Russian</a>, <a href="https://item.jd.com/12769567.html" rel="nofollow">Chinese</a>, and <a href="https://www.aladin.co.kr/shop/wproduct.aspx?ItemId=270818316" rel="nofollow">Korean</a>.</div>
                 </div>
             </div>
             <div class="panel panel-default">

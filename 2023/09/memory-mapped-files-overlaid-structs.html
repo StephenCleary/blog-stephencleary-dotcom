@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>On A Lighter Note: SocketFlags.MaxIOVectorLength</title>
+    <title>Memory-Mapped Files and Overlaid Structs</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Today I was just working along, minding my own business, when out of the blue my mind jumped back to something strange I had seen over a year ago. (Is anyone else insane like that, or is it just me?)" />
-    <link rel="canonical" href="https://blog.stephencleary.com/2010/06/on-lighter-note-socketflagsmaxiovectorl.html" />
+    <meta name="description" content="Mapping files into memory and accessing them through structure references in C#." />
+    <link rel="canonical" href="https://blog.stephencleary.com/2023/09/memory-mapped-files-overlaid-structs.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -276,30 +276,171 @@ img.comment-author-profile-image {
 
   <header>
       <div class="page-header">
-          <h1>On A Lighter Note: SocketFlags.MaxIOVectorLength</h1>
-          <small><time datetime="2010-06-25">Jun 25, 2010</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
+          <h1>Memory-Mapped Files and Overlaid Structs</h1>
+          <small><time datetime="2023-09-28">Sep 28, 2023</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
       </div>
   </header>
 
   <article>
-  <p>Today I was just working along, minding my own business, when out of the blue my mind jumped back to something strange I had seen over a year ago. (Is anyone else insane like that, or is it just me?)</p>
+  <p>It has been a long, long time since I’ve used memory-mapped files - I think the last time was before .NET existed (!). Recently, I had a need to work with memory-mapped files in C#, and I gathered together a few resources that explain how to do it - specifically, how to map a file into memory and then “overlay” a structure on top of that memory. Since it took me a while to figure this out (and I learned about some cool upcoming features along the way), I thought I’d write this up into a proper post or two.</p>
 
-<p>The seldom-used <a href="http://msdn.microsoft.com/en-us/library/system.net.sockets.socketflags.aspx?WT.mc_id=DT-MVP-5000058">SocketFlags</a> enumeration serves a dual purpose: it can represent flags passed to the Send or Receive operation, and it also represents flags passed back from the Send or Receive operation.</p>
+<h2 id="memory-mapped-files">Memory-Mapped Files</h2>
 
-<p>Reading through the enumeration values is pretty much straightforward: it’s fairly obvious which ones are meant as “input” or “output” parameters, and what their meanings are. One value, however, is rather strange: MaxIOVectorLength, which (according to the MSDN documentation) “Provides a standard value for the number of WSABUF structures that are used to send and receive data.”</p>
+<p>Memory-mapped files are a pretty cool technique, where instead of reading disk data into memory directly, you can <em>map</em> it into the memory space of your process very quickly. Once it’s mapped into your process memory, reading from that memory will read from the disk (as necessary), and writing to that memory will write out to the file (eventually). You can do cool things like create a huge file mapping (way larger than your memory), and it will Just Work, paging memory in and out of your process behind the scenes. There’s a ton of information about memory-mapped files out there; if you’re on Windows, I like <a href="https://www.amazon.com/Windows-Internals-Part-architecture-management/dp/0735684189?crid=1R9XTJDVYVT4R&amp;qid=1695906423&amp;linkCode=ll1&amp;tag=stepheclearys-20&amp;linkId=a9d94c8104abdd7c669e33fd6ea2d430&amp;language=en_US&amp;ref_=as_li_ss_tl" rel="nofollow">Windows Internals</a> - Part 1 covers the memory manager (including memory-mapped files), and Part 2 has a few additional details on how memory-mapped files interact with the cache manager.</p>
 
-<p>That should give anyone pause. That value is clearly not a <em>flag</em>. It would make (a twisted sort of) sense if, by passing that flag, you could specify the maximum I/O vector length. But a quick look at the Send and Receive methods make it clear that this flag is not “enabling” some other parameter.</p>
+<p>In C#, mapping a file into memory isn’t terribly complex. First, you open the file (i.e., create a <code>FileStream</code> object). Then, you create a file mapping. Tip on the file mapping: if you’re mapping an existing file, you can pass <code>0</code> for the file length to just map the entire file. Finally, you create a view on that file mapping - and this is the step that actually maps the file into the memory space for your process. You <em>can</em> create a view over the entire file, but if you’re dealing with a very large file mapping, it’s common to create partial views as you need them.</p>
 
-<p>The fact is: this flag value should simply not exist. The value is real enough; it’s defined in WinSock2.h as “MSG_MAXIOVLEN”. However, it defines a limitation in the WinSock implementation, <em>not</em> a flag for Send or Recv.</p>
+<p>This code will create a new file, a file mapping (specifying 1000 bytes as the length of the file; the file is immediately grown to this size), and a single view over the entire file:</p>
 
-<p>Why do I find this amusing? Because someone, during the devlopment of the .NET framework, had to track down all the meanings of these flags. This person undoubtedly discovered that MSG_MAXIOVLEN was undocumented in its header file, and learned its meaning from someone else (likely someone responsible for the WinSock code). And in all of that research, that person never once noticed that this value was <em>obviously</em> not a flag? Not only that, but all of the reviewers reading this documentation never once realized how its description was completely different than all of the other descriptions!</p>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="nn">FileStream</span> <span class="n">file</span> <span class="p">=</span> <span class="k">new</span> <span class="n">FileStream</span><span class="p">(</span><span class="s">@&quot;tmp.dat&quot;</span><span class="p">,</span> <span class="n">FileMode</span><span class="p">.</span><span class="n">Create</span><span class="p">,</span> <span class="n">FileAccess</span><span class="p">.</span><span class="n">ReadWrite</span><span class="p">,</span>
+    <span class="n">FileShare</span><span class="p">.</span><span class="n">None</span><span class="p">,</span> <span class="m">4096</span><span class="p">,</span> <span class="n">FileOptions</span><span class="p">.</span><span class="n">RandomAccess</span><span class="p">);</span>
+<span class="k">using</span> <span class="nn">MemoryMappedFile</span> <span class="n">mapping</span> <span class="p">=</span> <span class="n">MemoryMappedFile</span><span class="p">.</span><span class="n">CreateFromFile</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="k">null</span><span class="p">,</span> <span class="m">1000</span><span class="p">,</span>
+    <span class="n">MemoryMappedFileAccess</span><span class="p">.</span><span class="n">ReadWrite</span><span class="p">,</span> <span class="n">HandleInheritability</span><span class="p">.</span><span class="n">None</span><span class="p">,</span> <span class="n">leaveOpen</span><span class="p">:</span> <span class="k">true</span><span class="p">);</span>
+<span class="k">using</span> <span class="nn">MemoryMappedViewAccessor</span> <span class="n">view</span> <span class="p">=</span> <span class="n">mapping</span><span class="p">.</span><span class="n">CreateViewAccessor</span><span class="p">();</span></code></pre></figure>
 
-<p>This is a case of someone working too fast, and no one catching their fundamental mistake. The other flag values (which existed in WinSock.h with names like “MSG_OOB”, “MSG_PEEK”, and “MSG_DONTROUTE”) had straightforward translations to SocketFlags, and MSG_MAXIOVLEN somehow got lumped in with them.</p>
+<p>At this point, you have a <code>view</code>, which is a handle (actually a pointer) to the part of your process’ memory that actually represents the file contents. What’s really nice about this code is that it’s portable; the same code works on Linux and Windows (and presumably Mac and mobile platforms, though I haven’t tried those). However, pointers aren’t a great interface, especially in a managed language like C#. <code>MemoryMappedViewAccessor</code> has a bunch of… well… <em>awkward</em> methods that are essentially “read a signed 16-bit integer at this offset”, “write an unsigned 32-bit integer at this offset”, etc. You can also copy a struct into and out of the view, but I don’t want to go through the trouble of doing a file mapping just to turn around and serialize a struct anyway.</p>
 
-<p>P.S. An interesting futher note: the person who put MaxIOVectorLength into SocketFlags <em>correctly</em> did not include a translation of MSG_INTERRUPT. The MSG_INTERRUPT flag was used to signal WinSock that the Send/Recv is being called in a hardware interrupt context (and therefore WinSock could not call other Windows methods). That was back in the 16-bit Windows days, and that flag is no longer used.</p>
+<p>For convenience, unmanaged languages commonly overlay a structure onto the mapped memory. This approach allows you to define the file structure as an actual <code>struct</code> and then read/write fields in that struct instead of serializing values to memory or view offsets. “Overlapped structures” might be a more common term than “overlaid structures”, but I want to avoid any confusion with <code>OVERLAPPED</code>, so I’m using the term “overlaid structures” in these posts.</p>
 
-<p>P.P.S. Bonus amusing fact: SocketFlags.MaxIOVectorLength has the same value as MSG_INTERRUPT. He, he, he… I just <em>wonder</em> what would happen if someone ever used it… :)</p>
+<p>If you’re in an unmanaged language like C++, you can just <code>reinterpret_cast</code> your file mapping view pointer to a structure pointer, and that’s it: you’ve got a struct at the same memory address as your file view! I found that there was much less information about overlaying structs in C#, though. So, let’s see how to do the same thing in C#!</p>
 
+<h2 id="overlaid-structs">Overlaid Structs</h2>
+
+<p>After a bit of experimentation, this is what I ended up with:</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">unsafe</span> <span class="k">class</span> <span class="nc">Overlay</span> <span class="p">:</span> <span class="n">IDisposable</span>
+<span class="p">{</span>
+  <span class="k">private</span> <span class="k">readonly</span> <span class="n">MemoryMappedViewAccessor</span> <span class="n">_view</span><span class="p">;</span>
+  <span class="k">private</span> <span class="k">readonly</span> <span class="kt">byte</span><span class="p">*</span> <span class="n">_pointer</span><span class="p">;</span>
+
+  <span class="k">public</span> <span class="nf">Overlay</span><span class="p">(</span><span class="n">MemoryMappedViewAccessor</span> <span class="n">view</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">_view</span> <span class="p">=</span> <span class="n">view</span><span class="p">;</span>
+    <span class="n">view</span><span class="p">.</span><span class="n">SafeMemoryMappedViewHandle</span><span class="p">.</span><span class="n">AcquirePointer</span><span class="p">(</span><span class="k">ref</span> <span class="n">_pointer</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="k">public</span> <span class="k">void</span> <span class="nf">Dispose</span><span class="p">()</span> <span class="p">=&gt;</span> <span class="n">_view</span><span class="p">.</span><span class="n">SafeMemoryMappedViewHandle</span><span class="p">.</span><span class="n">ReleasePointer</span><span class="p">();</span>
+
+  <span class="k">public</span> <span class="k">ref</span> <span class="n">T</span> <span class="n">As</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;()</span> <span class="k">where</span> <span class="n">T</span> <span class="p">:</span> <span class="k">struct</span> <span class="err">=&gt; </span><span class="nc">ref</span> <span class="n">Unsafe</span><span class="p">.</span><span class="n">AsRef</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="n">_pointer</span><span class="p">);</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>This is an <code>unsafe</code> type, but ideally this is the only place where <code>unsafe</code> is necessary.</p>
+
+<p><code>Overlay</code> is mainly just a pointer - the pointer to the view of the file that has been mapped into your process’ memory. It also has a <code>MemoryMappedViewAccessor</code> member, but that’s just used to free the pointer when the <code>Overlay</code> instance is disposed.</p>
+
+<p><code>Overlay</code> has a single notable member: <code>As&lt;T&gt;()</code>, which allows you to get a reference to a struct that overlays the mapped memory view.</p>
+
+<div class="alert alert-info">
+  <p><i class="fa fa-info-circle fa-2x pull-left"></i></p>
+
+  <p>On Windows (at least), the <code>SafeMemoryMappedViewHandle</code> handle actually <em>is</em> a pointer, and the <code>AcquirePointer</code> and <code>ReleasePointer</code> calls increment and decrement a reference counter for that handle. <code>Overlay</code> could be designed very differently (and more efficiently) if it cast the <code>SafeMemoryMappedViewHandle</code> handle value to a pointer.</p>
+
+  <p>However, on other platforms, I’m not sure if <code>SafeMemoryMappedViewHandle</code> is actually a pointer or not, so I’ve stuck with this safer implementation just to make sure the code is portable.</p>
+</div>
+
+<p>If you are OK with assuming <code>SafeMemoryMappedViewHandle</code> is a pointer, you can use this instead of <code>Overlay</code>:</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">MemoryMappedViewAccessorExtensions</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="k">static</span> <span class="k">unsafe</span> <span class="k">ref</span> <span class="n">T</span> <span class="n">As</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="k">this</span> <span class="n">MemoryMappedViewAccessor</span> <span class="n">accessor</span><span class="p">)</span> <span class="k">where</span> <span class="n">T</span> <span class="p">:</span> <span class="k">struct</span> <span class="err">=&gt;</span>
+    <span class="k">ref</span> <span class="n">Unsafe</span><span class="p">.</span><span class="n">AsRef</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="n">accessor</span><span class="p">.</span><span class="n">SafeMemoryMappedViewHandle</span><span class="p">.</span><span class="n">DangerousGetHandle</span><span class="p">().</span><span class="n">ToPointer</span><span class="p">());</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>There’s a fair amount of “unsafe” and “dangerous” in that code, though, and it also makes some implementation assumptions (specifically, that <code>SafeMemoryMappedViewHandle</code>’s handle is an actual <em>pointer to memory</em>). So, for safety, I’m just sticking with <code>Overlay</code> with its explicit <code>AcquirePointer</code> and <code>ReleasePointer</code> calls.</p>
+
+<h2 id="using-overlay">Using Overlay</h2>
+
+<p>First, define your <code>struct</code> type, keeping in mind that the in-memory layout (including packing/padding) must reflect the on-disk file structure. Then, you can map a file just like the above code, create an <code>Overlay</code> type, and acquire a struct reference. At that point, you can read or write the struct as desired.</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">struct</span> <span class="nc">Data</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="kt">int</span> <span class="n">First</span><span class="p">;</span>
+  <span class="k">public</span> <span class="kt">int</span> <span class="n">Second</span><span class="p">;</span>
+<span class="p">}</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="nn">FileStream</span> <span class="n">file</span> <span class="p">=</span> <span class="k">new</span> <span class="n">FileStream</span><span class="p">(</span><span class="s">@&quot;tmp.dat&quot;</span><span class="p">,</span> <span class="n">FileMode</span><span class="p">.</span><span class="n">Create</span><span class="p">,</span> <span class="n">FileAccess</span><span class="p">.</span><span class="n">ReadWrite</span><span class="p">,</span>
+    <span class="n">FileShare</span><span class="p">.</span><span class="n">None</span><span class="p">,</span> <span class="m">4096</span><span class="p">,</span> <span class="n">FileOptions</span><span class="p">.</span><span class="n">RandomAccess</span><span class="p">);</span>
+<span class="k">using</span> <span class="nn">MemoryMappedFile</span> <span class="n">mapping</span> <span class="p">=</span> <span class="n">MemoryMappedFile</span><span class="p">.</span><span class="n">CreateFromFile</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="k">null</span><span class="p">,</span> <span class="m">1000</span><span class="p">,</span>
+    <span class="n">MemoryMappedFileAccess</span><span class="p">.</span><span class="n">ReadWrite</span><span class="p">,</span> <span class="n">HandleInheritability</span><span class="p">.</span><span class="n">None</span><span class="p">,</span> <span class="n">leaveOpen</span><span class="p">:</span> <span class="k">true</span><span class="p">);</span>
+<span class="k">using</span> <span class="nn">MemoryMappedViewAccessor</span> <span class="n">view</span> <span class="p">=</span> <span class="n">mapping</span><span class="p">.</span><span class="n">CreateViewAccessor</span><span class="p">();</span>
+<span class="k">using</span> <span class="nn">Overlay</span> <span class="n">overlay</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Overlay</span><span class="p">(</span><span class="n">view</span><span class="p">);</span>
+<span class="k">ref</span> <span class="n">Data</span> <span class="n">data</span> <span class="p">=</span> <span class="k">ref</span> <span class="n">overlay</span><span class="p">.</span><span class="n">As</span><span class="p">&lt;</span><span class="n">Data</span><span class="p">&gt;();</span>
+<span class="n">data</span><span class="p">.</span><span class="n">First</span> <span class="p">=</span> <span class="m">1</span><span class="p">;</span>
+<span class="n">data</span><span class="p">.</span><span class="n">Second</span> <span class="p">=</span> <span class="m">2</span><span class="p">;</span></code></pre></figure>
+
+<p>Run the code above (works in LINQPad!), and you’ll end up with a <code>tmp.dat</code> file 1000 bytes long, with the first four bytes having the value of <code>First</code> (1) and the second four bytes having the value of <code>Second</code> (2). Note that since you’re reading/writing structures in memory, whatever endianness your machine is will determine the endianness of the binary file. Go ahead and pop it open in a hex editor (there’s an online one called <a href="https://hexed.it/">HexEd.it</a>), and take a look at the binary file itself.</p>
+
+<h2 id="endianness">Endianness</h2>
+
+<p>If you’re working with portable file formats, handling endianness is a necessity. Values in files on disk must be little-endian or big-endian, regardless of what processor happens to be reading or writing them. I recommend handling the differences in code with helpers, like this:</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">OverlayHelpers</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="k">static</span> <span class="kt">int</span> <span class="nf">ReadBigEndian</span><span class="p">(</span><span class="kt">int</span> <span class="n">bigEndian</span><span class="p">)</span> <span class="p">=&gt;</span>
+      <span class="n">BitConverter</span><span class="p">.</span><span class="n">IsLittleEndian</span> <span class="p">?</span> <span class="n">BinaryPrimitives</span><span class="p">.</span><span class="n">ReverseEndianness</span><span class="p">(</span><span class="n">bigEndian</span><span class="p">)</span> <span class="p">:</span> <span class="n">bigEndian</span><span class="p">;</span>
+  <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">WriteBigEndian</span><span class="p">(</span><span class="k">out</span> <span class="kt">int</span> <span class="n">bigEndian</span><span class="p">,</span> <span class="kt">int</span> <span class="k">value</span><span class="p">)</span> <span class="p">=&gt;</span>
+      <span class="n">bigEndian</span> <span class="p">=</span> <span class="n">BitConverter</span><span class="p">.</span><span class="n">IsLittleEndian</span> <span class="p">?</span> <span class="n">BinaryPrimitives</span><span class="p">.</span><span class="n">ReverseEndianness</span><span class="p">(</span><span class="k">value</span><span class="p">)</span> <span class="p">:</span> <span class="k">value</span><span class="p">;</span>
+  <span class="k">public</span> <span class="k">static</span> <span class="kt">int</span> <span class="nf">ReadLittleEndian</span><span class="p">(</span><span class="kt">int</span> <span class="n">littleEndian</span><span class="p">)</span> <span class="p">=&gt;</span>
+      <span class="n">BitConverter</span><span class="p">.</span><span class="n">IsLittleEndian</span> <span class="p">?</span> <span class="n">littleEndian</span> <span class="p">:</span> <span class="n">BinaryPrimitives</span><span class="p">.</span><span class="n">ReverseEndianness</span><span class="p">(</span><span class="n">littleEndian</span><span class="p">);</span>
+  <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">WriteLittleEndian</span><span class="p">(</span><span class="k">out</span> <span class="kt">int</span> <span class="n">littleEndian</span><span class="p">,</span> <span class="kt">int</span> <span class="k">value</span><span class="p">)</span> <span class="p">=&gt;</span>
+      <span class="n">littleEndian</span> <span class="p">=</span> <span class="n">BitConverter</span><span class="p">.</span><span class="n">IsLittleEndian</span> <span class="p">?</span> <span class="k">value</span> <span class="p">:</span> <span class="n">BinaryPrimitives</span><span class="p">.</span><span class="n">ReverseEndianness</span><span class="p">(</span><span class="k">value</span><span class="p">);</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>The helpers above let you read/write big- or little-endian values, regardless of the endianness of the current machine. They can be used in your structure definitions as such:</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">struct</span> <span class="nc">Data</span>
+<span class="p">{</span>
+  <span class="c1">// Layout</span>
+  <span class="k">private</span> <span class="kt">int</span> <span class="n">_first</span><span class="p">;</span>
+  <span class="k">private</span> <span class="kt">int</span> <span class="n">_second</span><span class="p">;</span>
+
+  <span class="c1">// Convenience accessors</span>
+  <span class="k">public</span> <span class="kt">int</span> <span class="n">First</span>
+  <span class="p">{</span>
+    <span class="k">readonly</span> <span class="k">get</span> <span class="p">=&gt;</span> <span class="n">OverlayHelpers</span><span class="p">.</span><span class="n">ReadBigEndian</span><span class="p">(</span><span class="n">_first</span><span class="p">);</span>
+    <span class="k">set</span> <span class="p">=&gt;</span> <span class="n">OverlayHelpers</span><span class="p">.</span><span class="n">WriteBigEndian</span><span class="p">(</span><span class="k">out</span> <span class="n">_first</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">public</span> <span class="kt">int</span> <span class="n">Second</span>
+  <span class="p">{</span>
+    <span class="k">readonly</span> <span class="k">get</span> <span class="p">=&gt;</span> <span class="n">OverlayHelpers</span><span class="p">.</span><span class="n">ReadBigEndian</span><span class="p">(</span><span class="n">_second</span><span class="p">);</span>
+    <span class="k">set</span> <span class="p">=&gt;</span> <span class="n">OverlayHelpers</span><span class="p">.</span><span class="n">WriteBigEndian</span><span class="p">(</span><span class="k">out</span> <span class="n">_second</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>Now the same program as above will always write the “first” and “second” fields as 32-bit signed big-endian values:</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// (this is the same code as above)</span>
+<span class="k">using</span> <span class="nn">FileStream</span> <span class="n">file</span> <span class="p">=</span> <span class="k">new</span> <span class="n">FileStream</span><span class="p">(</span><span class="s">@&quot;tmp.dat&quot;</span><span class="p">,</span> <span class="n">FileMode</span><span class="p">.</span><span class="n">Create</span><span class="p">,</span> <span class="n">FileAccess</span><span class="p">.</span><span class="n">ReadWrite</span><span class="p">,</span>
+    <span class="n">FileShare</span><span class="p">.</span><span class="n">None</span><span class="p">,</span> <span class="m">4096</span><span class="p">,</span> <span class="n">FileOptions</span><span class="p">.</span><span class="n">RandomAccess</span><span class="p">);</span>
+<span class="k">using</span> <span class="nn">MemoryMappedFile</span> <span class="n">mapping</span> <span class="p">=</span> <span class="n">MemoryMappedFile</span><span class="p">.</span><span class="n">CreateFromFile</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="k">null</span><span class="p">,</span> <span class="m">1000</span><span class="p">,</span>
+    <span class="n">MemoryMappedFileAccess</span><span class="p">.</span><span class="n">ReadWrite</span><span class="p">,</span> <span class="n">HandleInheritability</span><span class="p">.</span><span class="n">None</span><span class="p">,</span> <span class="n">leaveOpen</span><span class="p">:</span> <span class="k">true</span><span class="p">);</span>
+<span class="k">using</span> <span class="nn">MemoryMappedViewAccessor</span> <span class="n">view</span> <span class="p">=</span> <span class="n">mapping</span><span class="p">.</span><span class="n">CreateViewAccessor</span><span class="p">();</span>
+<span class="k">using</span> <span class="nn">Overlay</span> <span class="n">overlay</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Overlay</span><span class="p">(</span><span class="n">view</span><span class="p">);</span>
+<span class="k">ref</span> <span class="n">Data</span> <span class="n">data</span> <span class="p">=</span> <span class="k">ref</span> <span class="n">overlay</span><span class="p">.</span><span class="n">As</span><span class="p">&lt;</span><span class="n">Data</span><span class="p">&gt;();</span>
+<span class="n">data</span><span class="p">.</span><span class="n">First</span> <span class="p">=</span> <span class="m">1</span><span class="p">;</span>
+<span class="n">data</span><span class="p">.</span><span class="n">Second</span> <span class="p">=</span> <span class="m">2</span><span class="p">;</span></code></pre></figure>
+
+<p>Now, the code is completely portable: any .NET runtime that supports memory-mapped files (which AFAIK is all of them) will run this code, giving you the ability to define portable binary file formats using overlaid structures.</p>
+
+<h2 id="a-word-of-warning-alignment">A Word of Warning: Alignment</h2>
+
+<p>Since you’re overlaying structures directly into memory addresses, you have to handle all the alignment requirements yourself. Some more common architectures such as x86/x64 don’t care about alignment and allow you to, e.g., define an <code>int</code> field at an offset of <code>1</code>. Other architectures do not allow unaligned access at all.</p>
+
+<p>As a general guideline, align your structure members by their own size. E.g., an <code>int</code> is 4 bytes, so it should be aligned on a 4-byte boundary. Put another way, the offset of an <code>int</code> field from the beginning of the <code>struct</code> should be evenly divisible by 4. Same for other types: <code>long</code> should be aligned on an 8-byte boundary, while <code>byte</code> should be aligned on a 1-byte boundary (i.e., anywhere).</p>
+
+<h2 id="a-word-of-warning-exceptions">A Word of Warning: Exceptions</h2>
+
+<p>Memory mapped files give you one kind of convenience by mapping files into memory, but the counterpoint is that I/O exceptions may not happen exactly when you expect them to.</p>
+
+<p>When reading a file using normal I/O calls, if the read fails, then it fails right at that time. When using memory-mapped files, reads <em>from memory</em> may cause an I/O exception. This is true even if a previous read from that same memory succeeded.</p>
+
+<p>Similarly, if you write to a file using normal I/O calls, any failures are reported immediately. With memory-mapped files, <em>memory</em> writes may cause an I/O exception. And since memory-mapped files are lazily flushed to disk, I/O exceptions may be delayed until the view is flushed (during disposal).</p>
+
+<h2 id="next-time">Next Time</h2>
+
+<p>I hope this has been helpful! If anyone out there knows a way to eliminate the <code>unsafe</code> code in <code>Overlay</code>, I’d love to hear it!</p>
+
+<p>Next time I’m planning to write a bit about overlaying structures with holes in them, which is a useful technique when you have “header” or “container” structures that wrap other structures possibly of different types.</p>
 
   </article>
     
@@ -313,8 +454,8 @@ img.comment-author-profile-image {
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2010/06/sqlite-and-entity-framework-4.html" title="SQLite and Entity Framework 4">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2010/07/resharper-and-obscure-cts-corner-case.html" title="ReSharper and the Obscure CTS Corner Case">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2023/05/grounded-chatgpt.html" title="Grounded ChatGPT">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="comments"></div>
@@ -472,7 +613,7 @@ img.comment-author-profile-image {
 
 <script type="text/javascript">
 
-var pageUrl = "https://blog.stephencleary.com" + "/2010/06/on-lighter-note-socketflagsmaxiovectorl.html";
+var pageUrl = "https://blog.stephencleary.com" + "/2023/09/memory-mapped-files-overlaid-structs.html";
 
 // (unnecessary) 1) If the URL starts with http://, replace with https://
 
