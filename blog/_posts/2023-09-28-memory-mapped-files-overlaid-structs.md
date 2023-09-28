@@ -52,7 +52,7 @@ public sealed unsafe class Overlay : IDisposable
 
 This is an `unsafe` type, but ideally this is the only place where `unsafe` is necessary.
 
-`Overlay` is mainly just a pointer - the pointer to the view of the file that has been mapped into your process' memory. It also has a `MemoryMappedViewAccessor` member, but that's just used to free the pointer when it's disposed.
+`Overlay` is mainly just a pointer - the pointer to the view of the file that has been mapped into your process' memory. It also has a `MemoryMappedViewAccessor` member, but that's just used to free the pointer when the `Overlay` instance is disposed.
 
 `Overlay` has a single notable member: `As<T>()`, which allows you to get a reference to a struct that overlays the mapped memory view.
 
