@@ -37,7 +37,7 @@ The device driver receives the IRP and issues a command to the device to write o
 
 The core of the truth is found here: the device driver is not allowed to block while processing an IRP. This means that if the IRP cannot be completed _immediately_, then it **must** be processed _asynchronously_. This is true even for synchronous APIs! At the device driver level, all (non-trivial) requests are asynchronous.
 
-> To quote the [Tomes](http://www.amazon.com/gp/product/0735648735/ref=as_li_ss_tl?ie=UTF8&camp=1789&creative=390957&creativeASIN=0735648735&linkCode=as2&tag=stepheclearys-20) of [Knowledge](http://www.amazon.com/gp/product/0735665877/ref=as_li_ss_tl?ie=UTF8&camp=1789&creative=390957&creativeASIN=0735665877&linkCode=as2&tag=stepheclearys-20), "Regardless of the type of I/O request, internally I/O operations issued to a driver on behalf of the application are performed asynchronously".
+> To quote the [Tomes](http://www.amazon.com/gp/product/0735648735/ref=as_li_ss_tl?ie=UTF8&camp=1789&creative=390957&creativeASIN=0735648735&linkCode=as2&tag=stepheclearys-20){:rel="nofollow"} of [Knowledge](http://www.amazon.com/gp/product/0735665877/ref=as_li_ss_tl?ie=UTF8&camp=1789&creative=390957&creativeASIN=0735665877&linkCode=as2&tag=stepheclearys-20){:rel="nofollow"}, "Regardless of the type of I/O request, internally I/O operations issued to a driver on behalf of the application are performed asynchronously".
 
 With the IRP "pending", the OS returns to the library, which returns an incomplete task to the button click event handler, which suspends the async method, and the UI thread continues executing.
 

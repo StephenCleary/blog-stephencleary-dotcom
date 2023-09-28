@@ -8,7 +8,7 @@ The core meaning of this quote is that code without unit tests is not as useful 
 
 I don't take a position quite this extreme, but I definitely agree with the underlying sentiment: that code with unit tests is far more useful. Unit tests prove correct functionality (at least for a limited set of cases). Unit tests also provide a sort of documentation.
 
-If you don't write unit tests - or if you or your manager think writing tests just delays software development - then I refer you to the best computer book ever written, [Code Complete](http://www.amazon.com/gp/product/0735619670/ref=as_li_ss_tl?ie=UTF8&tag=stepheclearys-20&linkCode=as2&camp=1789&creative=390957&creativeASIN=0735619670). In that book, Steve McConnell presents some very interesting hard facts about testing.
+If you don't write unit tests - or if you or your manager think writing tests just delays software development - then I refer you to the best computer book ever written, [Code Complete](http://www.amazon.com/gp/product/0735619670/ref=as_li_ss_tl?ie=UTF8&tag=stepheclearys-20&linkCode=as2&camp=1789&creative=390957&creativeASIN=0735619670){:rel="nofollow"}. In that book, Steve McConnell presents some very interesting hard facts about testing.
 
 I hope we can all agree that unit testing is a fundamental skill in Modern Programming. And this brings me to a sad chapter in async/await support: the "obvious" way to do unit tests is wrong.
 

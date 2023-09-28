@@ -6,7 +6,7 @@ There's a new paradign rising in .NET: _extension-based types (EBTs)_.
 
 ## Introduction
 
-It's an exciting time to be a .NET developer. I'm reminded of the time when Boost was young, and programmers were first starting to realize the capabilities of templates. Generic programming became a powerful mainstream paradign, producing techniques now described in [C++ Templates](http://www.amazon.com/gp/product/0201734842?ie=UTF8&tag=stepheclearys-20&linkCode=as2&camp=1789&creative=390957&creativeASIN=0201734842) and [C++ Template Metaprogramming](http://www.amazon.com/gp/product/0321227255?ie=UTF8&tag=stepheclearys-20&linkCode=as2&camp=1789&creative=390957&creativeASIN=0321227255).
+It's an exciting time to be a .NET developer. I'm reminded of the time when Boost was young, and programmers were first starting to realize the capabilities of templates. Generic programming became a powerful mainstream paradign, producing techniques now described in [C++ Templates](http://www.amazon.com/gp/product/0201734842?ie=UTF8&tag=stepheclearys-20&linkCode=as2&camp=1789&creative=390957&creativeASIN=0201734842){:rel="nofollow"} and [C++ Template Metaprogramming](http://www.amazon.com/gp/product/0321227255?ie=UTF8&tag=stepheclearys-20&linkCode=as2&camp=1789&creative=390957&creativeASIN=0321227255){:rel="nofollow"}.
 
 Currently, we're seeing a similar transformation taking place with C# generics. The adoption of generics is just beginning to reach a critical mass, where new and inventive approches are discovered. The thrust towards generic programming is driven by a desire for higher levels of _abstraction_ and _extensibility_.
 

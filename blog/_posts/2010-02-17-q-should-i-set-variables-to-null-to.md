@@ -41,7 +41,7 @@ The rest of this post deals with the reasoning behind this recommendation.
 
 ## Required Reading
 
-Most of this post relies heavily on Jeffrey Richter's awesome book [CLR via C#](http://www.amazon.com/gp/product/0735627045?ie=UTF8&tag=stepheclearys-20&linkCode=as2&camp=1789&creative=390957&creativeASIN=0735627045). Unfortunately, even though the 3rd edition is out, I only have the 2nd; so all page numbers in this blog post are for the 2nd edition. The section "The Garbage Collection Algorithm" (pg 461) covers GC in general, and the section "Garbage Collections and Debugging" (pg 465) is particularly useful when considering this question.
+Most of this post relies heavily on Jeffrey Richter's awesome book [CLR via C#](http://www.amazon.com/gp/product/0735627045?ie=UTF8&tag=stepheclearys-20&linkCode=as2&camp=1789&creative=390957&creativeASIN=0735627045){:rel="nofollow"}. Unfortunately, even though the 3rd edition is out, I only have the 2nd; so all page numbers in this blog post are for the 2nd edition. The section "The Garbage Collection Algorithm" (pg 461) covers GC in general, and the section "Garbage Collections and Debugging" (pg 465) is particularly useful when considering this question.
 
 ## Determining Root Objects
 
@@ -55,7 +55,7 @@ Instance fields are used to build the graph of referenced objects, so it's possi
 
 Method-local variables (including parameters and the implicit "this" reference) are much tricker: they are _sometimes_ root objects.
 
-As described in [CLR via C#](http://www.amazon.com/gp/product/0735627045?ie=UTF8&tag=stepheclearys-20&linkCode=as2&camp=1789&creative=390957&creativeASIN=0735627045), the JIT compiler for a method will determine which native code blocks reference which variables by building a "root table" for the method. It's important to note that this table is quite accurate (though not 100% accurate - it _may_ "hold onto" references slightly longer than necessary if it simplifies the table). Examine the simple code below:
+As described in [CLR via C#](http://www.amazon.com/gp/product/0735627045?ie=UTF8&tag=stepheclearys-20&linkCode=as2&camp=1789&creative=390957&creativeASIN=0735627045){:rel="nofollow"}, the JIT compiler for a method will determine which native code blocks reference which variables by building a "root table" for the method. It's important to note that this table is quite accurate (though not 100% accurate - it _may_ "hold onto" references slightly longer than necessary if it simplifies the table). Examine the simple code below:
 
 {% highlight csharp %}
 

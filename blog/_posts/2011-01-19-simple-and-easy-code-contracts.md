@@ -202,5 +202,5 @@ The Code Contracts library has a thorough [user manual](http://research.microsof
   - Advanced contract checking with **Pure** methods.
   - Tips for working with the static checker.
 
-Another great source of information is Jon Skeet's updated [C# in Depth](http://www.amazon.com/gp/product/1935182471?ie=UTF8&tag=stepheclearys-20&linkCode=as2&camp=1789&creative=390957&creativeASIN=1935182471) - the second edition added a whole chapter just on Code Contracts.
+Another great source of information is Jon Skeet's updated [C# in Depth](http://www.amazon.com/gp/product/1935182471?ie=UTF8&tag=stepheclearys-20&linkCode=as2&camp=1789&creative=390957&creativeASIN=1935182471){:rel="nofollow"} - the second edition added a whole chapter just on Code Contracts.
 
