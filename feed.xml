@@ -8,6 +8,148 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>Padding for Overlaid Structs</title>
+        <description>&lt;p&gt;&lt;a href=&quot;/2023/09/memory-mapped-files-overlaid-structs.html&quot;&gt;Last time&lt;/a&gt; we covered the basics of memory-mapped files and how to overlay structs onto the in-memory view of the file. This time we’ll take a look at different techniques to add “padding” or “holes” in our overlaid structs. Sometimes your overlaid struct is a header or container for another struct, which may be one of several different structure types. For example, a binary file may be composed of records, each with an identical header, and one field of that header is the record type, which defines how the remainder of that record should be interpreted.&lt;/p&gt;
+
+&lt;p&gt;For this post, we’ll use the same &lt;code&gt;Data&lt;/code&gt; struct we were working with last time, but this time we want to add some padding between the first and second data fields:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Data&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_first&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;cm&quot;&gt;/* TODO: forty bytes of padding goes here */&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_second&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Bonus points if our solution allows accessing that padding as another overlaid struct type.&lt;/p&gt;
+
+&lt;h2 id=&quot;the-ideal-solution-not-supported-safe-fixed-size-buffers&quot;&gt;The Ideal Solution (Not Supported): Safe Fixed-Size Buffers&lt;/h2&gt;
+
+&lt;p&gt;Ideally, we could just define a block of memory in our struct. This is similar to how it’s done in unamanged languages:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;c1&quot;&gt;// The code below currently causes these compiler erorrs.&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// Error CS0650 Bad array declarator: To declare a managed array the rank specifier precedes the variable&amp;#39;s identifier. To declare a fixed size buffer field, use the fixed keyword before the field type.&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// Error CS0270 Array size cannot be specified in a variable declaration (try initializing with a &amp;#39;new&amp;#39; expression)&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Data&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_first&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;byte&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_padding&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;40&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;];&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_second&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;There’s actually been some discussion about adding this to C#; the feature is called “safe fixed-size buffers” (a.k.a., “anonymous inline arrays”). It &lt;a href=&quot;https://github.com/dotnet/csharplang/blob/main/proposals/csharp-11.0/low-level-struct-improvements.md#safe-fixed-size-buffers&quot;&gt;didn’t make it into C# 11&lt;/a&gt;. The syntax above &lt;a href=&quot;https://github.com/dotnet/csharplang/issues/1314&quot;&gt;was considered for C# 12&lt;/a&gt; but &lt;a href=&quot;https://github.com/dotnet/csharplang/blob/main/meetings/2023/LDM-2023-05-01.md#fixed-size-buffers&quot;&gt;rejected earlier this year&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;inline-arrays-net-80--c-12&quot;&gt;Inline Arrays (.NET 8.0 / C# 12)&lt;/h2&gt;
+
+&lt;p&gt;Even though the nicer syntax above was rejected, &lt;a href=&quot;https://github.com/dotnet/csharplang/blob/f2800749ab171e9d6076f4f4bb5d0513f11c234a/proposals/csharp-12.0/inline-arrays.md&quot;&gt;inline arrays&lt;/a&gt; themselves have been accepted. Indeed, it is possible that a future version of C# may give us the nice syntax above, &lt;a href=&quot;https://github.com/dotnet/csharplang/blob/f2800749ab171e9d6076f4f4bb5d0513f11c234a/proposals/csharp-12.0/inline-arrays.md#detailed-design-option-2&quot;&gt;implemented using inline arrays&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;For now, we can just deconstruct that ourselves and write by hand what we wish the compiler would write for us:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Data&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_first&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Padding40&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_padding&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_second&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;na&quot;&gt;  [InlineArray(40)]&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Padding40&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;byte&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_start&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;The &lt;code&gt;InlineArrayAttribute&lt;/code&gt; is a bit odd; what it’s actually doing is telling the runtime to repeat the single field in that struct that many times. So &lt;code&gt;Padding40&lt;/code&gt; is actually 40 bytes long.&lt;/p&gt;
+
+&lt;p&gt;This works fine, as long as you’re on .NET 8.0; the &lt;code&gt;InlineArrayAttribute&lt;/code&gt; &lt;a href=&quot;https://github.com/dotnet/runtime/issues/61135&quot;&gt;requires runtime support&lt;/a&gt;. If you define your own &lt;code&gt;InlineArrayAttribute&lt;/code&gt; and try to run this on earlier runtimes, the &lt;code&gt;Padding40&lt;/code&gt; struct will be the wrong size, and &lt;code&gt;Data&lt;/code&gt; will not get the correct amount of padding.&lt;/p&gt;
+
+&lt;p&gt;Bonus: we can access the padding as another overlaid struct type by adding this member to the &lt;code&gt;Data&lt;/code&gt; struct:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;na&quot;&gt;[UnscopedRef]&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;ref&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;T&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PaddingAs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;T&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;()&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;where&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;T&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;=&amp;gt; &lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;ref&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Unsafe&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;As&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Padding40&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;T&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;ref&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_padding&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h2 id=&quot;unsafe-fixed-size-buffers&quot;&gt;Unsafe Fixed-Size Buffers&lt;/h2&gt;
+
+&lt;p&gt;The nicer syntax above is all about taking an existing feature - &lt;a href=&quot;https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/unsafe-code?WT.mc_id=DT-MVP-5000058#fixed-size-buffers&quot;&gt;unsafe fixed-size buffers&lt;/a&gt; - and allowing them in a safe context. If you’re not on .NET 8.0 yet, you can still use the old-school unsafe fixed-size buffers:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;unsafe&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Data&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_first&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;fixed&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;byte&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_padding&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;40&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;];&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_second&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;This also works fine, but has the drawback of requiring an &lt;code&gt;unsafe&lt;/code&gt; context. The &lt;code&gt;Overlay&lt;/code&gt; helper from the &lt;a href=&quot;/2023/09/memory-mapped-files-overlaid-structs.html&quot;&gt;last post&lt;/a&gt; is also &lt;code&gt;unsafe&lt;/code&gt;, but it would be nice if that was the &lt;em&gt;only&lt;/em&gt; &lt;code&gt;unsafe&lt;/code&gt; thing and all my overlay structures don’t have to be &lt;code&gt;unsafe&lt;/code&gt; just to add padding.&lt;/p&gt;
+
+&lt;p&gt;Bonus: we can access the padding as another overlaid struct type by adding this member to the &lt;code&gt;Data&lt;/code&gt; struct:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;unsafe&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;ref&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;T&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PaddingAs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;T&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;()&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;fixed&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;byte&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;p&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_padding&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;ref&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Unsafe&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AsRef&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;T&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;p&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;It does seem a bit awkward to me, though. The &lt;code&gt;fixed&lt;/code&gt; statement is informing the GC that &lt;code&gt;_padding&lt;/code&gt; can’t be moved… but since this is an overlaid structure (at the address of a memory-mapped view), it can’t be moved &lt;em&gt;anyway&lt;/em&gt;. So it seems superfluous. Probably &lt;a href=&quot;https://stackoverflow.com/a/22204244/263693&quot;&gt;not a lot of overhead&lt;/a&gt;; it’s just that the code seems awkward: “pin this thing in memory, read the pointer value, and then unpin it”.&lt;/p&gt;
+
+&lt;h2 id=&quot;explicit-struct-layout&quot;&gt;Explicit Struct Layout&lt;/h2&gt;
+
+&lt;p&gt;Let’s try an old-school, p/Invoke-style approach:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;na&quot;&gt;[StructLayout(LayoutKind.Explicit)]&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Data&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;  [FieldOffset(0)]&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_first&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;  [FieldOffset(44)]&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_second&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;I was curious to know if this approach worked, and it does. I don’t really recommend it, since you have to explicitly lay out your entire struct. Also, there isn’t a good way of referencing the padding.&lt;/p&gt;
+
+&lt;h2 id=&quot;marshalling-doesnt-work&quot;&gt;Marshalling (Doesn’t Work)&lt;/h2&gt;
+
+&lt;p&gt;Just as a side note, &lt;em&gt;marshalling&lt;/em&gt; directives don’t work. For example:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;c1&quot;&gt;// Does not work!&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;[StructLayout(LayoutKind.Sequential)]&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Data&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_first&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;  [MarshalAs(UnmanagedType.ByValArray, SizeConst = 40)]&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;byte&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_padding&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_second&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;This works if we’re doing p/Invoke, because it’s marshalling (copying) the structure to/from unmanaged code. Since we’re &lt;em&gt;overlaying&lt;/em&gt; the structure directly in memory, marshalling directives like this don’t work.&lt;/p&gt;
+
+&lt;h2 id=&quot;explicit-fields&quot;&gt;Explicit Fields&lt;/h2&gt;
+
+&lt;p&gt;Of course, you can always define padding using multiple explicit fields. The resulting code is ugly (and IMO more awkward to maintain), but it works fine:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Data&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_first&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_padding0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_padding1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_padding2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_padding3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_padding4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_padding5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_padding6&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_padding7&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_padding8&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_padding9&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_second&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;I’m using &lt;code&gt;int&lt;/code&gt; fields above so I only have to type 10 of them, as opposed to 40 &lt;code&gt;byte&lt;/code&gt;-sized fields.&lt;/p&gt;
+
+&lt;p&gt;You can even do a bonus round with this approach by referencing the first padding member:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;na&quot;&gt;[UnscopedRef]&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;ref&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;T&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PaddingAs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;T&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;()&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;where&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;T&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;=&amp;gt; &lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;ref&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Unsafe&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;As&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;T&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;ref&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_padding0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Of course, if you have lots of padding (or multiple padding sections), this can get tedious.&lt;/p&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;Since I’m working on a greenfield project, I’ve chosen to use the .NET 8.0-style &lt;code&gt;InlineArrayAttribute&lt;/code&gt; approach, with the hope that the syntax becomes nicer in future versions of C#. If I had to support older .NET versions, I’d probably take the “Unsafe Fixed-Size Buffers” approach, even though it requires &lt;code&gt;unsafe&lt;/code&gt; contexts for all those overlaid structs.&lt;/p&gt;
+
+&lt;p&gt;I hope this has been helpful to you during your memory-mapping adventures!&lt;/p&gt;
+</description>
+        <pubDate>Thu, 05 Oct 2023 00:00:00 +0000</pubDate>
+        <link>https://blog.stephencleary.com/2023/10/padding-for-overlaid-structs.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2023/10/padding-for-overlaid-structs.html</guid>
+      </item>
+    
+      <item>
         <title>Memory-Mapped Files and Overlaid Structs</title>
         <description>&lt;p&gt;It has been a long, long time since I’ve used memory-mapped files - I think the last time was before .NET existed (!). Recently, I had a need to work with memory-mapped files in C#, and I gathered together a few resources that explain how to do it - specifically, how to map a file into memory and then “overlay” a structure on top of that memory. Since it took me a while to figure this out (and I learned about some cool upcoming features along the way), I thought I’d write this up into a proper post or two.&lt;/p&gt;
 
@@ -167,7 +309,7 @@
 
 &lt;p&gt;I hope this has been helpful! If anyone out there knows a way to eliminate the &lt;code&gt;unsafe&lt;/code&gt; code in &lt;code&gt;Overlay&lt;/code&gt;, I’d love to hear it!&lt;/p&gt;
 
-&lt;p&gt;Next time I’m planning to write a bit about overlaying structures with holes in them, which is a useful technique when you have “header” or “container” structures that wrap other structures possibly of different types.&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;/2023/10/padding-for-overlaid-structs.html&quot;&gt;Next time&lt;/a&gt; I’m planning to write a bit about overlaying structures with holes in them, which is a useful technique when you have “header” or “container” structures that wrap other structures possibly of different types.&lt;/p&gt;
 </description>
         <pubDate>Thu, 28 Sep 2023 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2023/09/memory-mapped-files-overlaid-structs.html</link>
@@ -1126,46 +1268,6 @@ class AnotherExample : ExampleBase&amp;lt;AnotherExample&amp;gt;
         <pubDate>Thu, 24 Feb 2022 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2022/02/cancellation-1-overview.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2022/02/cancellation-1-overview.html</guid>
-      </item>
-    
-      <item>
-        <title>Asynchronous Messaging, Part 5: Miscellaneous Considerations</title>
-        <description>&lt;p&gt;This entry in my asynchronous messaging series is kind of a grab bag of miscellaneous topics. I don’t really have enough to say on these to make them their own posts, but some are too important to drop completely. So, here we go!&lt;/p&gt;
-
-&lt;h2 id=&quot;poison--dead-letter-queues&quot;&gt;Poison / Dead Letter Queues&lt;/h2&gt;
-
-&lt;p&gt;When designing your system, you need to decide how to handle queue messages that insist on failing to process. Usually, you plan for some kind of “dead letter queue” to hold these “poison” messages, and then set up alerting or something on that queue. Many cloud queue/worker systems will automatically do this for you: after a certain number of retries, the problematic message is removed from the regular queue and sent to a poison queue instead.&lt;/p&gt;
-
-&lt;p&gt;Just don’t forget to set up alerting on those poison queues!&lt;/p&gt;
-
-&lt;h2 id=&quot;versioning&quot;&gt;Versioning&lt;/h2&gt;
-
-&lt;p&gt;When I design asynchronous messaging systems, I tend to treat the queued messages as a kind of Data Transfer Object (DTO). These messages act as a bridge between two processes: the HTTP application and the backend processor.&lt;/p&gt;
-
-&lt;p&gt;Just like the rest of the system, the DTOs will change over time, and it’s best to be prepared for that. Unlike an HTTP stack, there’s no versioning possible in the URL or in a header. I tend to prefer versioning in the queue name itself, but you could also embed versions in the DTOs themselves. Generally, “storage DTOs” like these only require a single version number (i.e., they only have a major version, not a minor/patch version); this is because you explicitly &lt;em&gt;don’t&lt;/em&gt; want an older consumer to process newer queue messages.&lt;/p&gt;
-
-&lt;h2 id=&quot;mix-and-match&quot;&gt;Mix and Match&lt;/h2&gt;
-
-&lt;p&gt;I’ve pointed out that the cloud queue solutions work out of the box with the cloud backend processor solutions from the same company, including automatic scaling. But you don’t &lt;em&gt;have&lt;/em&gt; to use the same provider for each part of your asynchronous messaging architecture. It’s entirely possible to, e.g., scale Azure Functions based off a RabbitMQ, or wire up a Google Cloud hosted Docker backend to an Amazon SQS queue. Sometimes there are extra costs when crossing cloud providers, and sometimes you have to write a plugin so that your backend will use your kind of queue for its scaling; but it’s certainly possible to mix and match.&lt;/p&gt;
-
-&lt;h2 id=&quot;all-in-one&quot;&gt;All-In-One&lt;/h2&gt;
-
-&lt;p&gt;And then there is the other side: some solutions are all-in-one, complete solutions for asynchronous messaging. Examples of all-in-one solutions are &lt;a href=&quot;https://www.hangfire.io/&quot;&gt;Hangfire&lt;/a&gt; (.NET) and &lt;a href=&quot;https://github.com/collectiveidea/delayed_job&quot;&gt;Delayed Job&lt;/a&gt; (Ruby). Their all-in-one nature means they are easier to set up, but inevitably also means they are less flexible. There are also some very serious considerations you need to look into before adopting an all-in-one solution; what the developers of that solution created may be very different than what your application needs.&lt;/p&gt;
-
-&lt;p&gt;Specifically, you need to look into:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;Does it use a durable queue? If not, I would not even consider it. As a corollary, anything that uses Redis as a queue should not be used in its default configuration, including some very popular solutions such as Sidekiq (Ruby) and Bull (NodeJS). If you do wish to use Redis-based message queues, then you should configure Redis to be durable by telling it to write an Append Only File &lt;em&gt;and&lt;/em&gt; telling it to sync that file on every command. Both Hangfire and Delayed Job use a database as a queue, which is &lt;em&gt;just ok&lt;/em&gt; (assuming you already have a database in your architecture), but not &lt;em&gt;ideal&lt;/em&gt; (now your database server has to deal with all the queue messages as well as its normal data).&lt;/li&gt;
-  &lt;li&gt;How are jobs serialized - is the serialization backwards-compatible when your library is updated? As an example of this, until recently (early 2019), Hangfire &lt;em&gt;did not support rolling upgrades&lt;/em&gt; due to the way they serialized jobs. Before that time, Hangfire-based applications had to shut down completely before rolling out a Hangfire upgrade, and if a rollback was necessary, they had to shut down completely before doing the rollback, too. Ouch!&lt;/li&gt;
-  &lt;li&gt;How are jobs serialized - how much can the “runner” code change? My experience here is more with Hangfire: .NET is pretty specific when it comes to serializing method delegates, and even something like adding a parameter (with a default argument) can cause a failure. Any change like that now requires &lt;em&gt;two&lt;/em&gt; updates instead of one: the first will add the new overload, and once the old jobs have all completed, a second update can roll out to remove the old overload. I’m not as familiar with Delayed Jobs; Ruby is a more dynamic language, so it may not have this problem.&lt;/li&gt;
-  &lt;li&gt;How are errors handled? Most all-in-one solutions will automatically retry, but if the job message insists on failing, then it has to do something else with it. By default, Hangfire will leave those job messages in a “failed” state (and it’s up to you to build some kind of notification on that), whereas Delayed Job will &lt;em&gt;delete&lt;/em&gt; those jobs (!).&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;In conclusion, caveat emptor. Don’t just slap an all-in-one solution into your architecture; a well-thought-out, proper asynchronous messaging solution is almost always the better choice.&lt;/p&gt;
-</description>
-        <pubDate>Thu, 04 Feb 2021 00:00:00 +0000</pubDate>
-        <link>https://blog.stephencleary.com/2021/02/asynchronous-messaging-5-miscellaneous-considerations.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2021/02/asynchronous-messaging-5-miscellaneous-considerations.html</guid>
       </item>
     
   </channel>
