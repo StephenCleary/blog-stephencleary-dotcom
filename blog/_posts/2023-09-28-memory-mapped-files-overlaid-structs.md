@@ -178,4 +178,4 @@ Similarly, if you write to a file using normal I/O calls, any failures are repor
 
 I hope this has been helpful! If anyone out there knows a way to eliminate the `unsafe` code in `Overlay`, I'd love to hear it!
 
-Next time I'm planning to write a bit about overlaying structures with holes in them, which is a useful technique when you have "header" or "container" structures that wrap other structures possibly of different types.
+[Next time]({% post_url 2023-10-05-padding-for-overlaid-structs %}) I'm planning to write a bit about overlaying structures with holes in them, which is a useful technique when you have "header" or "container" structures that wrap other structures possibly of different types.
