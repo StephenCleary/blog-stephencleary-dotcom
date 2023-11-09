@@ -10,25 +10,25 @@ I don't often write "what's new in .NET" posts, but .NET 8.0 has an interesting 
 
 First, let's review the semantics and history of the original `ConfigureAwait`, which takes a boolean argument named `continueOnCapturedContext`.
 
-When `await` acts on a task (`Task`, `Task<T>`, `ValueTask`, or `ValueTask<T>`), its [default behavior]({% post_url 2012-02-02-async-and-await %}) is to capture a "context"; later, when the task completes, the `async` method resumes executing in that context. This "context" is `SynchronizationContext.Current` or `TaskScheduler.Current`. This default behavior can be made explicit by using `ConfigureAwait(continueOnCapturedContext: true)`.
+When `await` acts on a task (`Task`, `Task<T>`, `ValueTask`, or `ValueTask<T>`), its [default behavior]({% post_url 2012-02-02-async-and-await %}) is to capture a "context"; later, when the task completes, the `async` method resumes executing in that context. The "context" is `SynchronizationContext.Current` or `TaskScheduler.Current` (falling back on the thread pool context if none is provided). This default behavior of continuing on the captured context can be made explicit by using `ConfigureAwait(continueOnCapturedContext: true)`.
 
 `ConfigureAwait(continueOnCapturedContext: false)` is useful if you *don't* want to resume on that context. When using `ConfigureAwait(false)`, the `async` method resumes on any available thread pool thread.
 
 The history of `ConfigureAwait(false)` is interesting (at least to me). Originally, the community recommended using `ConfigureAwait(false)` everywhere you could, unless you *needed* the context. This is the position I [recommended in my Async Best Practices article](https://learn.microsoft.com/en-us/archive/msdn-magazine/2013/march/async-await-best-practices-in-asynchronous-programming?WT.mc_id=DT-MVP-5000058#configure-context). There were several discussions during that time frame over why the default was `true`, especially from frustrated library developers who had to use `ConfigureAwait(false)` a lot.
 
-Over the years, though, the recommendation of "use `ConfigureAwait(false)` whenever you can" has been modified. The first (albeit minor) shift was instead of "use `ConfigureAwait(false)` whenever you can", a simpler guideline arose: use `ConfigureAwait(false)` in library code and *don't* use it in application code. This is an easier guideline to understand and follow. Still, the complaints about having to use `ConfigureAwait(false)` continued, with periodic requests to change the default on a project-wide level. These requests have always been rejected for language consistency reasons.
+Over the years, though, the recommendation of "use `ConfigureAwait(false)` whenever you can" has been modified. The first (albeit minor) shift was instead of "use `ConfigureAwait(false)` whenever you can", a simpler guideline arose: use `ConfigureAwait(false)` in library code and *don't* use it in application code. This is an easier guideline to understand and follow. Still, the complaints about having to use `ConfigureAwait(false)` continued, with periodic requests to change the default on a project-wide level. These requests have always been rejected by the C# team for language consistency reasons.
 
-More recently (specifically, since ASP.NET Core dropped their `SynchronizationContext` and fixed all the places where sync-over-async was necessary), there has been a move away from `ConfigureAwait(false)`. As a library author, I fully understand how annoying it is to have `ConfigureAwait(false)` litter your codebase! Perhaps the most notable departure is the Entity Framework Core team, which just flat-out decided not to use `ConfigureAwait(false)` anymore. For myself, I still use `ConfigureAwait(false)` in my libraries, but I understand the frustration.
+More recently (specifically, since ASP.NET dropped their `SynchronizationContext` with ASP.NET Core and fixed all the places where sync-over-async was necessary), there has been a move away from `ConfigureAwait(false)`. As a library author, I fully understand how annoying it is to have `ConfigureAwait(false)` litter your codebase! Perhaps the most notable departure is the Entity Framework Core team, which just flat-out decided not to use `ConfigureAwait(false)` anymore. For myself, I still use `ConfigureAwait(false)` in my libraries, but I understand the frustration.
 
 Since we're on the topic of `ConfigureAwait(false)`, I'd like to note a few common misconceptions:
 
 1. `ConfigureAwait(false)` is not a good way to avoid deadlocks. That's not its purpose, and it's a questionable solution at best. In order to avoid deadlocks when doing direct blocking, you'd have to make sure _all_ the asynchronous code uses `ConfigureAwait(false)`, including code in libraries and the runtime. It's just not a very maintainable solution. There are [better solutions available](https://learn.microsoft.com/en-us/archive/msdn-magazine/2015/july/async-programming-brownfield-async-development?WT.mc_id=DT-MVP-5000058).
-1. `ConfigureAwait` configures the `await`, not the task. E.g., the `ConfigureAwait(false)` in `SomethingAsync().ConfigureAwait(false).GetAwaiter().GetResult()` does exactly nothing. Similarly, the `await` in `var task = SomethingAsync(); task.ConfigureAwait(false); await task;` still has the default behavior, completely ignoring the `ConfigureAwait(false)`. I've seen both of these mistakes over the years.
+1. `ConfigureAwait` configures the `await`, not the task. E.g., the `ConfigureAwait(false)` in `SomethingAsync().ConfigureAwait(false).GetAwaiter().GetResult()` does exactly nothing. Similarly, the `await` in `var task = SomethingAsync(); task.ConfigureAwait(false); await task;` still continues on the captured context, completely ignoring the `ConfigureAwait(false)`. I've seen both of these mistakes over the years.
 1. `ConfigureAwait(false)` does not mean "run the rest of this method on a thread pool thread" or "run the rest of this method on a different thread". It only takes effect if the `await` yields control and then later resumes the `async` method. Specifically, `await` will *not* yield control if its task is already complete; in that case, the `ConfigureAwait` has no effect because the `await` continues synchronously.
 
 OK, now that we've refreshed our understanding of `ConfigureAwait(false)`, let's take a look at how `ConfigureAwait` is getting some enhancements in .NET 8. None of the existing behavior is changed; `await` without any `ConfigureAwait` at all still has the default behavior of `ConfigureAwait(true)`, and `ConfigureAwait(false)` still has the same behavior, too. But there's a *new* `ConfigureAwait` coming into town!
 
-## ConfigureAwaitOptions
+## ConfigureAwait(ConfigureAwaitOptions)
 
 There are several new options available for `ConfigureAwait`. [`ConfigureAwaitOptions`](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.configureawaitoptions?view=net-8.0) is a new type that provides all the different ways to configure awaitables:
 
@@ -46,7 +46,7 @@ public enum ConfigureAwaitOptions
 
 First, a quick note: this is a `Flags` enum; any combination of these options can be used together.
 
-The next thing I want to point out is that `ConfigureAwait(ConfigureAwaitOptions)` is only available on `Task` and `Task<T>`, at least for .NET 8. It wasn't added to `ValueTask` / `ValueTask<T>` because of the natural implementation of some of these behaviors are easier to express if they can retrieve results multiple times (which [isn't allowed for value tasks]({% post_url 2020-03-28-valuetask %})). It's possible that a future release of .NET may add `ConfigureAwait(ConfigureAwaitOptions)` for value tasks, but as of now it's only available on reference tasks, so you'll need to call `AsTask` if you want to use these new options on value tasks.
+The next thing I want to point out is that `ConfigureAwait(ConfigureAwaitOptions)` is only available on `Task` and `Task<T>`, at least for .NET 8. It wasn't added to `ValueTask` / `ValueTask<T>` yet. It's possible that a future release of .NET may add `ConfigureAwait(ConfigureAwaitOptions)` for value tasks, but as of now it's only available on reference tasks, so you'll need to call `AsTask` if you want to use these new options on value tasks.
 
 Now, let's consider each of these options in turn.
 
@@ -89,7 +89,7 @@ await task.ConfigureAwait(ConfigureAwaitOptions.None);
 
 So, that's something to keep in mind as you start using this new `ConfigureAwaitOptions` enum.
 
-### SuppressThrowing
+### ConfigureAwaitOptions.SuppressThrowing
 
 The `SuppressThrowing` flag suppresses exceptions that would otherwise occur when `await`ing a task. Under normal conditions, `await` will observe task exceptions by re-raising them at the point of the `await`. Normally, this is exactly the behavior you want, but there are some situations where you just want to wait for the task to complete and you don't care whether it completes successfully or with an exception. `SuppressThrowing` allows you to wait for the completion of a task without observing its result.
 
@@ -118,11 +118,9 @@ If you `await` with the `SuppressThrowing` flag, then the exception _is_ conside
 {% highlight csharp %}
 TaskScheduler.UnobservedTaskException += (_, __) => { Console.WriteLine("never printed"); };
 
-Task task = Task.Run(() => throw new InvalidOperationException());
+Task task = Task.FromException(new InvalidOperationException());
 await task.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
 task = null;
-
-Thread.Sleep(1000);
 
 GC.Collect();
 GC.WaitForPendingFinalizers();
@@ -131,16 +129,16 @@ GC.Collect();
 Console.ReadKey();
 {% endhighlight %}
 
-There's another consideration for this flag as well. When used with a plain `Task`, the semantics are clear: if the task faults, the exception is just ignored. However, the same semantics don't quite work for `Task<T>`, because in that case the `await` expression needs to return a value (of type `T`). It's not clear what value of `T` would be appropriate to return in the case of an ignored exception, so the current behavior is to throw an `ArgumentOutOfRangeException` at runtime. To help catch this at compile time, a new warning [was added](https://github.com/dotnet/roslyn-analyzers/pull/6669): `CA2261` "The ConfigureAwaitOptions.SuppressThrowing is only supported with the non-generic Task". This rule defaults to a warning, but I'd suggest making it an error, since it will always fail at runtime.
+There's another consideration for this flag as well. When used with a plain `Task`, the semantics are clear: if the task faults, the exception is just ignored. However, the same semantics don't quite work for `Task<T>`, because in that case the `await` expression needs to return a value (of type `T`). It's not clear what value of `T` would be appropriate to return in the case of an ignored exception, so the current behavior is to throw an `ArgumentOutOfRangeException` at runtime. To help catch this at compile time, a new warning [was added](https://github.com/dotnet/roslyn-analyzers/pull/6669): `CA2261` `The ConfigureAwaitOptions.SuppressThrowing is only supported with the non-generic Task`. This rule defaults to a warning, but I'd suggest making it an error, since it will always fail at runtime.
 
 {% highlight csharp %}
-Task<int> task = Task.Run(() => 13);
+Task<int> task = Task.FromResult(13);
 
 // Causes CA2261 warning at build time and ArgumentOutOfRangeException at runtime.
 await task.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
 {% endhighlight %}
 
-As a final note, this is one flag that also affects synchronous blocking in addition to `await`. Specifically, you can call `.GetAwaiter().GetResult()` to block on the awaiter returned from `ConfigureAwait`, and the `SuppressThrowing` flag will cause exceptions to be ignored in that case as well. Previously, when `ConfigureAwait` only took a boolean parameter, you could say "ConfigureAwait configures the await"; but now you have to be more specific: "ConfigureAwait returns a configured awaitable". And it is now possible that the configured awaitable modifies the behavior of blocking code in addition to the behavior of the `await`. Of course, blocking on asynchronous code still isn't recommended. `ConfigureAwait` is perhaps a slight misnomer now, but it is still _primarily_ intended for configuring `await`.
+As a final note, this is one flag that also affects synchronous blocking in addition to `await`. Specifically, you can call `.GetAwaiter().GetResult()` to block on the awaiter returned from `ConfigureAwait`. The `SuppressThrowing` flag will cause exceptions to be ignored whether using `await` or `GetAwaiter().GetResult()`. Previously, when `ConfigureAwait` only took a boolean parameter, you could say "ConfigureAwait configures the await"; but now you have to be more specific: "ConfigureAwait returns a configured awaitable". And it is now possible that the configured awaitable modifies the behavior of blocking code in addition to the behavior of the `await`. `ConfigureAwait` is perhaps a slight misnomer now, but it is still _primarily_ intended for configuring `await`. Of course, blocking on asynchronous code still isn't recommended.
 
 {% highlight csharp %}
 Task task = Task.Run(() => throw new InvalidOperationException());
@@ -149,25 +147,37 @@ Task task = Task.Run(() => throw new InvalidOperationException());
 task.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing).GetAwaiter().GetResult();
 {% endhighlight %}
 
-### ForceYielding
+### ConfigureAwaitOptions.ForceYielding
 
 The final flag is the `ForceYielding` flag. I expect this flag will be rarely used, but when you need it, you need it!
 
 `ForceYielding` is similar to `Task.Yield`. `Yield` returns a special awaitable that always claims to be not completed, but schedules its continuations immediately. What this means is that the `await` always acts asynchronously, yielding to its caller, and then the `async` method continues executing as soon as possible. The [normal behavior for `await`](% post_url 2012-02-02-async-and-await %) is to check if its awaitable is complete, and if it is, then continue executing synchronously; `ForceYielding` prevents that synchronous behavior, forcing the `await` to behave asynchronously.
 
-For myself, I find forcing asynchronous behavior most useful in unit testing. It can also be used to avoid stack dives when recursive or heavily-nested asynchronous methods are completing; this is rarely needed these days, though, because the .NET Core runtime's stack heuristics are much better than the old .NET Framework ones were. It may also be useful when implementing asynchronous coordination primitives, such as the ones in my AsyncEx library. Essentially, anywhere where you want to force `await` to behave asynchronously, you can use `ForceYielding` to accomplish that.
+For myself, I find forcing asynchronous behavior most useful in unit testing. It can also be used to avoid stack dives in some cases. It may also be useful when implementing asynchronous coordination primitives, such as the ones in my AsyncEx library. Essentially, anywhere where you want to force `await` to behave asynchronously, you can use `ForceYielding` to accomplish that.
 
-One point that I find interesting is that `await` with `ForceYielding` makes the `await` behave like it does in JavaScript. In JavaScript, `await` _always_ yields, even if you pass it a resolved promise. In C#, you can now `await` a completed task with `ForceYielding`, and `await` will behave like it's not completed.
+One point that I find interesting is that `await` with `ForceYielding` makes the `await` behave like it does in JavaScript. In JavaScript, `await` _always_ yields, even if you pass it a resolved promise. In C#, you can now `await` a completed task with `ForceYielding`, and `await` will behave as though it's not completed, just like JavaScript's `await`.
 
 {% highlight csharp %}
-Console.WriteLine(Environment.CurrentManagedThreadId);
-await Task.CompletedTask;
-Console.WriteLine(Environment.CurrentManagedThreadId);
-await Task.CompletedTask.ConfigureAwait(ConfigureAwaitOptions.ForceYielding);
-Console.WriteLine(Environment.CurrentManagedThreadId);
+static async Task Main()
+{
+  Console.WriteLine(Environment.CurrentManagedThreadId); // main thread
+  await Task.CompletedTask;
+  Console.WriteLine(Environment.CurrentManagedThreadId); // main thread
+  await Task.CompletedTask.ConfigureAwait(ConfigureAwaitOptions.ForceYielding);
+  Console.WriteLine(Environment.CurrentManagedThreadId); // thread pool thread
+}
 {% endhighlight %}
 
-Note that `ForceYielding` by itself also implies _not_ continuing on the captured context, so it is the same as saying "schedule the rest of this method to the thread pool" or "switch to a thread pool thread". `Task.Yield` _will_ resume on the captured context, so it's not _exactly_ like `ForceYielding` by itself. It's exactly like `ForceYielding` with `ConinueOnCapturedContext`.
+Note that `ForceYielding` by itself also implies _not_ continuing on the captured context, so it is the same as saying "schedule the rest of this method to the thread pool" or "switch to a thread pool thread".
+
+{% highlight csharp %}
+// ForceYielding forces await to behave asynchronously.
+// Lack of ContinueOnCapturedContext means the method continues on a thread pool thread.
+// Therefore, code after this statement will *always* run on a thread pool thread.
+await task.ConfigureAwait(ConfigureAwaitOptions.ForceYielding);
+{% endhighlight %}
+
+`Task.Yield` _will_ resume on the captured context, so it's not _exactly_ like `ForceYielding` by itself. It's actually like `ForceYielding` with `ConinueOnCapturedContext`.
 
 {% highlight csharp %}
 // These do the same thing
@@ -175,7 +185,7 @@ await Task.Yield();
 await Task.CompletedTask.ConfigureAwait(ConfigureAwaitOptions.ForceYielding | ConfigureAwaitOptions.ContinueOnCapturedContext);
 {% endhighlight %}
 
-Of course, the real value of `ForceYielding` is that it can be applied to any task at all. Previously, in the situations where yielding was required, you had to either add a _separate_ `await Task.Yield();` or create a custom awaitable. That's no longer necessary now that `ForceYielding` can be applied to any task.
+Of course, the real value of `ForceYielding` is that it can be applied to any task at all. Previously, in the situations where yielding was required, you had to either add a _separate_ `await Task.Yield();` statement or create a custom awaitable. That's no longer necessary now that `ForceYielding` can be applied to any task.
 
 ## Further Reading
 
