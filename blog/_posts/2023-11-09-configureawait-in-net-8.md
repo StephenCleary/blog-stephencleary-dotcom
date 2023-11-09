@@ -64,11 +64,15 @@ So, that's something to keep in mind as you start using this new `ConfigureAwait
 
 ### SuppressThrowing
 
-This is one that's quite useful, in particular 
+The `SuppressThrowing` flag suppresses exceptions that would otherwise occur when `await`ing a task. Under normal conditions, `await` will observe task exceptions by re-raising them at the point of the `await`. Normally, this is exactly the behavior you want, but there are some situations where you just want to wait for the task to complete and you don't care whether it completes successfully or with an exception. `SuppressThrowing` allows you to wait for the completion of a task without observing its result.
 
-### ForceYielding
+I expect this will be most useful alongside cancellation. There are some cases where some code needs to cancel a task and then wait for the existing task to complete before starting a replacement task. `SuppressThrowing` would be useful in that scenario: the code can `await` with `SuppressThrowing`, and the method will continue when the task completes, whether it was successful, canceled, or finished with an exception.
+
+TODO: does it suppress `UnobservedException`?
 
 https://github.com/dotnet/roslyn-analyzers/pull/6669 - CA2261
+
+### ForceYielding
 
 - ConfigureAwait can affect synchronous blocking in addition to await (e.g., `SuppressThrowing`). It is still primarily intended for configuring `await`, but the additional options can affect synchronous behavior, too.
 
