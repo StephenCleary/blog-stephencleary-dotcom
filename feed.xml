@@ -8,6 +8,180 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>ConfigureAwait in .NET 8</title>
+        <description>&lt;p&gt;I don’t often write “what’s new in .NET” posts, but .NET 8.0 has an interesting addition that I haven’t seen a lot of people talk about. &lt;code&gt;ConfigureAwait&lt;/code&gt; is getting a pretty good overhaul/enhancement; let’s take a look!&lt;/p&gt;
+
+&lt;h2 id=&quot;configureawaittrue-and-configureawaitfalse&quot;&gt;ConfigureAwait(true) and ConfigureAwait(false)&lt;/h2&gt;
+
+&lt;p&gt;First, let’s review the semantics and history of the original &lt;code&gt;ConfigureAwait&lt;/code&gt;, which takes a boolean argument named &lt;code&gt;continueOnCapturedContext&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;When &lt;code&gt;await&lt;/code&gt; acts on a task (&lt;code&gt;Task&lt;/code&gt;, &lt;code&gt;Task&amp;lt;T&amp;gt;&lt;/code&gt;, &lt;code&gt;ValueTask&lt;/code&gt;, or &lt;code&gt;ValueTask&amp;lt;T&amp;gt;&lt;/code&gt;), its &lt;a href=&quot;/2012/02/async-and-await.html&quot;&gt;default behavior&lt;/a&gt; is to capture a “context”; later, when the task completes, the &lt;code&gt;async&lt;/code&gt; method resumes executing in that context. The “context” is &lt;code&gt;SynchronizationContext.Current&lt;/code&gt; or &lt;code&gt;TaskScheduler.Current&lt;/code&gt; (falling back on the thread pool context if none is provided). This default behavior of continuing on the captured context can be made explicit by using &lt;code&gt;ConfigureAwait(continueOnCapturedContext: true)&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;ConfigureAwait(continueOnCapturedContext: false)&lt;/code&gt; is useful if you &lt;em&gt;don’t&lt;/em&gt; want to resume on that context. When using &lt;code&gt;ConfigureAwait(false)&lt;/code&gt;, the &lt;code&gt;async&lt;/code&gt; method resumes on any available thread pool thread.&lt;/p&gt;
+
+&lt;p&gt;The history of &lt;code&gt;ConfigureAwait(false)&lt;/code&gt; is interesting (at least to me). Originally, the community recommended using &lt;code&gt;ConfigureAwait(false)&lt;/code&gt; everywhere you could, unless you &lt;em&gt;needed&lt;/em&gt; the context. This is the position I &lt;a href=&quot;https://learn.microsoft.com/en-us/archive/msdn-magazine/2013/march/async-await-best-practices-in-asynchronous-programming?WT.mc_id=DT-MVP-5000058#configure-context&quot;&gt;recommended in my Async Best Practices article&lt;/a&gt;. There were several discussions during that time frame over why the default was &lt;code&gt;true&lt;/code&gt;, especially from frustrated library developers who had to use &lt;code&gt;ConfigureAwait(false)&lt;/code&gt; a lot.&lt;/p&gt;
+
+&lt;p&gt;Over the years, though, the recommendation of “use &lt;code&gt;ConfigureAwait(false)&lt;/code&gt; whenever you can” has been modified. The first (albeit minor) shift was instead of “use &lt;code&gt;ConfigureAwait(false)&lt;/code&gt; whenever you can”, a simpler guideline arose: use &lt;code&gt;ConfigureAwait(false)&lt;/code&gt; in library code and &lt;em&gt;don’t&lt;/em&gt; use it in application code. This is an easier guideline to understand and follow. Still, the complaints about having to use &lt;code&gt;ConfigureAwait(false)&lt;/code&gt; continued, with periodic requests to change the default on a project-wide level. These requests have always been rejected by the C# team for language consistency reasons.&lt;/p&gt;
+
+&lt;p&gt;More recently (specifically, since ASP.NET dropped their &lt;code&gt;SynchronizationContext&lt;/code&gt; with ASP.NET Core and fixed all the places where sync-over-async was necessary), there has been a move away from &lt;code&gt;ConfigureAwait(false)&lt;/code&gt;. As a library author, I fully understand how annoying it is to have &lt;code&gt;ConfigureAwait(false)&lt;/code&gt; litter your codebase! Perhaps the most notable departure is the Entity Framework Core team, which just flat-out decided not to use &lt;code&gt;ConfigureAwait(false)&lt;/code&gt; anymore. For myself, I still use &lt;code&gt;ConfigureAwait(false)&lt;/code&gt; in my libraries, but I understand the frustration.&lt;/p&gt;
+
+&lt;p&gt;Since we’re on the topic of &lt;code&gt;ConfigureAwait(false)&lt;/code&gt;, I’d like to note a few common misconceptions:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;&lt;code&gt;ConfigureAwait(false)&lt;/code&gt; is not a good way to avoid deadlocks. That’s not its purpose, and it’s a questionable solution at best. In order to avoid deadlocks when doing direct blocking, you’d have to make sure &lt;em&gt;all&lt;/em&gt; the asynchronous code uses &lt;code&gt;ConfigureAwait(false)&lt;/code&gt;, including code in libraries and the runtime. It’s just not a very maintainable solution. There are &lt;a href=&quot;https://learn.microsoft.com/en-us/archive/msdn-magazine/2015/july/async-programming-brownfield-async-development?WT.mc_id=DT-MVP-5000058&quot;&gt;better solutions available&lt;/a&gt;.&lt;/li&gt;
+  &lt;li&gt;&lt;code&gt;ConfigureAwait&lt;/code&gt; configures the &lt;code&gt;await&lt;/code&gt;, not the task. E.g., the &lt;code&gt;ConfigureAwait(false)&lt;/code&gt; in &lt;code&gt;SomethingAsync().ConfigureAwait(false).GetAwaiter().GetResult()&lt;/code&gt; does exactly nothing. Similarly, the &lt;code&gt;await&lt;/code&gt; in &lt;code&gt;var task = SomethingAsync(); task.ConfigureAwait(false); await task;&lt;/code&gt; still continues on the captured context, completely ignoring the &lt;code&gt;ConfigureAwait(false)&lt;/code&gt;. I’ve seen both of these mistakes over the years.&lt;/li&gt;
+  &lt;li&gt;&lt;code&gt;ConfigureAwait(false)&lt;/code&gt; does not mean “run the rest of this method on a thread pool thread” or “run the rest of this method on a different thread”. It only takes effect if the &lt;code&gt;await&lt;/code&gt; yields control and then later resumes the &lt;code&gt;async&lt;/code&gt; method. Specifically, &lt;code&gt;await&lt;/code&gt; will &lt;em&gt;not&lt;/em&gt; yield control if its task is already complete; in that case, the &lt;code&gt;ConfigureAwait&lt;/code&gt; has no effect because the &lt;code&gt;await&lt;/code&gt; continues synchronously.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;OK, now that we’ve refreshed our understanding of &lt;code&gt;ConfigureAwait(false)&lt;/code&gt;, let’s take a look at how &lt;code&gt;ConfigureAwait&lt;/code&gt; is getting some enhancements in .NET 8. None of the existing behavior is changed; &lt;code&gt;await&lt;/code&gt; without any &lt;code&gt;ConfigureAwait&lt;/code&gt; at all still has the default behavior of &lt;code&gt;ConfigureAwait(true)&lt;/code&gt;, and &lt;code&gt;ConfigureAwait(false)&lt;/code&gt; still has the same behavior, too. But there’s a &lt;em&gt;new&lt;/em&gt; &lt;code&gt;ConfigureAwait&lt;/code&gt; coming into town!&lt;/p&gt;
+
+&lt;h2 id=&quot;configureawaitconfigureawaitoptions&quot;&gt;ConfigureAwait(ConfigureAwaitOptions)&lt;/h2&gt;
+
+&lt;p&gt;There are several new options available for &lt;code&gt;ConfigureAwait&lt;/code&gt;. &lt;a href=&quot;https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.configureawaitoptions?view=net-8.0&quot;&gt;&lt;code&gt;ConfigureAwaitOptions&lt;/code&gt;&lt;/a&gt; is a new type that provides all the different ways to configure awaitables:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;namespace&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;System.Threading.Tasks&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;[Flags]&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;enum&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ConfigureAwaitOptions&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;None&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;ContinueOnCapturedContext&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;SuppressThrowing&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;ForceYielding&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;First, a quick note: this is a &lt;code&gt;Flags&lt;/code&gt; enum; any combination of these options can be used together.&lt;/p&gt;
+
+&lt;p&gt;The next thing I want to point out is that &lt;code&gt;ConfigureAwait(ConfigureAwaitOptions)&lt;/code&gt; is only available on &lt;code&gt;Task&lt;/code&gt; and &lt;code&gt;Task&amp;lt;T&amp;gt;&lt;/code&gt;, at least for .NET 8. It wasn’t added to &lt;code&gt;ValueTask&lt;/code&gt; / &lt;code&gt;ValueTask&amp;lt;T&amp;gt;&lt;/code&gt; yet. It’s possible that a future release of .NET may add &lt;code&gt;ConfigureAwait(ConfigureAwaitOptions)&lt;/code&gt; for value tasks, but as of now it’s only available on reference tasks, so you’ll need to call &lt;code&gt;AsTask&lt;/code&gt; if you want to use these new options on value tasks.&lt;/p&gt;
+
+&lt;p&gt;Now, let’s consider each of these options in turn.&lt;/p&gt;
+
+&lt;h3 id=&quot;configureawaitoptionsnone-and-configureawaitoptionscontinueoncapturedcontext&quot;&gt;ConfigureAwaitOptions.None and ConfigureAwaitOptions.ContinueOnCapturedContext&lt;/h3&gt;
+
+&lt;p&gt;These two are going to be pretty familiar, except with one twist.&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;ConfigureAwaitOptions.ContinueOnCapturedContext&lt;/code&gt; - as you might guess from the name - is the same as &lt;code&gt;ConfigureAwait(continueOnCapturedContext: true)&lt;/code&gt;. In other words, the &lt;code&gt;await&lt;/code&gt; will capture the context and resume executing the &lt;code&gt;async&lt;/code&gt; method on that context.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;...;&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;// These all do the same thing&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ConfigureAwait&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;continueOnCapturedContext&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ConfigureAwait&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ConfigureAwaitOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ContinueOnCapturedContext&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;&lt;code&gt;ConfigureAwaitOptions.None&lt;/code&gt; is the same as &lt;code&gt;ConfigureAwait(continueOnCapturedContext: false)&lt;/code&gt;. In other words, &lt;code&gt;await&lt;/code&gt; will behave perfectly normally, except that it will &lt;em&gt;not&lt;/em&gt; capture the context; assuming the &lt;code&gt;await&lt;/code&gt; does yield (i.e, the task is not already complete), then the &lt;code&gt;async&lt;/code&gt; method will resume executing on any available thread pool thread.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;...;&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;// These do the same thing&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ConfigureAwait&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;continueOnCapturedContext&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ConfigureAwait&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ConfigureAwaitOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Here’s the twist: with the new options, the default is to &lt;em&gt;not&lt;/em&gt; capture the context! Unless you explicitly include &lt;code&gt;ContinueOnCapturedContext&lt;/code&gt; in your flags, the context will &lt;em&gt;not&lt;/em&gt; be captured. Of course, the default behavior of &lt;code&gt;await&lt;/code&gt; itself is unchanged: without any &lt;code&gt;ConfigureAwait&lt;/code&gt; at all, &lt;code&gt;await&lt;/code&gt; will behave as though &lt;code&gt;ConfigureAwait(true)&lt;/code&gt; or &lt;code&gt;ConfigureAwait(ConfigureAwaitOptions.ContinueOnCapturedContext)&lt;/code&gt; was used.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;...;&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;// Default behavior (no ConfigureAwait): continue on the captured context.&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;// Default flag option (None): do not continue on the captured context.&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ConfigureAwait&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ConfigureAwaitOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;So, that’s something to keep in mind as you start using this new &lt;code&gt;ConfigureAwaitOptions&lt;/code&gt; enum.&lt;/p&gt;
+
+&lt;h3 id=&quot;configureawaitoptionssuppressthrowing&quot;&gt;ConfigureAwaitOptions.SuppressThrowing&lt;/h3&gt;
+
+&lt;p&gt;The &lt;code&gt;SuppressThrowing&lt;/code&gt; flag suppresses exceptions that would otherwise occur when &lt;code&gt;await&lt;/code&gt;ing a task. Under normal conditions, &lt;code&gt;await&lt;/code&gt; will observe task exceptions by re-raising them at the point of the &lt;code&gt;await&lt;/code&gt;. Normally, this is exactly the behavior you want, but there are some situations where you just want to wait for the task to complete and you don’t care whether it completes successfully or with an exception. &lt;code&gt;SuppressThrowing&lt;/code&gt; allows you to wait for the completion of a task without observing its result.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;...;&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;// These do the same thing&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ConfigureAwait&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ConfigureAwaitOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;SuppressThrowing&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;try&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ConfigureAwait&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;I expect this will be most useful alongside cancellation. There are some cases where some code needs to cancel a task and then wait for the existing task to complete before starting a replacement task. &lt;code&gt;SuppressThrowing&lt;/code&gt; would be useful in that scenario: the code can &lt;code&gt;await&lt;/code&gt; with &lt;code&gt;SuppressThrowing&lt;/code&gt;, and the method will continue when the task completes, whether it was successful, canceled, or finished with an exception.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;c1&quot;&gt;// Cancel the old task and wait for it to complete, ignoring exceptions.&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Cancel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ConfigureAwait&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ConfigureAwaitOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;SuppressThrowing&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;// Start the new task.&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationTokenSource&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;_task&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;SomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;If you &lt;code&gt;await&lt;/code&gt; with the &lt;code&gt;SuppressThrowing&lt;/code&gt; flag, then the exception &lt;em&gt;is&lt;/em&gt; considered “observed”, so &lt;code&gt;TaskScheduler.UnobservedTaskException&lt;/code&gt; is not raised. The assumption is that you are awaiting the task and deliberately discarding the exception, so it’s not considered unobserved.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;TaskScheduler&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;UnobservedTaskException&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;WriteLine&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;never printed&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FromException&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;InvalidOperationException&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;());&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ConfigureAwait&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ConfigureAwaitOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;SuppressThrowing&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;task&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;GC&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Collect&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;GC&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;WaitForPendingFinalizers&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;GC&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Collect&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;Console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ReadKey&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;There’s another consideration for this flag as well. When used with a plain &lt;code&gt;Task&lt;/code&gt;, the semantics are clear: if the task faults, the exception is just ignored. However, the same semantics don’t quite work for &lt;code&gt;Task&amp;lt;T&amp;gt;&lt;/code&gt;, because in that case the &lt;code&gt;await&lt;/code&gt; expression needs to return a value (of type &lt;code&gt;T&lt;/code&gt;). It’s not clear what value of &lt;code&gt;T&lt;/code&gt; would be appropriate to return in the case of an ignored exception, so the current behavior is to throw an &lt;code&gt;ArgumentOutOfRangeException&lt;/code&gt; at runtime. To help catch this at compile time, a new warning &lt;a href=&quot;https://github.com/dotnet/roslyn-analyzers/pull/6669&quot;&gt;was added&lt;/a&gt;: &lt;code&gt;CA2261&lt;/code&gt; &lt;code&gt;The ConfigureAwaitOptions.SuppressThrowing is only supported with the non-generic Task&lt;/code&gt;. This rule defaults to a warning, but I’d suggest making it an error, since it will always fail at runtime.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FromResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;13&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;// Causes CA2261 warning at build time and ArgumentOutOfRangeException at runtime.&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ConfigureAwait&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ConfigureAwaitOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;SuppressThrowing&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;As a final note, this is one flag that also affects synchronous blocking in addition to &lt;code&gt;await&lt;/code&gt;. Specifically, you can call &lt;code&gt;.GetAwaiter().GetResult()&lt;/code&gt; to block on the awaiter returned from &lt;code&gt;ConfigureAwait&lt;/code&gt;. The &lt;code&gt;SuppressThrowing&lt;/code&gt; flag will cause exceptions to be ignored whether using &lt;code&gt;await&lt;/code&gt; or &lt;code&gt;GetAwaiter().GetResult()&lt;/code&gt;. Previously, when &lt;code&gt;ConfigureAwait&lt;/code&gt; only took a boolean parameter, you could say “ConfigureAwait configures the await”; but now you have to be more specific: “ConfigureAwait returns a configured awaitable”. And it is now possible that the configured awaitable modifies the behavior of blocking code in addition to the behavior of the &lt;code&gt;await&lt;/code&gt;. &lt;code&gt;ConfigureAwait&lt;/code&gt; is perhaps a slight misnomer now, but it is still &lt;em&gt;primarily&lt;/em&gt; intended for configuring &lt;code&gt;await&lt;/code&gt;. Of course, blocking on asynchronous code still isn’t recommended.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Run&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;throw&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;InvalidOperationException&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;());&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;// Synchronously blocks on the task (not recommended). Does not throw an exception.&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ConfigureAwait&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ConfigureAwaitOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;SuppressThrowing&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;GetAwaiter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;GetResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h3 id=&quot;configureawaitoptionsforceyielding&quot;&gt;ConfigureAwaitOptions.ForceYielding&lt;/h3&gt;
+
+&lt;p&gt;The final flag is the &lt;code&gt;ForceYielding&lt;/code&gt; flag. I expect this flag will be rarely used, but when you need it, you need it!&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;ForceYielding&lt;/code&gt; is similar to &lt;code&gt;Task.Yield&lt;/code&gt;. &lt;code&gt;Yield&lt;/code&gt; returns a special awaitable that always claims to be not completed, but schedules its continuations immediately. What this means is that the &lt;code&gt;await&lt;/code&gt; always acts asynchronously, yielding to its caller, and then the &lt;code&gt;async&lt;/code&gt; method continues executing as soon as possible. The &lt;a href=&quot;% post_url 2012-02-02-async-and-await %&quot;&gt;normal behavior for &lt;code&gt;await&lt;/code&gt;&lt;/a&gt; is to check if its awaitable is complete, and if it is, then continue executing synchronously; &lt;code&gt;ForceYielding&lt;/code&gt; prevents that synchronous behavior, forcing the &lt;code&gt;await&lt;/code&gt; to behave asynchronously.&lt;/p&gt;
+
+&lt;p&gt;For myself, I find forcing asynchronous behavior most useful in unit testing. It can also be used to avoid stack dives in some cases. It may also be useful when implementing asynchronous coordination primitives, such as the ones in my AsyncEx library. Essentially, anywhere where you want to force &lt;code&gt;await&lt;/code&gt; to behave asynchronously, you can use &lt;code&gt;ForceYielding&lt;/code&gt; to accomplish that.&lt;/p&gt;
+
+&lt;p&gt;One point that I find interesting is that &lt;code&gt;await&lt;/code&gt; with &lt;code&gt;ForceYielding&lt;/code&gt; makes the &lt;code&gt;await&lt;/code&gt; behave like it does in JavaScript. In JavaScript, &lt;code&gt;await&lt;/code&gt; &lt;em&gt;always&lt;/em&gt; yields, even if you pass it a resolved promise. In C#, you can now &lt;code&gt;await&lt;/code&gt; a completed task with &lt;code&gt;ForceYielding&lt;/code&gt;, and &lt;code&gt;await&lt;/code&gt; will behave as though it’s not completed, just like JavaScript’s &lt;code&gt;await&lt;/code&gt;.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;Console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;WriteLine&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CurrentManagedThreadId&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// main thread&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CompletedTask&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;Console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;WriteLine&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CurrentManagedThreadId&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// main thread&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CompletedTask&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ConfigureAwait&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ConfigureAwaitOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ForceYielding&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;Console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;WriteLine&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CurrentManagedThreadId&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// thread pool thread&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Note that &lt;code&gt;ForceYielding&lt;/code&gt; by itself also implies &lt;em&gt;not&lt;/em&gt; continuing on the captured context, so it is the same as saying “schedule the rest of this method to the thread pool” or “switch to a thread pool thread”.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;c1&quot;&gt;// ForceYielding forces await to behave asynchronously.&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// Lack of ContinueOnCapturedContext means the method continues on a thread pool thread.&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// Therefore, code after this statement will *always* run on a thread pool thread.&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ConfigureAwait&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ConfigureAwaitOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ForceYielding&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;&lt;code&gt;Task.Yield&lt;/code&gt; &lt;em&gt;will&lt;/em&gt; resume on the captured context, so it’s not &lt;em&gt;exactly&lt;/em&gt; like &lt;code&gt;ForceYielding&lt;/code&gt; by itself. It’s actually like &lt;code&gt;ForceYielding&lt;/code&gt; with &lt;code&gt;ConinueOnCapturedContext&lt;/code&gt;.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;c1&quot;&gt;// These do the same thing&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Yield&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CompletedTask&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ConfigureAwait&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ConfigureAwaitOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ForceYielding&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ConfigureAwaitOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ContinueOnCapturedContext&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Of course, the real value of &lt;code&gt;ForceYielding&lt;/code&gt; is that it can be applied to any task at all. Previously, in the situations where yielding was required, you had to either add a &lt;em&gt;separate&lt;/em&gt; &lt;code&gt;await Task.Yield();&lt;/code&gt; statement or create a custom awaitable. That’s no longer necessary now that &lt;code&gt;ForceYielding&lt;/code&gt; can be applied to any task.&lt;/p&gt;
+
+&lt;h2 id=&quot;further-reading&quot;&gt;Further Reading&lt;/h2&gt;
+
+&lt;p&gt;It’s great to see the .NET team still making improvements in &lt;code&gt;async&lt;/code&gt;/&lt;code&gt;await&lt;/code&gt;, all these years later!&lt;/p&gt;
+
+&lt;p&gt;If you’re interested in more of the history and design discussion behind &lt;code&gt;ConfigureAwaitOptions&lt;/code&gt;, check out the &lt;a href=&quot;https://github.com/dotnet/runtime/pull/87067&quot;&gt;pull request&lt;/a&gt;. At one point there &lt;a href=&quot;https://github.com/dotnet/runtime/issues/22144#issuecomment-1561983918&quot;&gt;was&lt;/a&gt; a &lt;code&gt;ForceAsynchronousContinuation&lt;/code&gt; that was dropped before release. It had a more obscure use case, essentially overriding &lt;code&gt;await&lt;/code&gt;’s &lt;a href=&quot;/2012/12/dont-block-in-asynchronous-code.html&quot;&gt;default behavior of scheduling the &lt;code&gt;async&lt;/code&gt; method continuation with &lt;code&gt;ExecuteSynchronously&lt;/code&gt;&lt;/a&gt;. Perhaps a future update will add that back in, or perhaps in a future update &lt;code&gt;ConfigureAwaitOptions&lt;/code&gt; will support value tasks. We’ll just have to see what the future holds!&lt;/p&gt;
+</description>
+        <pubDate>Thu, 09 Nov 2023 00:00:00 +0000</pubDate>
+        <link>https://blog.stephencleary.com/2023/11/configureawait-in-net-8.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2023/11/configureawait-in-net-8.html</guid>
+      </item>
+    
+      <item>
         <title>Padding for Overlaid Structs</title>
         <description>&lt;p&gt;&lt;a href=&quot;/2023/09/memory-mapped-files-overlaid-structs.html&quot;&gt;Last time&lt;/a&gt; we covered the basics of memory-mapped files and how to overlay structs onto the in-memory view of the file. This time we’ll take a look at different techniques to add “padding” or “holes” in our overlaid structs. Sometimes your overlaid struct is a header or container for another struct, which may be one of several different structure types. For example, a binary file may be composed of records, each with an identical header, and one field of that header is the record type, which defines how the remainder of that record should be interpreted.&lt;/p&gt;
 
@@ -1163,111 +1337,6 @@ class AnotherExample : ExampleBase&amp;lt;AnotherExample&amp;gt;
         <pubDate>Thu, 03 Mar 2022 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2022/03/cancellation-2-requesting-cancellation.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2022/03/cancellation-2-requesting-cancellation.html</guid>
-      </item>
-    
-      <item>
-        <title>Cancellation, Part 1: Overview</title>
-        <description>&lt;p&gt;Cancellation is a topic that I haven’t written on much yet, because the &lt;a href=&quot;https://docs.microsoft.com/en-us/dotnet/standard/threading/cancellation-in-managed-threads?WT.mc_id=DT-MVP-5000058&quot;&gt;Microsoft documentation&lt;/a&gt; is quite good. But after answering many questions for many years, I thought it would be a good topic to cover once, exhaustively.&lt;/p&gt;
-
-&lt;h2 id=&quot;cooperative-cancellation&quot;&gt;Cooperative Cancellation&lt;/h2&gt;
-
-&lt;p&gt;Cancellation in .NET is &lt;em&gt;cooperative&lt;/em&gt;.&lt;/p&gt;
-
-&lt;p&gt;What this really means is that one part of the code Requests cancellation, and another part of the code Responds to that request. We often talk about some code “cancelling” other code, but what actually happens is that the requesting code just politely notifies the other code that it would like it to please stop, and the responding code may react to that cancellation request in any way it chooses. The responding code may immediately stop what it is doing, or it may continue until it reaches a valid stopping point, or it may ignore the cancellation request completely.&lt;/p&gt;
-
-&lt;p&gt;So, the important takeaway here is that the responding code must respond to the cancellation request in order for cancellation to actually &lt;em&gt;cancel&lt;/em&gt; anything.&lt;/p&gt;
-
-&lt;p&gt;This discussion usually brings up a question: What about code that doesn’t cooperate? I.e., how do I cancel uncancelable code? This is actually an advanced scenario, so I’ll discuss it (with solutions) at the end of this series.&lt;/p&gt;
-
-&lt;h2 id=&quot;cancellation-tokens-and-the-90-case&quot;&gt;Cancellation Tokens and the 90% Case&lt;/h2&gt;
-
-&lt;p&gt;In .NET, a cancellation token is the “carrier” of a cancellation request. The requesting code will cancel a cancellation token, and the responding code reacts to the token being cancelled. We’ll look at the details of how to create and cancel tokens - as well as how to respond to them - in future posts. For now, it’s sufficient to know that the cancellation token is how the cancellation request is passed from the requesting code to the responding code.&lt;/p&gt;
-
-&lt;p&gt;In fact, I’d say about 90% of the cancellation code you’ll need to write is simply that: add a &lt;code&gt;CancellationToken&lt;/code&gt; parameter to your method and then pass it down to whatever APIs you call:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;intermediateValue&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;DoFirstStepAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSecondStepAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;intermediateValue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;A &lt;code&gt;CancellationToken&lt;/code&gt; can be any kind of cancellation: a user pressing a Cancel button; a client disconnecting from a server; an application shutting down; a timeout. It shouldn’t matter to your code &lt;em&gt;why&lt;/em&gt; it’s being cancelled; just the fact that it &lt;em&gt;is&lt;/em&gt; being cancelled.&lt;/p&gt;
-
-&lt;p&gt;Each &lt;code&gt;CancellationToken&lt;/code&gt; may only be cancelled one time; once it is cancelled, it is always cancelled.&lt;/p&gt;
-
-&lt;h2 id=&quot;the-cancellation-contract-method-signature&quot;&gt;The Cancellation Contract: Method Signature&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://docs.microsoft.com/en-us/dotnet/standard/asynchronous-programming-patterns/task-based-asynchronous-pattern-tap#cancellation-optional?WT.mc_id=DT-MVP-5000058&quot;&gt;By convention&lt;/a&gt;, the &lt;code&gt;CancellationToken&lt;/code&gt; parameter is usually the last parameter unless an &lt;code&gt;IProgress&amp;lt;T&amp;gt;&lt;/code&gt; parameter is present. It is common to provide an overload or default parameter so that callers do not &lt;em&gt;have&lt;/em&gt; to provide a &lt;code&gt;CancellationToken&lt;/code&gt; if they do not have one; the &lt;code&gt;default&lt;/code&gt; value of a &lt;code&gt;CancellationToken&lt;/code&gt; is the same as &lt;code&gt;CancellationToken.None&lt;/code&gt;, i.e., a cancellation token that will never be canceled.&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-
-&lt;span class=&quot;c1&quot;&gt;// or:&lt;/span&gt;
-
-&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;default&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;Some method signatures take both a &lt;code&gt;CancellationToken&lt;/code&gt; and a timeout value as separate parameters. I don’t recommend this for your own code; this is mainly done in the BCL to enable more efficient p/Invokes of methods that take timeout parameters. Unless you’re also p/Invoking APIs that take timeout parameters, I recommend just taking a single &lt;code&gt;CancellationToken&lt;/code&gt; which can represent &lt;em&gt;any&lt;/em&gt; kind of cancellation.&lt;/p&gt;
-
-&lt;p&gt;By taking a &lt;code&gt;CancellationToken&lt;/code&gt; parameter, a method is implicitly claiming that it may respond to cancellation. Technically, this is “may respond”, not “must respond”. In some cases (like interface implementations), a &lt;code&gt;CancellationToken&lt;/code&gt; argument may be ignored. So the presence of a &lt;code&gt;CancellationToken&lt;/code&gt; parameter does not necessarily mean the code &lt;em&gt;must&lt;/em&gt; support cancellation, but it &lt;em&gt;might&lt;/em&gt;.&lt;/p&gt;
-
-&lt;h2 id=&quot;the-cancellation-contract-response&quot;&gt;The Cancellation Contract: Response&lt;/h2&gt;
-
-&lt;p&gt;As noted above, when cancellation is requested, the responding code may cancel whatever it is doing, or it may not. Even if it &lt;em&gt;attempts&lt;/em&gt; to cancel, there is usually a race condition and the method may actually complete before the cancellation request can be honored. The cancellation contract handles this by having canceled code throw &lt;code&gt;OperationCanceledException&lt;/code&gt; when the cancellation is observed and has actually canceled some work. If the cancellation request is ignored or if it arrives too late and the work is finished anyway, then the method returns normally without throwing &lt;code&gt;OperationCanceledException&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;The standard “90% case” code handles this implicitly; if &lt;code&gt;DoFirstStepAsync&lt;/code&gt; or &lt;code&gt;DoSecondStepAsync&lt;/code&gt; throw &lt;code&gt;OperationCanceledException&lt;/code&gt;, then that exception is also propagated out of &lt;code&gt;DoSomethingAsync&lt;/code&gt;. No change to the “90% case” code is necessary:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;intermediateValue&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;DoFirstStepAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSecondStepAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;intermediateValue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;div class=&quot;alert alert-danger&quot;&gt;
-  &lt;p&gt;&lt;i class=&quot;fa fa-exclamation-triangle fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
-
-  &lt;p&gt;There are a lot of code examples out there that just silently return early when cancellation is requested. Please do not do this; it’s a violation of the cancellation contract! When the responding code just returns early, the calling code cannot know whether its cancellation request was honored or ignored.&lt;/p&gt;
-&lt;/div&gt;
-
-&lt;h2 id=&quot;exception-to-the-90-case&quot;&gt;Exception to the “90% Case”&lt;/h2&gt;
-
-&lt;p&gt;The “90% case” just takes a &lt;code&gt;CancellationToken&lt;/code&gt; parameter and passes it down. There’s one notable exception to this rule: you shouldn’t pass down &lt;code&gt;CancellationToken&lt;/code&gt;s to &lt;code&gt;Task.Run&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;The reason is that (IMO) the semantics are confusing. A lot of developers pass a delegate and a &lt;code&gt;CancellationToken&lt;/code&gt; to &lt;code&gt;Task.Run&lt;/code&gt; and expect the delegate to be cancelled when the token is cancelled, but that’s not what happens. The &lt;code&gt;CancellationToken&lt;/code&gt; passed to &lt;code&gt;Task.Run&lt;/code&gt; just cancels the &lt;em&gt;scheduling&lt;/em&gt; of the delegate to the thread pool; once that delegate starts running (which happens pretty much immediately), that cancellation token is ignored.&lt;/p&gt;
-
-&lt;p&gt;To put it in example code, this is what many developers write, incorrectly expecting that &lt;code&gt;// Do something&lt;/code&gt; will be canceled after it starts:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;test&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Run&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;c1&quot;&gt;// Do something, ignoring cancellationToken&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;By never passing the &lt;code&gt;CancellationToken&lt;/code&gt; to &lt;code&gt;Task.Run&lt;/code&gt; (which is ignored anyway unless there’s serious thread pool contention or the token is &lt;em&gt;already&lt;/em&gt; cancelled), we make it clearer that the delegate &lt;em&gt;itself&lt;/em&gt; has to respond to the token:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;test&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Run&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;c1&quot;&gt;// Do something&lt;/span&gt;
-        &lt;span class=&quot;c1&quot;&gt;// The IDE is telling me cancellationToken is unused,&lt;/span&gt;
-        &lt;span class=&quot;c1&quot;&gt;//    so this delegate code better use it.&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;});&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-</description>
-        <pubDate>Thu, 24 Feb 2022 00:00:00 +0000</pubDate>
-        <link>https://blog.stephencleary.com/2022/02/cancellation-1-overview.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2022/02/cancellation-1-overview.html</guid>
       </item>
     
   </channel>

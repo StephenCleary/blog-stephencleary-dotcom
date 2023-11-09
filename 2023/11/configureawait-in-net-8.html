@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Padding for Overlaid Structs</title>
+    <title>ConfigureAwait in .NET 8</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Techniques for adding padding or holes in overlaid structs used with memory-mapped files in C#." />
-    <link rel="canonical" href="https://blog.stephencleary.com/2023/10/padding-for-overlaid-structs.html" />
+    <meta name="description" content="Changes in ConfigureAwait that are new with .NET 8.0." />
+    <link rel="canonical" href="https://blog.stephencleary.com/2023/11/configureawait-in-net-8.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -276,146 +276,178 @@ img.comment-author-profile-image {
 
   <header>
       <div class="page-header">
-          <h1>Padding for Overlaid Structs</h1>
-          <small><time datetime="2023-10-05">Oct 5, 2023</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
+          <h1>ConfigureAwait in .NET 8</h1>
+          <small><time datetime="2023-11-09">Nov 9, 2023</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
       </div>
   </header>
 
   <article>
-  <p><a href="/2023/09/memory-mapped-files-overlaid-structs.html">Last time</a> we covered the basics of memory-mapped files and how to overlay structs onto the in-memory view of the file. This time we’ll take a look at different techniques to add “padding” or “holes” in our overlaid structs. Sometimes your overlaid struct is a header or container for another struct, which may be one of several different structure types. For example, a binary file may be composed of records, each with an identical header, and one field of that header is the record type, which defines how the remainder of that record should be interpreted.</p>
+  <p>I don’t often write “what’s new in .NET” posts, but .NET 8.0 has an interesting addition that I haven’t seen a lot of people talk about. <code>ConfigureAwait</code> is getting a pretty good overhaul/enhancement; let’s take a look!</p>
 
-<p>For this post, we’ll use the same <code>Data</code> struct we were working with last time, but this time we want to add some padding between the first and second data fields:</p>
+<h2 id="configureawaittrue-and-configureawaitfalse">ConfigureAwait(true) and ConfigureAwait(false)</h2>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">struct</span> <span class="nc">Data</span>
+<p>First, let’s review the semantics and history of the original <code>ConfigureAwait</code>, which takes a boolean argument named <code>continueOnCapturedContext</code>.</p>
+
+<p>When <code>await</code> acts on a task (<code>Task</code>, <code>Task&lt;T&gt;</code>, <code>ValueTask</code>, or <code>ValueTask&lt;T&gt;</code>), its <a href="/2012/02/async-and-await.html">default behavior</a> is to capture a “context”; later, when the task completes, the <code>async</code> method resumes executing in that context. The “context” is <code>SynchronizationContext.Current</code> or <code>TaskScheduler.Current</code> (falling back on the thread pool context if none is provided). This default behavior of continuing on the captured context can be made explicit by using <code>ConfigureAwait(continueOnCapturedContext: true)</code>.</p>
+
+<p><code>ConfigureAwait(continueOnCapturedContext: false)</code> is useful if you <em>don’t</em> want to resume on that context. When using <code>ConfigureAwait(false)</code>, the <code>async</code> method resumes on any available thread pool thread.</p>
+
+<p>The history of <code>ConfigureAwait(false)</code> is interesting (at least to me). Originally, the community recommended using <code>ConfigureAwait(false)</code> everywhere you could, unless you <em>needed</em> the context. This is the position I <a href="https://learn.microsoft.com/en-us/archive/msdn-magazine/2013/march/async-await-best-practices-in-asynchronous-programming?WT.mc_id=DT-MVP-5000058#configure-context">recommended in my Async Best Practices article</a>. There were several discussions during that time frame over why the default was <code>true</code>, especially from frustrated library developers who had to use <code>ConfigureAwait(false)</code> a lot.</p>
+
+<p>Over the years, though, the recommendation of “use <code>ConfigureAwait(false)</code> whenever you can” has been modified. The first (albeit minor) shift was instead of “use <code>ConfigureAwait(false)</code> whenever you can”, a simpler guideline arose: use <code>ConfigureAwait(false)</code> in library code and <em>don’t</em> use it in application code. This is an easier guideline to understand and follow. Still, the complaints about having to use <code>ConfigureAwait(false)</code> continued, with periodic requests to change the default on a project-wide level. These requests have always been rejected by the C# team for language consistency reasons.</p>
+
+<p>More recently (specifically, since ASP.NET dropped their <code>SynchronizationContext</code> with ASP.NET Core and fixed all the places where sync-over-async was necessary), there has been a move away from <code>ConfigureAwait(false)</code>. As a library author, I fully understand how annoying it is to have <code>ConfigureAwait(false)</code> litter your codebase! Perhaps the most notable departure is the Entity Framework Core team, which just flat-out decided not to use <code>ConfigureAwait(false)</code> anymore. For myself, I still use <code>ConfigureAwait(false)</code> in my libraries, but I understand the frustration.</p>
+
+<p>Since we’re on the topic of <code>ConfigureAwait(false)</code>, I’d like to note a few common misconceptions:</p>
+
+<ol>
+  <li><code>ConfigureAwait(false)</code> is not a good way to avoid deadlocks. That’s not its purpose, and it’s a questionable solution at best. In order to avoid deadlocks when doing direct blocking, you’d have to make sure <em>all</em> the asynchronous code uses <code>ConfigureAwait(false)</code>, including code in libraries and the runtime. It’s just not a very maintainable solution. There are <a href="https://learn.microsoft.com/en-us/archive/msdn-magazine/2015/july/async-programming-brownfield-async-development?WT.mc_id=DT-MVP-5000058">better solutions available</a>.</li>
+  <li><code>ConfigureAwait</code> configures the <code>await</code>, not the task. E.g., the <code>ConfigureAwait(false)</code> in <code>SomethingAsync().ConfigureAwait(false).GetAwaiter().GetResult()</code> does exactly nothing. Similarly, the <code>await</code> in <code>var task = SomethingAsync(); task.ConfigureAwait(false); await task;</code> still continues on the captured context, completely ignoring the <code>ConfigureAwait(false)</code>. I’ve seen both of these mistakes over the years.</li>
+  <li><code>ConfigureAwait(false)</code> does not mean “run the rest of this method on a thread pool thread” or “run the rest of this method on a different thread”. It only takes effect if the <code>await</code> yields control and then later resumes the <code>async</code> method. Specifically, <code>await</code> will <em>not</em> yield control if its task is already complete; in that case, the <code>ConfigureAwait</code> has no effect because the <code>await</code> continues synchronously.</li>
+</ol>
+
+<p>OK, now that we’ve refreshed our understanding of <code>ConfigureAwait(false)</code>, let’s take a look at how <code>ConfigureAwait</code> is getting some enhancements in .NET 8. None of the existing behavior is changed; <code>await</code> without any <code>ConfigureAwait</code> at all still has the default behavior of <code>ConfigureAwait(true)</code>, and <code>ConfigureAwait(false)</code> still has the same behavior, too. But there’s a <em>new</em> <code>ConfigureAwait</code> coming into town!</p>
+
+<h2 id="configureawaitconfigureawaitoptions">ConfigureAwait(ConfigureAwaitOptions)</h2>
+
+<p>There are several new options available for <code>ConfigureAwait</code>. <a href="https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.configureawaitoptions?view=net-8.0"><code>ConfigureAwaitOptions</code></a> is a new type that provides all the different ways to configure awaitables:</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">namespace</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
+<span class="na">[Flags]</span>
+<span class="k">public</span> <span class="k">enum</span> <span class="n">ConfigureAwaitOptions</span>
 <span class="p">{</span>
-  <span class="k">private</span> <span class="kt">int</span> <span class="n">_first</span><span class="p">;</span>
-  <span class="cm">/* TODO: forty bytes of padding goes here */</span>
-  <span class="k">private</span> <span class="kt">int</span> <span class="n">_second</span><span class="p">;</span>
+    <span class="n">None</span> <span class="p">=</span> <span class="m">0</span><span class="n">x0</span><span class="p">,</span>
+    <span class="n">ContinueOnCapturedContext</span> <span class="p">=</span> <span class="m">0</span><span class="n">x1</span><span class="p">,</span>
+    <span class="n">SuppressThrowing</span> <span class="p">=</span> <span class="m">0</span><span class="n">x2</span><span class="p">,</span>
+    <span class="n">ForceYielding</span> <span class="p">=</span> <span class="m">0</span><span class="n">x4</span><span class="p">,</span>
 <span class="p">}</span></code></pre></figure>
 
-<p>Bonus points if our solution allows accessing that padding as another overlaid struct type.</p>
+<p>First, a quick note: this is a <code>Flags</code> enum; any combination of these options can be used together.</p>
 
-<h2 id="the-ideal-solution-not-supported-safe-fixed-size-buffers">The Ideal Solution (Not Supported): Safe Fixed-Size Buffers</h2>
+<p>The next thing I want to point out is that <code>ConfigureAwait(ConfigureAwaitOptions)</code> is only available on <code>Task</code> and <code>Task&lt;T&gt;</code>, at least for .NET 8. It wasn’t added to <code>ValueTask</code> / <code>ValueTask&lt;T&gt;</code> yet. It’s possible that a future release of .NET may add <code>ConfigureAwait(ConfigureAwaitOptions)</code> for value tasks, but as of now it’s only available on reference tasks, so you’ll need to call <code>AsTask</code> if you want to use these new options on value tasks.</p>
 
-<p>Ideally, we could just define a block of memory in our struct. This is similar to how it’s done in unamanged languages:</p>
+<p>Now, let’s consider each of these options in turn.</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// The code below currently causes these compiler erorrs.</span>
-<span class="c1">// Error CS0650 Bad array declarator: To declare a managed array the rank specifier precedes the variable&#39;s identifier. To declare a fixed size buffer field, use the fixed keyword before the field type.</span>
-<span class="c1">// Error CS0270 Array size cannot be specified in a variable declaration (try initializing with a &#39;new&#39; expression)</span>
-<span class="k">public</span> <span class="k">struct</span> <span class="nc">Data</span>
+<h3 id="configureawaitoptionsnone-and-configureawaitoptionscontinueoncapturedcontext">ConfigureAwaitOptions.None and ConfigureAwaitOptions.ContinueOnCapturedContext</h3>
+
+<p>These two are going to be pretty familiar, except with one twist.</p>
+
+<p><code>ConfigureAwaitOptions.ContinueOnCapturedContext</code> - as you might guess from the name - is the same as <code>ConfigureAwait(continueOnCapturedContext: true)</code>. In other words, the <code>await</code> will capture the context and resume executing the <code>async</code> method on that context.</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span> <span class="n">task</span> <span class="p">=</span> <span class="p">...;</span>
+
+<span class="c1">// These all do the same thing</span>
+<span class="k">await</span> <span class="n">task</span><span class="p">;</span>
+<span class="k">await</span> <span class="n">task</span><span class="p">.</span><span class="n">ConfigureAwait</span><span class="p">(</span><span class="n">continueOnCapturedContext</span><span class="p">:</span> <span class="k">true</span><span class="p">);</span>
+<span class="k">await</span> <span class="n">task</span><span class="p">.</span><span class="n">ConfigureAwait</span><span class="p">(</span><span class="n">ConfigureAwaitOptions</span><span class="p">.</span><span class="n">ContinueOnCapturedContext</span><span class="p">);</span></code></pre></figure>
+
+<p><code>ConfigureAwaitOptions.None</code> is the same as <code>ConfigureAwait(continueOnCapturedContext: false)</code>. In other words, <code>await</code> will behave perfectly normally, except that it will <em>not</em> capture the context; assuming the <code>await</code> does yield (i.e, the task is not already complete), then the <code>async</code> method will resume executing on any available thread pool thread.</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span> <span class="n">task</span> <span class="p">=</span> <span class="p">...;</span>
+
+<span class="c1">// These do the same thing</span>
+<span class="k">await</span> <span class="n">task</span><span class="p">.</span><span class="n">ConfigureAwait</span><span class="p">(</span><span class="n">continueOnCapturedContext</span><span class="p">:</span> <span class="k">false</span><span class="p">);</span>
+<span class="k">await</span> <span class="n">task</span><span class="p">.</span><span class="n">ConfigureAwait</span><span class="p">(</span><span class="n">ConfigureAwaitOptions</span><span class="p">.</span><span class="n">None</span><span class="p">);</span></code></pre></figure>
+
+<p>Here’s the twist: with the new options, the default is to <em>not</em> capture the context! Unless you explicitly include <code>ContinueOnCapturedContext</code> in your flags, the context will <em>not</em> be captured. Of course, the default behavior of <code>await</code> itself is unchanged: without any <code>ConfigureAwait</code> at all, <code>await</code> will behave as though <code>ConfigureAwait(true)</code> or <code>ConfigureAwait(ConfigureAwaitOptions.ContinueOnCapturedContext)</code> was used.</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span> <span class="n">task</span> <span class="p">=</span> <span class="p">...;</span>
+
+<span class="c1">// Default behavior (no ConfigureAwait): continue on the captured context.</span>
+<span class="k">await</span> <span class="n">task</span><span class="p">;</span>
+
+<span class="c1">// Default flag option (None): do not continue on the captured context.</span>
+<span class="k">await</span> <span class="n">task</span><span class="p">.</span><span class="n">ConfigureAwait</span><span class="p">(</span><span class="n">ConfigureAwaitOptions</span><span class="p">.</span><span class="n">None</span><span class="p">);</span></code></pre></figure>
+
+<p>So, that’s something to keep in mind as you start using this new <code>ConfigureAwaitOptions</code> enum.</p>
+
+<h3 id="configureawaitoptionssuppressthrowing">ConfigureAwaitOptions.SuppressThrowing</h3>
+
+<p>The <code>SuppressThrowing</code> flag suppresses exceptions that would otherwise occur when <code>await</code>ing a task. Under normal conditions, <code>await</code> will observe task exceptions by re-raising them at the point of the <code>await</code>. Normally, this is exactly the behavior you want, but there are some situations where you just want to wait for the task to complete and you don’t care whether it completes successfully or with an exception. <code>SuppressThrowing</code> allows you to wait for the completion of a task without observing its result.</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span> <span class="n">task</span> <span class="p">=</span> <span class="p">...;</span>
+
+<span class="c1">// These do the same thing</span>
+<span class="k">await</span> <span class="n">task</span><span class="p">.</span><span class="n">ConfigureAwait</span><span class="p">(</span><span class="n">ConfigureAwaitOptions</span><span class="p">.</span><span class="n">SuppressThrowing</span><span class="p">);</span>
+<span class="k">try</span> <span class="p">{</span> <span class="k">await</span> <span class="n">task</span><span class="p">.</span><span class="n">ConfigureAwait</span><span class="p">(</span><span class="k">false</span><span class="p">);</span> <span class="p">}</span> <span class="k">catch</span> <span class="p">{</span> <span class="p">}</span></code></pre></figure>
+
+<p>I expect this will be most useful alongside cancellation. There are some cases where some code needs to cancel a task and then wait for the existing task to complete before starting a replacement task. <code>SuppressThrowing</code> would be useful in that scenario: the code can <code>await</code> with <code>SuppressThrowing</code>, and the method will continue when the task completes, whether it was successful, canceled, or finished with an exception.</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Cancel the old task and wait for it to complete, ignoring exceptions.</span>
+<span class="n">_cts</span><span class="p">.</span><span class="n">Cancel</span><span class="p">();</span>
+<span class="k">await</span> <span class="n">_task</span><span class="p">.</span><span class="n">ConfigureAwait</span><span class="p">(</span><span class="n">ConfigureAwaitOptions</span><span class="p">.</span><span class="n">SuppressThrowing</span><span class="p">);</span>
+
+<span class="c1">// Start the new task.</span>
+<span class="n">_cts</span> <span class="p">=</span> <span class="k">new</span> <span class="n">CancellationTokenSource</span><span class="p">();</span>
+<span class="n">_task</span> <span class="p">=</span> <span class="n">SomethingAsync</span><span class="p">(</span><span class="n">_cts</span><span class="p">.</span><span class="n">Token</span><span class="p">);</span></code></pre></figure>
+
+<p>If you <code>await</code> with the <code>SuppressThrowing</code> flag, then the exception <em>is</em> considered “observed”, so <code>TaskScheduler.UnobservedTaskException</code> is not raised. The assumption is that you are awaiting the task and deliberately discarding the exception, so it’s not considered unobserved.</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">TaskScheduler</span><span class="p">.</span><span class="n">UnobservedTaskException</span> <span class="p">+=</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">__</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span> <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;never printed&quot;</span><span class="p">);</span> <span class="p">};</span>
+
+<span class="n">Task</span> <span class="n">task</span> <span class="p">=</span> <span class="n">Task</span><span class="p">.</span><span class="n">FromException</span><span class="p">(</span><span class="k">new</span> <span class="n">InvalidOperationException</span><span class="p">());</span>
+<span class="k">await</span> <span class="n">task</span><span class="p">.</span><span class="n">ConfigureAwait</span><span class="p">(</span><span class="n">ConfigureAwaitOptions</span><span class="p">.</span><span class="n">SuppressThrowing</span><span class="p">);</span>
+<span class="n">task</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+
+<span class="n">GC</span><span class="p">.</span><span class="n">Collect</span><span class="p">();</span>
+<span class="n">GC</span><span class="p">.</span><span class="n">WaitForPendingFinalizers</span><span class="p">();</span>
+<span class="n">GC</span><span class="p">.</span><span class="n">Collect</span><span class="p">();</span>
+
+<span class="n">Console</span><span class="p">.</span><span class="n">ReadKey</span><span class="p">();</span></code></pre></figure>
+
+<p>There’s another consideration for this flag as well. When used with a plain <code>Task</code>, the semantics are clear: if the task faults, the exception is just ignored. However, the same semantics don’t quite work for <code>Task&lt;T&gt;</code>, because in that case the <code>await</code> expression needs to return a value (of type <code>T</code>). It’s not clear what value of <code>T</code> would be appropriate to return in the case of an ignored exception, so the current behavior is to throw an <code>ArgumentOutOfRangeException</code> at runtime. To help catch this at compile time, a new warning <a href="https://github.com/dotnet/roslyn-analyzers/pull/6669">was added</a>: <code>CA2261</code> <code>The ConfigureAwaitOptions.SuppressThrowing is only supported with the non-generic Task</code>. This rule defaults to a warning, but I’d suggest making it an error, since it will always fail at runtime.</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">task</span> <span class="p">=</span> <span class="n">Task</span><span class="p">.</span><span class="n">FromResult</span><span class="p">(</span><span class="m">13</span><span class="p">);</span>
+
+<span class="c1">// Causes CA2261 warning at build time and ArgumentOutOfRangeException at runtime.</span>
+<span class="k">await</span> <span class="n">task</span><span class="p">.</span><span class="n">ConfigureAwait</span><span class="p">(</span><span class="n">ConfigureAwaitOptions</span><span class="p">.</span><span class="n">SuppressThrowing</span><span class="p">);</span></code></pre></figure>
+
+<p>As a final note, this is one flag that also affects synchronous blocking in addition to <code>await</code>. Specifically, you can call <code>.GetAwaiter().GetResult()</code> to block on the awaiter returned from <code>ConfigureAwait</code>. The <code>SuppressThrowing</code> flag will cause exceptions to be ignored whether using <code>await</code> or <code>GetAwaiter().GetResult()</code>. Previously, when <code>ConfigureAwait</code> only took a boolean parameter, you could say “ConfigureAwait configures the await”; but now you have to be more specific: “ConfigureAwait returns a configured awaitable”. And it is now possible that the configured awaitable modifies the behavior of blocking code in addition to the behavior of the <code>await</code>. <code>ConfigureAwait</code> is perhaps a slight misnomer now, but it is still <em>primarily</em> intended for configuring <code>await</code>. Of course, blocking on asynchronous code still isn’t recommended.</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Task</span> <span class="n">task</span> <span class="p">=</span> <span class="n">Task</span><span class="p">.</span><span class="n">Run</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="k">throw</span> <span class="k">new</span> <span class="n">InvalidOperationException</span><span class="p">());</span>
+
+<span class="c1">// Synchronously blocks on the task (not recommended). Does not throw an exception.</span>
+<span class="n">task</span><span class="p">.</span><span class="n">ConfigureAwait</span><span class="p">(</span><span class="n">ConfigureAwaitOptions</span><span class="p">.</span><span class="n">SuppressThrowing</span><span class="p">).</span><span class="n">GetAwaiter</span><span class="p">().</span><span class="n">GetResult</span><span class="p">();</span></code></pre></figure>
+
+<h3 id="configureawaitoptionsforceyielding">ConfigureAwaitOptions.ForceYielding</h3>
+
+<p>The final flag is the <code>ForceYielding</code> flag. I expect this flag will be rarely used, but when you need it, you need it!</p>
+
+<p><code>ForceYielding</code> is similar to <code>Task.Yield</code>. <code>Yield</code> returns a special awaitable that always claims to be not completed, but schedules its continuations immediately. What this means is that the <code>await</code> always acts asynchronously, yielding to its caller, and then the <code>async</code> method continues executing as soon as possible. The <a href="% post_url 2012-02-02-async-and-await %">normal behavior for <code>await</code></a> is to check if its awaitable is complete, and if it is, then continue executing synchronously; <code>ForceYielding</code> prevents that synchronous behavior, forcing the <code>await</code> to behave asynchronously.</p>
+
+<p>For myself, I find forcing asynchronous behavior most useful in unit testing. It can also be used to avoid stack dives in some cases. It may also be useful when implementing asynchronous coordination primitives, such as the ones in my AsyncEx library. Essentially, anywhere where you want to force <code>await</code> to behave asynchronously, you can use <code>ForceYielding</code> to accomplish that.</p>
+
+<p>One point that I find interesting is that <code>await</code> with <code>ForceYielding</code> makes the <code>await</code> behave like it does in JavaScript. In JavaScript, <code>await</code> <em>always</em> yields, even if you pass it a resolved promise. In C#, you can now <code>await</code> a completed task with <code>ForceYielding</code>, and <code>await</code> will behave as though it’s not completed, just like JavaScript’s <code>await</code>.</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">Main</span><span class="p">()</span>
 <span class="p">{</span>
-  <span class="k">private</span> <span class="kt">int</span> <span class="n">_first</span><span class="p">;</span>
-  <span class="k">private</span> <span class="kt">byte</span> <span class="n">_padding</span><span class="p">[</span><span class="m">40</span><span class="p">];</span>
-  <span class="k">private</span> <span class="kt">int</span> <span class="n">_second</span><span class="p">;</span>
+  <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">Environment</span><span class="p">.</span><span class="n">CurrentManagedThreadId</span><span class="p">);</span> <span class="c1">// main thread</span>
+  <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">CompletedTask</span><span class="p">;</span>
+  <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">Environment</span><span class="p">.</span><span class="n">CurrentManagedThreadId</span><span class="p">);</span> <span class="c1">// main thread</span>
+  <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">CompletedTask</span><span class="p">.</span><span class="n">ConfigureAwait</span><span class="p">(</span><span class="n">ConfigureAwaitOptions</span><span class="p">.</span><span class="n">ForceYielding</span><span class="p">);</span>
+  <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">Environment</span><span class="p">.</span><span class="n">CurrentManagedThreadId</span><span class="p">);</span> <span class="c1">// thread pool thread</span>
 <span class="p">}</span></code></pre></figure>
 
-<p>There’s actually been some discussion about adding this to C#; the feature is called “safe fixed-size buffers” (a.k.a., “anonymous inline arrays”). It <a href="https://github.com/dotnet/csharplang/blob/main/proposals/csharp-11.0/low-level-struct-improvements.md#safe-fixed-size-buffers">didn’t make it into C# 11</a>. The syntax above <a href="https://github.com/dotnet/csharplang/issues/1314">was considered for C# 12</a> but <a href="https://github.com/dotnet/csharplang/blob/main/meetings/2023/LDM-2023-05-01.md#fixed-size-buffers">rejected earlier this year</a>.</p>
+<p>Note that <code>ForceYielding</code> by itself also implies <em>not</em> continuing on the captured context, so it is the same as saying “schedule the rest of this method to the thread pool” or “switch to a thread pool thread”.</p>
 
-<h2 id="inline-arrays-net-80--c-12">Inline Arrays (.NET 8.0 / C# 12)</h2>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// ForceYielding forces await to behave asynchronously.</span>
+<span class="c1">// Lack of ContinueOnCapturedContext means the method continues on a thread pool thread.</span>
+<span class="c1">// Therefore, code after this statement will *always* run on a thread pool thread.</span>
+<span class="k">await</span> <span class="n">task</span><span class="p">.</span><span class="n">ConfigureAwait</span><span class="p">(</span><span class="n">ConfigureAwaitOptions</span><span class="p">.</span><span class="n">ForceYielding</span><span class="p">);</span></code></pre></figure>
 
-<p>Even though the nicer syntax above was rejected, <a href="https://github.com/dotnet/csharplang/blob/f2800749ab171e9d6076f4f4bb5d0513f11c234a/proposals/csharp-12.0/inline-arrays.md">inline arrays</a> themselves have been accepted. Indeed, it is possible that a future version of C# may give us the nice syntax above, <a href="https://github.com/dotnet/csharplang/blob/f2800749ab171e9d6076f4f4bb5d0513f11c234a/proposals/csharp-12.0/inline-arrays.md#detailed-design-option-2">implemented using inline arrays</a>.</p>
+<p><code>Task.Yield</code> <em>will</em> resume on the captured context, so it’s not <em>exactly</em> like <code>ForceYielding</code> by itself. It’s actually like <code>ForceYielding</code> with <code>ConinueOnCapturedContext</code>.</p>
 
-<p>For now, we can just deconstruct that ourselves and write by hand what we wish the compiler would write for us:</p>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// These do the same thing</span>
+<span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Yield</span><span class="p">();</span>
+<span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">CompletedTask</span><span class="p">.</span><span class="n">ConfigureAwait</span><span class="p">(</span><span class="n">ConfigureAwaitOptions</span><span class="p">.</span><span class="n">ForceYielding</span> <span class="p">|</span> <span class="n">ConfigureAwaitOptions</span><span class="p">.</span><span class="n">ContinueOnCapturedContext</span><span class="p">);</span></code></pre></figure>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">struct</span> <span class="nc">Data</span>
-<span class="p">{</span>
-  <span class="k">private</span> <span class="kt">int</span> <span class="n">_first</span><span class="p">;</span>
-  <span class="k">private</span> <span class="n">Padding40</span> <span class="n">_padding</span><span class="p">;</span>
-  <span class="k">private</span> <span class="kt">int</span> <span class="n">_second</span><span class="p">;</span>
+<p>Of course, the real value of <code>ForceYielding</code> is that it can be applied to any task at all. Previously, in the situations where yielding was required, you had to either add a <em>separate</em> <code>await Task.Yield();</code> statement or create a custom awaitable. That’s no longer necessary now that <code>ForceYielding</code> can be applied to any task.</p>
 
-<span class="na">  [InlineArray(40)]</span>
-  <span class="k">private</span> <span class="k">struct</span> <span class="nc">Padding40</span>
-  <span class="p">{</span>
-    <span class="k">private</span> <span class="kt">byte</span> <span class="n">_start</span><span class="p">;</span>
-  <span class="p">}</span>
-<span class="p">}</span></code></pre></figure>
+<h2 id="further-reading">Further Reading</h2>
 
-<p>The <code>InlineArrayAttribute</code> is a bit odd; what it’s actually doing is telling the runtime to repeat the single field in that struct that many times. So <code>Padding40</code> is actually 40 bytes long.</p>
+<p>It’s great to see the .NET team still making improvements in <code>async</code>/<code>await</code>, all these years later!</p>
 
-<p>This works fine, as long as you’re on .NET 8.0; the <code>InlineArrayAttribute</code> <a href="https://github.com/dotnet/runtime/issues/61135">requires runtime support</a>. If you define your own <code>InlineArrayAttribute</code> and try to run this on earlier runtimes, the <code>Padding40</code> struct will be the wrong size, and <code>Data</code> will not get the correct amount of padding.</p>
-
-<p>Bonus: we can access the padding as another overlaid struct type by adding this member to the <code>Data</code> struct:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="na">[UnscopedRef]</span> <span class="k">public</span> <span class="k">ref</span> <span class="n">T</span> <span class="n">PaddingAs</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;()</span> <span class="k">where</span> <span class="n">T</span> <span class="p">:</span> <span class="k">struct</span> <span class="err">=&gt; </span><span class="nc">ref</span> <span class="n">Unsafe</span><span class="p">.</span><span class="n">As</span><span class="p">&lt;</span><span class="n">Padding40</span><span class="p">,</span> <span class="n">T</span><span class="p">&gt;(</span><span class="k">ref</span> <span class="n">_padding</span><span class="p">);</span></code></pre></figure>
-
-<h2 id="unsafe-fixed-size-buffers">Unsafe Fixed-Size Buffers</h2>
-
-<p>The nicer syntax above is all about taking an existing feature - <a href="https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/unsafe-code?WT.mc_id=DT-MVP-5000058#fixed-size-buffers">unsafe fixed-size buffers</a> - and allowing them in a safe context. If you’re not on .NET 8.0 yet, you can still use the old-school unsafe fixed-size buffers:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">unsafe</span> <span class="k">struct</span> <span class="nc">Data</span>
-<span class="p">{</span>
-  <span class="k">private</span> <span class="kt">int</span> <span class="n">_first</span><span class="p">;</span>
-  <span class="k">private</span> <span class="k">fixed</span> <span class="kt">byte</span> <span class="n">_padding</span><span class="p">[</span><span class="m">40</span><span class="p">];</span>
-  <span class="k">private</span> <span class="kt">int</span> <span class="n">_second</span><span class="p">;</span>
-<span class="p">}</span></code></pre></figure>
-
-<p>This also works fine, but has the drawback of requiring an <code>unsafe</code> context. The <code>Overlay</code> helper from the <a href="/2023/09/memory-mapped-files-overlaid-structs.html">last post</a> is also <code>unsafe</code>, but it would be nice if that was the <em>only</em> <code>unsafe</code> thing and all my overlay structures don’t have to be <code>unsafe</code> just to add padding.</p>
-
-<p>Bonus: we can access the padding as another overlaid struct type by adding this member to the <code>Data</code> struct:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">unsafe</span> <span class="k">ref</span> <span class="n">T</span> <span class="n">PaddingAs</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;()</span>
-<span class="p">{</span>
-  <span class="k">fixed</span> <span class="p">(</span><span class="kt">byte</span><span class="p">*</span> <span class="n">p</span> <span class="p">=</span> <span class="n">_padding</span><span class="p">)</span>
-    <span class="k">return</span> <span class="k">ref</span> <span class="n">Unsafe</span><span class="p">.</span><span class="n">AsRef</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="n">p</span><span class="p">);</span>
-<span class="p">}</span></code></pre></figure>
-
-<p>It does seem a bit awkward to me, though. The <code>fixed</code> statement is informing the GC that <code>_padding</code> can’t be moved… but since this is an overlaid structure (at the address of a memory-mapped view), it can’t be moved <em>anyway</em>. So it seems superfluous. Probably <a href="https://stackoverflow.com/a/22204244/263693">not a lot of overhead</a>; it’s just that the code seems awkward: “pin this thing in memory, read the pointer value, and then unpin it”.</p>
-
-<h2 id="explicit-struct-layout">Explicit Struct Layout</h2>
-
-<p>Let’s try an old-school, p/Invoke-style approach:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="na">[StructLayout(LayoutKind.Explicit)]</span>
-<span class="k">private</span> <span class="k">struct</span> <span class="nc">Data</span>
-<span class="p">{</span>
-<span class="na">  [FieldOffset(0)]</span>
-  <span class="k">private</span> <span class="kt">int</span> <span class="n">_first</span><span class="p">;</span>
-<span class="na">  [FieldOffset(44)]</span>
-  <span class="k">private</span> <span class="kt">int</span> <span class="n">_second</span><span class="p">;</span>
-<span class="p">}</span></code></pre></figure>
-
-<p>I was curious to know if this approach worked, and it does. I don’t really recommend it, since you have to explicitly lay out your entire struct. Also, there isn’t a good way of referencing the padding.</p>
-
-<h2 id="marshalling-doesnt-work">Marshalling (Doesn’t Work)</h2>
-
-<p>Just as a side note, <em>marshalling</em> directives don’t work. For example:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// Does not work!</span>
-<span class="na">[StructLayout(LayoutKind.Sequential)]</span>
-<span class="k">private</span> <span class="k">struct</span> <span class="nc">Data</span>
-<span class="p">{</span>
-  <span class="k">private</span> <span class="kt">int</span> <span class="n">_first</span><span class="p">;</span>
-<span class="na">  [MarshalAs(UnmanagedType.ByValArray, SizeConst = 40)]</span>
-  <span class="k">private</span> <span class="kt">byte</span><span class="p">[]</span> <span class="n">_padding</span><span class="p">;</span>
-  <span class="k">private</span> <span class="kt">int</span> <span class="n">_second</span><span class="p">;</span>
-<span class="p">}</span></code></pre></figure>
-
-<p>This works if we’re doing p/Invoke, because it’s marshalling (copying) the structure to/from unmanaged code. Since we’re <em>overlaying</em> the structure directly in memory, marshalling directives like this don’t work.</p>
-
-<h2 id="explicit-fields">Explicit Fields</h2>
-
-<p>Of course, you can always define padding using multiple explicit fields. The resulting code is ugly (and IMO more awkward to maintain), but it works fine:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">struct</span> <span class="nc">Data</span>
-<span class="p">{</span>
-  <span class="k">private</span> <span class="kt">int</span> <span class="n">_first</span><span class="p">;</span>
-  <span class="k">private</span> <span class="kt">int</span> <span class="n">_padding0</span><span class="p">,</span> <span class="n">_padding1</span><span class="p">,</span> <span class="n">_padding2</span><span class="p">,</span> <span class="n">_padding3</span><span class="p">,</span> <span class="n">_padding4</span><span class="p">,</span> <span class="n">_padding5</span><span class="p">,</span> <span class="n">_padding6</span><span class="p">,</span> <span class="n">_padding7</span><span class="p">,</span> <span class="n">_padding8</span><span class="p">,</span> <span class="n">_padding9</span><span class="p">;</span>
-  <span class="k">private</span> <span class="kt">int</span> <span class="n">_second</span><span class="p">;</span>
-<span class="p">}</span></code></pre></figure>
-
-<p>I’m using <code>int</code> fields above so I only have to type 10 of them, as opposed to 40 <code>byte</code>-sized fields.</p>
-
-<p>You can even do a bonus round with this approach by referencing the first padding member:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="na">[UnscopedRef]</span> <span class="k">public</span> <span class="k">ref</span> <span class="n">T</span> <span class="n">PaddingAs</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;()</span> <span class="k">where</span> <span class="n">T</span> <span class="p">:</span> <span class="k">struct</span> <span class="err">=&gt; </span><span class="nc">ref</span> <span class="n">Unsafe</span><span class="p">.</span><span class="n">As</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">T</span><span class="p">&gt;(</span><span class="k">ref</span> <span class="n">_padding0</span><span class="p">);</span></code></pre></figure>
-
-<p>Of course, if you have lots of padding (or multiple padding sections), this can get tedious.</p>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>Since I’m working on a greenfield project, I’ve chosen to use the .NET 8.0-style <code>InlineArrayAttribute</code> approach, with the hope that the syntax becomes nicer in future versions of C#. If I had to support older .NET versions, I’d probably take the “Unsafe Fixed-Size Buffers” approach, even though it requires <code>unsafe</code> contexts for all those overlaid structs.</p>
-
-<p>I hope this has been helpful to you during your memory-mapping adventures!</p>
+<p>If you’re interested in more of the history and design discussion behind <code>ConfigureAwaitOptions</code>, check out the <a href="https://github.com/dotnet/runtime/pull/87067">pull request</a>. At one point there <a href="https://github.com/dotnet/runtime/issues/22144#issuecomment-1561983918">was</a> a <code>ForceAsynchronousContinuation</code> that was dropped before release. It had a more obscure use case, essentially overriding <code>await</code>’s <a href="/2012/12/dont-block-in-asynchronous-code.html">default behavior of scheduling the <code>async</code> method continuation with <code>ExecuteSynchronously</code></a>. Perhaps a future update will add that back in, or perhaps in a future update <code>ConfigureAwaitOptions</code> will support value tasks. We’ll just have to see what the future holds!</p>
 
   </article>
     
@@ -429,8 +461,8 @@ img.comment-author-profile-image {
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2023/09/memory-mapped-files-overlaid-structs.html" title="Memory-Mapped Files and Overlaid Structs">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2023/11/configureawait-in-net-8.html" title="ConfigureAwait in .NET 8">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2023/10/padding-for-overlaid-structs.html" title="Padding for Overlaid Structs">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="comments"></div>
@@ -589,7 +621,7 @@ img.comment-author-profile-image {
 
 <script type="text/javascript">
 
-var pageUrl = "https://blog.stephencleary.com" + "/2023/10/padding-for-overlaid-structs.html";
+var pageUrl = "https://blog.stephencleary.com" + "/2023/11/configureawait-in-net-8.html";
 
 // (unnecessary) 1) If the URL starts with http://, replace with https://
 
