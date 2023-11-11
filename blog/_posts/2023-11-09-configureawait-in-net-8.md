@@ -18,7 +18,13 @@ The history of `ConfigureAwait(false)` is interesting (at least to me). Original
 
 Over the years, though, the recommendation of "use `ConfigureAwait(false)` whenever you can" has been modified. The first (albeit minor) shift was instead of "use `ConfigureAwait(false)` whenever you can", a simpler guideline arose: use `ConfigureAwait(false)` in library code and *don't* use it in application code. This is an easier guideline to understand and follow. Still, the complaints about having to use `ConfigureAwait(false)` continued, with periodic requests to change the default on a project-wide level. These requests have always been rejected by the C# team for language consistency reasons.
 
-More recently (specifically, since ASP.NET dropped their `SynchronizationContext` with ASP.NET Core and fixed all the places where sync-over-async was necessary), there has been a move away from `ConfigureAwait(false)`. As a library author, I fully understand how annoying it is to have `ConfigureAwait(false)` litter your codebase! Perhaps the most notable departure is the Entity Framework Core team, which just flat-out decided not to use `ConfigureAwait(false)` anymore. For myself, I still use `ConfigureAwait(false)` in my libraries, but I understand the frustration.
+More recently (specifically, since ASP.NET dropped their `SynchronizationContext` with ASP.NET Core and fixed all the places where sync-over-async was necessary), there has been a move away from `ConfigureAwait(false)`. As a library author, I fully understand how annoying it is to have `ConfigureAwait(false)` litter your codebase! Some library authors have just decided not to bother with `ConfigureAwait(false)`. For myself, I still use `ConfigureAwait(false)` in my libraries, but I understand the frustration.
+
+<div class="alert alert-info" markdown="1">
+<i class="fa fa-hand-o-right fa-2x pull-left"></i>
+
+An earlier version of this post incorrectly claimed that the Entity Framework Core team had decided not to use `ConfigureAwait(false)`. This was only true in early versions of Entity Framework Core. Entity Framework Core [added `ConfigureAwait(false)` in version 5.0.0](https://github.com/dotnet/efcore/pull/21110){:.alert-link} and continues to use `ConfigureAwait(false)` as of this writing (2023-11-11).
+</div>
 
 Since we're on the topic of `ConfigureAwait(false)`, I'd like to note a few common misconceptions:
 
