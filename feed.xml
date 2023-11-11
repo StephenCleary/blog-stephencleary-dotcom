@@ -23,7 +23,13 @@
 
 &lt;p&gt;Over the years, though, the recommendation of “use &lt;code&gt;ConfigureAwait(false)&lt;/code&gt; whenever you can” has been modified. The first (albeit minor) shift was instead of “use &lt;code&gt;ConfigureAwait(false)&lt;/code&gt; whenever you can”, a simpler guideline arose: use &lt;code&gt;ConfigureAwait(false)&lt;/code&gt; in library code and &lt;em&gt;don’t&lt;/em&gt; use it in application code. This is an easier guideline to understand and follow. Still, the complaints about having to use &lt;code&gt;ConfigureAwait(false)&lt;/code&gt; continued, with periodic requests to change the default on a project-wide level. These requests have always been rejected by the C# team for language consistency reasons.&lt;/p&gt;
 
-&lt;p&gt;More recently (specifically, since ASP.NET dropped their &lt;code&gt;SynchronizationContext&lt;/code&gt; with ASP.NET Core and fixed all the places where sync-over-async was necessary), there has been a move away from &lt;code&gt;ConfigureAwait(false)&lt;/code&gt;. As a library author, I fully understand how annoying it is to have &lt;code&gt;ConfigureAwait(false)&lt;/code&gt; litter your codebase! Perhaps the most notable departure is the Entity Framework Core team, which just flat-out decided not to use &lt;code&gt;ConfigureAwait(false)&lt;/code&gt; anymore. For myself, I still use &lt;code&gt;ConfigureAwait(false)&lt;/code&gt; in my libraries, but I understand the frustration.&lt;/p&gt;
+&lt;p&gt;More recently (specifically, since ASP.NET dropped their &lt;code&gt;SynchronizationContext&lt;/code&gt; with ASP.NET Core and fixed all the places where sync-over-async was necessary), there has been a move away from &lt;code&gt;ConfigureAwait(false)&lt;/code&gt;. As a library author, I fully understand how annoying it is to have &lt;code&gt;ConfigureAwait(false)&lt;/code&gt; litter your codebase! Some library authors have just decided not to bother with &lt;code&gt;ConfigureAwait(false)&lt;/code&gt;. For myself, I still use &lt;code&gt;ConfigureAwait(false)&lt;/code&gt; in my libraries, but I understand the frustration.&lt;/p&gt;
+
+&lt;div class=&quot;alert alert-info&quot;&gt;
+  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
+
+  &lt;p&gt;An earlier version of this post incorrectly claimed that the Entity Framework Core team had decided not to use &lt;code&gt;ConfigureAwait(false)&lt;/code&gt;. This was only true in early versions of Entity Framework Core. Entity Framework Core &lt;a href=&quot;https://github.com/dotnet/efcore/pull/21110&quot; class=&quot;alert-link&quot;&gt;added &lt;code&gt;ConfigureAwait(false)&lt;/code&gt; in version 5.0.0&lt;/a&gt; and continues to use &lt;code&gt;ConfigureAwait(false)&lt;/code&gt; as of this writing (2023-11-11).&lt;/p&gt;
+&lt;/div&gt;
 
 &lt;p&gt;Since we’re on the topic of &lt;code&gt;ConfigureAwait(false)&lt;/code&gt;, I’d like to note a few common misconceptions:&lt;/p&gt;
 
