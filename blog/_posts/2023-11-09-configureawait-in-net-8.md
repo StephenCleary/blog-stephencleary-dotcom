@@ -183,7 +183,7 @@ Note that `ForceYielding` by itself also implies _not_ continuing on the capture
 await task.ConfigureAwait(ConfigureAwaitOptions.ForceYielding);
 {% endhighlight %}
 
-`Task.Yield` _will_ resume on the captured context, so it's not _exactly_ like `ForceYielding` by itself. It's actually like `ForceYielding` with `ConinueOnCapturedContext`.
+`Task.Yield` _will_ resume on the captured context, so it's not _exactly_ like `ForceYielding` by itself. It's actually like `ForceYielding` with `ContinueOnCapturedContext`.
 
 {% highlight csharp %}
 // These do the same thing
