@@ -441,7 +441,7 @@ img.comment-author-profile-image {
 <span class="c1">// Therefore, code after this statement will *always* run on a thread pool thread.</span>
 <span class="k">await</span> <span class="n">task</span><span class="p">.</span><span class="n">ConfigureAwait</span><span class="p">(</span><span class="n">ConfigureAwaitOptions</span><span class="p">.</span><span class="n">ForceYielding</span><span class="p">);</span></code></pre></figure>
 
-<p><code>Task.Yield</code> <em>will</em> resume on the captured context, so it’s not <em>exactly</em> like <code>ForceYielding</code> by itself. It’s actually like <code>ForceYielding</code> with <code>ConinueOnCapturedContext</code>.</p>
+<p><code>Task.Yield</code> <em>will</em> resume on the captured context, so it’s not <em>exactly</em> like <code>ForceYielding</code> by itself. It’s actually like <code>ForceYielding</code> with <code>ContinueOnCapturedContext</code>.</p>
 
 <figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// These do the same thing</span>
 <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Yield</span><span class="p">();</span>

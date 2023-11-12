@@ -168,7 +168,7 @@
 &lt;span class=&quot;c1&quot;&gt;// Therefore, code after this statement will *always* run on a thread pool thread.&lt;/span&gt;
 &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ConfigureAwait&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ConfigureAwaitOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ForceYielding&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
-&lt;p&gt;&lt;code&gt;Task.Yield&lt;/code&gt; &lt;em&gt;will&lt;/em&gt; resume on the captured context, so it’s not &lt;em&gt;exactly&lt;/em&gt; like &lt;code&gt;ForceYielding&lt;/code&gt; by itself. It’s actually like &lt;code&gt;ForceYielding&lt;/code&gt; with &lt;code&gt;ConinueOnCapturedContext&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;Task.Yield&lt;/code&gt; &lt;em&gt;will&lt;/em&gt; resume on the captured context, so it’s not &lt;em&gt;exactly&lt;/em&gt; like &lt;code&gt;ForceYielding&lt;/code&gt; by itself. It’s actually like &lt;code&gt;ForceYielding&lt;/code&gt; with &lt;code&gt;ContinueOnCapturedContext&lt;/code&gt;.&lt;/p&gt;
 
 &lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;c1&quot;&gt;// These do the same thing&lt;/span&gt;
 &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Yield&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
