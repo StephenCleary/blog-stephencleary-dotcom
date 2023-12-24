@@ -8,6 +8,205 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>C# Advent: The Joy of Immutable Update Patterns</title>
+        <description>&lt;p&gt;This is my first-ever post that is part of &lt;a href=&quot;https://csadvent.christmas/&quot;&gt;C# Advent&lt;/a&gt; organized by &lt;a href=&quot;https://x.com/mgroves&quot;&gt;@mgroves&lt;/a&gt;. This year there’s a &lt;a href=&quot;https://www.youtube.com/watch?v=D4udjhRjW4o&quot;&gt;video&lt;/a&gt;, too, including yours-truly singing while wearing my favorite Christmas shirt!&lt;/p&gt;
+
+&lt;h2 id=&quot;joy-to-the-world&quot;&gt;Joy to the World!&lt;/h2&gt;
+
+&lt;blockquote class=&quot;blockquote&quot;&gt;
+  &lt;p&gt;Glory to God in the highest, and on earth peace, good will toward men.&lt;/p&gt;
+
+  &lt;footer class=&quot;blockquote-footer text-right&quot;&gt;&lt;cite&gt;Luke 2:14&lt;/cite&gt;&lt;/footer&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;I love Christmas! It’s easily my favorite holiday.&lt;/p&gt;
+
+&lt;p&gt;In spite of difficulties and upheaval in the world (it is 2023 right now), Christmas still stands as a time of refection and remembrance and expectation.&lt;/p&gt;
+
+&lt;p&gt;I do approach Christmas from a Christian perspective, and I enjoy meditating on Jesus’ birth during this time. In particular this year, I’ve been focusing on &lt;em&gt;peace&lt;/em&gt; and &lt;em&gt;joy&lt;/em&gt;, two words commonly associated with Christmas and the coming of the Christ.&lt;/p&gt;
+
+&lt;p&gt;So, when I was considering the topic for my C# Advent article, I particularly wanted one that invoked Peace or Joy. And, when working with C#, there is one aspect of the language that truly does cause feelings of joy whenever I use it. It’s not a single language feature, but rather a collection of language features that all work together in a beatiful way.&lt;/p&gt;
+
+&lt;p&gt;Hence the title of this blog post: The Joy of Immutable Update Patterns. Wow, that sounds nerdy…&lt;/p&gt;
+
+&lt;h2 id=&quot;immutability&quot;&gt;Immutability&lt;/h2&gt;
+
+&lt;p&gt;An immutable type is one whose value can’t change. Immutable types have several advantages, not the least of which is that they’re just easier to reason about. Some languages push immutability very strongly; C# takes a relatively pragmatic approach.&lt;/p&gt;
+
+&lt;p&gt;Immutability varies across the C# ecosystem (and it’s currently seeing a gradual rise in popularity). Most value types are usually immutable (e.g., &lt;code&gt;int&lt;/code&gt;, &lt;code&gt;decimal&lt;/code&gt;, and &lt;code&gt;Guid&lt;/code&gt;); most reference types are not immutable (e.g., &lt;code&gt;List&amp;lt;int&amp;gt;&lt;/code&gt;). However, there are lots of exceptions to that general rule; mutable value types are common in performance-sensitive scenarios, and some reference types such as &lt;code&gt;string&lt;/code&gt; are immutable.&lt;/p&gt;
+
+&lt;p&gt;Modern code has a few additional options for immutable types: you can use &lt;code&gt;record class&lt;/code&gt; (C# 9) for immutable reference types and &lt;code&gt;readonly record struct&lt;/code&gt; (C# 10) for immutable value types. There’s also the collections in &lt;code&gt;System.Collections.Immutable&lt;/code&gt; for more complex data structures such as stacks, queues, and dictionaries. Of course, with your own immutable types and collections, their members/elements must be immutable in order for the composite value to be immutable.&lt;/p&gt;
+
+&lt;h2 id=&quot;updating-immutable-data&quot;&gt;Updating Immutable Data&lt;/h2&gt;
+
+&lt;p&gt;Immutable data makes local functions easier to reason about - you &lt;em&gt;know&lt;/em&gt; the data can’t change - but of course every program has to model modifications in some way. One approach is to have a &lt;em&gt;variable&lt;/em&gt; that is mutable, referring to some &lt;em&gt;data&lt;/em&gt; that is immutable. To change the immutable data, you can write code that transitions one immutable value to another.&lt;/p&gt;
+
+&lt;p&gt;It is in this area that C# has been slowly adding enhancements over many years, and is now approaching beautiful code. Code that makes me smile when I write it!&lt;/p&gt;
+
+&lt;h3 id=&quot;switch-expressions&quot;&gt;&lt;code&gt;switch&lt;/code&gt; Expressions&lt;/h3&gt;
+
+&lt;p&gt;&lt;code&gt;switch&lt;/code&gt; expressions (C# 8) are at the core of immutable update patterns. At their simplest, they provide a mapping from one constant to another:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Category&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Map&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AdventThing&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;t&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;t&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;switch&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;AdventThing&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Mary&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Category&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Person&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;AdventThing&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Sheep&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Category&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Animal&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;AdventThing&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Camel&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Category&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Animal&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;AdventThing&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Bethlehem&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Category&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Place&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;_&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;throw&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ArgumentOutOfRangeException&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;nameof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;t&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)),&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;&lt;code&gt;switch&lt;/code&gt; expressions are built on &lt;a href=&quot;https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/patterns?WT.mc_id=DT-MVP-5000058&quot;&gt;pattern matching&lt;/a&gt;, which started in &lt;a href=&quot;https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-8.0/patterns?WT.mc_id=DT-MVP-5000058&quot;&gt;C# 8&lt;/a&gt; (alongside the &lt;code&gt;switch&lt;/code&gt; expression) and have received enhancements in &lt;a href=&quot;https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-9.0/patterns3?WT.mc_id=DT-MVP-5000058&quot;&gt;C# 9&lt;/a&gt;, &lt;a href=&quot;https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-10.0/extended-property-patterns?WT.mc_id=DT-MVP-5000058&quot;&gt;C# 10&lt;/a&gt;, and &lt;a href=&quot;https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-11.0/list-patterns?WT.mc_id=DT-MVP-5000058&quot;&gt;C# 11&lt;/a&gt;. They’re practically a separate mini-language at this point!&lt;/p&gt;
+
+&lt;p&gt;Switch expressions on their own are powerful, but they’re especially useful alongside &lt;code&gt;with&lt;/code&gt; expressions.&lt;/p&gt;
+
+&lt;h3 id=&quot;with-expressions&quot;&gt;&lt;code&gt;with&lt;/code&gt; Expressions&lt;/h3&gt;
+
+&lt;p&gt;&lt;code&gt;with&lt;/code&gt; expressions are a shorthand way of copying a composite value (i.e., a &lt;code&gt;record class&lt;/code&gt; or &lt;code&gt;readonly record struct&lt;/code&gt;) and changing only the specified properties. A simple example should suffice:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;record&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Inn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;RoomsAvailable&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;Inn&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Full&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Inn&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;inn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;inn&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;with&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;RoomsAvailable&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;Inn&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;myInn&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;Bethlehem Getaway&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;50&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;Inn&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fullInn&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Full&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;myInn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;In the example above, &lt;code&gt;Full&lt;/code&gt; does not modify the (immutable) inn; it returns a &lt;em&gt;new&lt;/em&gt; inn that is full.&lt;/p&gt;
+
+&lt;p&gt;Combining &lt;code&gt;switch&lt;/code&gt; expressions with &lt;code&gt;with&lt;/code&gt; expressions is where you start to see the beauty of this kind of immutable update pattern:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;Inn&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ReserveRoom&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Inn&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;inn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;inn&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;switch&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;RoomsAvailable&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;inn&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;RoomsAvailable&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;inn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;RoomsAvailable&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;_&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;throw&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;InvalidOperationException&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;No rooms available.&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Here’s a method that decrements the available rooms in an &lt;code&gt;Inn&lt;/code&gt;. It is a &lt;em&gt;pure&lt;/em&gt; method; it depends only on its inputs and produces only its outputs, with no mutation. This is the point at which we’re starting to do immutable state transitions.&lt;/p&gt;
+
+&lt;h3 id=&quot;collections&quot;&gt;Collections&lt;/h3&gt;
+
+&lt;p&gt;I tend to use &lt;code&gt;System.Collections.Immutable&lt;/code&gt; whenever I need something stack- or queue- or dictionary-like in an immutable context. These types all have methods like &lt;code&gt;Add&lt;/code&gt; that &lt;em&gt;return&lt;/em&gt; a new collection rather than modifying one in place. Internally, the immutable collections share internal data structures, so this isn’t as inefficient as copying the entire collection; immutable collections can never be as memory-efficient as immutable collections, but they’re usually efficient enough to not be an issue. I find immutable collections satisfy my needs quite well.&lt;/p&gt;
+
+&lt;p&gt;However, I would be remiss if I didn’t mention that C# has added a new way to create collections (including &lt;code&gt;ImmutableArray&amp;lt;T&amp;gt;&lt;/code&gt;). It’s very reminiscient of JavaScript’s &lt;a href=&quot;https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax&quot;&gt;spread operator&lt;/a&gt;:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;ImmutableArray&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;list&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ImmutableArray&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Create&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;6&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;11&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;13&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;index&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;ImmutableArray&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[..&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;list&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[..&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;index&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;7&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;list&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[^&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;index&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;..]];&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// result: [3, 5, 7, 11, 13]&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// Equivalent to:&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;//   ImmutableArray&amp;lt;int&amp;gt; result = list.SetItem(index, 7);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;As of this writing, though, the implementation iterates over all the elements and builds an entirely new collection. This is quite inefficient for immutable collections, so I do not use C# 12’s &lt;a href=&quot;https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/collection-expressions?WT.mc_id=DT-MVP-5000058&quot;&gt;collection expressions&lt;/a&gt; when working with immutable data. (But for mutable code, they rock!)&lt;/p&gt;
+
+&lt;h2 id=&quot;application-unidirectional-data-flow&quot;&gt;Application: Unidirectional Data Flow&lt;/h2&gt;
+
+&lt;p&gt;Let’s build this up into something a bit more complex! We can give each inn an actual collection of rooms, and just acquire an available one when requested.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;record&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Room&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Id&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Available&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;record&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Inn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ImmutableHashSet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Room&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Rooms&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;Inn&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ReserveRoom&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Inn&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;inn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;room&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;inn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Rooms&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FirstOrDefault&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;r&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;r&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Available&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;??&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;throw&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;InvalidOperationException&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;No rooms available.&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;inn&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;with&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;Rooms&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;inn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Rooms&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Remove&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;room&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Add&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;room&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Available&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;false&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}),&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;Inn&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;myInn&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;Bethlehem Getaway&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;Enumerable&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Range&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;50&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Select&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Room&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;100&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Available&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ToImmutableHashSet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;());&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;Inn&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;resultInn&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ReserveRoom&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;myInn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Now we have some more complex state, and our &lt;code&gt;ReserveRoom&lt;/code&gt; method now finds a room, reserves it, and returns the new composite state of the inn. I often find it useful to have these modifier methods also return some indication of what they did - in this case, it can return the room that was reserved. Tuples are convenient for multiple return values:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Inn&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Inn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;RoomId&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ReserveRoom&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Inn&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;inn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;room&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;inn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Rooms&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FirstOrDefault&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;r&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;r&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Available&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;??&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;throw&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;InvalidOperationException&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;No rooms available.&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;inn&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;with&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;Rooms&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;inn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Rooms&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Remove&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;room&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Add&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;room&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Available&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;false&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}),&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;room&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Id&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;If you squint a bit, you can see &lt;code&gt;ReserveRoom&lt;/code&gt; as being like a Redux reducer (for a single action: reserving a room). Many years ago, React and Redux took the world by storm. Although Redux has fallen out of favor in some circles, it made some ideas popular, and those continue to live on.&lt;/p&gt;
+
+&lt;p&gt;Specifically, the idea of Unidirectional Data Flow is one that has taken hold, particularly in UI applications. The core idea is that the application has a single instance of composite immutable state, and that this state is only changed by applying pure functions to it (commonly called “reducers”). Other parts of the application (including the UI) listen for and respond to state changes. UDF is an architecture that is overkill for extremely simple applications, but is an absolute lifesaver when there is significant complexity.&lt;/p&gt;
+
+&lt;p&gt;Unidirectional Data Flow (UDF) can go by several names. Model-View-Intent (MVI) is an architecture common on mobile platforms that is based on UDF. Another fairly common architecture name is The Elm Architecture (TEA, or sometimes just Elm). Today most C# UI applications still use a basic MVVM style of architecture, but I expect with the language changes that better support immutable update patterns, we’ll start to see more adoption of UDF architectures in C#. At least, I hope so!&lt;/p&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;I hope this post has been interesting to you! Personally, I do enjoy writing code combining &lt;code&gt;switch&lt;/code&gt; and &lt;code&gt;with&lt;/code&gt; expressions. I think the resulting code is really elegant, and I hope you got some joy out of this! Merry Christmas!&lt;/p&gt;
+
+&lt;!--
+## Application: Building Asynchronous Primitives
+
+And now I'm going to completely switch gears. Because immutable state updates are great for application state, but they're also great for doing threadsafe code.
+
+One advantage of immutable data is that - since it is immutable - it can be safely shared among any threads! There's usually just one variable that _refers_ to the immutable state, and that variable is the only thing that needs actual multithreaded protection. So, let's use this aspect to improve on a well-known primitive.
+
+I have an &quot;Async Masterclass&quot; talk that I've given a few times, and in that talk one of the topics I cover is building your own asynchronous synchronization primitives. A simple example is an `AsyncManualResetEvent`, which in my (current) slides ends up looking like this:
+
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;sealed&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;AsyncManualResetEvent&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+	&lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;object&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_mutex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	&lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TaskCompletionSource&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_tcs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	
+	&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;AsyncManualResetEvent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;_mutex&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;_tcs&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TaskCreationOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;RunContinuationsAsynchronously&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+	&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;WaitUntilSetAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+		&lt;span class=&quot;k&quot;&gt;lock&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_mutex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+		&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+			&lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_tcs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+		&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+	&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Set&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+		&lt;span class=&quot;k&quot;&gt;lock&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_mutex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+		&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+			&lt;span class=&quot;n&quot;&gt;_tcs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TrySetResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+		&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+	
+	&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Reset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+		&lt;span class=&quot;k&quot;&gt;lock&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_mutex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+		&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+			&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_tcs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IsCompleted&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+				&lt;span class=&quot;n&quot;&gt;_tcs&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TaskCreationOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;RunContinuationsAsynchronously&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+		&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+
+And, sure, there's nothing really _wrong_ with this, but there's some parts that aren't clear to many developers. How can I use `lock` in this asynchronous primitive? And `RunContinuationsAsynchronously` is necessary to avoid a particularly tricky deadlock situation. It's just not code that is 
+
+--&gt;
+</description>
+        <pubDate>Sun, 24 Dec 2023 00:00:00 +0000</pubDate>
+        <link>https://blog.stephencleary.com/2023/12/the-joy-of-immutable-update-patterns.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2023/12/the-joy-of-immutable-update-patterns.html</guid>
+      </item>
+    
+      <item>
         <title>ConfigureAwait in .NET 8</title>
         <description>&lt;p&gt;I don’t often write “what’s new in .NET” posts, but .NET 8.0 has an interesting addition that I haven’t seen a lot of people talk about. &lt;code&gt;ConfigureAwait&lt;/code&gt; is getting a pretty good overhaul/enhancement; let’s take a look!&lt;/p&gt;
 
@@ -1154,195 +1353,6 @@ class AnotherExample : ExampleBase&amp;lt;AnotherExample&amp;gt;
         <pubDate>Thu, 10 Mar 2022 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2022/03/cancellation-3-detecting-cancellation.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2022/03/cancellation-3-detecting-cancellation.html</guid>
-      </item>
-    
-      <item>
-        <title>Cancellation, Part 2: Requesting Cancellation</title>
-        <description>&lt;p&gt;&lt;a href=&quot;/2022/02/cancellation-1-overview.html&quot;&gt;Last time&lt;/a&gt; we covered the basic cancellation contract. Responding code takes a &lt;code&gt;CancellationToken&lt;/code&gt;, which is a way to communicate a cancellation request. Today we’re looking at how to create &lt;code&gt;CancellationToken&lt;/code&gt;s and how to request cancellation.&lt;/p&gt;
-
-&lt;h2 id=&quot;cancellationtokensource&quot;&gt;CancellationTokenSource&lt;/h2&gt;
-
-&lt;p&gt;Some &lt;code&gt;CancellationToken&lt;/code&gt;s are provided by a framework or library that you’re using. For example, ASP.NET will provide you a &lt;code&gt;CancellationToken&lt;/code&gt; that represents an unexpected client disconnect. As another example, Polly can provide your delegate with a &lt;code&gt;CancellationToken&lt;/code&gt; that represents a more generic cancellation (e.g., a timeout policy being triggered).&lt;/p&gt;
-
-&lt;p&gt;For other scenarios, you’ll need to provide your own &lt;code&gt;CancellationToken&lt;/code&gt;. You can use the &lt;code&gt;CancellationToken&lt;/code&gt; constructor or &lt;code&gt;CancellationToken.None&lt;/code&gt; to create a cancellation token that is either signalled (and always signalled) or unsignalled (and never signalled).&lt;/p&gt;
-
-&lt;p&gt;But in the general case, when you want to create a &lt;code&gt;CancellationToken&lt;/code&gt; that can be cancelled later, then you’ll need to use &lt;code&gt;CancellationTokenSource&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;Each &lt;code&gt;CancellationTokenSource&lt;/code&gt; controls its own set of &lt;code&gt;CancellationToken&lt;/code&gt;s. Each &lt;code&gt;CancellationToken&lt;/code&gt; created from a &lt;code&gt;CancellationTokenSource&lt;/code&gt; is just a small &lt;code&gt;struct&lt;/code&gt; that refers back to its &lt;code&gt;CancellationTokenSource&lt;/code&gt;. A &lt;code&gt;CancellationToken&lt;/code&gt; can only respond to cancellation requests; the &lt;code&gt;CancellationTokenSource&lt;/code&gt; is necessary to request cancellation. So the requesting code creates the &lt;code&gt;CancellationTokenSource&lt;/code&gt; and keeps a reference to it (using that reference later to request cancellation), and the responding code just gets a &lt;code&gt;CancellationToken&lt;/code&gt; and uses that to respond to the cancellation requests.&lt;/p&gt;
-
-&lt;h2 id=&quot;timeouts&quot;&gt;Timeouts&lt;/h2&gt;
-
-&lt;p&gt;One common need for cancellation is implementing a timeout. The solution is to have a timer that requests cancellation when it expires. This is actually common enough that &lt;code&gt;CancellationTokenSource&lt;/code&gt; has this behavior built-in. You can either use the &lt;code&gt;CancellationTokenSource&lt;/code&gt; constructor that takes a delay, or call &lt;code&gt;CancelAfter&lt;/code&gt; on an existing &lt;code&gt;CancellationTokenSource&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;For example, if you want to apply a timeout to a code scope:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingWithTimeoutAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;c1&quot;&gt;// Create a CTS that cancels after 5 minutes.&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;CancellationTokenSource&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TimeSpan&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FromMinutes&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
-
-    &lt;span class=&quot;c1&quot;&gt;// Pass the token for that CTS to lower-level code.&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-
-    &lt;span class=&quot;c1&quot;&gt;// At the end of this method, the CTS is disposed.&lt;/span&gt;
-    &lt;span class=&quot;c1&quot;&gt;// All of its tokens should not be used after this point.&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;h2 id=&quot;manual-cancellation&quot;&gt;Manual Cancellation&lt;/h2&gt;
-
-&lt;p&gt;For more general cancellation needs, create a &lt;code&gt;CancellationTokenSource&lt;/code&gt;, and at some point in the future call its &lt;code&gt;Cancel&lt;/code&gt; method to manually request cancellation.&lt;/p&gt;
-
-&lt;p&gt;One example is a GUI application with an actual “Cancel” button:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationTokenSource&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;?&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-
-&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;StartButton_Click&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(..)&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;c1&quot;&gt;// Create a CTS for manual cancellation requests.&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-
-    &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;c1&quot;&gt;// Pass the token for that CTS to lower-level code.&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Exception&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Display error in UI.&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-
-&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;CancelButton_Click&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(..)&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;c1&quot;&gt;// Manually cancel the CTS.&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;!.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Cancel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;The code above shows the basic idea, but has some serious problems that you wouldn’t want to have in production. For one thing, the cancel button can be clicked when &lt;code&gt;_cts&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;, causing a &lt;code&gt;NullReferenceException&lt;/code&gt;. Also, the start button handler will blindly overwrite any &lt;code&gt;_cts&lt;/code&gt; value, ignoring any existing ongoing operation.&lt;/p&gt;
-
-&lt;p&gt;The proper resolution of these issues depends on your desired user experience and nature of the operation. Just to make this example more complete and production-ready, let’s implement the following:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Either the start or cancel buttons should be enabled at any time, never both.&lt;/li&gt;
-  &lt;li&gt;If the operation completes on its own, the start button should be enabled and the cancel button disabled.&lt;/li&gt;
-  &lt;li&gt;If the operation is cancelled, the start button should remain disabled until the operation completes (either successfully or with an &lt;code&gt;OperationCanceledException&lt;/code&gt;).&lt;/li&gt;
-  &lt;li&gt;After the operation is cancelled, the cancel button remains enabled but becomes a noop.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;These requirements result in this kind of code:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;Constructor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancelButton&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Enabled&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-
-&lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationTokenSource&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;?&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-
-&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;StartButton_Click&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(..)&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;StartButton&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Enabled&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;CancelButton&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Enabled&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-
-    &lt;span class=&quot;c1&quot;&gt;// Create a CTS for manual cancellation requests.&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-
-    &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;c1&quot;&gt;// Pass the token for that CTS to lower-level code.&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Display success in UI.&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Exception&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Display error in UI.&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;finally&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;n&quot;&gt;StartButton&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Enabled&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-        &lt;span class=&quot;n&quot;&gt;CancelButton&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Enabled&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-
-&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;CancelButton_Click&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(..)&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;c1&quot;&gt;// Manually cancel the CTS.&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;!.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Cancel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;You may wish to have different requirements. For example:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Either the start or cancel buttons should be enabled at any time, never both.&lt;/li&gt;
-  &lt;li&gt;If the operation completes on its own, the start button should be enabled and the cancel button disabled.&lt;/li&gt;
-  &lt;li&gt;
-    &lt;s&gt;If the operation is cancelled, the start button should remain disabled until the operation completes (either successfully or with an `OperationCanceledException`).&lt;/s&gt;
-    &lt;p&gt;&lt;em&gt;If one operation is cancelled, the start button should become enabled immediately. Any cancelled operations no longer cause any UI updates.&lt;/em&gt;&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;s&gt;After the operation is cancelled, the cancel button remains enabled but becomes a noop.&lt;/s&gt;
-  &lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Since the new requirements allow the user to start a new operation &lt;em&gt;as soon as the old operation is cancelled&lt;/em&gt; (without waiting for the old operation to complete), the “update the UI” code needs to be guarded to ensure only the current operation updates the UI:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;n&quot;&gt;Constructor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancelButton&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Enabled&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-
-&lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationTokenSource&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;?&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-
-&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;StartButton_Click&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(..)&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;StartButton&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Enabled&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;CancelButton&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Enabled&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-
-    &lt;span class=&quot;c1&quot;&gt;// Create a CTS for manual cancellation requests.&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-
-    &lt;span class=&quot;c1&quot;&gt;// In this method, we can check whether we are the current operation by doing (cts == _cts)&lt;/span&gt;
-    &lt;span class=&quot;c1&quot;&gt;// This works because _cts changes every time the start button is clicked.&lt;/span&gt;
-
-    &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;c1&quot;&gt;// Pass the token for that CTS to lower-level code.&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-            &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Display success in UI.&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Exception&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-            &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Display error in UI.&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;finally&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;n&quot;&gt;StartButton&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Enabled&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-        &lt;span class=&quot;n&quot;&gt;CancelButton&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Enabled&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-
-&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;CancelButton_Click&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(..)&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;StartButton&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Enabled&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;CancelButton&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Enabled&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-
-    &lt;span class=&quot;c1&quot;&gt;// Manually cancel the CTS.&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;!.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Cancel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-
-    &lt;span class=&quot;c1&quot;&gt;// Ensure cancelled operations do not update the UI with success/errors&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;_cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;There are many other options available, depending on your desired user experience. For example, you might choose to keep the start button enabled and just have it implicitly cancel the previous operation (if any). Whatever you end up with, just be sure to walk through all the possible states of your UI and ensure that your handlers are interacting with your &lt;code&gt;CancellationTokenSource&lt;/code&gt; instances appropriately.&lt;/p&gt;
-
-&lt;h2 id=&quot;cleaning-up-cancelling-and-disposing&quot;&gt;Cleaning Up: Cancelling and Disposing&lt;/h2&gt;
-
-&lt;p&gt;To avoid resource leaks, it’s important to clean up your &lt;code&gt;CancellationTokenSource&lt;/code&gt; instances. There are a couple of kinds of resources that are cleaned up: first, the timeout timer (if any) is freed; second, any “listeners” attached to &lt;code&gt;CancellationToken&lt;/code&gt;s are freed (we’ll cover “listening” registrations later in this series). This cleanup is done when the &lt;code&gt;CancellationTokenSource&lt;/code&gt; is cancelled &lt;em&gt;or&lt;/em&gt; when it’s disposed. You can either cancel or dispose, but you should ensure one or the other is done to avoid resource leaks.&lt;/p&gt;
-
-&lt;p&gt;The examples in this blog post always dispose the &lt;code&gt;CancelltionTokenSource&lt;/code&gt; when the responding code is done executing (and thus the &lt;code&gt;CancellationToken&lt;/code&gt;s are no longer used). If the &lt;code&gt;CancellationToken&lt;/code&gt; is saved and used later, then you &lt;em&gt;don’t&lt;/em&gt; want to dispose the &lt;code&gt;CancellationTokenSource&lt;/code&gt;. In that case, you’d want to keep the &lt;code&gt;CancellationTokenSource&lt;/code&gt; alive until you are sure that all code is done with its &lt;code&gt;CancellationToken&lt;/code&gt;s. This is a more advanced case, and sometimes it’s more convenient to cancel the &lt;code&gt;CancellationTokenSource&lt;/code&gt; rather than disposing it.&lt;/p&gt;
-</description>
-        <pubDate>Thu, 03 Mar 2022 00:00:00 +0000</pubDate>
-        <link>https://blog.stephencleary.com/2022/03/cancellation-2-requesting-cancellation.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2022/03/cancellation-2-requesting-cancellation.html</guid>
       </item>
     
   </channel>
