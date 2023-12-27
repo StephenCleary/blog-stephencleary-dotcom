@@ -88,7 +88,7 @@ Here's a method that decrements the available rooms in an `Inn`. It is a _pure_ 
 
 ### Collections
 
-I tend to use `System.Collections.Immutable` whenever I need something stack- or queue- or dictionary-like in an immutable context. These types all have methods like `Add` that _return_ a new collection rather than modifying one in place. Internally, the immutable collections share internal data structures, so this isn't as inefficient as copying the entire collection; immutable collections can never be as memory-efficient as immutable collections, but they're usually efficient enough to not be an issue. I find immutable collections satisfy my needs quite well.
+I tend to use `System.Collections.Immutable` whenever I need something stack- or queue- or dictionary-like in an immutable context. These types all have methods like `Add` that _return_ a new collection rather than modifying one in place. Internally, the immutable collections share internal data structures, so this isn't as inefficient as copying the entire collection; immutable collections can never be as memory-efficient as mutable collections, but they're usually efficient enough to not be an issue. I find immutable collections satisfy my needs quite well.
 
 However, I would be remiss if I didn't mention that C# has added a new way to create collections (including `ImmutableArray<T>`). It's very reminiscient of JavaScript's [spread operator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax):
 
