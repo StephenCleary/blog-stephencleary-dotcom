@@ -360,7 +360,7 @@ img.comment-author-profile-image {
 
 <h3 id="collections">Collections</h3>
 
-<p>I tend to use <code>System.Collections.Immutable</code> whenever I need something stack- or queue- or dictionary-like in an immutable context. These types all have methods like <code>Add</code> that <em>return</em> a new collection rather than modifying one in place. Internally, the immutable collections share internal data structures, so this isn’t as inefficient as copying the entire collection; immutable collections can never be as memory-efficient as immutable collections, but they’re usually efficient enough to not be an issue. I find immutable collections satisfy my needs quite well.</p>
+<p>I tend to use <code>System.Collections.Immutable</code> whenever I need something stack- or queue- or dictionary-like in an immutable context. These types all have methods like <code>Add</code> that <em>return</em> a new collection rather than modifying one in place. Internally, the immutable collections share internal data structures, so this isn’t as inefficient as copying the entire collection; immutable collections can never be as memory-efficient as mutable collections, but they’re usually efficient enough to not be an issue. I find immutable collections satisfy my needs quite well.</p>
 
 <p>However, I would be remiss if I didn’t mention that C# has added a new way to create collections (including <code>ImmutableArray&lt;T&gt;</code>). It’s very reminiscient of JavaScript’s <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax">spread operator</a>:</p>
 
