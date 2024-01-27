@@ -11,6 +11,10 @@ I recently posted a poll on [The Twitter](https://www.youtube.com/watch?v=VqQrUn
 
 It's unanimous! This post is the first in a series that will take a look at all the `Task` members (as of .NET 4.5).
 
+## What is a "Task"
+
+A `Task` is an object representing some operation that will complete in the future. In other languages, this same concept is commonly called a "Future" or a "Promise". In C#, tasks may represent some code that is running, or they may represent some future _event_ (e.g., a timer firing).
+
 ## A Bit of Task History
 
 One of the biggest stumbling blocks to developers learning `async` is actually the `Task` type itself. Most developers fall into one of two categories:
