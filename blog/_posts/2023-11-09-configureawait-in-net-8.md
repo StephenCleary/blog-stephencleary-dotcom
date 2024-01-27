@@ -157,7 +157,7 @@ task.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing).GetAwaiter().GetResu
 
 The final flag is the `ForceYielding` flag. I expect this flag will be rarely used, but when you need it, you need it!
 
-`ForceYielding` is similar to `Task.Yield`. `Yield` returns a special awaitable that always claims to be not completed, but schedules its continuations immediately. What this means is that the `await` always acts asynchronously, yielding to its caller, and then the `async` method continues executing as soon as possible. The [normal behavior for `await`](% post_url 2012-02-02-async-and-await %) is to check if its awaitable is complete, and if it is, then continue executing synchronously; `ForceYielding` prevents that synchronous behavior, forcing the `await` to behave asynchronously.
+`ForceYielding` is similar to `Task.Yield`. `Yield` returns a special awaitable that always claims to be not completed, but schedules its continuations immediately. What this means is that the `await` always acts asynchronously, yielding to its caller, and then the `async` method continues executing as soon as possible. The [normal behavior for `await`]({% post_url 2012-02-02-async-and-await %}) is to check if its awaitable is complete, and if it is, then continue executing synchronously; `ForceYielding` prevents that synchronous behavior, forcing the `await` to behave asynchronously.
 
 For myself, I find forcing asynchronous behavior most useful in unit testing. It can also be used to avoid stack dives in some cases. It may also be useful when implementing asynchronous coordination primitives, such as the ones in my AsyncEx library. Essentially, anywhere where you want to force `await` to behave asynchronously, you can use `ForceYielding` to accomplish that.
 
