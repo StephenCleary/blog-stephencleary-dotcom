@@ -375,6 +375,14 @@ img.comment-author-profile-image {
 
 <p>This can be installed by adding this service (<code>services.AddSingleton&lt;IHostLifetime, MyWindowsServiceLifetime&gt;()</code>) after calling <code>UseWindowsService</code>; the .NET Core dependency injection will just take the last registered <code>IHostLifetime</code>.</p>
 
+<div class="alert alert-danger">
+  <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
+
+  <p>Be sure to only override the <code>IHostLifetime</code> service <em>if the application is actually running as a Win32 service!</em> I.e., use code like <code>if (WindowsServiceHelpers.IsWindowsService()) { services.AddSingleton&lt;IHostLifetime, MyWindowsServiceLifetime&gt;(); }</code></p>
+
+  <p>H/t to David Hopkins in the comments!</p>
+</div>
+
 <h2 id="crashing-windowsservicelifetime">Crashing WindowsServiceLifetime</h2>
 
 <p>It is also possible to create a custom derived <code>WindowsServiceLifetime</code> that can detect application failures and will prevent <code>ServiceBase</code> from sending the “stopped” message to the SCM. That way, your service will be restarted regardless of the <code>failureflag</code> setting, because any failures will cause the process to crash.</p>
