@@ -186,3 +186,9 @@ There are many other options available, depending on your desired user experienc
 To avoid resource leaks, it's important to clean up your `CancellationTokenSource` instances. There are a couple of kinds of resources that are cleaned up: first, the timeout timer (if any) is freed; second, any "listeners" attached to `CancellationToken`s are freed (we'll cover "listening" registrations later in this series). This cleanup is done when the `CancellationTokenSource` is cancelled *or* when it's disposed. You can either cancel or dispose, but you should ensure one or the other is done to avoid resource leaks.
 
 The examples in this blog post always dispose the `CancelltionTokenSource` when the responding code is done executing (and thus the `CancellationToken`s are no longer used). If the `CancellationToken` is saved and used later, then you *don't* want to dispose the `CancellationTokenSource`. In that case, you'd want to keep the `CancellationTokenSource` alive until you are sure that all code is done with its `CancellationToken`s. This is a more advanced case, and sometimes it's more convenient to cancel the `CancellationTokenSource` rather than disposing it.
+
+### Warning: Dispose Linked CancellationTokenSources
+
+Calling either `Cancel` or `Dispose` will clean up any registrations for _this_ `CancellationTokenSource`. However, if this `CancellationTokenSource` is linked to a "parent" `CancellationTokenSource`, calling `Cancel` on the "child" `CancellationTokenSource` will still result in a registration for the "parent" `CancellationTokenSource`. You can call `Dispose` (or - more commonly - use a `using` statement) on the "child" to free the parent's registration for that child, breaking the link.
+
+This and other topics regarding linked `CancellationTokenSource`s will be covered in a future post.
