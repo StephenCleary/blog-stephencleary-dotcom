@@ -464,6 +464,12 @@ img.comment-author-profile-image {
 
 <p>The examples in this blog post always dispose the <code>CancelltionTokenSource</code> when the responding code is done executing (and thus the <code>CancellationToken</code>s are no longer used). If the <code>CancellationToken</code> is saved and used later, then you <em>don’t</em> want to dispose the <code>CancellationTokenSource</code>. In that case, you’d want to keep the <code>CancellationTokenSource</code> alive until you are sure that all code is done with its <code>CancellationToken</code>s. This is a more advanced case, and sometimes it’s more convenient to cancel the <code>CancellationTokenSource</code> rather than disposing it.</p>
 
+<h3 id="warning-dispose-linked-cancellationtokensources">Warning: Dispose Linked CancellationTokenSources</h3>
+
+<p>Calling either <code>Cancel</code> or <code>Dispose</code> will clean up any registrations for <em>this</em> <code>CancellationTokenSource</code>. However, if this <code>CancellationTokenSource</code> is linked to a “parent” <code>CancellationTokenSource</code>, calling <code>Cancel</code> on the “child” <code>CancellationTokenSource</code> will still result in a registration for the “parent” <code>CancellationTokenSource</code>. You can call <code>Dispose</code> (or - more commonly - use a <code>using</code> statement) on the “child” to free the parent’s registration for that child, breaking the link.</p>
+
+<p>This and other topics regarding linked <code>CancellationTokenSource</code>s will be covered in a future post.</p>
+
   </article>
     
     <footer class="hidden-print">
