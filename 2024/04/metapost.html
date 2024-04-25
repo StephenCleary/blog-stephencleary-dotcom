@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>C# Advent: The Joy of Immutable Update Patterns</title>
+    <title>MetaPost 2024-04-24</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Reviews several changes to the language over the years that (taken together) provide joyful techniques to update immutable data." />
-    <link rel="canonical" href="https://blog.stephencleary.com/2023/12/the-joy-of-immutable-update-patterns.html" />
+    <meta name="description" content="A post about my blog: the future of advertisements and introducing a new ICYMI series." />
+    <link rel="canonical" href="https://blog.stephencleary.com/2024/04/metapost.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -276,203 +276,51 @@ img.comment-author-profile-image {
 
   <header>
       <div class="page-header">
-          <h1>C# Advent: The Joy of Immutable Update Patterns</h1>
-          <small><time datetime="2023-12-24">Dec 24, 2023</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
+          <h1>MetaPost 2024-04-24</h1>
+          <small><time datetime="2024-04-25">Apr 25, 2024</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
       </div>
   </header>
 
   <article>
-  <p>This is my first-ever post that is part of <a href="https://csadvent.christmas/">C# Advent</a> organized by <a href="https://x.com/mgroves">@mgroves</a>. This year there’s a <a href="https://www.youtube.com/watch?v=D4udjhRjW4o">video</a>, too, including yours-truly singing while wearing my favorite Christmas shirt!</p>
+  <p>I don’t do meta-posts that often, but this is one. Feel free to skip this if you don’t care! :D</p>
 
-<h2 id="joy-to-the-world">Joy to the World!</h2>
+<h2 id="icymi-in-case-you-missed-it">ICYMI (In Case You Missed It)</h2>
 
-<blockquote class="blockquote">
-  <p>Glory to God in the highest, and on earth peace, good will toward men.</p>
+<p>I’m planning to write several rather small blog posts that will mostly be pointers to other things. I’ve been publishing more GitHub repositories, Gists, and other things (occasional videos and podcasts). It has occurred to me recently that most of my followers are not aware of these; I apologize, and I’ll try to be better about publishing a note here about them.</p>
 
-  <footer class="blockquote-footer text-right"><cite>Luke 2:14</cite></footer>
-</blockquote>
+<p>These blog posts will have an ICYMI prefix. Unless I forget.</p>
 
-<p>I love Christmas! It’s easily my favorite holiday.</p>
+<h2 id="advertisements">Advertisements</h2>
 
-<p>In spite of difficulties and upheaval in the world (it is 2023 right now), Christmas still stands as a time of refection and remembrance and expectation.</p>
+<p>On a completely different note, I’ve always had a tolerate-hate relationship with advertisements on my site. Before jumping into the latest change, I’m going to briefly describe some history.</p>
 
-<p>I do approach Christmas from a Christian perspective, and I enjoy meditating on Jesus’ birth during this time. In particular this year, I’ve been focusing on <em>peace</em> and <em>joy</em>, two words commonly associated with Christmas and the coming of the Christ.</p>
+<h3 id="google-ads-the-early-days">Google Ads: The Early Days</h3>
 
-<p>So, when I was considering the topic for my C# Advent article, I particularly wanted one that invoked Peace or Joy. And, when working with C#, there is one aspect of the language that truly does cause feelings of joy whenever I use it. It’s not a single language feature, but rather a collection of language features that all work together in a beatiful way.</p>
+<p>Google Ads have always been on my site. Except recently (more on that below). Google Ads give you a great way to very easily set up ads and also give you a good deal of control on what <em>kinds</em> of ads are on your site. This is very important to me since I have personal objections to advertisements that encourage addictions. Specifically, gambling and pornography ads have never been allowed on my site.</p>
 
-<p>Hence the title of this blog post: The Joy of Immutable Update Patterns. Wow, that sounds nerdy…</p>
+<p>Perhaps non-coincidentally, gambling and pornography ads are the <em>highest paying</em> ad categories (or at least they were last time I checked). I’ve never made a lot of money off my ads, though, and cutting my ad income by a third or half has always been an acceptable tradeoff to me.</p>
 
-<h2 id="immutability">Immutability</h2>
+<h3 id="disqus">Disqus</h3>
 
-<p>An immutable type is one whose value can’t change. Immutable types have several advantages, not the least of which is that they’re just easier to reason about. Some languages push immutability very strongly; C# takes a relatively pragmatic approach.</p>
+<p>Back in the day, I used Disqus for comments on my blog. It was good (enough), and the price was right: free. Sooner or later, though, they decided they should actually make some money.</p>
 
-<p>Immutability varies across the C# ecosystem (and it’s currently seeing a gradual rise in popularity). Most value types are usually immutable (e.g., <code>int</code>, <code>decimal</code>, and <code>Guid</code>); most reference types are not immutable (e.g., <code>List&lt;int&gt;</code>). However, there are lots of exceptions to that general rule; mutable value types are common in performance-sensitive scenarios, and some reference types such as <code>string</code> are immutable.</p>
+<p>I was first made aware of this by several visitors to my site informing me that my site was showing ads of… let’s say “unsavory content”. Yes, Disqus - without warning - had started showing ads for pornographic sites on my site.</p>
 
-<p>Modern code has a few additional options for immutable types: you can use <code>record class</code> (C# 9) for immutable reference types and <code>readonly record struct</code> (C# 10) for immutable value types. There’s also the collections in <code>System.Collections.Immutable</code> for more complex data structures such as stacks, queues, and dictionaries. Of course, with your own immutable types and collections, their members/elements must be immutable in order for the composite value to be immutable.</p>
+<p>Not only were they showing ads I didn’t want on my site, but they also deliberately hid them from me. It turns out Disqus would not show ads if they could tell you were potentially the owner of your site.</p>
 
-<h2 id="updating-immutable-data">Updating Immutable Data</h2>
+<p>I tried to control the ad categories, but Disqus (at least at that time) did not have any such controls or options. It was either pay them money or put up with <em>their</em> ad choices.</p>
 
-<p>Immutable data makes local functions easier to reason about - you <em>know</em> the data can’t change - but of course every program has to model modifications in some way. One approach is to have a <em>variable</em> that is mutable, referring to some <em>data</em> that is immutable. To change the immutable data, you can write code that transitions one immutable value to another.</p>
+<p>Of course, there was a third option, too. I spent a weekend hacking together my own comment system. Goodbye forever, Disqus.</p>
 
-<p>It is in this area that C# has been slowly adding enhancements over many years, and is now approaching beautiful code. Code that makes me smile when I write it!</p>
+<h3 id="google-ads-now-also-gone">Google Ads: Now Also Gone</h3>
 
-<h3 id="switch-expressions"><code>switch</code> Expressions</h3>
+<p>Recently, I removed Google Ads from my site. They’ve been getting more annoying, doing sneaky full-page takeovers if users switch to another tab and then back. I’ve tried to restrain them, but at the end of the day, there’s only so much I can do.</p>
 
-<p><code>switch</code> expressions (C# 8) are at the core of immutable update patterns. At their simplest, they provide a mapping from one constant to another:</p>
+<p>So, I’ve removed Google Ads. I’m not against companies making money, and I’m not against advertising. But I am against annoying ads (Google), or sneaky uncontrollable ads (Disqus).</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">static</span> <span class="n">Category</span> <span class="nf">Map</span><span class="p">(</span><span class="n">AdventThing</span> <span class="n">t</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="n">t</span> <span class="k">switch</span>
-<span class="p">{</span>
-  <span class="n">AdventThing</span><span class="p">.</span><span class="n">Mary</span> <span class="p">=&gt;</span> <span class="n">Category</span><span class="p">.</span><span class="n">Person</span><span class="p">,</span>
-  <span class="n">AdventThing</span><span class="p">.</span><span class="n">Sheep</span> <span class="p">=&gt;</span> <span class="n">Category</span><span class="p">.</span><span class="n">Animal</span><span class="p">,</span>
-  <span class="n">AdventThing</span><span class="p">.</span><span class="n">Camel</span> <span class="p">=&gt;</span> <span class="n">Category</span><span class="p">.</span><span class="n">Animal</span><span class="p">,</span>
-  <span class="n">AdventThing</span><span class="p">.</span><span class="n">Bethlehem</span> <span class="p">=&gt;</span> <span class="n">Category</span><span class="p">.</span><span class="n">Place</span><span class="p">,</span>
-  <span class="n">_</span> <span class="p">=&gt;</span> <span class="k">throw</span> <span class="k">new</span> <span class="n">ArgumentOutOfRangeException</span><span class="p">(</span><span class="n">nameof</span><span class="p">(</span><span class="n">t</span><span class="p">)),</span>
-<span class="p">};</span></code></pre></figure>
+<h3 id="the-future-of-my-ads">The Future of My Ads</h3>
 
-<p><code>switch</code> expressions are built on <a href="https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/patterns?WT.mc_id=DT-MVP-5000058">pattern matching</a>, which started in <a href="https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-8.0/patterns?WT.mc_id=DT-MVP-5000058">C# 8</a> (alongside the <code>switch</code> expression) and have received enhancements in <a href="https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-9.0/patterns3?WT.mc_id=DT-MVP-5000058">C# 9</a>, <a href="https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-10.0/extended-property-patterns?WT.mc_id=DT-MVP-5000058">C# 10</a>, and <a href="https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-11.0/list-patterns?WT.mc_id=DT-MVP-5000058">C# 11</a>. They’re practically a separate mini-language at this point!</p>
-
-<p>Switch expressions on their own are powerful, but they’re especially useful alongside <code>with</code> expressions.</p>
-
-<h3 id="with-expressions"><code>with</code> Expressions</h3>
-
-<p><code>with</code> expressions are a shorthand way of copying a composite value (i.e., a <code>record class</code> or <code>readonly record struct</code>) and changing only the specified properties. A simple example should suffice:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">record</span> <span class="k">class</span> <span class="nf">Inn</span><span class="p">(</span><span class="kt">string</span> <span class="n">Name</span><span class="p">,</span> <span class="kt">int</span> <span class="n">RoomsAvailable</span><span class="p">);</span>
-<span class="n">Inn</span> <span class="nf">Full</span><span class="p">(</span><span class="n">Inn</span> <span class="n">inn</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="n">inn</span> <span class="n">with</span>
-<span class="p">{</span>
-  <span class="n">RoomsAvailable</span> <span class="p">=</span> <span class="m">0</span><span class="p">,</span>
-<span class="p">};</span>
-
-<span class="n">Inn</span> <span class="n">myInn</span> <span class="p">=</span> <span class="k">new</span><span class="p">(</span><span class="s">&quot;Bethlehem Getaway&quot;</span><span class="p">,</span> <span class="m">50</span><span class="p">);</span>
-<span class="n">Inn</span> <span class="n">fullInn</span> <span class="p">=</span> <span class="n">Full</span><span class="p">(</span><span class="n">myInn</span><span class="p">);</span></code></pre></figure>
-
-<p>In the example above, <code>Full</code> does not modify the (immutable) inn; it returns a <em>new</em> inn that is full.</p>
-
-<p>Combining <code>switch</code> expressions with <code>with</code> expressions is where you start to see the beauty of this kind of immutable update pattern:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">Inn</span> <span class="nf">ReserveRoom</span><span class="p">(</span><span class="n">Inn</span> <span class="n">inn</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="n">inn</span> <span class="k">switch</span>
-<span class="p">{</span>
-  <span class="p">{</span> <span class="n">RoomsAvailable</span><span class="p">:</span> <span class="p">&gt;</span><span class="m">0</span> <span class="p">}</span> <span class="p">=&gt;</span> <span class="n">inn</span> <span class="n">with</span> <span class="p">{</span> <span class="n">RoomsAvailable</span> <span class="p">=</span> <span class="n">inn</span><span class="p">.</span><span class="n">RoomsAvailable</span> <span class="p">-</span> <span class="m">1</span> <span class="p">},</span>
-  <span class="n">_</span> <span class="p">=&gt;</span> <span class="k">throw</span> <span class="k">new</span> <span class="n">InvalidOperationException</span><span class="p">(</span><span class="s">&quot;No rooms available.&quot;</span><span class="p">),</span>
-<span class="p">};</span></code></pre></figure>
-
-<p>Here’s a method that decrements the available rooms in an <code>Inn</code>. It is a <em>pure</em> method; it depends only on its inputs and produces only its outputs, with no mutation. This is the point at which we’re starting to do immutable state transitions.</p>
-
-<h3 id="collections">Collections</h3>
-
-<p>I tend to use <code>System.Collections.Immutable</code> whenever I need something stack- or queue- or dictionary-like in an immutable context. These types all have methods like <code>Add</code> that <em>return</em> a new collection rather than modifying one in place. Internally, the immutable collections share internal data structures, so this isn’t as inefficient as copying the entire collection; immutable collections can never be as memory-efficient as mutable collections, but they’re usually efficient enough to not be an issue. I find immutable collections satisfy my needs quite well.</p>
-
-<p>However, I would be remiss if I didn’t mention that C# has added a new way to create collections (including <code>ImmutableArray&lt;T&gt;</code>). It’s very reminiscient of JavaScript’s <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax">spread operator</a>:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">ImmutableArray</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">list</span> <span class="p">=</span> <span class="n">ImmutableArray</span><span class="p">.</span><span class="n">Create</span><span class="p">(</span><span class="m">3</span><span class="p">,</span> <span class="m">5</span><span class="p">,</span> <span class="m">6</span><span class="p">,</span> <span class="m">11</span><span class="p">,</span> <span class="m">13</span><span class="p">);</span>
-<span class="kt">int</span> <span class="n">index</span> <span class="p">=</span> <span class="m">2</span><span class="p">;</span>
-
-<span class="n">ImmutableArray</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">result</span> <span class="p">=</span> <span class="p">[..</span><span class="n">list</span><span class="p">[..</span><span class="n">index</span><span class="p">],</span> <span class="m">7</span><span class="p">,</span> <span class="p">..</span><span class="n">list</span><span class="p">[^</span><span class="n">index</span><span class="p">..]];</span>
-<span class="c1">// result: [3, 5, 7, 11, 13]</span>
-<span class="c1">// Equivalent to:</span>
-<span class="c1">//   ImmutableArray&lt;int&gt; result = list.SetItem(index, 7);</span></code></pre></figure>
-
-<p>As of this writing, though, the implementation iterates over all the elements and builds an entirely new collection. This is quite inefficient for immutable collections, so I do not use C# 12’s <a href="https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/collection-expressions?WT.mc_id=DT-MVP-5000058">collection expressions</a> when working with immutable data. (But for mutable code, they rock!)</p>
-
-<h2 id="application-unidirectional-data-flow">Application: Unidirectional Data Flow</h2>
-
-<p>Let’s build this up into something a bit more complex! We can give each inn an actual collection of rooms, and just acquire an available one when requested.</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="n">record</span> <span class="k">class</span> <span class="nf">Room</span><span class="p">(</span><span class="kt">int</span> <span class="n">Id</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">Available</span><span class="p">);</span>
-<span class="n">record</span> <span class="k">class</span> <span class="nf">Inn</span><span class="p">(</span><span class="kt">string</span> <span class="n">Name</span><span class="p">,</span> <span class="n">ImmutableHashSet</span><span class="p">&lt;</span><span class="n">Room</span><span class="p">&gt;</span> <span class="n">Rooms</span><span class="p">);</span>
-
-<span class="n">Inn</span> <span class="nf">ReserveRoom</span><span class="p">(</span><span class="n">Inn</span> <span class="n">inn</span><span class="p">)</span>
-<span class="p">{</span>
-  <span class="kt">var</span> <span class="n">room</span> <span class="p">=</span> <span class="n">inn</span><span class="p">.</span><span class="n">Rooms</span><span class="p">.</span><span class="n">FirstOrDefault</span><span class="p">(</span><span class="n">r</span> <span class="p">=&gt;</span> <span class="n">r</span><span class="p">.</span><span class="n">Available</span><span class="p">)</span>
-      <span class="p">??</span> <span class="k">throw</span> <span class="k">new</span> <span class="n">InvalidOperationException</span><span class="p">(</span><span class="s">&quot;No rooms available.&quot;</span><span class="p">);</span>
-  <span class="k">return</span> <span class="n">inn</span> <span class="n">with</span>
-  <span class="p">{</span>
-    <span class="n">Rooms</span> <span class="p">=</span> <span class="n">inn</span><span class="p">.</span><span class="n">Rooms</span><span class="p">.</span><span class="n">Remove</span><span class="p">(</span><span class="n">room</span><span class="p">).</span><span class="n">Add</span><span class="p">(</span><span class="n">room</span> <span class="n">with</span> <span class="p">{</span> <span class="n">Available</span> <span class="p">=</span> <span class="k">false</span> <span class="p">}),</span>
-  <span class="p">};</span>
-<span class="p">}</span>
-
-<span class="n">Inn</span> <span class="n">myInn</span> <span class="p">=</span> <span class="k">new</span><span class="p">(</span><span class="s">&quot;Bethlehem Getaway&quot;</span><span class="p">,</span>
-    <span class="n">Enumerable</span><span class="p">.</span><span class="n">Range</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">50</span><span class="p">)</span>
-    <span class="p">.</span><span class="n">Select</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="k">new</span> <span class="n">Room</span><span class="p">(</span><span class="n">x</span> <span class="p">+</span> <span class="m">100</span><span class="p">,</span> <span class="n">Available</span><span class="p">:</span> <span class="k">true</span><span class="p">))</span>
-    <span class="p">.</span><span class="n">ToImmutableHashSet</span><span class="p">());</span>
-<span class="n">Inn</span> <span class="n">resultInn</span> <span class="p">=</span> <span class="n">ReserveRoom</span><span class="p">(</span><span class="n">myInn</span><span class="p">);</span></code></pre></figure>
-
-<p>Now we have some more complex state, and our <code>ReserveRoom</code> method now finds a room, reserves it, and returns the new composite state of the inn. I often find it useful to have these modifier methods also return some indication of what they did - in this case, it can return the room that was reserved. Tuples are convenient for multiple return values:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="p">(</span><span class="n">Inn</span> <span class="n">Inn</span><span class="p">,</span> <span class="kt">int</span> <span class="n">RoomId</span><span class="p">)</span> <span class="n">ReserveRoom</span><span class="p">(</span><span class="n">Inn</span> <span class="n">inn</span><span class="p">)</span>
-<span class="p">{</span>
-  <span class="kt">var</span> <span class="n">room</span> <span class="p">=</span> <span class="n">inn</span><span class="p">.</span><span class="n">Rooms</span><span class="p">.</span><span class="n">FirstOrDefault</span><span class="p">(</span><span class="n">r</span> <span class="p">=&gt;</span> <span class="n">r</span><span class="p">.</span><span class="n">Available</span><span class="p">)</span>
-      <span class="p">??</span> <span class="k">throw</span> <span class="k">new</span> <span class="n">InvalidOperationException</span><span class="p">(</span><span class="s">&quot;No rooms available.&quot;</span><span class="p">);</span>
-  <span class="k">return</span> <span class="p">(</span>
-      <span class="n">inn</span> <span class="n">with</span>
-      <span class="p">{</span>
-        <span class="n">Rooms</span> <span class="p">=</span> <span class="n">inn</span><span class="p">.</span><span class="n">Rooms</span><span class="p">.</span><span class="n">Remove</span><span class="p">(</span><span class="n">room</span><span class="p">).</span><span class="n">Add</span><span class="p">(</span><span class="n">room</span> <span class="n">with</span> <span class="p">{</span> <span class="n">Available</span> <span class="p">=</span> <span class="k">false</span> <span class="p">}),</span>
-      <span class="p">},</span>
-      <span class="n">room</span><span class="p">.</span><span class="n">Id</span>
-  <span class="p">);</span>
-<span class="p">}</span></code></pre></figure>
-
-<p>If you squint a bit, you can see <code>ReserveRoom</code> as being like a Redux reducer (for a single action: reserving a room). Many years ago, React and Redux took the world by storm. Although Redux has fallen out of favor in some circles, it made some ideas popular, and those continue to live on.</p>
-
-<p>Specifically, the idea of Unidirectional Data Flow is one that has taken hold, particularly in UI applications. The core idea is that the application has a single instance of composite immutable state, and that this state is only changed by applying pure functions to it (commonly called “reducers”). Other parts of the application (including the UI) listen for and respond to state changes. UDF is an architecture that is overkill for extremely simple applications, but is an absolute lifesaver when there is significant complexity.</p>
-
-<p>Unidirectional Data Flow (UDF) can go by several names. Model-View-Intent (MVI) is an architecture common on mobile platforms that is based on UDF. Another fairly common architecture name is The Elm Architecture (TEA, or sometimes just Elm). Today most C# UI applications still use a basic MVVM style of architecture, but I expect with the language changes that better support immutable update patterns, we’ll start to see more adoption of UDF architectures in C#. At least, I hope so!</p>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>I hope this post has been interesting to you! Personally, I do enjoy writing code combining <code>switch</code> and <code>with</code> expressions. I think the resulting code is really elegant, and I hope you got some joy out of this! Merry Christmas!</p>
-
-<!--
-## Application: Building Asynchronous Primitives
-
-And now I'm going to completely switch gears. Because immutable state updates are great for application state, but they're also great for doing threadsafe code.
-
-One advantage of immutable data is that - since it is immutable - it can be safely shared among any threads! There's usually just one variable that _refers_ to the immutable state, and that variable is the only thing that needs actual multithreaded protection. So, let's use this aspect to improve on a well-known primitive.
-
-I have an "Async Masterclass" talk that I've given a few times, and in that talk one of the topics I cover is building your own asynchronous synchronization primitives. A simple example is an `AsyncManualResetEvent`, which in my (current) slides ends up looking like this:
-
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">sealed</span> <span class="k">class</span> <span class="nc">AsyncManualResetEvent</span>
-<span class="p">{</span>
-	<span class="k">private</span> <span class="kt">object</span> <span class="n">_mutex</span><span class="p">;</span>
-	<span class="k">private</span> <span class="n">TaskCompletionSource</span> <span class="n">_tcs</span><span class="p">;</span>
-	
-	<span class="k">public</span> <span class="nf">AsyncManualResetEvent</span><span class="p">()</span>
-	<span class="p">{</span>
-		<span class="n">_mutex</span> <span class="p">=</span> <span class="k">new</span><span class="p">();</span>
-		<span class="n">_tcs</span> <span class="p">=</span> <span class="k">new</span><span class="p">(</span><span class="n">TaskCreationOptions</span><span class="p">.</span><span class="n">RunContinuationsAsynchronously</span><span class="p">);</span>
-	<span class="p">}</span>
-
-	<span class="k">public</span> <span class="n">Task</span> <span class="nf">WaitUntilSetAsync</span><span class="p">()</span>
-	<span class="p">{</span>
-		<span class="k">lock</span> <span class="p">(</span><span class="n">_mutex</span><span class="p">)</span>
-		<span class="p">{</span>
-			<span class="k">return</span> <span class="n">_tcs</span><span class="p">.</span><span class="n">Task</span><span class="p">;</span>
-		<span class="p">}</span>
-	<span class="p">}</span>
-
-	<span class="k">public</span> <span class="k">void</span> <span class="nf">Set</span><span class="p">()</span>
-	<span class="p">{</span>
-		<span class="k">lock</span> <span class="p">(</span><span class="n">_mutex</span><span class="p">)</span>
-		<span class="p">{</span>
-			<span class="n">_tcs</span><span class="p">.</span><span class="n">TrySetResult</span><span class="p">();</span>
-		<span class="p">}</span>
-	<span class="p">}</span>
-	
-	<span class="k">public</span> <span class="k">void</span> <span class="nf">Reset</span><span class="p">()</span>
-	<span class="p">{</span>
-		<span class="k">lock</span> <span class="p">(</span><span class="n">_mutex</span><span class="p">)</span>
-		<span class="p">{</span>
-			<span class="k">if</span> <span class="p">(</span><span class="n">_tcs</span><span class="p">.</span><span class="n">Task</span><span class="p">.</span><span class="n">IsCompleted</span><span class="p">)</span>
-				<span class="n">_tcs</span> <span class="p">=</span> <span class="k">new</span><span class="p">(</span><span class="n">TaskCreationOptions</span><span class="p">.</span><span class="n">RunContinuationsAsynchronously</span><span class="p">);</span>
-		<span class="p">}</span>
-	<span class="p">}</span>
-<span class="p">}</span></code></pre></figure>
-
-
-And, sure, there's nothing really _wrong_ with this, but there's some parts that aren't clear to many developers. How can I use `lock` in this asynchronous primitive? And `RunContinuationsAsynchronously` is necessary to avoid a particularly tricky deadlock situation. It's just not code that is 
-
--->
+<p>All that to say this: I’m open to considering sponsor messages on my blog post(s). If you’re interested in sponsoring an existing post, <a href="https://stephencleary.com/contact/">contact me</a>!</p>
 
   </article>
     
@@ -486,8 +334,8 @@ And, sure, there's nothing really _wrong_ with this, but there's some parts that
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2023/11/configureawait-in-net-8.html" title="ConfigureAwait in .NET 8">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2024/04/metapost.html" title="MetaPost 2024-04-24">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2023/12/the-joy-of-immutable-update-patterns.html" title="C# Advent: The Joy of Immutable Update Patterns">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="comments"></div>
@@ -643,7 +491,7 @@ And, sure, there's nothing really _wrong_ with this, but there's some parts that
 
 <script type="text/javascript">
 
-var pageUrl = "https://blog.stephencleary.com" + "/2023/12/the-joy-of-immutable-update-patterns.html";
+var pageUrl = "https://blog.stephencleary.com" + "/2024/04/metapost.html";
 
 // (unnecessary) 1) If the URL starts with http://, replace with https://
 

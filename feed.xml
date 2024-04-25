@@ -8,6 +8,53 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>MetaPost 2024-04-24</title>
+        <description>&lt;p&gt;I don’t do meta-posts that often, but this is one. Feel free to skip this if you don’t care! :D&lt;/p&gt;
+
+&lt;h2 id=&quot;icymi-in-case-you-missed-it&quot;&gt;ICYMI (In Case You Missed It)&lt;/h2&gt;
+
+&lt;p&gt;I’m planning to write several rather small blog posts that will mostly be pointers to other things. I’ve been publishing more GitHub repositories, Gists, and other things (occasional videos and podcasts). It has occurred to me recently that most of my followers are not aware of these; I apologize, and I’ll try to be better about publishing a note here about them.&lt;/p&gt;
+
+&lt;p&gt;These blog posts will have an ICYMI prefix. Unless I forget.&lt;/p&gt;
+
+&lt;h2 id=&quot;advertisements&quot;&gt;Advertisements&lt;/h2&gt;
+
+&lt;p&gt;On a completely different note, I’ve always had a tolerate-hate relationship with advertisements on my site. Before jumping into the latest change, I’m going to briefly describe some history.&lt;/p&gt;
+
+&lt;h3 id=&quot;google-ads-the-early-days&quot;&gt;Google Ads: The Early Days&lt;/h3&gt;
+
+&lt;p&gt;Google Ads have always been on my site. Except recently (more on that below). Google Ads give you a great way to very easily set up ads and also give you a good deal of control on what &lt;em&gt;kinds&lt;/em&gt; of ads are on your site. This is very important to me since I have personal objections to advertisements that encourage addictions. Specifically, gambling and pornography ads have never been allowed on my site.&lt;/p&gt;
+
+&lt;p&gt;Perhaps non-coincidentally, gambling and pornography ads are the &lt;em&gt;highest paying&lt;/em&gt; ad categories (or at least they were last time I checked). I’ve never made a lot of money off my ads, though, and cutting my ad income by a third or half has always been an acceptable tradeoff to me.&lt;/p&gt;
+
+&lt;h3 id=&quot;disqus&quot;&gt;Disqus&lt;/h3&gt;
+
+&lt;p&gt;Back in the day, I used Disqus for comments on my blog. It was good (enough), and the price was right: free. Sooner or later, though, they decided they should actually make some money.&lt;/p&gt;
+
+&lt;p&gt;I was first made aware of this by several visitors to my site informing me that my site was showing ads of… let’s say “unsavory content”. Yes, Disqus - without warning - had started showing ads for pornographic sites on my site.&lt;/p&gt;
+
+&lt;p&gt;Not only were they showing ads I didn’t want on my site, but they also deliberately hid them from me. It turns out Disqus would not show ads if they could tell you were potentially the owner of your site.&lt;/p&gt;
+
+&lt;p&gt;I tried to control the ad categories, but Disqus (at least at that time) did not have any such controls or options. It was either pay them money or put up with &lt;em&gt;their&lt;/em&gt; ad choices.&lt;/p&gt;
+
+&lt;p&gt;Of course, there was a third option, too. I spent a weekend hacking together my own comment system. Goodbye forever, Disqus.&lt;/p&gt;
+
+&lt;h3 id=&quot;google-ads-now-also-gone&quot;&gt;Google Ads: Now Also Gone&lt;/h3&gt;
+
+&lt;p&gt;Recently, I removed Google Ads from my site. They’ve been getting more annoying, doing sneaky full-page takeovers if users switch to another tab and then back. I’ve tried to restrain them, but at the end of the day, there’s only so much I can do.&lt;/p&gt;
+
+&lt;p&gt;So, I’ve removed Google Ads. I’m not against companies making money, and I’m not against advertising. But I am against annoying ads (Google), or sneaky uncontrollable ads (Disqus).&lt;/p&gt;
+
+&lt;h3 id=&quot;the-future-of-my-ads&quot;&gt;The Future of My Ads&lt;/h3&gt;
+
+&lt;p&gt;All that to say this: I’m open to considering sponsor messages on my blog post(s). If you’re interested in sponsoring an existing post, &lt;a href=&quot;https://stephencleary.com/contact/&quot;&gt;contact me&lt;/a&gt;!&lt;/p&gt;
+</description>
+        <pubDate>Thu, 25 Apr 2024 00:00:00 +0000</pubDate>
+        <link>https://blog.stephencleary.com/2024/04/metapost.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2024/04/metapost.html</guid>
+      </item>
+    
+      <item>
         <title>C# Advent: The Joy of Immutable Update Patterns</title>
         <description>&lt;p&gt;This is my first-ever post that is part of &lt;a href=&quot;https://csadvent.christmas/&quot;&gt;C# Advent&lt;/a&gt; organized by &lt;a href=&quot;https://x.com/mgroves&quot;&gt;@mgroves&lt;/a&gt;. This year there’s a &lt;a href=&quot;https://www.youtube.com/watch?v=D4udjhRjW4o&quot;&gt;video&lt;/a&gt;, too, including yours-truly singing while wearing my favorite Christmas shirt!&lt;/p&gt;
 
@@ -1232,127 +1279,6 @@ class AnotherExample : ExampleBase&amp;lt;AnotherExample&amp;gt;
         <pubDate>Thu, 17 Mar 2022 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2022/03/cancellation-4-polling.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2022/03/cancellation-4-polling.html</guid>
-      </item>
-    
-      <item>
-        <title>Cancellation, Part 3: Detecting Cancellation</title>
-        <description>&lt;p&gt;It’s not uncommon to want to detect whether the cancellation actually canceled anything or not. Cancellation is cooperative, and sometimes the code requesting cancellation needs to know whether that cancellation actually took place, or whether the operation just completed normally.&lt;/p&gt;
-
-&lt;p&gt;As a reminder, the cancellation contract has a way to communicate that: methods that take &lt;code&gt;CancellationToken&lt;/code&gt;, by convention, will throw &lt;code&gt;OperationCanceledException&lt;/code&gt; when they are cancelled. This is true for all BCL methods, and should be true for your code as well. Later in this series we’ll cover the best ways for code to respond to cancellation requests, all of which satisfy this contract, i.e., throwing &lt;code&gt;OperationCanceledException&lt;/code&gt; when they cancel.&lt;/p&gt;
-
-&lt;h2 id=&quot;responding-to-cancellation&quot;&gt;Responding to Cancellation&lt;/h2&gt;
-
-&lt;p&gt;The most common scenario for detecting cancellation is to avoid taking the normal error path if the code has been cancelled. Usually, the &lt;code&gt;OperationCanceledException&lt;/code&gt; is just ignored:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;TryDoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;CancellationTokenSource&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-
-    &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Wire up something that may cancel the CTS.&lt;/span&gt;
-
-    &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoThingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Exception&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;when&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;is&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;not&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;OperationCanceledException&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Normal error handling; log, etc.&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;The code above will log any unexpected errors, but will ignore cancellation exceptions.&lt;/p&gt;
-
-&lt;p&gt;If your code must do something &lt;em&gt;different&lt;/em&gt; when a cancellation happens, then you can handle that in a &lt;code&gt;catch&lt;/code&gt; block. Well, first, I’d recommend taking a step back and asking yourself if you &lt;em&gt;really have&lt;/em&gt; to do that, because it’s unusual and raises concerns about the code design, and it can be difficult to test as well. But if you must:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;CancellationTokenSource&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-
-    &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Wire up something that may cancel the CTS.&lt;/span&gt;
-
-    &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoThingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;OperationCanceledException&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Special cancellation handling&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Exception&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Normal error handling; log, etc.&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;h2 id=&quot;taskcanceledexception&quot;&gt;TaskCanceledException&lt;/h2&gt;
-
-&lt;p&gt;You may notice that there is another cancellation exception type: &lt;code&gt;TaskCanceledException&lt;/code&gt;. This is raised by some APIs instead of &lt;code&gt;OperationCanceledException&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;As a general rule, I recommend you completely ignore &lt;code&gt;TaskCanceledException&lt;/code&gt;. Some APIs just raise &lt;code&gt;OperationCanceledException&lt;/code&gt;, even if they deal with cancelled tasks. And since &lt;code&gt;TaskCanceledException&lt;/code&gt; derives from &lt;code&gt;OperationCanceledException&lt;/code&gt;, your cancellation exception handler code can just use &lt;code&gt;OperationCanceledException&lt;/code&gt;, ignore &lt;code&gt;TaskCanceledException&lt;/code&gt; completely, and it will work everywhere.&lt;/p&gt;
-
-&lt;div class=&quot;alert alert-danger&quot;&gt;
-  &lt;p&gt;&lt;i class=&quot;fa fa-exclamation-triangle fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
-
-  &lt;p&gt;Do not catch &lt;code&gt;TaskCanceledException&lt;/code&gt;. Catch &lt;code&gt;OperationCanceledException&lt;/code&gt; instead.&lt;/p&gt;
-&lt;/div&gt;
-
-&lt;h2 id=&quot;operationcanceledexceptioncancellationtoken&quot;&gt;OperationCanceledException.CancellationToken&lt;/h2&gt;
-
-&lt;p&gt;You may also notice that &lt;code&gt;OperationCanceledException&lt;/code&gt; has a &lt;code&gt;CancellationToken&lt;/code&gt; property. This is the token that caused the cancellation. That is, if it’s set; not all APIs set this value on the exceptions they throw.&lt;/p&gt;
-
-&lt;p&gt;If your code needs to determine whether &lt;em&gt;it&lt;/em&gt; cancels the operation or whether something &lt;em&gt;else&lt;/em&gt; cancels the operation, then you might be tempted to use this property. But I recommend that your code ignore this property. When linked cancel tokens are used (a topic I’ll cover in a future post), it’s possible that the token in this property is not actually the root cause of the cancellation.&lt;/p&gt;
-
-&lt;p&gt;More specifically:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;Environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FailFast&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;Bad code; do not use!&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-
-    &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;CancellationTokenSource&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-
-    &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Wire up something that may cancel the CTS.&lt;/span&gt;
-
-    &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoThingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;OperationCanceledException&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;when&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Special cancellation handling for &amp;quot;our&amp;quot; cancellation only.&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;The code above has a problem: depending on the implementation of &lt;code&gt;DoThingAsync&lt;/code&gt;, it’s possible that &lt;code&gt;cts&lt;/code&gt; will be cancelled, and that cancellation will cause &lt;code&gt;DoThingAsync&lt;/code&gt; to throw &lt;code&gt;OperationCanceledException&lt;/code&gt;, and for the token referenced by that exception to be &lt;em&gt;different&lt;/em&gt; than the &lt;code&gt;cts&lt;/code&gt;’s token.&lt;/p&gt;
-
-&lt;p&gt;If you do need to do special processing for when this specific cancellation happens, I recommend something like this:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;CancellationTokenSource&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-
-    &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Wire up something that may cancel the CTS.&lt;/span&gt;
-
-    &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoThingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;OperationCanceledException&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;when&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IsCancellationRequested&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Special cancellation handling for &amp;quot;our&amp;quot; cancellation only.&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;&lt;em&gt;Technically,&lt;/em&gt; the semantics of this are not “did my token cause the cancellation”, but rather “did cancellation happen and is my token requesting cancellation”. But in every case I’ve seen in the real world, the alternative semantics have been sufficient.&lt;/p&gt;
-
-&lt;div class=&quot;alert alert-danger&quot;&gt;
-  &lt;p&gt;&lt;i class=&quot;fa fa-exclamation-triangle fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
-
-  &lt;p&gt;Do not use &lt;code&gt;OperationCanceledException.CancellationToken&lt;/code&gt;. It doesn’t work as expected.&lt;/p&gt;
-&lt;/div&gt;
-</description>
-        <pubDate>Thu, 10 Mar 2022 00:00:00 +0000</pubDate>
-        <link>https://blog.stephencleary.com/2022/03/cancellation-3-detecting-cancellation.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2022/03/cancellation-3-detecting-cancellation.html</guid>
       </item>
     
   </channel>
