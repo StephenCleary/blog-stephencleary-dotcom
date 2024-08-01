@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>MetaPost 2024-04-24</title>
+    <title>ICYMI: Video Series on TCP/IP Application Protocol Design</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="A post about my blog: the future of advertisements and introducing a new ICYMI series." />
-    <link rel="canonical" href="https://blog.stephencleary.com/2024/04/metapost.html" />
+    <meta name="description" content="In case you missed it: I did a (free) video series about TCP/IP protocol design" />
+    <link rel="canonical" href="https://blog.stephencleary.com/2024/08/icymi-tcpip-protocol-design.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -276,51 +276,27 @@ img.comment-author-profile-image {
 
   <header>
       <div class="page-header">
-          <h1>MetaPost 2024-04-24</h1>
-          <small><time datetime="2024-04-25">Apr 25, 2024</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
+          <h1>ICYMI: Video Series on TCP/IP Application Protocol Design</h1>
+          <small><time datetime="2024-08-01">Aug 1, 2024</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
       </div>
   </header>
 
   <article>
-  <p>I don’t do meta-posts that often, but this is one. Feel free to skip this if you don’t care! :D</p>
+  <p>I speak regularly at various programming conferences, and one of my favorite talks is actually on TCP/IP protocol design. This is a skill that I learned almost by accident (literally because <em>someone</em> had to, and no one else in the company <em>wanted</em> to). It’s always been one of my favorite talks, and I submit it all over the place. Most of the time it’s rejected. Which I get - protocol design is esoteric and just plain useless for most developers. But I think it’s still <em>fun!</em></p>
 
-<h2 id="icymi-in-case-you-missed-it">ICYMI (In Case You Missed It)</h2>
+<p>A bit ago I decided to take everything I had ever learned about TCP/IP protcols and live-code a server and client. So, all the knowledge that goes into my talk is also in this video series. I chose a basic chat server, since the requirements are simple and easily understood. I also wanted to try out some of the newer .NET APIs. Specifically, the final solution uses:</p>
 
-<p>I’m planning to write several rather small blog posts that will mostly be pointers to other things. I’ve been publishing more GitHub repositories, Gists, and other things (occasional videos and podcasts). It has occurred to me recently that most of my followers are not aware of these; I apologize, and I’ll try to be better about publishing a note here about them.</p>
+<ul>
+  <li><code>async</code> and <code>await</code> - naturally!</li>
+  <li><code>Socket</code> - the Berkeley-ish API for socket communication.</li>
+  <li><code>System.IO.Pipelines</code> - for low-level buffer management.</li>
+  <li><code>System.Threading.Channels</code> and <code>IAsyncEnumerable</code> - for asynchronous streams of messages.</li>
+  <li>A dictionary of <code>TaskCompletionSource</code> instances - to implement higher-level request/response APIs.</li>
+</ul>
 
-<p>These blog posts will have an ICYMI prefix. Unless I forget.</p>
+<p>Someday I’d like to update this to use QUIC (<code>System.Net.Quic</code>). Let me know if that’s something you’d be interested in!</p>
 
-<h2 id="advertisements">Advertisements</h2>
-
-<p>On a completely different note, I’ve always had a tolerate-hate relationship with advertisements on my site. Before jumping into the latest change, I’m going to briefly describe some history.</p>
-
-<h3 id="google-ads-the-early-days">Google Ads: The Early Days</h3>
-
-<p>Google Ads have always been on my site. Except recently (more on that below). Google Ads give you a great way to very easily set up ads and also give you a good deal of control on what <em>kinds</em> of ads are on your site. This is very important to me since I have personal objections to advertisements that encourage addictions. Specifically, gambling and pornography ads have never been allowed on my site.</p>
-
-<p>Perhaps non-coincidentally, gambling and pornography ads are the <em>highest paying</em> ad categories (or at least they were last time I checked). I’ve never made a lot of money off my ads, though, and cutting my ad income by a third or half has always been an acceptable tradeoff to me.</p>
-
-<h3 id="disqus">Disqus</h3>
-
-<p>Back in the day, I used Disqus for comments on my blog. It was good (enough), and the price was right: free. Sooner or later, though, they decided they should actually make some money.</p>
-
-<p>I was first made aware of this by several visitors to my site informing me that my site was showing ads of… let’s say “unsavory content”. Yes, Disqus - without warning - had started showing ads for pornographic sites on my site.</p>
-
-<p>Not only were they showing ads I didn’t want on my site, but they also deliberately hid them from me. It turns out Disqus would not show ads if they could tell you were potentially the owner of your site.</p>
-
-<p>I tried to control the ad categories, but Disqus (at least at that time) did not have any such controls or options. It was either pay them money or put up with <em>their</em> ad choices.</p>
-
-<p>Of course, there was a third option, too. I spent a weekend hacking together my own comment system. Goodbye forever, Disqus.</p>
-
-<h3 id="google-ads-now-also-gone">Google Ads: Now Also Gone</h3>
-
-<p>Recently, I removed Google Ads from my site. They’ve been getting more annoying, doing sneaky full-page takeovers if users switch to another tab and then back. I’ve tried to restrain them, but at the end of the day, there’s only so much I can do.</p>
-
-<p>So, I’ve removed Google Ads. I’m not against companies making money, and I’m not against advertising. But I am against annoying ads (Google), or sneaky uncontrollable ads (Disqus).</p>
-
-<h3 id="the-future-of-my-ads">The Future of My Ads</h3>
-
-<p>All that to say this: I’m open to considering sponsor messages on my blog post(s). If you’re interested in sponsoring an existing post, <a href="https://stephencleary.com/contact/">contact me</a>!</p>
+<p>The full video series (over 16 hours!) is <a href="https://www.youtube.com/playlist?list=PLIebvSMVr_dehKSoq6vuAW0BGEM6QnDlS">available for free on YouTube</a>, and the code is <a href="https://github.com/StephenClearyExamples/TcpChat">on GitHub</a>. Enjoy!</p>
 
   </article>
     
@@ -334,8 +310,8 @@ img.comment-author-profile-image {
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2023/12/the-joy-of-immutable-update-patterns.html" title="C# Advent: The Joy of Immutable Update Patterns">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2024/08/icymi-tcpip-protocol-design.html" title="ICYMI: Video Series on TCP/IP Application Protocol Design">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2024/04/metapost.html" title="MetaPost 2024-04-24">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="comments"></div>
@@ -491,7 +467,7 @@ img.comment-author-profile-image {
 
 <script type="text/javascript">
 
-var pageUrl = "https://blog.stephencleary.com" + "/2024/04/metapost.html";
+var pageUrl = "https://blog.stephencleary.com" + "/2024/08/icymi-tcpip-protocol-design.html";
 
 // (unnecessary) 1) If the URL starts with http://, replace with https://
 

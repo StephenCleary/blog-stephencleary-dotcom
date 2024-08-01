@@ -8,6 +8,29 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>ICYMI: Video Series on TCP/IP Application Protocol Design</title>
+        <description>&lt;p&gt;I speak regularly at various programming conferences, and one of my favorite talks is actually on TCP/IP protocol design. This is a skill that I learned almost by accident (literally because &lt;em&gt;someone&lt;/em&gt; had to, and no one else in the company &lt;em&gt;wanted&lt;/em&gt; to). It’s always been one of my favorite talks, and I submit it all over the place. Most of the time it’s rejected. Which I get - protocol design is esoteric and just plain useless for most developers. But I think it’s still &lt;em&gt;fun!&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;A bit ago I decided to take everything I had ever learned about TCP/IP protcols and live-code a server and client. So, all the knowledge that goes into my talk is also in this video series. I chose a basic chat server, since the requirements are simple and easily understood. I also wanted to try out some of the newer .NET APIs. Specifically, the final solution uses:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;code&gt;async&lt;/code&gt; and &lt;code&gt;await&lt;/code&gt; - naturally!&lt;/li&gt;
+  &lt;li&gt;&lt;code&gt;Socket&lt;/code&gt; - the Berkeley-ish API for socket communication.&lt;/li&gt;
+  &lt;li&gt;&lt;code&gt;System.IO.Pipelines&lt;/code&gt; - for low-level buffer management.&lt;/li&gt;
+  &lt;li&gt;&lt;code&gt;System.Threading.Channels&lt;/code&gt; and &lt;code&gt;IAsyncEnumerable&lt;/code&gt; - for asynchronous streams of messages.&lt;/li&gt;
+  &lt;li&gt;A dictionary of &lt;code&gt;TaskCompletionSource&lt;/code&gt; instances - to implement higher-level request/response APIs.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Someday I’d like to update this to use QUIC (&lt;code&gt;System.Net.Quic&lt;/code&gt;). Let me know if that’s something you’d be interested in!&lt;/p&gt;
+
+&lt;p&gt;The full video series (over 16 hours!) is &lt;a href=&quot;https://www.youtube.com/playlist?list=PLIebvSMVr_dehKSoq6vuAW0BGEM6QnDlS&quot;&gt;available for free on YouTube&lt;/a&gt;, and the code is &lt;a href=&quot;https://github.com/StephenClearyExamples/TcpChat&quot;&gt;on GitHub&lt;/a&gt;. Enjoy!&lt;/p&gt;
+</description>
+        <pubDate>Thu, 01 Aug 2024 00:00:00 +0000</pubDate>
+        <link>https://blog.stephencleary.com/2024/08/icymi-tcpip-protocol-design.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2024/08/icymi-tcpip-protocol-design.html</guid>
+      </item>
+    
+      <item>
         <title>MetaPost 2024-04-24</title>
         <description>&lt;p&gt;I don’t do meta-posts that often, but this is one. Feel free to skip this if you don’t care! :D&lt;/p&gt;
 
@@ -1199,86 +1222,6 @@ class AnotherExample : ExampleBase&amp;lt;AnotherExample&amp;gt;
         <pubDate>Thu, 29 Sep 2022 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2022/09/modern-csharp-techniques-1-curiously-recurring-generic-pattern.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2022/09/modern-csharp-techniques-1-curiously-recurring-generic-pattern.html</guid>
-      </item>
-    
-      <item>
-        <title>Cancellation, Part 4: Polling</title>
-        <description>&lt;p&gt;So far in this series, I’ve talked about how to request and detect cancellation, but for the next couple of posts I’ll be switching perspectives and discussing ways to respond to cancellation.&lt;/p&gt;
-
-&lt;p&gt;I know I’ve probably said this a half dozen times already, but it bears repeating: cancellation is cooperative. Your code will be provided a &lt;code&gt;CancellationToken&lt;/code&gt;, and it must &lt;em&gt;do&lt;/em&gt; something with that &lt;code&gt;CancellationToken&lt;/code&gt; in order to be cancelable. Most of the time, this is just passing the &lt;code&gt;CancellationToken&lt;/code&gt; down to lower-level APIs, but if you want cancelable code at the lowest level, there are a couple of other options. The one we’re looking at today is polling.&lt;/p&gt;
-
-&lt;h2 id=&quot;how-to-poll&quot;&gt;How to Poll&lt;/h2&gt;
-
-&lt;p&gt;The normal pattern is to periodically call &lt;code&gt;ThrowIfCancellationRequested&lt;/code&gt;:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomething&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;while&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;done&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ThrowIfCancellationRequested&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-        &lt;span class=&quot;n&quot;&gt;Thread&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Sleep&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;200&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// do synchronous work&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;The example code above checks the cancellation token &lt;em&gt;before&lt;/em&gt; it starts work, which is a good general practice. It is possible that the token is already cancelled by the time your operation starts running.&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;ThrowIfCancellationRequested&lt;/code&gt; will check to see if cancellation is requested, and if it is, it will throw &lt;code&gt;OperationCanceledException&lt;/code&gt;. So it handles the proper reporting of cancellation for you; your code should just let that exception propagate out of the method.&lt;/p&gt;
-
-&lt;p&gt;One question you’ll need to answer is how &lt;em&gt;often&lt;/em&gt; to poll. There really isn’t a good answer for this; ideally you probably want to poll a few times a second, but when you’re talking about CPU-bound code running on potentially very different machines, it’s pretty much a guess at where in the code the &lt;code&gt;ThrowIfCancellationRequested&lt;/code&gt; should go. Just put it in the best place(s), run some tests to see if cancellation feels responsive enough, and that’s the best you can do.&lt;/p&gt;
-
-&lt;h2 id=&quot;how-not-to-poll&quot;&gt;How Not to Poll&lt;/h2&gt;
-
-&lt;p&gt;There’s a sadly common antipattern regarding polling for cancellation, particularly in infinite loops: the “while not cancelled” loop, which looks like this:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingForever&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;Environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FailFast&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;Bad code! Do not use!&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;while&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IsCancellationRequested&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;n&quot;&gt;Thread&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Sleep&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;200&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// do work&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;When this code runs, it will periodically check the cancellation token; but when cancellation is requested, the method just returns early. This method doesn’t satisfy the cancellation contract of throwing an exception on cancellation. This means that the calling code cannot know whether the method ran to completion or whether it was cancelled.&lt;/p&gt;
-
-&lt;p&gt;The proper solution is to use &lt;code&gt;ThrowIfCancellationRequested&lt;/code&gt;, even for infinite loops:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingForever&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;while&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ThrowIfCancellationRequested&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-        &lt;span class=&quot;n&quot;&gt;Thread&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Sleep&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;200&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// do work&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;h2 id=&quot;when-to-poll&quot;&gt;When to Poll&lt;/h2&gt;
-
-&lt;p&gt;Polling is an appropriate option for observing cancellation if your code is synchronous, such as CPU-bound code. Cancellation is often thought of as only a concern for asynchronous code; it was explicitly pointed out in the documentation for &lt;code&gt;async&lt;/code&gt; when &lt;code&gt;async&lt;/code&gt; was introduced. But cancellation in .NET predates &lt;code&gt;async&lt;/code&gt;, and cancellation is just as applicable to synchronous code as to asynchronous code. In fact, &lt;code&gt;Parallel&lt;/code&gt; loops and PLINQ each have built-in support for cancellation: &lt;code&gt;ParallelOptions.CancellationToken&lt;/code&gt; for &lt;code&gt;Parallel&lt;/code&gt;, and &lt;code&gt;WithCancellation&lt;/code&gt; for PLINQ.&lt;/p&gt;
-
-&lt;p&gt;That’s not to say you can’t use it for asynchronous code. It’s also appropriate to inject a &lt;code&gt;ThrowIfCancellationRequested&lt;/code&gt; in asynchronous code, if you are not sure whether other methods will respect their cancellation tokens. Remember, taking a &lt;code&gt;CancellationToken&lt;/code&gt; parameter means that the method &lt;em&gt;may&lt;/em&gt; respect cancellation; it may also ignore the token and just ignore any cancellation requests. So your code may want to inject cancellation checks in-between “steps” of its operation. In this case, &lt;code&gt;ThrowIfCancellationRequested&lt;/code&gt; isn’t so much “polling” as it is an “occasional check”:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoComplexWorkAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;c1&quot;&gt;// From testing, it appears that DoStep1Async and DoStep2Async do not always cancel when requested.&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ThrowIfCancellationRequested&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoStep1Async&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-
-    &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ThrowIfCancellationRequested&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoStep2Async&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;While you &lt;em&gt;can&lt;/em&gt; sprinkle calls to &lt;code&gt;ThrowIfCancellationRequested&lt;/code&gt; throughout your code like this, I only do this when testing indicates that the code does not respect cancellation. In other words, I assume that &lt;code&gt;DoStep1Async&lt;/code&gt; and &lt;code&gt;DoStep2Async&lt;/code&gt; will respect cancellation until proven otherwise by testing.&lt;/p&gt;
-
-&lt;p&gt;It is also appropriate to use &lt;code&gt;ThrowIfCancellationRequested&lt;/code&gt; at certain points where your code is about to do something expensive. Just adding a cancellation check there means your code won’t have to do the expensive work if it’s cancelled anyway.&lt;/p&gt;
-
-&lt;h2 id=&quot;summary&quot;&gt;Summary&lt;/h2&gt;
-
-&lt;p&gt;Polling - implemented by periodic calls to &lt;code&gt;ThrowIfCancellationRequested&lt;/code&gt; - is one way to respond to cancellation requests. This is the common solution for synchronous, CPU-bound methods, and can also be used in a few other scenarios. Most asynchronous code does not use polling; we’ll cover that scenario next time!&lt;/p&gt;
-</description>
-        <pubDate>Thu, 17 Mar 2022 00:00:00 +0000</pubDate>
-        <link>https://blog.stephencleary.com/2022/03/cancellation-4-polling.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2022/03/cancellation-4-polling.html</guid>
       </item>
     
   </channel>
