@@ -8,6 +8,102 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>Cancellation, Part 5: Registration</title>
+        <description>&lt;p&gt;Last time in this series I talked about &lt;a href=&quot;/2022/03/cancellation-4-polling.html&quot;&gt;how to respond to cancellation requests by polling for them&lt;/a&gt;. That’s a common approach for synchronous or CPU-bound code. In this post, I’m covering a pattern more common for asynchronous code: registration.&lt;/p&gt;
+
+&lt;p&gt;Registration is a way for your code to get a callback immediately when cancellation is requested. This callback can then perform some operation (often calling a different API) to cancel the asynchronous operation. Due to the multiple ways callbacks may be invoked, it’s generally recommended that cancellation callbacks should not throw exceptions.&lt;/p&gt;
+
+&lt;div class=&quot;alert alert-danger&quot;&gt;
+  &lt;p&gt;&lt;i class=&quot;fa fa-exclamation-triangle fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
+
+  &lt;p&gt;Your callback should not throw exceptions.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;how-to-register&quot;&gt;How to Register&lt;/h2&gt;
+
+&lt;p&gt;Your code can register a callback with any &lt;code&gt;CancellationToken&lt;/code&gt; by calling &lt;code&gt;CancellationToken.Register&lt;/code&gt;. This callback is invoked when (if) the cancellation token is cancelled. The &lt;code&gt;Register&lt;/code&gt; method returns a cancellation token registration, which is essentially just an &lt;code&gt;IDisposable&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Pretty much every asynchronous API &lt;em&gt;already has&lt;/em&gt; cancellation support, so the example code below is somewhat contrived. The API in this example code provides a &lt;code&gt;StartSomething()&lt;/code&gt; method to start some asynchronous operation, a &lt;code&gt;StopSomething()&lt;/code&gt; method to cancel that operation, and a &lt;code&gt;SomethingCompletedTask&lt;/code&gt; property to detect when the operation completed. There are very few APIs like this in the .NET ecosystem, but you may run into a design similar to this if you’re wrapping code from another language that doesn’t have a promise-based &lt;code&gt;async&lt;/code&gt; system.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;registration&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Register&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;StopSomething&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;());&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;StartSomething&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;SomethingCompletedTask&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Note that callbacks might never be invoked! Tasks always complete (that is, &lt;a href=&quot;https://devblogs.microsoft.com/pfxteam/dont-forget-to-complete-your-tasks/?WT.mc_id=DT-MVP-5000058&quot;&gt;they always &lt;em&gt;should&lt;/em&gt; complete&lt;/a&gt;), but that doesn’t hold for cancellation tokens. There are some cancellation tokens that will never be cancelled, so they will never invoke their callbacks.&lt;/p&gt;
+
+&lt;div class=&quot;alert alert-danger&quot;&gt;
+  &lt;p&gt;&lt;i class=&quot;fa fa-exclamation-triangle fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
+
+  &lt;p&gt;Your callback might never be called.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;h3 id=&quot;a-race-condition&quot;&gt;A Race Condition&lt;/h3&gt;
+
+&lt;p&gt;What happens if a cancellation token is cancelled at approximately the same time the callback is registered? This situation is properly handled by a simple rule: if a callback is ever added to a cancellation token that is already canceled, then it is immediately and synchronously invoked.&lt;/p&gt;
+
+&lt;div class=&quot;alert alert-danger&quot;&gt;
+  &lt;p&gt;&lt;i class=&quot;fa fa-exclamation-triangle fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
+
+  &lt;p&gt;Your callback might be called immediately on the same thread before &lt;code&gt;Register&lt;/code&gt; returns.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;cleanup-is-important&quot;&gt;Cleanup Is Important!&lt;/h2&gt;
+
+&lt;p&gt;The lifetime of cancellation tokens can vary greatly. Some cancellation tokens are used for short, individual operations. Other cancellation tokens are used for application shutdown. When writing your cancelable code, ensure that your code disposes of the registration; this will prevent resource leaks in your application.&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;using var registration&lt;/code&gt; in the example code above (repeated below) is one common way of handling cleanup: the registration is disposed once the asynchronous work completes.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;registration&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Register&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;StopSomething&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;());&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;StartSomething&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;SomethingCompletedTask&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// The registration is cleaned up here if the operation completed without being cancelled.&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;div class=&quot;alert alert-danger&quot;&gt;
+  &lt;p&gt;&lt;i class=&quot;fa fa-exclamation-triangle fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
+
+  &lt;p&gt;Be sure to dispose your cancellation token registrations!&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;sharp-corner-synchronous-cancellation-callbacks&quot;&gt;Sharp Corner: Synchronous Cancellation Callbacks&lt;/h2&gt;
+
+&lt;p&gt;As discussed in &lt;a href=&quot;/2022/03/cancellation-2-requesting-cancellation.html&quot;&gt;requesting cancellation&lt;/a&gt;, token sources may be cancelled by calling the &lt;code&gt;Cancel&lt;/code&gt; method. It’s important to note that any registered callbacks are immediately (and synchronously) run by the &lt;code&gt;Cancel&lt;/code&gt; method before it returns. This can be a source of deadlocks or other unexpected behavior if your code is written assuming that callbacks are invoked &lt;em&gt;after&lt;/em&gt; the &lt;code&gt;Cancel&lt;/code&gt; method. Specifically, callbacks shouldn’t perform any blocking operation.&lt;/p&gt;
+
+&lt;div class=&quot;alert alert-danger&quot;&gt;
+  &lt;p&gt;&lt;i class=&quot;fa fa-exclamation-triangle fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
+
+  &lt;p&gt;Your callback is invoked synchronously in most cases.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;p&gt;This is awkward often enough that .NET 8.0 added a &lt;a href=&quot;https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtokensource.cancelasync?view=net-8.0&amp;amp;WT.mc_id=DT-MVP-5000058&quot;&gt;&lt;code&gt;CancellationTokenSource.CancelAsync&lt;/code&gt; method&lt;/a&gt; which invokes the cancellation callbacks on a thread pool thread. Technically, it immediately and synchronously transitions the cancellation token source to the canceled state, and &lt;em&gt;then&lt;/em&gt; queues the callback invocations on a thread pool thread. The returned task completes when the callbacks have completed.&lt;/p&gt;
+
+&lt;p&gt;One more wrinkle, actually: it’s possible that &lt;code&gt;CancelAsync&lt;/code&gt; will return before the callbacks have completed &lt;em&gt;if&lt;/em&gt; it’s already been called. As soon as the &lt;code&gt;CancellationTokenSource&lt;/code&gt; transitions to the canceled state, any future calls to &lt;code&gt;Cancel&lt;/code&gt; or &lt;code&gt;CancelAsync&lt;/code&gt; will return immediately, even if a previous call to &lt;code&gt;CancelAsync&lt;/code&gt; hasn’t finished running its callbacks yet. But you probably don’t need to worry about that; it’s just a side note.&lt;/p&gt;
+
+&lt;h2 id=&quot;summary&quot;&gt;Summary&lt;/h2&gt;
+
+&lt;p&gt;This post has a bunch of scary warnings, but really, registering callbacks is the &lt;em&gt;natural&lt;/em&gt; way to implement cancellation at the lowest levels. &lt;a href=&quot;/2022/03/cancellation-4-polling.html&quot;&gt;Polling&lt;/a&gt; is commonly used in sample code because it’s simpler, but registration allows your code to react immediately.&lt;/p&gt;
+
+&lt;p&gt;Don’t let the warnings dissuade you from using cancellation registrations! They’re more like guidelines for proper usage:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Your callback should not throw exceptions.&lt;/li&gt;
+  &lt;li&gt;Your callback might never be called.&lt;/li&gt;
+  &lt;li&gt;Your callback might be called immediately on the same thread before &lt;code&gt;Register&lt;/code&gt; returns.&lt;/li&gt;
+  &lt;li&gt;Be sure to dispose your cancellation token registrations.&lt;/li&gt;
+  &lt;li&gt;Your callback is invoked synchronously in most cases.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;If you follow these guidelines, you should be able to use cancellation token registrations successfully!&lt;/p&gt;
+</description>
+        <pubDate>Thu, 08 Aug 2024 00:00:00 +0000</pubDate>
+        <link>https://blog.stephencleary.com/2024/08/cancellation-5-registration.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2024/08/cancellation-5-registration.html</guid>
+      </item>
+    
+      <item>
         <title>ICYMI: Video Series on TCP/IP Application Protocol Design</title>
         <description>&lt;p&gt;I speak regularly at various programming conferences, and one of my favorite talks is actually on TCP/IP protocol design. This is a skill that I learned almost by accident (literally because &lt;em&gt;someone&lt;/em&gt; had to, and no one else in the company &lt;em&gt;wanted&lt;/em&gt; to). It’s always been one of my favorite talks, and I submit it all over the place. Most of the time it’s rejected. Which I get - protocol design is esoteric and just plain useless for most developers. But I think it’s still &lt;em&gt;fun!&lt;/em&gt;&lt;/p&gt;
 
@@ -1123,105 +1219,6 @@ public Task&amp;lt;string&amp;gt; GetAsync() =&amp;gt; GetCoreAsync&amp;lt;Async
         <pubDate>Thu, 06 Oct 2022 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2022/10/modern-csharp-techniques-2-value-records.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2022/10/modern-csharp-techniques-2-value-records.html</guid>
-      </item>
-    
-      <item>
-        <title>Modern C# Techniques, Part 1: Curiously Recurring Generic Pattern</title>
-        <description>&lt;p&gt;I’m starting a new series today looking at some modern C# techniques. Part of what I like about C# is that the language is always improving, and those improvements bring newer code patterns with them.&lt;/p&gt;
-
-&lt;p&gt;Today’s topic is not actually &lt;em&gt;new&lt;/em&gt;, but many developers haven’t seen it before, so it’s worth taking a look at. As with many of the techniques I’ll be discussing, I’m not sure if this one has a name, so I am just calling it whatever I call it in my head.&lt;/p&gt;
-
-&lt;h2 id=&quot;the-curiously-recurring-generic-pattern&quot;&gt;The Curiously Recurring Generic Pattern&lt;/h2&gt;
-
-&lt;div class=&quot;alert alert-info&quot;&gt;
-  &lt;p&gt;&lt;i class=&quot;fa fa-hand-o-right fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
-
-  &lt;p&gt;The “curious” name for this pattern comes from the C++ world, where it was called the Curiously Recurring Template Pattern. So in C# I just call it the Curiously Recurring Generic Pattern, since it’s essentially the same thing but with generics instead of templates. &lt;a href=&quot;https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern&quot; class=&quot;alert-link&quot;&gt;According to Wikipedia&lt;/a&gt;, it’s actually “F-bound polymorphism”, but I’m not going to remember that.&lt;/p&gt;
-&lt;/div&gt;
-
-&lt;p&gt;The Curiously Recurring Generic Pattern is when an interface (or base type) takes a generic parameter that is its own derived type. A simple example looks like this:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&quot;language-C#&quot;&gt;interface IExample&amp;lt;TDerived&amp;gt;
-{
-}
-
-class MyExample : IExample&amp;lt;MyExample&amp;gt;
-{
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h2 id=&quot;but-why-tho&quot;&gt;But Why Tho?&lt;/h2&gt;
-
-&lt;p&gt;It essentially comes down to typing. If an interface (or base type) wants to use the &lt;em&gt;full, derived type&lt;/em&gt; as a method parameter or return value, then it can define those methods itself without putting any burdern on the derived type.&lt;/p&gt;
-
-&lt;p&gt;Consider a familiar example from the .NET BCL: &lt;code&gt;IEquatable&amp;lt;T&amp;gt;&lt;/code&gt;. &lt;code&gt;IEquatable&amp;lt;T&amp;gt;&lt;/code&gt; &lt;a href=&quot;https://learn.microsoft.com/en-us/dotnet/api/system.iequatable-1?view=net-6.0&amp;amp;WT.mc_id=DT-MVP-5000058&quot;&gt;is defined&lt;/a&gt; as thus:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&quot;language-C#&quot;&gt;public interface IEquatable&amp;lt;T&amp;gt;
-{
-  bool Equals(T? other);
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;And it is used as such:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&quot;language-C#&quot;&gt;sealed class MyEquatable : IEquatable&amp;lt;MyEquatable&amp;gt;
-{
-  public bool Equals(MyEquatable? other) { ... }
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;The thing to note here is that &lt;code&gt;MyEquatable.Equals&lt;/code&gt; implements &lt;code&gt;IEquatable&amp;lt;T&amp;gt;.Equals&lt;/code&gt; with a &lt;em&gt;strongly-typed&lt;/em&gt; &lt;code&gt;MyEquatable&lt;/code&gt; argument. If the Curiously Recurring Generic Pattern wasn’t used, then &lt;code&gt;IEquatable&amp;lt;T&amp;gt;&lt;/code&gt; would just be &lt;code&gt;IEquatable&lt;/code&gt; (taking an &lt;code&gt;object&lt;/code&gt; argument), losing type safety and efficiency.&lt;/p&gt;
-
-&lt;h2 id=&quot;adding-a-generic-constraint&quot;&gt;Adding a Generic Constraint&lt;/h2&gt;
-
-&lt;p&gt;The interface (or base type) may also use itself as a generic constraint. It doesn’t &lt;em&gt;have&lt;/em&gt; to (the examples above don’t), but sometimes it’s useful, particularly for base types. The Curiously Recurring Generic Pattern with generic constraints looks like this:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&quot;language-C#&quot;&gt;abstract class ExampleBase&amp;lt;TDerived&amp;gt;
-    where TDerived : ExampleBase&amp;lt;TDerived&amp;gt;
-{
-  // Methods in here can use `(TDerived)this` freely.
-  // This is particularly useful if this interface wants to *return* a value of TDerived.
-  public virtual TDerived Something() =&amp;gt; (TDerived)this;
-}
-
-class AnotherExample : ExampleBase&amp;lt;AnotherExample&amp;gt;
-{
-  // Implicitly has `public AnotherExample Something();` defined.
-  // The base class method already has the correct return type.
-  // (Can still override if desired).
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;As noted in the comments above, this approach is useful if &lt;code&gt;TDerived&lt;/code&gt; is used as a &lt;em&gt;return&lt;/em&gt; type. As one example, this is common with fluent APIs.&lt;/p&gt;
-
-&lt;p&gt;More generally, the generic constraint is needed in either of these situations:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;The base type needs to treat a &lt;code&gt;ExampleBase&amp;lt;TDerived&amp;gt;&lt;/code&gt; instance (e.g., &lt;code&gt;this&lt;/code&gt;) as its derived type (i.e., &lt;code&gt;(TDerived)this&lt;/code&gt;). This can also come up when passing &lt;code&gt;this&lt;/code&gt; to other methods.&lt;/li&gt;
-  &lt;li&gt;The base type needs to treat a &lt;code&gt;TDerived&lt;/code&gt; as a &lt;code&gt;ExampleBase&amp;lt;TDerived&amp;gt;&lt;/code&gt;, e.g., calling private base methods on an instance of type &lt;code&gt;TDerived&lt;/code&gt; &lt;em&gt;other&lt;/em&gt; than &lt;code&gt;this&lt;/code&gt;. In this case no explicit cast is necessary.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;h2 id=&quot;crgp-and-default-interface-methods&quot;&gt;CRGP and Default Interface Methods&lt;/h2&gt;
-
-&lt;p&gt;Similar to regular interface methods, the Curiously Recurring Generic Pattern can enhance the type safety of &lt;a href=&quot;https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-8.0/default-interface-methods?WT.mc_id=DT-MVP-5000058&quot;&gt;default interface methods&lt;/a&gt; if necessary. This is similar to using CRGP with base types, except interfaces cannot have state. Put another way, this enables strongly-typed traits, but falls short of mixins.&lt;/p&gt;
-
-&lt;h2 id=&quot;crgp-and-static-interface-methods-and-operators&quot;&gt;CRGP and Static Interface Methods (and Operators)&lt;/h2&gt;
-
-&lt;p&gt;One possibility for CRGP with &lt;a href=&quot;https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/tutorials/static-virtual-interface-members?WT.mc_id=DT-MVP-5000058&quot;&gt;static interface methods&lt;/a&gt; is to define operators (or other static methods) with the proper type signatures. Previously, CRGP required a base type to define operators (e.g., &lt;a href=&quot;https://github.com/StephenCleary/Comparers/blob/48cd202db5d7ea7209cc4248bf6a531d3752f170/src/Nito.Comparers.Core/EquatableBaseWithOperators.cs&quot;&gt;&lt;code&gt;EquatableBaseWithOperators&amp;lt;TDerived&amp;gt;&lt;/code&gt; in my Nito.Comparers library&lt;/a&gt;), but using CRGP with static interface methods allows strong typing for operator signatures (e.g., &lt;a href=&quot;https://learn.microsoft.com/en-us/dotnet/api/system.numerics.iunarynegationoperators-2?view=net-7.0&amp;amp;WT.mc_id=DT-MVP-5000058&quot;&gt;&lt;code&gt;IUnaryNegationOperators&amp;lt;TSelf, TResult&amp;gt;&lt;/code&gt;&lt;/a&gt; is an interface that defines &lt;code&gt;operator-&lt;/code&gt; with the proper type signature).&lt;/p&gt;
-
-&lt;h2 id=&quot;misuse&quot;&gt;Misuse&lt;/h2&gt;
-
-&lt;p&gt;Like other code patterns, the CRGP can be misused. IMO the most common misuse of this pattern is &lt;em&gt;overuse&lt;/em&gt;. Bear in mind CRGP isn’t powerful enough to provide mixins - even with default interface methods (which provide traits, not mixins).&lt;/p&gt;
-
-&lt;p&gt;Also, CRGP tends to make the code more complex. There’s a tradeoff there, and you need to keep maintainability in mind.&lt;/p&gt;
-
-&lt;h2 id=&quot;summary&quot;&gt;Summary&lt;/h2&gt;
-
-&lt;p&gt;The Curiously Recurring Generic Pattern isn’t actually new, and it isn’t often necessary, but it’s a nice tool to have when you do need it.&lt;/p&gt;
-</description>
-        <pubDate>Thu, 29 Sep 2022 00:00:00 +0000</pubDate>
-        <link>https://blog.stephencleary.com/2022/09/modern-csharp-techniques-1-curiously-recurring-generic-pattern.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2022/09/modern-csharp-techniques-1-curiously-recurring-generic-pattern.html</guid>
       </item>
     
   </channel>
