@@ -288,7 +288,7 @@ img.comment-author-profile-image {
 
 <p>Traditional producer/consumer queues are easily built using locks and condition variables (or monitors). I want the ability to throttle the queue with a maximum number of elements, so my implementation will use one lock and two condition variables. One condition variable will be signaled when the queue is not full (releasing a producer), and the other condition variable will be signaled when the queue is not empty (releasing a consumer).</p>
 
-<p>Here’s a simple implementation using <code>async</code>-compatible synchronization primitives from <a href="http://nitoasyncex.codeplex.com/">AsyncEx</a> (which supports all the same targets as Microsoft.Bcl.Async):</p>
+<p>Here’s a simple implementation using <code>async</code>-compatible synchronization primitives from <a href="https://github.com/StephenCleary/AsyncEx">AsyncEx</a> (which supports all the same targets as Microsoft.Bcl.Async):</p>
 
 <figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">AsyncProducerConsumerQueue</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span>
 <span class="p">{</span>
@@ -347,7 +347,7 @@ img.comment-author-profile-image {
 
 <p>Most of this is boilerplate. The interesting parts are in <code>EnqueueAsync</code> and <code>DequeueAsync</code>. They both parallel each other: take the lock, wait until their operation can be performed, perform the operation, and notify the other side that the other condition is met.</p>
 
-<p>One question that comes up with condition variables is <strong>why use a while loop instead of just an if statement?</strong> It’s actually because the condition may not be true by the time the method resumes! Consider this sequence of events (keeping in mind that <a href="http://nitoasyncex.codeplex.com/wikipage?title=AsyncConditionVariable">waiting on a condition variable temporarily releases the lock, and re-acquires it after the condition variable is signaled</a>):</p>
+<p>One question that comes up with condition variables is <strong>why use a while loop instead of just an if statement?</strong> It’s actually because the condition may not be true by the time the method resumes! Consider this sequence of events (keeping in mind that waiting on a condition variable temporarily releases the lock, and re-acquires it after the condition variable is signaled):</p>
 
 <ol>
   <li>One producer is attempting to enqueue an item to a full queue. It waits on the <code>notFull</code> condition variable.</li>
@@ -359,7 +359,7 @@ img.comment-author-profile-image {
 
 <p>This is a very unlikely scenario, but it <em>is</em> possible. For this reason, condition variables are almost always used with <code>while</code> loops. There may be occasional situations where an <code>if</code> statement would suffice (e.g., if there is only one producer and it only produced one item at a time), but it’s barely an optimization at all. It’s safer to always use <code>while</code> loops with condition variables.</p>
 
-<p>There is an implementation of this type in the <a href="http://nitoasyncex.codeplex.com">AsyncEx library</a> which is more complex than the simple version in this blog post. The AsyncEx version includes:</p>
+<p>There is an implementation of this type in the <a href="https://github.com/StephenCleary/AsyncEx">AsyncEx library</a> which is more complex than the simple version in this blog post. The AsyncEx version includes:</p>
 
 <ul>
   <li>Full cancellation support.</li>

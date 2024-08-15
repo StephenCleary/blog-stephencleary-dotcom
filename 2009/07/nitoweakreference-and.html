@@ -294,11 +294,11 @@ img.comment-author-profile-image {
 
 <p>However, <code>System.WeakReference</code> does not implement <a href="http://msdn.microsoft.com/en-us/library/system.idisposable.aspx?WT.mc_id=DT-MVP-5000058"><code>System.IDisposable</code></a>. This is not the end of the world, but it does place additional pressure on the garbage collector. It forces every <code>System.WeakReference</code> into an extra generation, holds the GCHandle table entry longer than necessary (possibly causing extra work for the garbage collector, since it must update the GCHandle table entry when that object is collected), and requires the finalizer thread to actually release the resource.</p>
 
-<p><a href="http://nitomvvm.codeplex.com/sourcecontrol/changeset/view/27265?projectName=NitoMVVM#453686"><code>Nito.WeakReference&lt;T&gt;</code></a> is a strongly-typed, disposable replacement for <code>System.WeakReference</code>. [Note, however, that <code>Nito.WeakReference&lt;T&gt;</code> does not support resurrection, which is a complex use case that is only required in very rare situations.]</p>
+<p><code>Nito.WeakReference&lt;T&gt;</code> is a strongly-typed, disposable replacement for <code>System.WeakReference</code>. [Note, however, that <code>Nito.WeakReference&lt;T&gt;</code> does not support resurrection, which is a complex use case that is only required in very rare situations.]</p>
 
 <h2 id="a-simple-weak-collection">A Simple Weak Collection</h2>
 
-<p>A weak collection (or more properly, a collection of weak references) at any given time may contain references to both live (referenced) and dead (garbage collected) objects. Removing all the dead objects is called a “purge”. It’s convenient to be able to enumerate the collection both with and without a purge. The <a href="http://nitomvvm.codeplex.com/sourcecontrol/changeset/view/27265?projectName=NitoMVVM#453683"><code>Nito.IWeakCollection&lt;T&gt;</code></a> defines an interface for enumerable collections of weak references, and includes methods for enumerating or counting the collection both with and without purging. Some of its members include:</p>
+<p>A weak collection (or more properly, a collection of weak references) at any given time may contain references to both live (referenced) and dead (garbage collected) objects. Removing all the dead objects is called a “purge”. It’s convenient to be able to enumerate the collection both with and without a purge. The <code>Nito.IWeakCollection&lt;T&gt;</code> defines an interface for enumerable collections of weak references, and includes methods for enumerating or counting the collection both with and without purging. Some of its members include:</p>
 
 <ul>
   <li><code>CompleteList</code> - Gets a complete sequence of objects from the collection (null entries represent dead objects).</li>
@@ -307,7 +307,7 @@ img.comment-author-profile-image {
   <li><code>LiveCount</code> - Gets the number of live entries in the collection, causing a purge. O(n).</li>
 </ul>
 
-<p><a href="http://nitomvvm.codeplex.com/sourcecontrol/changeset/view/27265?projectName=NitoMVVM#453683"><code>Nito.WeakCollection&lt;T&gt;</code></a> is a <code>List</code>-based implementation of a weak collection. It is used by the Nito MVVM library to track weak events, but it should be useful in other situations as well.</p>
+<p><code>Nito.WeakCollection&lt;T&gt;</code> is a <code>List</code>-based implementation of a weak collection. It is used by the Nito MVVM library to track weak events, but it should be useful in other situations as well.</p>
 
 
   </article>

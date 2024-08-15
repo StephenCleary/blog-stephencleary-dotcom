@@ -297,7 +297,7 @@ img.comment-author-profile-image {
 
 <p>Unfortunately, that doesn’t work (and in fact, the Visual Studio 11 compiler will reject an async Main method). Remember <a href="/2012/02/async-and-await.html">from our intro post</a> that an async method will <em>return</em> to its caller before it is complete. This works perfectly in UI applications (the method just returns to the UI event loop) and ASP.NET applications (the method returns off the thread but keeps the request alive). It doesn’t work out so well for Console programs: Main returns to the OS - so your program exits.</p>
 
-<p>You can work around this by providing your own async-compatible context. <a href="http://nitoasyncex.codeplex.com/wikipage?title=AsyncContext">AsyncContext</a> is a general-purpose context that can be used to enable an asynchronous MainAsync:</p>
+<p>You can work around this by providing your own async-compatible context. <a href="https://github.com/StephenCleary/AsyncEx">AsyncContext</a> is a general-purpose context that can be used to enable an asynchronous MainAsync:</p>
 
 <pre><code>class Program
 {

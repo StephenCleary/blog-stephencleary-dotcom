@@ -355,12 +355,12 @@ img.comment-author-profile-image {
 <div class="alert alert-info">
   <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
 
-  <p>When developers try to attach data to tasks, they’re usually trying to figure out some kind of “ambient context” for asynchronous operations. <a href="/2013/04/implicit-async-context-asynclocal.html" class="alert-link">I cover the correct way to do that in a separate post.</a> If you really, seriously do need to attach data to tasks and you can’t derive from <code>Task</code> for whatever reason, you can use <a href="http://connectedproperties.codeplex.com/" class="alert-link">Connected Properties</a>.</p>
+  <p>When developers try to attach data to tasks, they’re usually trying to figure out some kind of “ambient context” for asynchronous operations. <a href="/2013/04/implicit-async-context-asynclocal.html" class="alert-link">I cover the correct way to do that in a separate post.</a> If you really, seriously do need to attach data to tasks and you can’t derive from <code>Task</code> for whatever reason, you can use <a href="https://github.com/StephenCleary/ConnectedProperties" class="alert-link">Connected Properties</a>.</p>
 </div>
 
 <h2 id="identifiers-in-nitoasyncex">Identifiers in Nito.AsyncEx</h2>
 
-<p>I have a number of types in my <a href="http://nitoasyncex.codeplex.com">AsyncEx library</a> where I need a similar sort of semi-unique identifier (primarily for logging purposes). So I follow the same pattern as the built-in framework identifiers: generated on demand, zero as an invalid/unassigned value, and allocated by-type. I use a <a href="http://nitoasyncex.codeplex.com/SourceControl/changeset/view/f74db7311ea1#Source/Nito.AsyncEx (NET4, Win8, SL4, WP75)/Internal/IdManager.cs">helper class called IdManager</a> (not exposed in the public API) to satisfy this pattern.</p>
+<p>I have a number of types in my <a href="https://github.com/StephenCleary/AsyncEx">AsyncEx library</a> where I need a similar sort of semi-unique identifier (primarily for logging purposes). So I follow the same pattern as the built-in framework identifiers: generated on demand, zero as an invalid/unassigned value, and allocated by-type. I use a helper class called IdManager (not exposed in the public API) to satisfy this pattern.</p>
 
 <p>You’re welcome to use this type in your own code if you need to. The design may appear a little unusual to .NET developers because it uses a <em>generic tag type</em>. Conceptually, <code>IdManager&lt;Tag&gt;</code> actually defines a <em>set</em> of types, each with their own “namespace” for identifiers. The generic parameter <code>Tag</code> is completely unused by <code>IdManager&lt;Tag&gt;</code>; its only purpose is to partition the static members.</p>
 

@@ -292,7 +292,7 @@ img.comment-author-profile-image {
 
 <p>A similar problem is that <code>BackgroundWorker</code> doesn’t work well with <code>async</code> code. An <code>async DoWork</code> handler will exit early, causing the <code>RunWorkerCompleted</code> to fire before the method is completed.</p>
 
-<p>Also, it’s difficult to call <code>async</code> code from within a (properly synchronous) <code>DoWork</code>; you either have to call <code>Task.Wait</code> or establish your own <code>async</code>-friendly synchronization context (e.g., <a href="https://nitoasyncex.codeplex.com/wikipage?title=AsyncContext">AsyncContext</a>).</p>
+<p>Also, it’s difficult to call <code>async</code> code from within a (properly synchronous) <code>DoWork</code>; you either have to call <code>Task.Wait</code> or establish your own <code>async</code>-friendly synchronization context (e.g., <a href="https://github.com/StephenCleary/AsyncEx">AsyncContext</a>).</p>
 
 <p>On the other hand, <code>Task.Run</code> does support these scenarios: nesting, <code>async</code> delegates, and calling <code>async</code> code are all perfectly natural.</p>
 

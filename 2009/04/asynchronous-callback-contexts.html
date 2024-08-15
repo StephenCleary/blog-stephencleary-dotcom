@@ -304,7 +304,7 @@ img.comment-author-profile-image {
 
 <h2 id="reusable-callbackcontext-type">Reusable CallbackContext Type</h2>
 
-<p>One of the new classes in version 1.2 of the <a href="http://nitoasync.codeplex.com/">Nito Async</a> library is a reusable CallbackContext type. This class encapsulates all the semantics necessary, and introduces a few new terms:</p>
+<p>One of the new classes in version 1.2 of the <a href="https://github.com/StephenClearyArchive/Nito.Asynchronous">Nito Async</a> library is a reusable CallbackContext type. This class encapsulates all the semantics necessary, and introduces a few new terms:</p>
 
 <ul>
   <li>A delegate may be <em>bound</em> to a CallbackContext. Binding a delegate results in a new delegate (the <em>bound delegate</em>) - which wraps the original delegate.</li>
@@ -315,7 +315,7 @@ img.comment-author-profile-image {
 
 <p>To use CallbackContext from an asynchronous component, bind each delegate that needs to check the context. Then call CallbackContext.Reset when the operation is cancelled. CallbackContext also derives from IDisposable and implements Dispose (as a synonym for Reset) to remind users to call CallbackContext.Dispose when the asynchronous component is disposed.</p>
 
-<p>The only other note regarding CallbackContext is that the delegates should be synchronized (using SynchronizingObject or SynchronizationContext) before the bound delegate is invoked. We are considering adding overloads to CallbackContext to allow for synchronization and binding in a single step, ensuring the correct order; if they are added, they will be included in <a href="http://nitoasync.codeplex.com/">Nito.Async</a> version 1.3.</p>
+<p>The only other note regarding CallbackContext is that the delegates should be synchronized (using SynchronizingObject or SynchronizationContext) before the bound delegate is invoked. We are considering adding overloads to CallbackContext to allow for synchronization and binding in a single step, ensuring the correct order; if they are added, they will be included in <a href="https://github.com/StephenClearyArchive/Nito.Asynchronous">Nito.Async</a> version 1.3.</p>
 
 
   </article>

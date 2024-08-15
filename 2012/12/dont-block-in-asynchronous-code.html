@@ -367,7 +367,7 @@ img.comment-author-profile-image {
   <span class="n">task</span><span class="p">.</span><span class="n">Wait</span><span class="p">();</span>
 <span class="p">}</span></code></pre></figure>
 
-<p>Most people would not write code like this. It’s very unnatural to call <code>Task.Wait</code> in an <code>async</code> method; the natural code would use <code>await</code> instead. I only came across this behavior while writing unit tests for my <a href="http://nitoasyncex.codeplex.com/">AsyncEx</a> library; these unit tests can get pretty complex and can involve a mixture of synchronous and asynchronous code.</p>
+<p>Most people would not write code like this. It’s very unnatural to call <code>Task.Wait</code> in an <code>async</code> method; the natural code would use <code>await</code> instead. I only came across this behavior while writing unit tests for my <a href="https://github.com/StephenCleary/AsyncEx">AsyncEx</a> library; these unit tests can get pretty complex and can involve a mixture of synchronous and asynchronous code.</p>
 
 <p>In conclusion, we already knew <a href="/2012/07/dont-block-on-async-code.html">not to block <strong>on</strong> asynchronous code</a>; now we know not to block <strong>in</strong> asynchronous code either!</p>
 

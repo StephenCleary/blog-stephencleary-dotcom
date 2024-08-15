@@ -296,19 +296,19 @@ img.comment-author-profile-image {
 
 <p>Somehow I missed that class when the .NET 4.0 changes were announced, but Jeffrey Richter gave an example of it in his “.NET Nuggets” talk last week as part of <a href="http://www.wintellect.com/ten">Wintellect’s T.E.N.</a> event. Essentially, you can use ConditionalWeakTable to define a (threadsafe) mapping from an object <em>instance</em> to any type of value you need. This allows you to treat any object as an “expando” object, “attaching” information to it. When the object instance is garbage collected, any attached values are automatically cleaned up as well.</p>
 
-<p>This is a powerful concept, and it was the primary motivation behind my (pre-release) <a href="http://nitoweakness.codeplex.com/">Nito.Weakness</a> library. According to Mr. Richter, ConditionalWeakTable is notified of object collection by the garbage collector rather than using a polling thread, which is good. There are a couple of caveats, though, when using CWT.</p>
+<p>This is a powerful concept, and it was the primary motivation behind my (pre-release) Nito.Weakness library. According to Mr. Richter, ConditionalWeakTable is notified of object collection by the garbage collector rather than using a polling thread, which is good. There are a couple of caveats, though, when using CWT.</p>
 
 <div class="alert alert-danger">
   <p><i class="fa fa-exclamation-triangle fa-2x pull-left"></i></p>
 
-  <p><strong>Update 2011-01-22:</strong> The Nito.Weakness library has been postponed indefinitely. Instead, I’ve released the ConnectedProperties library on both <a href="http://connectedproperties.codeplex.com/" class="alert-link">CodePlex</a> and <a href="http://nuget.org/Packages/Packages/Details/Connected-Properties-(by-Nito-Programs)-1-0-0" class="alert-link">NuGet</a>. ConnectedProperties is a straightforward wrapper for ConditionalWeakTable.</p>
+  <p><strong>Update 2011-01-22:</strong> The Nito.Weakness library has been postponed indefinitely. Instead, I’ve released the ConnectedProperties library on both <a href="https://github.com/StephenCleary/ConnectedProperties" class="alert-link">GitHub</a> and <a href="http://nuget.org/Packages/Packages/Details/Connected-Properties-(by-Nito-Programs)-1-0-0" class="alert-link">NuGet</a>. ConnectedProperties is a straightforward wrapper for ConditionalWeakTable.</p>
 </div>
 
 <h2 id="caveat-1-restrictions-on-tkey">Caveat 1: Restrictions on TKey</h2>
 
 <p>Be careful what type you specify for <strong>TKey</strong>. I stronly recommend that you only use types that use reference equality. This means that I <em>don’t</em> recommend you use <strong>string</strong> like Mr. Richter did during his demo (and in his example source code). It’s well and good for the author of <a href="http://www.amazon.com/gp/product/0735621632?ie=UTF8&amp;tag=stepheclearys-20&amp;linkCode=as2&amp;camp=1789&amp;creative=390957&amp;creativeASIN=0735621632" rel="nofollow">CLR via C#</a> to use <strong>TKey = System.String</strong>, but mere mortals like you and I should steer clear. <strong>string</strong> not only uses value equality, but also has a complex interning feature. Remember, ConditionalWeakTable tracks object <em>instances</em>, not object <em>values</em>.</p>
 
-<p>Nito.Weakness contains <a href="http://nitoweakness.codeplex.com/SourceControl/changeset/view/b85303561fd1#Source%2f_internal%2fExtensions.cs">some code (IsReferenceEquatable)</a> to determine if a type uses reference or value equality, and refuses to track object instances that use value equality. Perhaps this is a bit strong, but I’m planning to add this requirement in any generic ConditionalWeakTable wrappers that I use in my own code.</p>
+<p>Nito.Weakness contains some code (IsReferenceEquatable) to determine if a type uses reference or value equality, and refuses to track object instances that use value equality. Perhaps this is a bit strong, but I’m planning to add this requirement in any generic ConditionalWeakTable wrappers that I use in my own code.</p>
 
 <h2 id="caveat-2-idisposable-is-ignored-on-tvalue">Caveat 2: IDisposable is ignored on TValue</h2>
 

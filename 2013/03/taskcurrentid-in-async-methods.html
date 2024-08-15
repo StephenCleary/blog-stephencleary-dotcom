@@ -344,7 +344,7 @@ img.comment-author-profile-image {
 
 <p>Note that this is an implementation detail. I’m not aware of any documentation stating that the first part of a thread pool <code>async</code> method runs as a task and the rest of it never will. It’s likely that this behavior is just the result of the easiest and most efficient implementation.</p>
 
-<p>I do make a different choice for my <a href="http://nitoasyncex.codeplex.com/wikipage?title=AsyncContext">AsyncContext</a> type. I started off with a design similar to the thread pool task scheduler (executing bare <code>Action</code> delegates), but I found the code simplified quite nicely if I treated <em>everything</em> as a <code>Task</code>. So this program will always use tasks:</p>
+<p>I do make a different choice for my <a href="https://github.com/StephenCleary/AsyncEx">AsyncContext</a> type. I started off with a design similar to the thread pool task scheduler (executing bare <code>Action</code> delegates), but I found the code simplified quite nicely if I treated <em>everything</em> as a <code>Task</code>. So this program will always use tasks:</p>
 
 <figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
 <span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>

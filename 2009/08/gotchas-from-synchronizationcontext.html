@@ -330,7 +330,7 @@ img.comment-author-profile-image {
     <span class="p">}</span>
 <span class="p">}</span></code></pre></figure>
 
-<p>This code or something similar may go into the next release of <a href="http://www.codeplex.com/NitoAsync">Nito.Async</a>. However, the code as-is will cause a deadlock when used with synchronization contexts that are sometimes reentrant (e.g., WindowsFormsSynchronizationContext.Send or DispatcherSynchronizationContext.Send if called from the specific thread associated with that synchronization context).</p>
+<p>This code or something similar may go into the next release of <a href="https://github.com/StephenClearyArchive/Nito.Asynchronous">Nito.Async</a>. However, the code as-is will cause a deadlock when used with synchronization contexts that are sometimes reentrant (e.g., WindowsFormsSynchronizationContext.Send or DispatcherSynchronizationContext.Send if called from the specific thread associated with that synchronization context).</p>
 
 <h2 id="gotcha-2-non-exclusive-execution">Gotcha #2: Non-exclusive execution</h2>
 
@@ -338,7 +338,7 @@ img.comment-author-profile-image {
 
 <p>However, this brings up concerns when designing APIs for asynchronous components. In particular, cancellation becomes problematic.</p>
 
-<p>Some SynchronizationContext instances do execute exclusively: the <a href="http://msdn.microsoft.com/en-us/library/system.windows.forms.windowsformssynchronizationcontext.aspx?WT.mc_id=DT-MVP-5000058">WindowsFormsSynchronizationContext</a>, <a href="http://msdn.microsoft.com/en-us/library/system.windows.threading.dispatchersynchronizationcontext.aspx?WT.mc_id=DT-MVP-5000058">DispatcherSynchronizationContext</a> and <a href="http://www.codeplex.com/NitoAsync">Nito.Async.ActionDispatcherSynchronizationContext</a> all operate on some type of queue internally, which has a single thread processing requests one at a time.</p>
+<p>Some SynchronizationContext instances do execute exclusively: the <a href="http://msdn.microsoft.com/en-us/library/system.windows.forms.windowsformssynchronizationcontext.aspx?WT.mc_id=DT-MVP-5000058">WindowsFormsSynchronizationContext</a>, <a href="http://msdn.microsoft.com/en-us/library/system.windows.threading.dispatchersynchronizationcontext.aspx?WT.mc_id=DT-MVP-5000058">DispatcherSynchronizationContext</a> and <a href="https://github.com/StephenClearyArchive/Nito.Asynchronous">Nito.Async.ActionDispatcherSynchronizationContext</a> all operate on some type of queue internally, which has a single thread processing requests one at a time.</p>
 
 <p>Most asynchronous components that use the <a href="http://msdn.microsoft.com/en-us/library/wewwczdw.aspx?WT.mc_id=DT-MVP-5000058">event-based asynchronous pattern (EBAP)</a> - including Nito.Async classes - assume that SynchronizationContext will actually synchronize the delegates with some notion of an “originating thread”. However, this is only true for SynchronizationContext instances that execute exclusively. So it works in most cases (Windows Forms, WPF, and explicit ActionDispatcher queues), but would fail in other cases (most notably ASP.NET and in free-threaded/ThreadPool contexts).</p>
 

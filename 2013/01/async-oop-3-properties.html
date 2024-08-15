@@ -349,7 +349,7 @@ img.comment-author-profile-image {
 
 <p>In this case, you only want the asynchronous operation executed once: the first time it’s requested. After the operation completes, the result of the operation should be cached and returned immediately.</p>
 
-<p>The easiest solution for this is to use <code>AsyncLazy&lt;T&gt;</code>, <a href="http://nitoasyncex.codeplex.com/wikipage?title=AsyncLazy">available in the AsyncEx library</a>:</p>
+<p>The easiest solution for this is to use <code>AsyncLazy&lt;T&gt;</code>, <a href="https://github.com/StephenCleary/AsyncEx">available in the AsyncEx library</a>:</p>
 
 <figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span>
 <span class="p">{</span>
@@ -410,7 +410,7 @@ img.comment-author-profile-image {
 
 <p>In the example code above, I’m assuming that the code constructing a <code>MyClass</code> will call its <code>InitializeAsync</code> method. Alternatively, if this instance is contained in an enclosing data bound instance, you could wrap the construction and <code>InitializeAsync</code> into an asynchronous factory method <a href="/2013/01/async-oop-2-constructors.html">as we discussed last time</a>.</p>
 
-<p>If your property value is simply the result of a <code>Task&lt;TResult&gt;</code>, then you can use the <a href="http://nitoasyncex.codeplex.com/wikipage?title=NotifyTaskCompletion">NotifyTaskCompletion type in the AsyncEx library</a> to make this even easier:</p>
+<p>If your property value is simply the result of a <code>Task&lt;TResult&gt;</code>, then you can use the <a href="https://github.com/StephenCleary/Mvvm">NotifyTaskCompletion type (now called <code>NotifyTask</code>) in the Mvvm library</a> to make this even easier:</p>
 
 <figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MyClass</span> <span class="p">:</span> <span class="n">INotifyPropertyChanged</span>
 <span class="p">{</span>

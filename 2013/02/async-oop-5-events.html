@@ -298,7 +298,7 @@ img.comment-author-profile-image {
 
 <p>WinRT introduces the concept of a “deferral” for command-style events. An asynchronous handler acquires a deferral before its first <code>await</code>, and notifies that deferral when the handler is complete. Synchronous handlers do not need to acquire deferrals. WinRT does not provide a “deferral manager” type for implementing our own command-style events, so we’ll have to make our own.</p>
 
-<p>There’s already a type in my <a href="http://nitoasyncex.codeplex.com">AsyncEx</a> library with much of the functionality we need: <a href="http://nitoasyncex.codeplex.com/wikipage?title=AsyncCountdownEvent">AsyncCountdownEvent</a>. We increment the count whenever a handler acquires a deferral and signal the count whenever a deferral is completed. To prevent race conditions, we also need to increment the count before invoking the handlers and signal the count when all the handlers have returned.</p>
+<p>There’s already a type in my <a href="https://github.com/StephenCleary/AsyncEx">AsyncEx</a> library with much of the functionality we need: AsyncCountdownEvent. We increment the count whenever a handler acquires a deferral and signal the count whenever a deferral is completed. To prevent race conditions, we also need to increment the count before invoking the handlers and signal the count when all the handlers have returned.</p>
 
 <p>There is one difference in the design of WinRT deferrals and my deferral manager: WinRT provides different interfaces and implementations for each different deferral scenario (i.e., <code>SuspendingDeferral</code> has no relation to <code>BackgroundTaskDeferral</code>). Since a “deferral” only has one possible action (<code>Complete</code>), and since this action should <em>always</em> be done regardless of exceptions, I chose to represent deferrals as <code>IDisposable</code>. This allows asynchronous event handlers to use a <code>using</code> block in their implementation.</p>
 
@@ -342,7 +342,7 @@ img.comment-author-profile-image {
 <div class="alert alert-info">
   <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
 
-  <p>The <a href="http://nitoasyncex.codeplex.com/wikipage?title=DeferralManager" class="alert-link">DeferralManager in the AsyncEx library</a> is almost identical to this code, except that it lazy-creates the asynchronous countdown event. This minimizes overhead if all the handlers are synchronous.</p>
+  <p>The <a href="https://github.com/StephenCleary/AsyncEx" class="alert-link">DeferralManager in the AsyncEx library</a> is almost identical to this code, except that it lazy-creates the asynchronous countdown event. This minimizes overhead if all the handlers are synchronous.</p>
 </div>
 
 <p>Once you have a <code>DeferralManager</code>, you can extend your “command-style” event arguments type as such:</p>

@@ -317,7 +317,7 @@ img.comment-author-profile-image {
 
 <p>One drawback to TaskFactory.FromAsync is that it is somewhat limited in its number of parameters. If you need more, you can pass the IAsyncResult object instead of the Begin method. However, the implementation is less efficient: instead of just passing an AsyncCallback to Begin, they have to pass the AsyncWaitHandle to ThreadPool.RegisterWaitForSingleObject.</p>
 
-<p>Another alternative is AsyncFactory.FromApm in <a href="http://nitoasyncex.codeplex.com/">my AsyncEx library</a>. FromApm supports many more parameters. However, if Begin throws, then FromApm will place the exception on the Task rather than throwing it directly (changing the synchronous exception to an asynchronous exception).</p>
+<p>Another alternative is AsyncFactory.FromApm in <a href="https://github.com/StephenCleary/AsyncEx">my AsyncEx library</a>. FromApm supports many more parameters. However, if Begin throws, then FromApm will place the exception on the Task rather than throwing it directly (changing the synchronous exception to an asynchronous exception).</p>
 
 <div class="alert alert-info">
   <p><i class="fa fa-hand-o-right fa-2x pull-left"></i></p>
@@ -383,7 +383,7 @@ img.comment-author-profile-image {
 
 <p>Note that - as of now - the example code in the Task-based Asynchronous Pattern document does not unwrap Task exceptions, so any exceptions will be wrapped in an AggregateException, which is thrown from End.</p>
 
-<p>The BCL does not provide generic Begin/End implementations, but my <a href="http://nitoasyncex.codeplex.com/">AsyncEx</a> library does, as AsyncFactory.ToBegin and AsyncFactory.ToEnd:</p>
+<p>The BCL does not provide generic Begin/End implementations, but my <a href="https://github.com/StephenCleary/AsyncEx">AsyncEx</a> library does, as AsyncFactory.ToBegin and AsyncFactory.ToEnd:</p>
 
 <figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">public</span> <span class="n">IAsyncResult</span> <span class="nf">BeginDivide</span><span class="p">(</span><span class="kt">int</span> <span class="n">numerator</span><span class="p">,</span> <span class="kt">int</span> <span class="n">denominator</span><span class="p">,</span> <span class="n">AsyncCallback</span> <span class="n">callback</span><span class="p">,</span> <span class="kt">object</span> <span class="n">state</span><span class="p">)</span>
 <span class="p">{</span>

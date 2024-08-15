@@ -282,16 +282,13 @@ img.comment-author-profile-image {
   </header>
 
   <article>
-  <p>I recently posted on this blog a “toy application” of MSBuild that <a href="/2009/05/msbuild-factorial.html">calculates factorials</a>. Well, this weekend I was working on the new build script for the <a href="http://nitoasync.codeplex.com/">Nito.Async library</a>, and surprised myself by finding an actual real-world application for this code!</p>
+  <p>I recently posted on this blog a “toy application” of MSBuild that <a href="/2009/05/msbuild-factorial.html">calculates factorials</a>. Well, this weekend I was working on the new build script for the <a href="https://github.com/StephenClearyArchive/Nito.Asynchronous">Nito.Async library</a>, and surprised myself by finding an actual real-world application for this code!</p>
 
 <p>It turns out that this is useful when autogenerating publisher policies. Nito.Async follows a simple <em>major.minor</em> version numbering scheme, where changes in <em>minor</em> are always fully backwards-compatible and changes in <em>major</em> never are. Publisher policies are a way of declaring backwards compatibility for strongly-named assemblies in the GAC (more info on <a href="http://msdn.microsoft.com/en-us/library/dz32563a.aspx?WT.mc_id=DT-MVP-5000058">MSDN</a> and in <a href="http://support.microsoft.com/kb/891030">KB891030</a>).</p>
 
 <p>To autogenerate publisher policies for a version <em>maj.min</em>, the build script must build a separate dll for each version in the range [<em>maj</em>.0, <em>maj.min</em>). It turns out that the recursive behavior in my “factorial.proj” toy was exactly what I needed; I just changed the return value to concatenate a list of numbers instead of multiplying them together.</p>
 
 <p>There was one other small hurdle to overcome; I had to perform a cross product of two different item groups (the list of “previous minor versions” and the list of library dlls). This is not exactly straightforward in MSBuild, and is a common question (just Google for “MSBuild cross product”).</p>
-
-<p>The updated build script for Nito.Async has been checked into CodePlex, so if you want to see the details on how this works, you can view it online <a href="http://nitoasync.codeplex.com/SourceControl/changeset/view/17989#324550">here</a>. I’m not going to post it on the blog here, for sake of space.</p>
-
 
   </article>
     
