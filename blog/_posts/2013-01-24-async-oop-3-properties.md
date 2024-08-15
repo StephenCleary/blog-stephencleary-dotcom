@@ -73,7 +73,7 @@ Personally, I think the asynchronous method makes it clearer that a new asynchro
 
 In this case, you only want the asynchronous operation executed once: the first time it's requested. After the operation completes, the result of the operation should be cached and returned immediately.
 
-The easiest solution for this is to use `AsyncLazy<T>`, [available in the AsyncEx library](http://nitoasyncex.codeplex.com/wikipage?title=AsyncLazy):
+The easiest solution for this is to use `AsyncLazy<T>`, [available in the AsyncEx library](https://github.com/StephenCleary/AsyncEx):
 
 {% highlight csharp %}
 public sealed class MyClass
@@ -138,7 +138,7 @@ public sealed class MyClass : INotifyPropertyChanged
 
 In the example code above, I'm assuming that the code constructing a `MyClass` will call its `InitializeAsync` method. Alternatively, if this instance is contained in an enclosing data bound instance, you could wrap the construction and `InitializeAsync` into an asynchronous factory method [as we discussed last time]({% post_url 2013-01-17-async-oop-2-constructors %}).
 
-If your property value is simply the result of a `Task<TResult>`, then you can use the [NotifyTaskCompletion type in the AsyncEx library](http://nitoasyncex.codeplex.com/wikipage?title=NotifyTaskCompletion) to make this even easier:
+If your property value is simply the result of a `Task<TResult>`, then you can use the [NotifyTaskCompletion type (now called `NotifyTask`) in the Mvvm library](https://github.com/StephenCleary/Mvvm) to make this even easier:
 
 {% highlight csharp %}
 public sealed class MyClass : INotifyPropertyChanged

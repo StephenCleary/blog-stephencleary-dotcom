@@ -84,5 +84,5 @@ Another possible problem is when well-meaning coders actually _increment_ an exi
 
 ## Code!
 
-When doing the research for [my own combed GUID]({% post_url 2009-08-17-alternative-guids-for-mobile-devices %}), I wrote [a few extension methods](http://nitokitchensink.codeplex.com/SourceControl/changeset/view/57812#1006424) for the Guid structure that allow examining the RFC 4122 fields. For example, you can extract the MAC address and creation time for a sequential GUID. Naturally, these extension methods will only work for RFC 4122 GUIDs.
+When doing the research for [my own combed GUID]({% post_url 2009-08-17-alternative-guids-for-mobile-devices %}), I wrote [a few extension methods](https://github.com/StephenCleary/Guids) for the Guid structure that allow examining the RFC 4122 fields. For example, you can extract the MAC address and creation time for a sequential GUID. Naturally, these extension methods will only work for RFC 4122 GUIDs.
 

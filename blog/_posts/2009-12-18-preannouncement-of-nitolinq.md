@@ -4,7 +4,7 @@ title: "(Pre)Announcement of Nito.Linq!"
 ---
 I know that it's not actually released yet, but I just couldn't keep quiet any longer!
 
-[Nito.Linq](http://nitolinq.codeplex.com/) is a library that helps "fill in the gaps" in the existing LINQ system. It will be compatible with .NET 3.5 SP1, .NET 4.0, and Silverlight 3 (all with or without [Rx](http://msdn.microsoft.com/en-us/devlabs/ee794896.aspx?WT.mc_id=DT-MVP-5000058)).
+[Nito.Linq](https://github.com/StephenClearyArchive/Nito.LINQ) is a library that helps "fill in the gaps" in the existing LINQ system. It will be compatible with .NET 3.5 SP1, .NET 4.0, and Silverlight 3 (all with or without [Rx](http://msdn.microsoft.com/en-us/devlabs/ee794896.aspx?WT.mc_id=DT-MVP-5000058)).
 
 The primary focus of this library is the development of operators around random-access sequences (`IList<T>`). Secondary focii include sorted sequence and list operators; a translation of all C++ STL algorithms into sequence/list operators (finally!); compatibility shims for working between .NET 3.5, .NET 4.0, and Rx; and a handful of little "extra" items such as `LexicographicalComparer`, `CircularBuffer`, and `Deque`.
 

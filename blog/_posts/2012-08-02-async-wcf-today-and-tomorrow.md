@@ -110,7 +110,7 @@ public class Calculator : ICalculator
 
 The wrappers are straightforward. The only tricky part is in the End wrapper where we re-throw a FaultException.
 
-The wrappers are also tedious, especially if you have a lot of methods to wrap. My [AsyncEx library](http://nitoasyncex.codeplex.com/) includes AsyncFactory.ToBegin and AsyncFactory.ToEnd methods that handle the TAP-to-APM conversion cleanly. That's what I use:
+The wrappers are also tedious, especially if you have a lot of methods to wrap. My [AsyncEx library](https://github.com/StephenCleary/AsyncEx) includes AsyncFactory.ToBegin and AsyncFactory.ToEnd methods that handle the TAP-to-APM conversion cleanly. That's what I use:
 
 {% highlight csharp %}
 

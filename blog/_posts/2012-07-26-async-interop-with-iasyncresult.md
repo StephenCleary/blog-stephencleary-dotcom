@@ -43,7 +43,7 @@ The only real design decision is what to do if Begin throws an exception. TaskFa
 
 One drawback to TaskFactory.FromAsync is that it is somewhat limited in its number of parameters. If you need more, you can pass the IAsyncResult object instead of the Begin method. However, the implementation is less efficient: instead of just passing an AsyncCallback to Begin, they have to pass the AsyncWaitHandle to ThreadPool.RegisterWaitForSingleObject.
 
-Another alternative is AsyncFactory.FromApm in [my AsyncEx library](http://nitoasyncex.codeplex.com/). FromApm supports many more parameters. However, if Begin throws, then FromApm will place the exception on the Task rather than throwing it directly (changing the synchronous exception to an asynchronous exception).
+Another alternative is AsyncFactory.FromApm in [my AsyncEx library](https://github.com/StephenCleary/AsyncEx). FromApm supports many more parameters. However, if Begin throws, then FromApm will place the exception on the Task rather than throwing it directly (changing the synchronous exception to an asynchronous exception).
 
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
@@ -115,7 +115,7 @@ The End method must (synchronously) block if the operation has not completed. If
 
 Note that - as of now - the example code in the Task-based Asynchronous Pattern document does not unwrap Task exceptions, so any exceptions will be wrapped in an AggregateException, which is thrown from End.
 
-The BCL does not provide generic Begin/End implementations, but my [AsyncEx](http://nitoasyncex.codeplex.com/) library does, as AsyncFactory.ToBegin and AsyncFactory.ToEnd:
+The BCL does not provide generic Begin/End implementations, but my [AsyncEx](https://github.com/StephenCleary/AsyncEx) library does, as AsyncFactory.ToBegin and AsyncFactory.ToEnd:
 
 {% highlight csharp %}
 

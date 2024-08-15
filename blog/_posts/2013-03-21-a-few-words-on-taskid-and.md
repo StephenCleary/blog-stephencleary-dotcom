@@ -76,12 +76,12 @@ So, be aware that identifiers are not strictly unique. Some developers have atte
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
-When developers try to attach data to tasks, they're usually trying to figure out some kind of "ambient context" for asynchronous operations. [I cover the correct way to do that in a separate post.]({% post_url 2013-04-04-implicit-async-context-asynclocal %}){:.alert-link} If you really, seriously do need to attach data to tasks and you can't derive from `Task` for whatever reason, you can use [Connected Properties](http://connectedproperties.codeplex.com/){:.alert-link}.
+When developers try to attach data to tasks, they're usually trying to figure out some kind of "ambient context" for asynchronous operations. [I cover the correct way to do that in a separate post.]({% post_url 2013-04-04-implicit-async-context-asynclocal %}){:.alert-link} If you really, seriously do need to attach data to tasks and you can't derive from `Task` for whatever reason, you can use [Connected Properties](https://github.com/StephenCleary/ConnectedProperties){:.alert-link}.
 </div>
 
 ## Identifiers in Nito.AsyncEx
 
-I have a number of types in my [AsyncEx library](http://nitoasyncex.codeplex.com) where I need a similar sort of semi-unique identifier (primarily for logging purposes). So I follow the same pattern as the built-in framework identifiers: generated on demand, zero as an invalid/unassigned value, and allocated by-type. I use a [helper class called IdManager](http://nitoasyncex.codeplex.com/SourceControl/changeset/view/f74db7311ea1#Source/Nito.AsyncEx (NET4, Win8, SL4, WP75)/Internal/IdManager.cs) (not exposed in the public API) to satisfy this pattern.
+I have a number of types in my [AsyncEx library](https://github.com/StephenCleary/AsyncEx) where I need a similar sort of semi-unique identifier (primarily for logging purposes). So I follow the same pattern as the built-in framework identifiers: generated on demand, zero as an invalid/unassigned value, and allocated by-type. I use a helper class called IdManager (not exposed in the public API) to satisfy this pattern.
 
 You're welcome to use this type in your own code if you need to. The design may appear a little unusual to .NET developers because it uses a _generic tag type_. Conceptually, `IdManager<Tag>` actually defines a _set_ of types, each with their own "namespace" for identifiers. The generic parameter `Tag` is completely unused by `IdManager<Tag>`; its only purpose is to partition the static members.
 

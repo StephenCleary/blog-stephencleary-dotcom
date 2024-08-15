@@ -52,7 +52,7 @@ public static class SynchronizationContextExtensions
 }
 {% endhighlight %}
 
-This code or something similar may go into the next release of [Nito.Async](http://www.codeplex.com/NitoAsync). However, the code as-is will cause a deadlock when used with synchronization contexts that are sometimes reentrant (e.g., WindowsFormsSynchronizationContext.Send or DispatcherSynchronizationContext.Send if called from the specific thread associated with that synchronization context).
+This code or something similar may go into the next release of [Nito.Async](https://github.com/StephenClearyArchive/Nito.Asynchronous). However, the code as-is will cause a deadlock when used with synchronization contexts that are sometimes reentrant (e.g., WindowsFormsSynchronizationContext.Send or DispatcherSynchronizationContext.Send if called from the specific thread associated with that synchronization context).
 
 ## Gotcha #2: Non-exclusive execution
 
@@ -60,7 +60,7 @@ SynchronizationContext does not guarantee that delegates queued to it will be ex
 
 However, this brings up concerns when designing APIs for asynchronous components. In particular, cancellation becomes problematic.
 
-Some SynchronizationContext instances do execute exclusively: the [WindowsFormsSynchronizationContext](http://msdn.microsoft.com/en-us/library/system.windows.forms.windowsformssynchronizationcontext.aspx?WT.mc_id=DT-MVP-5000058), [DispatcherSynchronizationContext](http://msdn.microsoft.com/en-us/library/system.windows.threading.dispatchersynchronizationcontext.aspx?WT.mc_id=DT-MVP-5000058) and [Nito.Async.ActionDispatcherSynchronizationContext](http://www.codeplex.com/NitoAsync) all operate on some type of queue internally, which has a single thread processing requests one at a time.
+Some SynchronizationContext instances do execute exclusively: the [WindowsFormsSynchronizationContext](http://msdn.microsoft.com/en-us/library/system.windows.forms.windowsformssynchronizationcontext.aspx?WT.mc_id=DT-MVP-5000058), [DispatcherSynchronizationContext](http://msdn.microsoft.com/en-us/library/system.windows.threading.dispatchersynchronizationcontext.aspx?WT.mc_id=DT-MVP-5000058) and [Nito.Async.ActionDispatcherSynchronizationContext](https://github.com/StephenClearyArchive/Nito.Asynchronous) all operate on some type of queue internally, which has a single thread processing requests one at a time.
 
 Most asynchronous components that use the [event-based asynchronous pattern (EBAP)](http://msdn.microsoft.com/en-us/library/wewwczdw.aspx?WT.mc_id=DT-MVP-5000058) - including Nito.Async classes - assume that SynchronizationContext will actually synchronize the delegates with some notion of an "originating thread". However, this is only true for SynchronizationContext instances that execute exclusively. So it works in most cases (Windows Forms, WPF, and explicit ActionDispatcher queues), but would fail in other cases (most notably ASP.NET and in free-threaded/ThreadPool contexts).
 

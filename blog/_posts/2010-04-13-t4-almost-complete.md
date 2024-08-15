@@ -6,7 +6,7 @@ Visual Studio 2010 was released today, and one of the (many) improvements is tha
 
 Currently, .NET languages do not have built-in metaprogramming support (which C++ has had for years). They do have generics and dynamic dispatch, which do handle some of the metaprogramming use cases, but they also have their own limitations. Both of these solutions generate code at runtime.
 
-There are two other metaprogramming solutions currently available. T4 is a solution that generates code before compiling. The other solution exists at the other end of the spectrum: IL rewriters such as [CciSharp](http://ccisamples.codeplex.com/wikipage?title=CciSharp) can be used to modify (and generate) code after compiling.
+There are two other metaprogramming solutions currently available. T4 is a solution that generates code before compiling. The other solution exists at the other end of the spectrum: IL rewriters such as CciSharp can be used to modify (and generate) code after compiling.
 
 T4 is a good step in the metaprogramming evolution. It allows generating one (or more) classes from a given template. T4 templates allow you to use an ASP-like syntax to create C# code using C# code. [Side note: T4 can generate a lot more than C# code; it can generate any kind of text files].
 

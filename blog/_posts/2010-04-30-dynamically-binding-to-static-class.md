@@ -8,7 +8,7 @@ One limitation is dynamically accessing static (class-scoped) members. The _dyna
 
 One can use the [DynamicObject](http://msdn.microsoft.com/en-us/library/system.dynamic.dynamicobject.aspx?WT.mc_id=DT-MVP-5000058) class to redirect instance member access to static member access. This approach was first explored in David Ebbo's blog post ["Using C# dynamic to call static members"](https://web.archive.org/web/20100125023227/http://blogs.msdn.com/davidebb/archive/2009/10/23/using-c-dynamic-to-call-static-members.aspx). However, this approach brings with it its own limitation.
 
-The general concept is to implement a DynamicObject type that uses reflection to access static members. This makes sense since _dynamic_ may be seen as a more user-friendly type of reflection (of course, this simple interpretation ignores a lot of other DLR benefits). Unfortunately, DynamicObject does not support the concept of ref/out parameters, even though they are fully supported by _dynamic_. There is a work-around for this: wrapping ref or out parameters, adding a layer of indirection. The RefOutArg class was invented for this purpose ([official source](http://nitokitchensink.codeplex.com/SourceControl/changeset/view/51391#1073961)):
+The general concept is to implement a DynamicObject type that uses reflection to access static members. This makes sense since _dynamic_ may be seen as a more user-friendly type of reflection (of course, this simple interpretation ignores a lot of other DLR benefits). Unfortunately, DynamicObject does not support the concept of ref/out parameters, even though they are fully supported by _dynamic_. There is a work-around for this: wrapping ref or out parameters, adding a layer of indirection. The RefOutArg class was invented for this purpose:
 
 {% highlight csharp %}
 
@@ -69,7 +69,7 @@ public sealed class RefOutArg
 
 RefOutArg is a very simple class that contains a single value (which can be accessed either as _object_ or _dynamic_).
 
-The DynamicStaticTypeMembers class enables dynamic access to static members. It is similar to David's StaticMembersDynamicWrapper, only this class allows setting static properties, invoking overloaded static methods, and ref/out parameters using RefOutArg ([official source](http://nitokitchensink.codeplex.com/SourceControl/changeset/view/51391#1073960)):
+The DynamicStaticTypeMembers class enables dynamic access to static members. It is similar to David's StaticMembersDynamicWrapper, only this class allows setting static properties, invoking overloaded static methods, and ref/out parameters using RefOutArg:
 
 {% highlight csharp %}
 

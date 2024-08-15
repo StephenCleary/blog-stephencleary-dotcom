@@ -136,7 +136,7 @@ public sealed class BackgroundTaskManager : IRegisteredObject
 }
 {% endhighlight %}
 
-`BackgroundTaskManager` is a singleton that keeps track of background operations. It uses an [AsyncCountdownEvent](http://nitoasyncex.codeplex.com/wikipage?title=AsyncCountdownEvent) from [AsyncEx](http://nitoasyncex.codeplex.com/) as a counter of background operations (plus an extra count that is decremented when ASP.NET notifies us that the AppDomain is going down).
+`BackgroundTaskManager` is a singleton that keeps track of background operations. It uses an AsyncCountdownEvent from [AsyncEx](https://github.com/StephenCleary/AsyncEx) as a counter of background operations (plus an extra count that is decremented when ASP.NET notifies us that the AppDomain is going down).
 
 You can queue synchronous or asynchronous work by calling `Run`:
 

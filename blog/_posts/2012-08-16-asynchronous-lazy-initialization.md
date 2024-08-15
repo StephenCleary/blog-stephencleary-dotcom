@@ -82,7 +82,7 @@ public async Task UseResource()
 
 ## Update, 2012-09-30
 
-The AsyncLazy\<T> type is now part of [Nito.AsyncEx](http://nitoasyncex.codeplex.com/), which you can get via NuGet.
+The AsyncLazy\<T> type is now part of [Nito.AsyncEx](https://github.com/StephenCleary/AsyncEx), which you can get via NuGet.
 
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>

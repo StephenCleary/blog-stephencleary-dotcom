@@ -2,7 +2,7 @@
 layout: post
 title: "Naming Unit Tests"
 ---
-I spent some of this last weekend writing my first real unit tests, and I noticed by the end of the weekend that they were not exactly maintainable (a common problem for first-time unit testers). I understood the theory of unit tests, so I didn't make the mistakes of having dependent tests or testing multiple failures in a single unit test. However, my unit tests are on the long side (up to ~20 lines), mainly because I'm testing a complex threading and synchronization library ([Nito.Async](http://www.codeplex.com/NitoAsync))
+I spent some of this last weekend writing my first real unit tests, and I noticed by the end of the weekend that they were not exactly maintainable (a common problem for first-time unit testers). I understood the theory of unit tests, so I didn't make the mistakes of having dependent tests or testing multiple failures in a single unit test. However, my unit tests are on the long side (up to ~20 lines), mainly because I'm testing a complex threading and synchronization library ([Nito.Async](https://github.com/StephenClearyArchive/Nito.Asynchronous))
 
 My biggest problem was naming. There are many different situations that need to be tested when working with these low-level synchronization objects (indeed, I've been enlightened that code coverage is a nearly useless metric for the Nito.Async library). As a result, there are more than 100 unit tests already, and I still have one of the more complex components to test. Even though the unit tests are grouped by component, the individual test names are still inadequate.
 

@@ -2,7 +2,7 @@
 layout: post
 title: "SimplePropertyPath: A Poor Man's Binding"
 ---
-This post illustrates one of several utility classes that are in the [Nito.MVVM](http://nitomvvm.codeplex.com/) library: SimplePropertyPath.
+This post illustrates one of several utility classes that are in the [Nito.MVVM](https://github.com/StephenCleary/Mvvm) library: SimplePropertyPath.
 
 SimplePropertyPath is used to create a very simple binding using only [INotifyPropertyChanged](http://msdn.microsoft.com/en-us/library/system.componentmodel.inotifypropertychanged.aspx?WT.mc_id=DT-MVP-5000058) and not using [DependencyProperty](http://msdn.microsoft.com/en-us/library/system.windows.dependencyproperty.aspx?WT.mc_id=DT-MVP-5000058) or [DependencyObject](http://msdn.microsoft.com/en-us/library/system.windows.dependencyobject.aspx?WT.mc_id=DT-MVP-5000058). The [System.Windows.Data.Binding](http://msdn.microsoft.com/en-us/library/system.windows.data.binding.aspx?WT.mc_id=DT-MVP-5000058) class is much more powerful, but is dependent on the WPF-specific dependency property/object system. SimplePropertyPath only uses INotifyPropertyChanged, which gives it two advantages:
 
@@ -108,7 +108,7 @@ Assert.AreEqual(113, path.Value);
 
 Finally, SimplePropertyPath will raise its own INotifyPropertyChanged for its Value property every time it changes, whether it was caused by a change in the "childmost" property or any of the objects along the path.
 
-SimplePropertyPath is used by the [Nito.MVVM](http://nitomvvm.codeplex.com/) library as a building block to construct some of the more advanced classes, such as MultiProperty and MultiCommand. However, it can be useful in its own right.
+SimplePropertyPath is used by the [Nito.MVVM](https://github.com/StephenCleary/Mvvm) library as a building block to construct some of the more advanced classes, such as MultiProperty and MultiCommand. However, it can be useful in its own right.
 
 [Note: all of the examples above were copied almost verbatim from the unit tests in the Nito.MVVM library].
 

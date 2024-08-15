@@ -87,7 +87,7 @@ Writing your own TaskScheduler is possible, but frustrating due to the lack of M
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
 
-If you need a specific thread (e.g., an STA thread) that supports TaskScheduler, you can use the [**AsyncContextThread** type](http://nitoasyncex.codeplex.com/wikipage?title=AsyncContextThread){:.alert-link} in the [Nito.AsyncEx library](http://nuget.org/packages/Nito.AsyncEx){:.alert-link}.
+If you need a specific thread (e.g., an STA thread) that supports TaskScheduler, you can use the [**AsyncContextThread** type](https://github.com/StephenCleary/AsyncEx){:.alert-link} in the [Nito.AsyncEx library](http://nuget.org/packages/Nito.AsyncEx){:.alert-link}.
 </div>
 
 There are some pretty cool tricks we can pull off using the built-in TaskScheduler/TaskFactory types. We'll look at more advanced TaskScheduler situations in later posts.

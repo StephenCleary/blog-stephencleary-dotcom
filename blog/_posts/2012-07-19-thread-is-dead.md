@@ -13,5 +13,5 @@ Friends don't let friends use Thread. Or BackgroundWorker. It is time for these 
 
 ...
 
-OK, OK, you can use a thread _if_ you need to implement a specific scheduling context for a task that isn't already provided. But the _only_ case I can think of for this is if you need an STA context - and in that case, you can use [AsyncContextThread](http://nitoasyncex.codeplex.com/wikipage?title=AsyncContextThread).
+OK, OK, you can use a thread _if_ you need to implement a specific scheduling context for a task that isn't already provided. But the _only_ case I can think of for this is if you need an STA context - and in that case, you can use [AsyncContextThread](https://github.com/StephenCleary/AsyncEx).
 

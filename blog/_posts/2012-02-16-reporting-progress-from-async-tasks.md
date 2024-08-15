@@ -74,7 +74,7 @@ In _other_ words, don't throw exceptions from Progress\<T>.ProgressChanged. :)
 
 ## More Progress Reporter Implementations!
 
-The callback-based Progress\<T> is great for general use, but there's no reason you couldn't write your own IProgress\<T> that works better with your own code base. Here are some implementations from the [AsyncEx library:](http://nitoasyncex.codeplex.com)
+The callback-based Progress\<T> is great for general use, but there's no reason you couldn't write your own IProgress\<T> that works better with your own code base. Here are some implementations from the [AsyncEx library:](https://github.com/StephenCleary/AsyncEx)
 
   - **PropertyProgress\<T>** has a property called Progress and implements [INotifyPropertyChanged](http://msdn.microsoft.com/en-us/library/system.componentmodel.inotifypropertychanged.aspx?WT.mc_id=DT-MVP-5000058), so progress updates can update data bindings. This implementation also captures its context just like Progress\<T>, which is expected for data binding updates.
   - **ObserverProgress\<T>** forwards progress updates to an [IObserver\<T>](http://msdn.microsoft.com/en-us/library/dd783449.aspx?WT.mc_id=DT-MVP-5000058), where they can be composed using Rx.

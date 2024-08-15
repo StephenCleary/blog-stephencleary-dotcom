@@ -187,7 +187,7 @@ if (asyncInstance != null)
     await asyncInstance.Initialization;
 {% endhighlight %}
 
-However, if you're creating a type by data binding, or using IoC/DI to inject your view models into your view's data context, then you don't really have a place where you interact with the top-level instance. Data binding will take care of updating the UI when the initialization completes _unless the initialization fails_, so you'll need to surface failures. Unfortunately, `Task` does not implement `INotifyPropertyChanged`, so the task completion is not surfaced automatically. You can use a type like [NotifyTaskCompletion type in the AsyncEx library](http://nitoasyncex.codeplex.com/wikipage?title=NotifyTaskCompletion) to make this easy:
+However, if you're creating a type by data binding, or using IoC/DI to inject your view models into your view's data context, then you don't really have a place where you interact with the top-level instance. Data binding will take care of updating the UI when the initialization completes _unless the initialization fails_, so you'll need to surface failures. Unfortunately, `Task` does not implement `INotifyPropertyChanged`, so the task completion is not surfaced automatically. You can use a type like [NotifyTaskCompletion (now called `NotifyTask`) type in the Mvvm library](https://github.com/StephenCleary/Mvvm) to make this easy:
 
 {% highlight csharp %}
 public sealed class MyViewModel : INotifyPropertyChanged, IAsyncInitialization

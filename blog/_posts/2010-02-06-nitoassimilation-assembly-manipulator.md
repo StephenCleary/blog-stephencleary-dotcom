@@ -2,7 +2,7 @@
 layout: post
 title: "Nito.Assimilation - the Assembly Manipulator"
 ---
-There's a growing need for a nicer "cross-platform" story. The [Nito.Linq](http://nitolinq.codeplex.com/) library has temporarily stalled, due to the complexity of the project with regards to multiple platforms. Currently, we support:
+There's a growing need for a nicer "cross-platform" story. The [Nito.Linq](https://github.com/StephenClearyArchive/Nito.LINQ) library has temporarily stalled, due to the complexity of the project with regards to multiple platforms. Currently, we support:
 
 - .NET 3.5 SP1 (Client profile compatible) with Rx
 - .NET 3.5 SP1 (Client profile compatible) without Rx
@@ -24,7 +24,7 @@ Nito.Assimilation is the open-source equivalent. It's intended to be a tool for 
 
 The terminology can certainly get confusing! I'm still brainstorming for better words.
 
-Anyway, Nito.Assimilation has reached its first milestone: it is capable of creating metadata assemblies from regular assemblies (along with XML documentation, of course). It is currently included in the source code of the [Nito.Linq](http://nitolinq.codeplex.com/) library (though eventually it will probably become its own project). It's been successfully used to create "metadata profiles" of the .NET 3.5 SP1 Client profile and the .NET 3.5 Compact Framework. Applications built against these metadata assemblies have working IntelliSense and execute without problems (binding to the real assemblies at runtime).
+Anyway, Nito.Assimilation has reached its first milestone: it is capable of creating metadata assemblies from regular assemblies (along with XML documentation, of course). It is currently included in the source code of the [Nito.Linq](https://github.com/StephenClearyArchive/Nito.LINQ) library (though eventually it will probably become its own project). It's been successfully used to create "metadata profiles" of the .NET 3.5 SP1 Client profile and the .NET 3.5 Compact Framework. Applications built against these metadata assemblies have working IntelliSense and execute without problems (binding to the real assemblies at runtime).
 
 Enjoy!
 

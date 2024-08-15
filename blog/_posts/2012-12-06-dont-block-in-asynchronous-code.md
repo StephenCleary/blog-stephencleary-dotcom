@@ -89,7 +89,7 @@ static async Task Test()
 }
 {% endhighlight %}
 
-Most people would not write code like this. It's very unnatural to call `Task.Wait` in an `async` method; the natural code would use `await` instead. I only came across this behavior while writing unit tests for my [AsyncEx](http://nitoasyncex.codeplex.com/) library; these unit tests can get pretty complex and can involve a mixture of synchronous and asynchronous code.
+Most people would not write code like this. It's very unnatural to call `Task.Wait` in an `async` method; the natural code would use `await` instead. I only came across this behavior while writing unit tests for my [AsyncEx](https://github.com/StephenCleary/AsyncEx) library; these unit tests can get pretty complex and can involve a mixture of synchronous and asynchronous code.
 
 In conclusion, we already knew [not to block **on** asynchronous code]({% post_url 2012-07-12-dont-block-on-async-code %}); now we know not to block **in** asynchronous code either!
 

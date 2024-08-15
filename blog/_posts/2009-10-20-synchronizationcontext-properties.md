@@ -33,7 +33,7 @@ The "Windows Forms" entry refers to the [System.Windows.Forms.WindowsFormsSynchr
 
 The "Windows Presentation Foundation and Silverlight" entry refers to the [System.Windows.Threading.DispatcherSynchronizationContext](http://msdn.microsoft.com/en-us/library/system.windows.threading.dispatchersynchronizationcontext.aspx?WT.mc_id=DT-MVP-5000058), which is used by the GUI thread(s) in Windows Presentation Foundation and Silverlight applications. Other threads in the same application may use different SynchronizationContext implementations.
 
-The "Nito" entry refers to the Nito.Async.ActionDispatcherSynchronizationContext from the [Nito.Async](http://nitoasync.codeplex.com/) library. This includes Nito.Async.ActionThread threads.
+The "Nito" entry refers to the Nito.Async.ActionDispatcherSynchronizationContext from the [Nito.Async](https://github.com/StephenClearyArchive/Nito.Asynchronous) library. This includes Nito.Async.ActionThread threads.
 
 The "Default" entry refers the default implementation of [System.Threading.SynchronizationContext](http://msdn.microsoft.com/en-us/library/system.threading.synchronizationcontext.aspx?WT.mc_id=DT-MVP-5000058). This includes ThreadPool and Thread class threads, Windows Services, and Console applications, unless that thread replaces the default with a different SynchronizationContext.
 
@@ -57,5 +57,5 @@ The "Supports Equality Comparision" property means that instances of that Synchr
 
 For more details, see the previous SynchronizationContext-related posts [Gotchas from SynchronizationContext!]({% post_url 2009-08-14-gotchas-from-synchronizationcontext %}) and [Another SynchronizationContext Gotcha: InvokeRequired?]({% post_url 2009-09-22-another-synchronizationcontext-gotcha %})
 
-[The Nito.Async library](http://nitoasync.codeplex.com/) contains a Nito.Async.SynchronizationContextRegister that can be used by a program to query properties of a SynchronizationContext implementation (except the "Supports Equality Comparision" property). This is useful when writing .NET multi-host-compatible asynchronous components.
+[The Nito.Async library](https://github.com/StephenClearyArchive/Nito.Asynchronous) contains a Nito.Async.SynchronizationContextRegister that can be used by a program to query properties of a SynchronizationContext implementation (except the "Supports Equality Comparision" property). This is useful when writing .NET multi-host-compatible asynchronous components.
 

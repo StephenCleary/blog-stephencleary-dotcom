@@ -2,7 +2,7 @@
 layout: post
 title: "I/O Limitation in Windows"
 ---
-Earlier today I was stress-testing a SerialPort component for [Nito.Async](http://nitoasync.codeplex.com/) when I ran into an unusual error: ERROR_NO_SYSTEM_RESOURCES (1450).
+Earlier today I was stress-testing a SerialPort component for [Nito.Async](https://github.com/StephenClearyArchive/Nito.Asynchronous) when I ran into an unusual error: ERROR_NO_SYSTEM_RESOURCES (1450).
 
 This error can be caused by exhausting any of several OS resources, though all the examples I've found deal with exhausing memory-related resources. In my particular example, I was trying to shove a 600 MB file across a serial port all at once.
 

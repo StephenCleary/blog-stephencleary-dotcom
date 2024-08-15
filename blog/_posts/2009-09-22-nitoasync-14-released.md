@@ -2,7 +2,7 @@
 layout: post
 title: "Nito.Async 1.4 Released"
 ---
-Today marks a good day: at long last, [Nito.Async](http://www.codeplex.com/NitoAsync) Version 1.4 has been released!
+Today marks a good day: at long last, [Nito.Async](https://github.com/StephenClearyArchive/Nito.Asynchronous) Version 1.4 has been released!
 
 One thing I'm proud of in this release is my unit test coverage. Those were some very adventerous unit tests to write, too!
 

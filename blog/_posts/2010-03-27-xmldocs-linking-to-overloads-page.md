@@ -37,5 +37,5 @@ In my projects, I use the following XSLT transformation to automatically transla
        </xsl:template>
     </xsl:stylesheet>
 
-By the way, it's not difficult to include an XSLT transformation as part of an MSBuild project file (with the [MSBuild Extension Pack](http://msbuildextensionpack.codeplex.com/)). It's beyond the scope of this blog post, but you can check out the [Nito.Async main project build file](http://nitoasync.codeplex.com/SourceControl/changeset/view/40861#324550) for an example.
+By the way, it's not difficult to include an XSLT transformation as part of an MSBuild project file (with the [MSBuild Extension Pack](https://github.com/mikefourie-zz/MSBuildExtensionPack)). It's beyond the scope of this blog post, but you can check out the Nito.Async main project build file for an example.
 

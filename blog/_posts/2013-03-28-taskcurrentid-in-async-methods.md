@@ -68,7 +68,7 @@ The output of this program is `1,null,2`. That pesky `null` is still there! The 
 
 Note that this is an implementation detail. I'm not aware of any documentation stating that the first part of a thread pool `async` method runs as a task and the rest of it never will. It's likely that this behavior is just the result of the easiest and most efficient implementation.
 
-I do make a different choice for my [AsyncContext](http://nitoasyncex.codeplex.com/wikipage?title=AsyncContext) type. I started off with a design similar to the thread pool task scheduler (executing bare `Action` delegates), but I found the code simplified quite nicely if I treated _everything_ as a `Task`. So this program will always use tasks:
+I do make a different choice for my [AsyncContext](https://github.com/StephenCleary/AsyncEx) type. I started off with a design similar to the thread pool task scheduler (executing bare `Action` delegates), but I found the code simplified quite nicely if I treated _everything_ as a `Task`. So this program will always use tasks:
 
 {% highlight csharp %}
 using System;

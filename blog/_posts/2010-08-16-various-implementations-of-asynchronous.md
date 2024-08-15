@@ -57,7 +57,7 @@ BackgroundWorker does have one rather significant drawback. It works perfectly f
 
 - **Nesting.** BackgroundWorker's problem with nesting is because the DoWork delegate is not given a SynchronizationContext in which to run. Because of this, any time RunWorkerAsync is called from DoWork, the ProgressChanged and RunWorkerCompleted events on the child BackgroundWorker are _not_ synchronized to the UI thread (or to the parent BackgroundWorker). This can be solved one of two ways:
   - If the child BackgroundWorker should synchronize to the UI, then the parent BackgroundWorker can manually install the UI SynchronizationContext in its DoWork delegate by calling SynchronizationContext.SetSynchronizationContext.
-  - If the child BackgroundWorker should synchronize to the parent BackgroundWorker (not the UI), then the parent BackgroundWorker can run a synchronization loop using an object like [Nito.Async.ActionDispatcher](http://nitoasync.codeplex.com/). Alternatively, the parent BackgroundWorker could be replaced entirely by a [Nito.Async.ActionThread](http://nitoasync.codeplex.com/).
+  - If the child BackgroundWorker should synchronize to the parent BackgroundWorker (not the UI), then the parent BackgroundWorker can run a synchronization loop using an object like [Nito.Async.ActionDispatcher](https://github.com/StephenClearyArchive/Nito.Asynchronous). Alternatively, the parent BackgroundWorker could be replaced entirely by a [Nito.Async.ActionThread](https://github.com/StephenClearyArchive/Nito.Asynchronous).
 
 <div class="alert alert-danger" markdown="1">
 <i class="fa fa-exclamation-triangle fa-2x pull-left"></i>

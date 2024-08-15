@@ -245,5 +245,5 @@ Async Diagnostics works by capturing the diagnostic stack at the time the except
 
 ## Call to Action
 
-Please download Async Diagnostics and take it for a spin! I've run a number of tests but haven't tried it on really complex code bases. Let me know (in the [AsyncEx library discussions](https://nitoasyncex.codeplex.com/discussions)) if it doesn't work!
+Please download Async Diagnostics and take it for a spin! I've run a number of tests but haven't tried it on really complex code bases. Let me know (in the [AsyncDiagnostics library issues](https://github.com/StephenCleary/AsyncDiagnostics)) if it doesn't work!
 

@@ -87,7 +87,7 @@ This blog post just scratched the surface of the complexity of the built-in .NET
  - There are additional types of messages that fall under "ActivityTracing": Start, Stop, etc. These can be used in addition to the existing Verbose to Critical hierarchy.
  - There's a [Trace.CorrelationManager](http://msdn.microsoft.com/en-us/library/system.diagnostics.trace.correlationmanager.aspx?WT.mc_id=DT-MVP-5000058) class that enables "grouping" of traces into logical operations. This is used in conjection with the ActivityTracing messages to relate traces together that would otherwise get intermixed with other traces.
 
-For more information, see [this SO answer](http://stackoverflow.com/questions/576185/logging-best-practices/939944#939944) and the [MSDN documentation](http://msdn.microsoft.com/en-us/library/zs6s4h68.aspx?WT.mc_id=DT-MVP-5000058). Also, check out [Essential Diagnostics](http://essentialdiagnostics.codeplex.com/) on CodePlex before writing your own extensions; the most useful things have already been done.
+For more information, see [this SO answer](http://stackoverflow.com/questions/576185/logging-best-practices/939944#939944) and the [MSDN documentation](http://msdn.microsoft.com/en-us/library/zs6s4h68.aspx?WT.mc_id=DT-MVP-5000058).
 
 ## Other TraceSources
 

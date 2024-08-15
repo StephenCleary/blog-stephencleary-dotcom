@@ -141,5 +141,5 @@ Note that all context-based actions (setting the current context when starting a
 
 I'm playing around with a few classes that make asynchronous contexts a little easier to use. Observable elements bound to a context are placed into a structure similar to Timestamped\<T> (which binds observable elements to a timestamp), and there are special binding and verification operators. The actual AsynchronousContext type also includes thread checking to ensure that it is used in a synchronized fashion.
 
-However, I'm just not pleased with how usable it is. I'll continue playing with it over the next week or so, and if I can find a good solution, I'll post it here and put it into [Nito.Async](http://nitoasync.codeplex.com/). Suggestions are welcome. :)
+However, I'm just not pleased with how usable it is. I'll continue playing with it over the next week or so, and if I can find a good solution, I'll post it here and put it into [Nito.Async](https://github.com/StephenClearyArchive/Nito.Asynchronous). Suggestions are welcome. :)
 

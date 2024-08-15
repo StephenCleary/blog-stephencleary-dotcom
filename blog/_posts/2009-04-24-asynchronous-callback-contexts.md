@@ -24,7 +24,7 @@ System.Timers.Timer does not change "cookie" when it is disposed because the und
 
 ## Reusable CallbackContext Type
 
-One of the new classes in version 1.2 of the [Nito Async](http://nitoasync.codeplex.com/) library is a reusable CallbackContext type. This class encapsulates all the semantics necessary, and introduces a few new terms:
+One of the new classes in version 1.2 of the [Nito Async](https://github.com/StephenClearyArchive/Nito.Asynchronous) library is a reusable CallbackContext type. This class encapsulates all the semantics necessary, and introduces a few new terms:
 
 - A delegate may be _bound_ to a CallbackContext. Binding a delegate results in a new delegate (the _bound delegate_) - which wraps the original delegate.
 - Every bound delegate is either _valid_ or _invalid_. When a valid delegate executes, it will execute its wrapped delegate; when an invalid delegate executes, it will do nothing.
@@ -33,5 +33,5 @@ Delegates are bound to the CallbackContext by calling CallbackContext.Bind; dele
 
 To use CallbackContext from an asynchronous component, bind each delegate that needs to check the context. Then call CallbackContext.Reset when the operation is cancelled. CallbackContext also derives from IDisposable and implements Dispose (as a synonym for Reset) to remind users to call CallbackContext.Dispose when the asynchronous component is disposed.
 
-The only other note regarding CallbackContext is that the delegates should be synchronized (using SynchronizingObject or SynchronizationContext) before the bound delegate is invoked. We are considering adding overloads to CallbackContext to allow for synchronization and binding in a single step, ensuring the correct order; if they are added, they will be included in [Nito.Async](http://nitoasync.codeplex.com/) version 1.3.
+The only other note regarding CallbackContext is that the delegates should be synchronized (using SynchronizingObject or SynchronizationContext) before the bound delegate is invoked. We are considering adding overloads to CallbackContext to allow for synchronization and binding in a single step, ensuring the correct order; if they are added, they will be included in [Nito.Async](https://github.com/StephenClearyArchive/Nito.Asynchronous) version 1.3.
 

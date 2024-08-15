@@ -4,7 +4,7 @@ title: "MSBuild.ExtensionPack Accepts DynamicExecute Task"
 ---
 Sorry for the lack of blog postings lately. I have been busy the last week polishing, refactoring, and documenting my first (and hopefully only) MSBuild custom task: DynamicExecute. DynamicExecute makes it possible to define and execute .NET methods using MSBuild 3.5.
 
-[Mike Fourie](http://freetodev.spaces.live.com/default.aspx) has [accepted](http://freetodev.spaces.live.com/blog/cns!EC3C8F2028D842D5!927.entry) DynamicExecute for the next release of the [MSBuild Extension Pack](http://msbuildextensionpack.codeplex.com/). It's available as Beta in the source code download until the next official release, when it will be included in the regular binaries.
+[Mike Fourie](http://freetodev.spaces.live.com/default.aspx) has [accepted](http://freetodev.spaces.live.com/blog/cns!EC3C8F2028D842D5!927.entry) DynamicExecute for the next release of the [MSBuild Extension Pack](https://github.com/mikefourie-zz/MSBuildExtensionPack). It's available as Beta in the source code download until the next official release, when it will be included in the regular binaries.
 
 DynamicExecute is similar to the inline tasks that are planned for MSBuild 4.0. Both DynamicExecute and inline tasks allow a build master to write C# code within the build script that is compiled and then executed as part of the build. There are a few differences, though:
 

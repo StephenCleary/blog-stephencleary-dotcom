@@ -16,19 +16,19 @@ The last of those examples is what [ConditionalWeakTable](http://msdn.microsoft.
 
 Somehow I missed that class when the .NET 4.0 changes were announced, but Jeffrey Richter gave an example of it in his ".NET Nuggets" talk last week as part of [Wintellect's T.E.N.](http://www.wintellect.com/ten) event. Essentially, you can use ConditionalWeakTable to define a (threadsafe) mapping from an object _instance_ to any type of value you need. This allows you to treat any object as an "expando" object, "attaching" information to it. When the object instance is garbage collected, any attached values are automatically cleaned up as well.
 
-This is a powerful concept, and it was the primary motivation behind my (pre-release) [Nito.Weakness](http://nitoweakness.codeplex.com/) library. According to Mr. Richter, ConditionalWeakTable is notified of object collection by the garbage collector rather than using a polling thread, which is good. There are a couple of caveats, though, when using CWT.
+This is a powerful concept, and it was the primary motivation behind my (pre-release) Nito.Weakness library. According to Mr. Richter, ConditionalWeakTable is notified of object collection by the garbage collector rather than using a polling thread, which is good. There are a couple of caveats, though, when using CWT.
 
 <div class="alert alert-danger" markdown="1">
 <i class="fa fa-exclamation-triangle fa-2x pull-left"></i>
 
-**Update 2011-01-22:** The Nito.Weakness library has been postponed indefinitely. Instead, I've released the ConnectedProperties library on both [CodePlex](http://connectedproperties.codeplex.com/){:.alert-link} and [NuGet](http://nuget.org/Packages/Packages/Details/Connected-Properties-(by-Nito-Programs)-1-0-0){:.alert-link}. ConnectedProperties is a straightforward wrapper for ConditionalWeakTable.
+**Update 2011-01-22:** The Nito.Weakness library has been postponed indefinitely. Instead, I've released the ConnectedProperties library on both [GitHub](https://github.com/StephenCleary/ConnectedProperties){:.alert-link} and [NuGet](http://nuget.org/Packages/Packages/Details/Connected-Properties-(by-Nito-Programs)-1-0-0){:.alert-link}. ConnectedProperties is a straightforward wrapper for ConditionalWeakTable.
 </div>
 
 ## Caveat 1: Restrictions on TKey
 
 Be careful what type you specify for **TKey**. I stronly recommend that you only use types that use reference equality. This means that I _don't_ recommend you use **string** like Mr. Richter did during his demo (and in his example source code). It's well and good for the author of [CLR via C#](http://www.amazon.com/gp/product/0735621632?ie=UTF8&tag=stepheclearys-20&linkCode=as2&camp=1789&creative=390957&creativeASIN=0735621632){:rel="nofollow"} to use **TKey = System.String**, but mere mortals like you and I should steer clear. **string** not only uses value equality, but also has a complex interning feature. Remember, ConditionalWeakTable tracks object _instances_, not object _values_.
 
-Nito.Weakness contains [some code (IsReferenceEquatable)](http://nitoweakness.codeplex.com/SourceControl/changeset/view/b85303561fd1#Source%2f_internal%2fExtensions.cs) to determine if a type uses reference or value equality, and refuses to track object instances that use value equality. Perhaps this is a bit strong, but I'm planning to add this requirement in any generic ConditionalWeakTable wrappers that I use in my own code.
+Nito.Weakness contains some code (IsReferenceEquatable) to determine if a type uses reference or value equality, and refuses to track object instances that use value equality. Perhaps this is a bit strong, but I'm planning to add this requirement in any generic ConditionalWeakTable wrappers that I use in my own code.
 
 ## Caveat 2: IDisposable is ignored on TValue
 

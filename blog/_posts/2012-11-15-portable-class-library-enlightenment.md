@@ -8,7 +8,7 @@ title: "Portable Class Library Enlightenment / Adaptation"
 **Update, 2014-05-07:** I have been giving it a lot of thought, and I have decided that the [Bait-and-Switch approach](http://log.paulbetts.org/the-bait-and-switch-pcl-trick/){:.alert-link} described by Paul Betts is a better solution than the one described below. This blog post is retained for historical purposes.
 </div>
 
-I have a long-standing interest in [portable class libraries (PCL)](http://msdn.microsoft.com/en-us/library/gg597391.aspx?WT.mc_id=DT-MVP-5000058), because most of my open-source contributions are widely-applicable libraries (including [Comparers](http://comparers.codeplex.com/), [ArraySegments](http://arraysegments.codeplex.com/), and of course [AsyncEx](http://nitoasyncex.codeplex.com/)). This post is an explanation of a technique that I learned from Rx; it's useful for any PCL that is actually a _library_ (i.e., not a portable _application_).
+I have a long-standing interest in [portable class libraries (PCL)](http://msdn.microsoft.com/en-us/library/gg597391.aspx?WT.mc_id=DT-MVP-5000058), because most of my open-source contributions are widely-applicable libraries (including [Comparers](https://github.com/StephenCleary/Comparers), [ArraySegments](https://github.com/StephenCleary/ArraySegments), and of course [AsyncEx](https://github.com/StephenCleary/AsyncEx)). This post is an explanation of a technique that I learned from Rx; it's useful for any PCL that is actually a _library_ (i.e., not a portable _application_).
 
 <div class="alert alert-info" markdown="1">
 <i class="fa fa-hand-o-right fa-2x pull-left"></i>
@@ -314,6 +314,3 @@ If you're modifying an existing library to have a portable core, you should keep
 Daniel Plaisted's blog post [How to Make Portable Class Libraries Work for You](https://docs.microsoft.com/en-us/archive/blogs/dsplaisted/how-to-make-portable-class-libraries-work-for-you?WT.mc_id=DT-MVP-5000058).
 
 The [original Rx team blog post describes their "Platform Enlightenment" (section "Intermezzo - The refactored API surface")](https://docs.microsoft.com/en-us/archive/blogs/rxteam/reactive-extensions-v2-0-has-arrived?WT.mc_id=DT-MVP-5000058).
-
-The [Portable Class Libraries Contrib project has a "Platform Adaptation" implementation (under Source/Portable.Runtime/Adaptation)](http://pclcontrib.codeplex.com/SourceControl/changeset/view/82200).
-

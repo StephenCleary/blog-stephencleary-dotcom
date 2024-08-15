@@ -14,7 +14,7 @@ One of the design problems of `BackgroundWorker` is that the semantics get surpr
 
 A similar problem is that `BackgroundWorker` doesn't work well with `async` code. An `async DoWork` handler will exit early, causing the `RunWorkerCompleted` to fire before the method is completed.
 
-Also, it's difficult to call `async` code from within a (properly synchronous) `DoWork`; you either have to call `Task.Wait` or establish your own `async`-friendly synchronization context (e.g., [AsyncContext](https://nitoasyncex.codeplex.com/wikipage?title=AsyncContext)).
+Also, it's difficult to call `async` code from within a (properly synchronous) `DoWork`; you either have to call `Task.Wait` or establish your own `async`-friendly synchronization context (e.g., [AsyncContext](https://github.com/StephenCleary/AsyncEx)).
 
 On the other hand, `Task.Run` does support these scenarios: nesting, `async` delegates, and calling `async` code are all perfectly natural.
 
