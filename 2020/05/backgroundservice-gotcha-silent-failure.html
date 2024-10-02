@@ -288,6 +288,10 @@ img.comment-author-profile-image {
 
 <p>If the <code>ExecuteAsync</code> implementation throws an exception, that exception is silently swallowed and ignored. This is because <code>BackgroundService</code> captures the task from <code>ExecuteAsync</code> but never <code>await</code>s it - i.e., <a href="https://github.com/dotnet/runtime/blob/e3ffd343ad5bd3a999cb9515f59e6e7a777b2c34/src/libraries/Microsoft.Extensions.Hosting.Abstractions/src/BackgroundService.cs"><code>BackgroundService</code> uses fire-and-forget</a>.</p>
 
+<div class="alert alert-info">
+  <p><strong>Update:</strong> .NET 6 has changed this behavior. By default, exceptions thrown from <code>BackgroundService.ExecuteAsync</code> <a href="https://learn.microsoft.com/en-us/dotnet/core/compatibility/core-libraries/6.0/hosting-exception-handling" class="alert-link">now log the exception and shut down the host</a>. This blog post is preserved for historical reasons.</p>
+</div>
+
 <h2 id="problem-description">Problem Description</h2>
 
 <p>This problem will surface as <code>BackgroundService</code> instances just stopping, without any indication of a problem. What actually happens if <code>ExecuteAsync</code> throws an exception is that the exception is captured and placed on the <code>Task</code> that was returned from <code>ExecuteAsync</code>. The problem is that <code>BackgroundService</code> doesn’t observe that task, so there’s no logging and no process crash - the <code>BackgroundService</code> has completed executing but it just sits there doing nothing.</p>
