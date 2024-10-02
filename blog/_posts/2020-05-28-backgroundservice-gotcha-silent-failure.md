@@ -12,6 +12,10 @@ I know [last time]({% post_url 2020-05-21-backgroundservice-gotcha-startup %}) I
 
 If the `ExecuteAsync` implementation throws an exception, that exception is silently swallowed and ignored. This is because `BackgroundService` captures the task from `ExecuteAsync` but never `await`s it - i.e., [`BackgroundService` uses fire-and-forget](https://github.com/dotnet/runtime/blob/e3ffd343ad5bd3a999cb9515f59e6e7a777b2c34/src/libraries/Microsoft.Extensions.Hosting.Abstractions/src/BackgroundService.cs).
 
+<div class="alert alert-info" markdown="1">
+**Update:** .NET 6 has changed this behavior. By default, exceptions thrown from `BackgroundService.ExecuteAsync` [now log the exception and shut down the host](https://learn.microsoft.com/en-us/dotnet/core/compatibility/core-libraries/6.0/hosting-exception-handling){:.alert-link}. This blog post is preserved for historical reasons.
+</div>
+
 ## Problem Description
 
 This problem will surface as `BackgroundService` instances just stopping, without any indication of a problem. What actually happens if `ExecuteAsync` throws an exception is that the exception is captured and placed on the `Task` that was returned from `ExecuteAsync`. The problem is that `BackgroundService` doesn't observe that task, so there's no logging and no process crash - the `BackgroundService` has completed executing but it just sits there doing nothing.
