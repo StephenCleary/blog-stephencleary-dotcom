@@ -8,6 +8,230 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>Cancellation, Part 5: Linking</title>
+        <description>&lt;p&gt;So far we’ve covered how &lt;a href=&quot;/2022/02/cancellation-1-overview.html&quot;&gt;cancellation is requested by one piece of code, and responded to by another piece of code&lt;/a&gt;. The requesting code has a &lt;a href=&quot;/2022/03/cancellation-2-requesting-cancellation.html&quot;&gt;standard way of requesting cancellation&lt;/a&gt;, as well as a standard way of &lt;a href=&quot;/2022/03/cancellation-3-detecting-cancellation.html&quot;&gt;detecting whether the code was canceled or not&lt;/a&gt;. Meanwhile, the responding code can observe cancellation either by &lt;a href=&quot;/2022/03/cancellation-4-polling.html&quot;&gt;polling&lt;/a&gt; or (more commonly) by &lt;a href=&quot;/2024/08/cancellation-5-registration.html&quot;&gt;registering a cancellation callback&lt;/a&gt;. So far, so good; and we’re ready for the next step!&lt;/p&gt;
+
+&lt;p&gt;In this article, we’ll look at how &lt;em&gt;linked&lt;/em&gt; cancellation tokens work.&lt;/p&gt;
+
+&lt;h2 id=&quot;linked-cancellation-tokens&quot;&gt;Linked Cancellation Tokens&lt;/h2&gt;
+
+&lt;p&gt;Linked cancellation tokens allow your code to create a &lt;code&gt;CancellationTokenSource&lt;/code&gt; that cancels whenever any other cancellation tokens are canceled, in addition to a manual cancellation request.&lt;/p&gt;
+
+&lt;p&gt;The following code creates a linked cancellation token source:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationTokenSource&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CreateLinkedTokenSource&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;DoSomethingElseAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Do something while operation is in progress, possibly calling `cts.Cancel()`&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;The &lt;code&gt;DoSomethingAsync&lt;/code&gt; method above takes a &lt;code&gt;cancellationToken&lt;/code&gt; - I’ll call this the “outer” cancellation token. It then creates a CTS that is linked to that outer token. Then, when it calls &lt;code&gt;DoSomethingElseAsync&lt;/code&gt;, it passes the token from that linked CTS, which I’ll call the “inner” cancellation token.&lt;/p&gt;
+
+&lt;p&gt;If the outer cancellation token (&lt;code&gt;cancellationToken&lt;/code&gt;) is ever canceled, then the linked CTS (&lt;code&gt;cts&lt;/code&gt;) and its inner cancellation token (&lt;code&gt;cts.Token&lt;/code&gt;) are also canceled. Furthermore, the &lt;code&gt;DoSomethingAsync&lt;/code&gt; method has the option of explicitly cancelling the linked CTS - in this case, only the inner cancellation token would be canceled, leaving the outer cancellation token unchanged.&lt;/p&gt;
+
+&lt;p&gt;Sharp observers may have noticed that the same thing can be done using registrations:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationTokenSource&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;registration&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Register&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Cancel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;DoSomethingElseAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Do something while operation is in progress, possibly calling `cts.Cancel()`&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Indeed, logically this is pretty much what is happening: you can think of a linked cancellation token source as a perfectly ordinary cancellation token source along with a registration that cancels it when some other token is canceled.&lt;/p&gt;
+
+&lt;h3 id=&quot;multiple-links&quot;&gt;Multiple Links&lt;/h3&gt;
+
+&lt;p&gt;The inner cancellation token above is canceled when the outer token is canceled &lt;em&gt;or&lt;/em&gt; when its source is explicitly canceled. Similarly, we can pass any number of cancellation tokens into &lt;code&gt;CreateLinkedTokenSource&lt;/code&gt;, and the cancellation token source it returns will be canceled when &lt;em&gt;any&lt;/em&gt; of the outer tokens are canceled.&lt;/p&gt;
+
+&lt;h2 id=&quot;use-cases&quot;&gt;Use Cases&lt;/h2&gt;
+
+&lt;p&gt;The outer token and the inner cancellation source can really represent anything; linked cancellation tokens are useful whenever you need code to be canceled if “A or B”.&lt;/p&gt;
+
+&lt;p&gt;But I suspect the most common use case is when the outer token represents an end-user cancellation request, and the inner token represents a timeout. E.g., this can happen when the business logic includes a timeout-and-retry kind of code pattern, while also allowing the end-user to cancel all the retries with a single button click.&lt;/p&gt;
+
+&lt;p&gt;One natural place where this kind of code is used is Polly. Polly will allow you to pass in a cancellation token - an outer token that is under your control. Then it passes a &lt;em&gt;potentially different&lt;/em&gt; cancellation token to your execution delegate; this inner token is controlled by Polly. Polly’s pipelines (e.g., timeout) may trigger the inner token to cancel your delegate. Naturally, if your code cancels the outer token passed to Polly, that would flow to the inner token as well. I.e., they are linked.&lt;/p&gt;
+
+&lt;p&gt;Taking a simplified code example right from the Polly homepage:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ExecuteWithTimeoutAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;ResiliencePipeline&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pipeline&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ResiliencePipelineBuilder&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AddTimeout&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TimeSpan&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FromSeconds&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;10&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Build&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pipeline&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExecuteAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;token&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;cm&quot;&gt;/* Your custom logic goes here */&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;The &lt;code&gt;ExecuteWithRetryAndTimeoutAsync&lt;/code&gt; takes an outer token &lt;code&gt;cancellationToken&lt;/code&gt; and passes it to Polly. Polly then creates a linked inner token (which includes pipeline behaviors such as the timeout), and passes the inner token (&lt;code&gt;token&lt;/code&gt;) to your delegate.&lt;/p&gt;
+
+&lt;div class=&quot;alert alert-danger&quot;&gt;
+  &lt;p&gt;&lt;i class=&quot;fa fa-exclamation-triangle fa-2x pull-left&quot;&gt;&lt;/i&gt;&lt;/p&gt;
+
+  &lt;p&gt;Delegates you pass to Polly should observe the token they get from Polly, not any other tokens!&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;p&gt;This is particularly a pitfall when you’re adding Polly pipelines to existing code, e.g., when adding timeouts to this code:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ExecuteAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;10&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;++&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Delay&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TimeSpan&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FromSeconds&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;A common mistake is to forget to update the token usage:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;c1&quot;&gt;// BAD CODE!!! DO NOT USE!!!&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ExecuteWithTimeoutAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;ResiliencePipeline&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pipeline&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ResiliencePipelineBuilder&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AddTimeout&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TimeSpan&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FromSeconds&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;10&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Build&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pipeline&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExecuteAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;token&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// BAD CODE!!! DO NOT USE!!!&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;10&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;++&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Delay&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TimeSpan&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FromSeconds&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;In this case, the delegate is still observing &lt;code&gt;cancellationToken&lt;/code&gt;, when it should be observing &lt;code&gt;token&lt;/code&gt; instead:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ExecuteWithTimeoutAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;ResiliencePipeline&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pipeline&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ResiliencePipelineBuilder&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AddTimeout&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TimeSpan&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FromSeconds&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;10&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Build&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pipeline&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExecuteAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;token&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;10&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;++&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Delay&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TimeSpan&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FromSeconds&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h2 id=&quot;sharp-corner-dont-use-operationcanceledexceptioncancellationtoken&quot;&gt;Sharp Corner: Don’t use OperationCanceledException.CancellationToken&lt;/h2&gt;
+
+&lt;p&gt;Consider the original example code again:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationTokenSource&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CreateLinkedTokenSource&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;DoSomethingElseAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Do something while operation is in progress, possibly calling `cts.Cancel()`&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Now consider some code that may call &lt;code&gt;DoSomethingAsync&lt;/code&gt; and respond to cancellation:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;c1&quot;&gt;// BAD CODE!!! DO NOT USE!!!&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;MainAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationTokenSource&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancelAfter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TimeSpan&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FromSeconds&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;2000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;OperationCanceledException&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;when&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// BAD CODE!!! DO NOT USE!!!&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;Console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;WriteLine&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;Timeout!&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Exception&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;Console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;WriteLine&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;The intent of the handling code is to do something different if the code is canceled &lt;em&gt;due to this particular cancellation source&lt;/em&gt;. Unfortunately, this code is problematic in the real world; &lt;code&gt;DoSomethingAsync&lt;/code&gt; may be using a linked cancellation token source, in which case the &lt;code&gt;OperationCanceledException.CancellationToken&lt;/code&gt; would not match &lt;code&gt;cts.Token&lt;/code&gt;, even if that was the source of the cancellation!&lt;/p&gt;
+
+&lt;p&gt;This is why I always recommend &lt;a href=&quot;/2022/03/cancellation-3-detecting-cancellation.html&quot;&gt;not using &lt;code&gt;OperationCanceledException.CancellationToken&lt;/code&gt;&lt;/a&gt;. A proper solution is to check whether that source has been triggered:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;MainAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationTokenSource&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancelAfter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TimeSpan&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FromSeconds&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;2000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;OperationCanceledException&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;when&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IsCancellationRequested&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;Console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;WriteLine&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;Timeout!&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Exception&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;Console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;WriteLine&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h3 id=&quot;checking-inner-tokens-still-dont-use-operationcanceledexceptioncancellationtoken&quot;&gt;Checking Inner Tokens: Still don’t use OperationCanceledException.CancellationToken&lt;/h3&gt;
+
+&lt;p&gt;You might be tempted to do this kind of test when using linked cancellation tokens, again to determine what the cancellation source is:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;c1&quot;&gt;// BAD CODE!!! DO NOT USE!!!&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationTokenSource&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CreateLinkedTokenSource&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancelAfter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TimeSpan&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FromSeconds&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;10&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingElseAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;OperationCanceledException&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;when&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// BAD CODE!!! DO NOT USE!!!&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Do some recovery specific to the timeout.&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;throw&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;However, this code has the same issue! It’s possible that &lt;code&gt;DoSomethingElseAsync&lt;/code&gt; may &lt;em&gt;itself&lt;/em&gt; use a linked cancellation token (or may be changed to use one in the future)!&lt;/p&gt;
+
+&lt;p&gt;The solution - again - is to not use &lt;code&gt;OperationCanceledException.CancellationToken&lt;/code&gt;:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancellationToken&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CancellationTokenSource&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CreateLinkedTokenSource&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cancellationToken&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CancelAfter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TimeSpan&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FromSeconds&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;10&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DoSomethingElseAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;OperationCanceledException&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;when&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IsCancellationRequested&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Do some recovery specific to the timeout.&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;throw&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h2 id=&quot;summary&quot;&gt;Summary&lt;/h2&gt;
+
+&lt;p&gt;Most of the time you won’t need to use linked cancellation tokens in your code, but linked cancellation tokens are useful when you need them! Some points to remember:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Dispose your cancellation token sources - including linked cancellation token sources.&lt;/li&gt;
+  &lt;li&gt;Don’t use &lt;code&gt;OperationCanceledException.CancellationToken&lt;/code&gt;; use &lt;code&gt;IsCancellationRequested&lt;/code&gt; instead.&lt;/li&gt;
+  &lt;li&gt;For any code that has multiple tokens in scope, be mindful about which one you are observing.&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        <pubDate>Thu, 10 Oct 2024 00:00:00 +0000</pubDate>
+        <link>https://blog.stephencleary.com/2024/10/cancellation-6-linking.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2024/10/cancellation-6-linking.html</guid>
+      </item>
+    
+      <item>
         <title>Cancellation, Part 5: Registration</title>
         <description>&lt;p&gt;Last time in this series I talked about &lt;a href=&quot;/2022/03/cancellation-4-polling.html&quot;&gt;how to respond to cancellation requests by polling for them&lt;/a&gt;. That’s a common approach for synchronous or CPU-bound code. In this post, I’m covering a pattern more common for asynchronous code: registration.&lt;/p&gt;
 
@@ -1119,106 +1343,6 @@ public Task&amp;lt;string&amp;gt; GetAsync() =&amp;gt; GetCoreAsync&amp;lt;Async
         <pubDate>Thu, 13 Oct 2022 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2022/10/modern-csharp-techniques-3-generic-code-generation.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2022/10/modern-csharp-techniques-3-generic-code-generation.html</guid>
-      </item>
-    
-      <item>
-        <title>Modern C# Techniques, Part 2: Value Records</title>
-        <description>&lt;p&gt;Today I’ll cover another technique for modern C# that isn’t exactly &lt;em&gt;new&lt;/em&gt;, but which the language supports much better than it used to.&lt;/p&gt;
-
-&lt;p&gt;I’m calling today’s technique Value Records, which are a form of the more general “value object” pattern that is specific to modern C#. But before we dive into the solution, let’s look at the problem.&lt;/p&gt;
-
-&lt;h2 id=&quot;primitive-obsession&quot;&gt;Primitive Obsession&lt;/h2&gt;
-
-&lt;p&gt;The name of the antipattern we’re trying to remove is Primitive Obsession. This is a highly searchable term with some great descriptions out there.&lt;/p&gt;
-
-&lt;p&gt;Essentially, Primitive Obsession is when a developer (over)uses primitives (&lt;code&gt;string&lt;/code&gt;, &lt;code&gt;int&lt;/code&gt;, &lt;code&gt;Guid&lt;/code&gt;, &lt;code&gt;decimal&lt;/code&gt;, etc) to represent business or domain concepts. One classic example is entity ids. There are a couple of problems with using primitives like this:&lt;/p&gt;
-&lt;ol&gt;
-  &lt;li&gt;The primitives are not type-safe. In other words, it’s easy to accidentally pass a &lt;code&gt;customerId&lt;/code&gt; to a method expecting a &lt;code&gt;resourceId&lt;/code&gt;. Or, say, if a method needs &lt;em&gt;both&lt;/em&gt; a &lt;code&gt;customerId&lt;/code&gt; and &lt;code&gt;resourceId&lt;/code&gt;, it’s easy to pass the parameters in the wrong order.&lt;/li&gt;
-  &lt;li&gt;Primitives support operations that don’t make sense. For example, if a &lt;code&gt;customerId&lt;/code&gt; is an &lt;code&gt;int&lt;/code&gt;, the compiler will happily let you divide it by 2, but that makes no business sense at all. A related problem is when you have &lt;em&gt;units&lt;/em&gt;, such as &lt;code&gt;distanceInFeet&lt;/code&gt; and &lt;code&gt;distanceInMeters&lt;/code&gt;; the lack of units in the type system allow these values to be (incorrectly) added together.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;h2 id=&quot;solving-primitive-obsession-with-value-objects&quot;&gt;Solving Primitive Obsession with Value Objects&lt;/h2&gt;
-
-&lt;p&gt;Value Objects are the general solution to Primitive Obsession. The idea is that you define a (simple) domain object that wraps the primitive type inside a type-safe wrapper type. In some cases, this wrapper type may have some limited domain behavior (such as validation), but in many cases Value Objects are so-called “anemic domain models”, and that’s OK. Value Objects inhabit a middle ground between primitives and full-blown domain objects.&lt;/p&gt;
-
-&lt;p&gt;Value Objects tend to behave similarly to the primitives they replace:&lt;/p&gt;
-&lt;ul&gt;
-  &lt;li&gt;Value Objects are usually immutable.&lt;/li&gt;
-  &lt;li&gt;Value Objects usually have value semantics.&lt;/li&gt;
-  &lt;li&gt;If a primitive has a useful operation (e.g., string concatenation, integer addition, or even &lt;code&gt;ToString&lt;/code&gt; or &lt;code&gt;GetHashCode&lt;/code&gt; support) that also makes sense for the domain object, then Value Objects usually support those operations.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Following these patterns allows Value Objects to essentially be type-safe replacements for primitives. Occasionally some business rules are added (e.g., validation), but just plain old Value Objects work quite well on their own, too.&lt;/p&gt;
-
-&lt;h2 id=&quot;c-and-value-records&quot;&gt;C# and Value Records&lt;/h2&gt;
-
-&lt;p&gt;The modern C# technique for Value Objects is what I call Value Records, and looks like this:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&quot;language-C#&quot;&gt;public readonly record struct CustomerId(string Value);
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Yes, that’s the whole type.&lt;/p&gt;
-
-&lt;p&gt;Breaking it down:&lt;/p&gt;
-&lt;ul&gt;
-  &lt;li&gt;Records provide value semantics, complete with equality, hash code, and &lt;code&gt;ToString&lt;/code&gt; support.&lt;/li&gt;
-  &lt;li&gt;Struct records provide a value-type wrapper, avoiding heap allocation (the size of the wrapper &lt;em&gt;is&lt;/em&gt; the size of the wrapped value).&lt;/li&gt;
-  &lt;li&gt;Readonly struct records provide immutability.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;I prefer to use a single property named &lt;code&gt;Value&lt;/code&gt;, which is similar to &lt;code&gt;Nullable&amp;lt;T&amp;gt;.Value&lt;/code&gt;, except a Value Record &lt;em&gt;always&lt;/em&gt; has a valid &lt;code&gt;Value&lt;/code&gt;. Since the type definition is just a single line, it seems silly to have them follow the one-type-per-file rule; I tend to collect Value Record types and include them in a single source file, usually called &lt;code&gt;Primitives.cs&lt;/code&gt;.&lt;/p&gt;
-
-&lt;h2 id=&quot;guidelines-for-use&quot;&gt;Guidelines for Use&lt;/h2&gt;
-
-&lt;h3 id=&quot;avoid-sharp-edges&quot;&gt;Avoid Sharp Edges&lt;/h3&gt;
-
-&lt;p&gt;I’ve used Value Records in a few projects now, and I think they work best as internal types. I don’t mean &lt;code&gt;internal&lt;/code&gt;; I mean as types that are created and unwrapped by your own code at the “edges” of your app. Then the core of your app &lt;em&gt;only&lt;/em&gt; deals with the Value Records.&lt;/p&gt;
-
-&lt;p&gt;This way you don’t have to deal with any kind of serialization, which can be a real headache. I recommend you completely ignore Newtonsoft.Json / System.Text.Json / Xml, ASP.NET parameter binding / output formatting, WPF bindings, Entity Framework value conversions, and all other forms of serialization. Instead of trying to automatically support these, just have your own code create the Value Record wrappers when reading the values from an external source (e.g., &lt;code&gt;CustomerId customerId = new(customerIdIntValue)&lt;/code&gt;), and unwrap them when writing values to an external source (e.g., &lt;code&gt;int customerIdIntValue = customerId.Value;&lt;/code&gt;).&lt;/p&gt;
-
-&lt;h3 id=&quot;choosing-primitives-to-replace&quot;&gt;Choosing Primitives to Replace&lt;/h3&gt;
-
-&lt;p&gt;Not all primitives &lt;em&gt;need&lt;/em&gt; to be Value Records. Choosing which primitives &lt;em&gt;should&lt;/em&gt; be Value Records is a skill, one which everyone is developing right now, and there are no masters of this skill yet AFAIK.&lt;/p&gt;
-
-&lt;p&gt;In my experience, I would say to use primitives by default, but use Value Records in the following situations:&lt;/p&gt;
-&lt;ol&gt;
-  &lt;li&gt;Use Value Records whenever you have similar value types that are used together.
-    &lt;ul&gt;
-      &lt;li&gt;“Similar” here can mean &lt;em&gt;conceptually&lt;/em&gt; similar or just having a similar &lt;em&gt;name&lt;/em&gt;.&lt;/li&gt;
-    &lt;/ul&gt;
-  &lt;/li&gt;
-  &lt;li&gt;Use Value Records whenever you have to &lt;em&gt;guarantee&lt;/em&gt; that a critical value type &lt;em&gt;must&lt;/em&gt; be used only in a particular way.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;The classic example of the first situation (similar types) is using Value Records for entity identifiers (&lt;code&gt;CustomerId&lt;/code&gt; and friends). Entity identifiers are conceptually similar &lt;em&gt;and&lt;/em&gt; have similar names, and usually there are multiple methods that deal with different kinds of identifiers at the same time.&lt;/p&gt;
-
-&lt;p&gt;The second situation (critical types) is more of a judgement call. I can at least give an example, though: one of my projects sends emails to users, but also has to deal with users that type in an email address that may or may not be theirs. And there are some severe repercussions for sending emails to people who haven’t asked for them; there’s actual laws in my country about that kind of behavior. So, I created a &lt;code&gt;ValidatedEmail&lt;/code&gt; Value Record for this critical type. In my model, a user has a &lt;code&gt;ValidatedEmail&lt;/code&gt; (whose value may be &lt;code&gt;null&lt;/code&gt;), and the code component that sends emails &lt;em&gt;only&lt;/em&gt; accepts a &lt;code&gt;ValidatedEmail&lt;/code&gt;. It’s comforting to know that the type system itself is enforcing the business rule “only send emails to validated email addresses”.&lt;/p&gt;
-
-&lt;h2 id=&quot;misuse&quot;&gt;Misuse&lt;/h2&gt;
-
-&lt;p&gt;Similar to last week’s technique, the primary misuse of the Value Record technique is &lt;em&gt;overuse&lt;/em&gt;. Once you start feeling the benefits of the stronger type safety from Value Records, you’ll start wanting it everywhere. You may end up temporarily suffering from “Primitive Obsession Obsession”, if you will.&lt;/p&gt;
-
-&lt;p&gt;There’s a maintenance tradeoff with using Value Records: Value Records increase the code complexity. Speficially, Value Records increase the mental burden when reading the code. Put simply: every developer knows what a &lt;code&gt;string&lt;/code&gt; is, but if they see a &lt;code&gt;CustomerId&lt;/code&gt; type, then they need to look that up. Remember, techniques like Value Records are easy to write because they’re in &lt;em&gt;your&lt;/em&gt; head &lt;em&gt;now&lt;/em&gt;, but the resulting code is more difficult to maintain (whether maintained by &lt;em&gt;others&lt;/em&gt; or yourself &lt;em&gt;later&lt;/em&gt;).&lt;/p&gt;
-
-&lt;p&gt;After all, it’s not like primitives are evil or anything like that. Primitives are a perfectly fine solution for a lot of data. &lt;code&gt;string CustomerName&lt;/code&gt; is probably just fine; it wouldn’t have any real validation and is unlikely to be confused with something else. Well, that’s true unless your domain has a ton of “names”, in which case maybe it &lt;em&gt;can&lt;/em&gt; be easily confused with another kind of name and &lt;em&gt;should&lt;/em&gt; be a Value Record.&lt;/p&gt;
-
-&lt;h2 id=&quot;history&quot;&gt;History&lt;/h2&gt;
-
-&lt;p&gt;Until records were added to the language, immutable objects were always a bit of a pain, with some going so far as to &lt;a href=&quot;https://github.com/AArnott/ImmutableObjectGraph&quot;&gt;create libraries just to help write immutable types&lt;/a&gt;. The Value Object pattern was used only when absolutely necessary, since it resulted in much more complex code (with a naturally higher probability of containing bugs).&lt;/p&gt;
-
-&lt;p&gt;If you haven’t read it yet, &lt;a href=&quot;https://andrewlock.net/series/using-strongly-typed-entity-ids-to-avoid-primitive-obsession/&quot;&gt;Andrew Lock has a great blog series on using strongly-typed entity IDs to avoid primitive obsession&lt;/a&gt;. I think overall it’s a good series conceptually, but do note that the implementation details are quite dated at this point. Also note how much the complexity is increased by trying to handle only a couple forms of serialization.&lt;/p&gt;
-
-&lt;p&gt;Record types brought immutability to C# as a first-class citizen. The initial record types were class records (reference types), which works great for many immutable types, but tends to be a heavyweight solution for Value Objects. E.g., when wrapping &lt;code&gt;int&lt;/code&gt; values, a &lt;code&gt;class record&lt;/code&gt; wrapper essentially acts as an always-boxed &lt;code&gt;int&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;These days we have readonly struct records, which are immutable &lt;em&gt;and&lt;/em&gt; lightweight, and a perfect fit for the Value Object pattern.&lt;/p&gt;
-
-&lt;h2 id=&quot;summary&quot;&gt;Summary&lt;/h2&gt;
-
-&lt;p&gt;Carefully replacing some primitive types with Value Records will increase the type safety, correctness, and maintainability of your code.&lt;/p&gt;
-</description>
-        <pubDate>Thu, 06 Oct 2022 00:00:00 +0000</pubDate>
-        <link>https://blog.stephencleary.com/2022/10/modern-csharp-techniques-2-value-records.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2022/10/modern-csharp-techniques-2-value-records.html</guid>
       </item>
     
   </channel>

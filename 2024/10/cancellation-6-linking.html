@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Cancellation, Part 4: Polling</title>
+    <title>Cancellation, Part 5: Linking</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Responding to cancellation requests by using polling." />
-    <link rel="canonical" href="https://blog.stephencleary.com/2022/03/cancellation-4-polling.html" />
+    <meta name="description" content="Providing complemetary cancellation by linking cancellation tokens." />
+    <link rel="canonical" href="https://blog.stephencleary.com/2024/10/cancellation-6-linking.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -276,84 +276,228 @@ img.comment-author-profile-image {
 
   <header>
       <div class="page-header">
-          <h1>Cancellation, Part 4: Polling</h1>
-          <small><time datetime="2022-03-17">Mar 17, 2022</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
+          <h1>Cancellation, Part 5: Linking</h1>
+          <small><time datetime="2024-10-10">Oct 10, 2024</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
       </div>
   </header>
 
   <article>
-  <p>So far in this series, I’ve talked about how to request and detect cancellation, but for the next couple of posts I’ll be switching perspectives and discussing ways to respond to cancellation.</p>
+  <p>So far we’ve covered how <a href="/2022/02/cancellation-1-overview.html">cancellation is requested by one piece of code, and responded to by another piece of code</a>. The requesting code has a <a href="/2022/03/cancellation-2-requesting-cancellation.html">standard way of requesting cancellation</a>, as well as a standard way of <a href="/2022/03/cancellation-3-detecting-cancellation.html">detecting whether the code was canceled or not</a>. Meanwhile, the responding code can observe cancellation either by <a href="/2022/03/cancellation-4-polling.html">polling</a> or (more commonly) by <a href="/2024/08/cancellation-5-registration.html">registering a cancellation callback</a>. So far, so good; and we’re ready for the next step!</p>
 
-<p>I know I’ve probably said this a half dozen times already, but it bears repeating: cancellation is cooperative. Your code will be provided a <code>CancellationToken</code>, and it must <em>do</em> something with that <code>CancellationToken</code> in order to be cancelable. Most of the time, this is just passing the <code>CancellationToken</code> down to lower-level APIs, but if you want cancelable code at the lowest level, there are a couple of other options. The one we’re looking at today is polling.</p>
+<p>In this article, we’ll look at how <em>linked</em> cancellation tokens work.</p>
 
-<h2 id="how-to-poll">How to Poll</h2>
+<h2 id="linked-cancellation-tokens">Linked Cancellation Tokens</h2>
 
-<p>The normal pattern is to periodically call <code>ThrowIfCancellationRequested</code>:</p>
+<p>Linked cancellation tokens allow your code to create a <code>CancellationTokenSource</code> that cancels whenever any other cancellation tokens are canceled, in addition to a manual cancellation request.</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">void</span> <span class="nf">DoSomething</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
+<p>The following code creates a linked cancellation token source:</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
 <span class="p">{</span>
-    <span class="k">while</span> <span class="p">(!</span><span class="n">done</span><span class="p">)</span>
+    <span class="k">using</span> <span class="nn">var</span> <span class="n">cts</span> <span class="p">=</span> <span class="n">CancellationTokenSource</span><span class="p">.</span><span class="n">CreateLinkedTokenSource</span><span class="p">(</span><span class="n">cancellationToken</span><span class="p">);</span>
+    <span class="kt">var</span> <span class="n">task</span> <span class="p">=</span> <span class="n">DoSomethingElseAsync</span><span class="p">(</span><span class="n">cts</span><span class="p">.</span><span class="n">Token</span><span class="p">);</span>
+    <span class="p">...</span> <span class="c1">// Do something while operation is in progress, possibly calling `cts.Cancel()`</span>
+    <span class="k">await</span> <span class="n">task</span><span class="p">;</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>The <code>DoSomethingAsync</code> method above takes a <code>cancellationToken</code> - I’ll call this the “outer” cancellation token. It then creates a CTS that is linked to that outer token. Then, when it calls <code>DoSomethingElseAsync</code>, it passes the token from that linked CTS, which I’ll call the “inner” cancellation token.</p>
+
+<p>If the outer cancellation token (<code>cancellationToken</code>) is ever canceled, then the linked CTS (<code>cts</code>) and its inner cancellation token (<code>cts.Token</code>) are also canceled. Furthermore, the <code>DoSomethingAsync</code> method has the option of explicitly cancelling the linked CTS - in this case, only the inner cancellation token would be canceled, leaving the outer cancellation token unchanged.</p>
+
+<p>Sharp observers may have noticed that the same thing can be done using registrations:</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">using</span> <span class="nn">var</span> <span class="n">cts</span> <span class="p">=</span> <span class="k">new</span> <span class="n">CancellationTokenSource</span><span class="p">();</span>
+    <span class="k">using</span> <span class="nn">var</span> <span class="n">registration</span> <span class="p">=</span> <span class="n">cancellationToken</span><span class="p">.</span><span class="n">Register</span><span class="p">(</span><span class="n">cts</span><span class="p">.</span><span class="n">Cancel</span><span class="p">);</span>
+    <span class="kt">var</span> <span class="n">task</span> <span class="p">=</span> <span class="n">DoSomethingElseAsync</span><span class="p">(</span><span class="n">cts</span><span class="p">.</span><span class="n">Token</span><span class="p">);</span>
+    <span class="p">...</span> <span class="c1">// Do something while operation is in progress, possibly calling `cts.Cancel()`</span>
+    <span class="k">await</span> <span class="n">task</span><span class="p">;</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>Indeed, logically this is pretty much what is happening: you can think of a linked cancellation token source as a perfectly ordinary cancellation token source along with a registration that cancels it when some other token is canceled.</p>
+
+<h3 id="multiple-links">Multiple Links</h3>
+
+<p>The inner cancellation token above is canceled when the outer token is canceled <em>or</em> when its source is explicitly canceled. Similarly, we can pass any number of cancellation tokens into <code>CreateLinkedTokenSource</code>, and the cancellation token source it returns will be canceled when <em>any</em> of the outer tokens are canceled.</p>
+
+<h2 id="use-cases">Use Cases</h2>
+
+<p>The outer token and the inner cancellation source can really represent anything; linked cancellation tokens are useful whenever you need code to be canceled if “A or B”.</p>
+
+<p>But I suspect the most common use case is when the outer token represents an end-user cancellation request, and the inner token represents a timeout. E.g., this can happen when the business logic includes a timeout-and-retry kind of code pattern, while also allowing the end-user to cancel all the retries with a single button click.</p>
+
+<p>One natural place where this kind of code is used is Polly. Polly will allow you to pass in a cancellation token - an outer token that is under your control. Then it passes a <em>potentially different</em> cancellation token to your execution delegate; this inner token is controlled by Polly. Polly’s pipelines (e.g., timeout) may trigger the inner token to cancel your delegate. Naturally, if your code cancels the outer token passed to Polly, that would flow to the inner token as well. I.e., they are linked.</p>
+
+<p>Taking a simplified code example right from the Polly homepage:</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">ExecuteWithTimeoutAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">ResiliencePipeline</span> <span class="n">pipeline</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ResiliencePipelineBuilder</span><span class="p">()</span>
+        <span class="p">.</span><span class="n">AddTimeout</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">FromSeconds</span><span class="p">(</span><span class="m">10</span><span class="p">))</span>
+        <span class="p">.</span><span class="n">Build</span><span class="p">();</span>
+
+    <span class="k">await</span> <span class="n">pipeline</span><span class="p">.</span><span class="n">ExecuteAsync</span><span class="p">(</span><span class="k">async</span> <span class="n">token</span> <span class="p">=&gt;</span>
     <span class="p">{</span>
-        <span class="n">cancellationToken</span><span class="p">.</span><span class="n">ThrowIfCancellationRequested</span><span class="p">();</span>
-        <span class="n">Thread</span><span class="p">.</span><span class="n">Sleep</span><span class="p">(</span><span class="m">200</span><span class="p">);</span> <span class="c1">// do synchronous work</span>
+        <span class="cm">/* Your custom logic goes here */</span>
+    <span class="p">},</span> <span class="n">cancellationToken</span><span class="p">);</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>The <code>ExecuteWithRetryAndTimeoutAsync</code> takes an outer token <code>cancellationToken</code> and passes it to Polly. Polly then creates a linked inner token (which includes pipeline behaviors such as the timeout), and passes the inner token (<code>token</code>) to your delegate.</p>
+
+<div class="alert alert-danger">
+  <p><i class="fa fa-exclamation-triangle fa-2x pull-left"></i></p>
+
+  <p>Delegates you pass to Polly should observe the token they get from Polly, not any other tokens!</p>
+</div>
+
+<p>This is particularly a pitfall when you’re adding Polly pipelines to existing code, e.g., when adding timeouts to this code:</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">ExecuteAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">!=</span> <span class="m">10</span><span class="p">;</span> <span class="p">++</span><span class="n">i</span><span class="p">)</span>
+        <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">FromSeconds</span><span class="p">(</span><span class="m">1</span><span class="p">),</span> <span class="n">cancellationToken</span><span class="p">);</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>A common mistake is to forget to update the token usage:</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// BAD CODE!!! DO NOT USE!!!</span>
+<span class="k">async</span> <span class="n">Task</span> <span class="nf">ExecuteWithTimeoutAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">ResiliencePipeline</span> <span class="n">pipeline</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ResiliencePipelineBuilder</span><span class="p">()</span>
+        <span class="p">.</span><span class="n">AddTimeout</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">FromSeconds</span><span class="p">(</span><span class="m">10</span><span class="p">))</span>
+        <span class="p">.</span><span class="n">Build</span><span class="p">();</span>
+
+    <span class="k">await</span> <span class="n">pipeline</span><span class="p">.</span><span class="n">ExecuteAsync</span><span class="p">(</span><span class="k">async</span> <span class="n">token</span> <span class="p">=&gt;</span>
+    <span class="p">{</span>
+        <span class="c1">// BAD CODE!!! DO NOT USE!!!</span>
+        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">!=</span> <span class="m">10</span><span class="p">;</span> <span class="p">++</span><span class="n">i</span><span class="p">)</span>
+            <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">FromSeconds</span><span class="p">(</span><span class="m">1</span><span class="p">),</span> <span class="n">cancellationToken</span><span class="p">);</span>
+    <span class="p">},</span> <span class="n">cancellationToken</span><span class="p">);</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>In this case, the delegate is still observing <code>cancellationToken</code>, when it should be observing <code>token</code> instead:</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">ExecuteWithTimeoutAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">ResiliencePipeline</span> <span class="n">pipeline</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ResiliencePipelineBuilder</span><span class="p">()</span>
+        <span class="p">.</span><span class="n">AddTimeout</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">FromSeconds</span><span class="p">(</span><span class="m">10</span><span class="p">))</span>
+        <span class="p">.</span><span class="n">Build</span><span class="p">();</span>
+
+    <span class="k">await</span> <span class="n">pipeline</span><span class="p">.</span><span class="n">ExecuteAsync</span><span class="p">(</span><span class="k">async</span> <span class="n">token</span> <span class="p">=&gt;</span>
+    <span class="p">{</span>
+        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">!=</span> <span class="m">10</span><span class="p">;</span> <span class="p">++</span><span class="n">i</span><span class="p">)</span>
+            <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">FromSeconds</span><span class="p">(</span><span class="m">1</span><span class="p">),</span> <span class="n">token</span><span class="p">);</span>
+    <span class="p">},</span> <span class="n">cancellationToken</span><span class="p">);</span>
+<span class="p">}</span></code></pre></figure>
+
+<h2 id="sharp-corner-dont-use-operationcanceledexceptioncancellationtoken">Sharp Corner: Don’t use OperationCanceledException.CancellationToken</h2>
+
+<p>Consider the original example code again:</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">using</span> <span class="nn">var</span> <span class="n">cts</span> <span class="p">=</span> <span class="n">CancellationTokenSource</span><span class="p">.</span><span class="n">CreateLinkedTokenSource</span><span class="p">(</span><span class="n">cancellationToken</span><span class="p">);</span>
+    <span class="kt">var</span> <span class="n">task</span> <span class="p">=</span> <span class="n">DoSomethingElseAsync</span><span class="p">(</span><span class="n">cts</span><span class="p">.</span><span class="n">Token</span><span class="p">);</span>
+    <span class="p">...</span> <span class="c1">// Do something while operation is in progress, possibly calling `cts.Cancel()`</span>
+    <span class="k">await</span> <span class="n">task</span><span class="p">;</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>Now consider some code that may call <code>DoSomethingAsync</code> and respond to cancellation:</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// BAD CODE!!! DO NOT USE!!!</span>
+<span class="k">async</span> <span class="n">Task</span> <span class="nf">MainAsync</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="k">using</span> <span class="nn">var</span> <span class="n">cts</span> <span class="p">=</span> <span class="k">new</span> <span class="n">CancellationTokenSource</span><span class="p">();</span>
+    <span class="n">cts</span><span class="p">.</span><span class="n">CancelAfter</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">FromSeconds</span><span class="p">(</span><span class="m">2000</span><span class="p">));</span>
+
+    <span class="k">try</span>
+    <span class="p">{</span>
+        <span class="k">await</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="n">cts</span><span class="p">.</span><span class="n">Token</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">OperationCanceledException</span> <span class="n">ex</span><span class="p">)</span> <span class="n">when</span> <span class="p">(</span><span class="n">ex</span><span class="p">.</span><span class="n">CancellationToken</span> <span class="p">==</span> <span class="n">cts</span><span class="p">.</span><span class="n">Token</span><span class="p">)</span> <span class="c1">// BAD CODE!!! DO NOT USE!!!</span>
+    <span class="p">{</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Timeout!&quot;</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">ex</span><span class="p">);</span>
     <span class="p">}</span>
 <span class="p">}</span></code></pre></figure>
 
-<p>The example code above checks the cancellation token <em>before</em> it starts work, which is a good general practice. It is possible that the token is already cancelled by the time your operation starts running.</p>
+<p>The intent of the handling code is to do something different if the code is canceled <em>due to this particular cancellation source</em>. Unfortunately, this code is problematic in the real world; <code>DoSomethingAsync</code> may be using a linked cancellation token source, in which case the <code>OperationCanceledException.CancellationToken</code> would not match <code>cts.Token</code>, even if that was the source of the cancellation!</p>
 
-<p><code>ThrowIfCancellationRequested</code> will check to see if cancellation is requested, and if it is, it will throw <code>OperationCanceledException</code>. So it handles the proper reporting of cancellation for you; your code should just let that exception propagate out of the method.</p>
+<p>This is why I always recommend <a href="/2022/03/cancellation-3-detecting-cancellation.html">not using <code>OperationCanceledException.CancellationToken</code></a>. A proper solution is to check whether that source has been triggered:</p>
 
-<p>One question you’ll need to answer is how <em>often</em> to poll. There really isn’t a good answer for this; ideally you probably want to poll a few times a second, but when you’re talking about CPU-bound code running on potentially very different machines, it’s pretty much a guess at where in the code the <code>ThrowIfCancellationRequested</code> should go. Just put it in the best place(s), run some tests to see if cancellation feels responsive enough, and that’s the best you can do.</p>
-
-<h2 id="how-not-to-poll">How Not to Poll</h2>
-
-<p>There’s a sadly common antipattern regarding polling for cancellation, particularly in infinite loops: the “while not cancelled” loop, which looks like this:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">void</span> <span class="nf">DoSomethingForever</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">MainAsync</span><span class="p">()</span>
 <span class="p">{</span>
-    <span class="n">Environment</span><span class="p">.</span><span class="n">FailFast</span><span class="p">(</span><span class="s">&quot;Bad code! Do not use!&quot;</span><span class="p">);</span>
-    <span class="k">while</span> <span class="p">(!</span><span class="n">cancellationToken</span><span class="p">.</span><span class="n">IsCancellationRequested</span><span class="p">)</span>
+    <span class="k">using</span> <span class="nn">var</span> <span class="n">cts</span> <span class="p">=</span> <span class="k">new</span> <span class="n">CancellationTokenSource</span><span class="p">();</span>
+    <span class="n">cts</span><span class="p">.</span><span class="n">CancelAfter</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">FromSeconds</span><span class="p">(</span><span class="m">2000</span><span class="p">));</span>
+
+    <span class="k">try</span>
     <span class="p">{</span>
-        <span class="n">Thread</span><span class="p">.</span><span class="n">Sleep</span><span class="p">(</span><span class="m">200</span><span class="p">);</span> <span class="c1">// do work</span>
+        <span class="k">await</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="n">cts</span><span class="p">.</span><span class="n">Token</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">OperationCanceledException</span><span class="p">)</span> <span class="n">when</span> <span class="p">(</span><span class="n">cts</span><span class="p">.</span><span class="n">IsCancellationRequested</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Timeout!&quot;</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">ex</span><span class="p">);</span>
     <span class="p">}</span>
 <span class="p">}</span></code></pre></figure>
 
-<p>When this code runs, it will periodically check the cancellation token; but when cancellation is requested, the method just returns early. This method doesn’t satisfy the cancellation contract of throwing an exception on cancellation. This means that the calling code cannot know whether the method ran to completion or whether it was cancelled.</p>
+<h3 id="checking-inner-tokens-still-dont-use-operationcanceledexceptioncancellationtoken">Checking Inner Tokens: Still don’t use OperationCanceledException.CancellationToken</h3>
 
-<p>The proper solution is to use <code>ThrowIfCancellationRequested</code>, even for infinite loops:</p>
+<p>You might be tempted to do this kind of test when using linked cancellation tokens, again to determine what the cancellation source is:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">void</span> <span class="nf">DoSomethingForever</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// BAD CODE!!! DO NOT USE!!!</span>
+<span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
 <span class="p">{</span>
-    <span class="k">while</span> <span class="p">(</span><span class="k">true</span><span class="p">)</span>
+    <span class="k">using</span> <span class="nn">var</span> <span class="n">cts</span> <span class="p">=</span> <span class="n">CancellationTokenSource</span><span class="p">.</span><span class="n">CreateLinkedTokenSource</span><span class="p">(</span><span class="n">cancellationToken</span><span class="p">);</span>
+    <span class="n">cts</span><span class="p">.</span><span class="n">CancelAfter</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">FromSeconds</span><span class="p">(</span><span class="m">10</span><span class="p">));</span>
+
+    <span class="k">try</span>
     <span class="p">{</span>
-        <span class="n">cancellationToken</span><span class="p">.</span><span class="n">ThrowIfCancellationRequested</span><span class="p">();</span>
-        <span class="n">Thread</span><span class="p">.</span><span class="n">Sleep</span><span class="p">(</span><span class="m">200</span><span class="p">);</span> <span class="c1">// do work</span>
+        <span class="k">await</span> <span class="nf">DoSomethingElseAsync</span><span class="p">(</span><span class="n">cts</span><span class="p">.</span><span class="n">Token</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">OperationCanceledException</span> <span class="n">ex</span><span class="p">)</span> <span class="n">when</span> <span class="p">(</span><span class="n">ex</span><span class="p">.</span><span class="n">CancellationToken</span> <span class="p">==</span> <span class="n">cts</span><span class="p">.</span><span class="n">Token</span><span class="p">)</span> <span class="c1">// BAD CODE!!! DO NOT USE!!!</span>
+    <span class="p">{</span>
+        <span class="p">...</span> <span class="c1">// Do some recovery specific to the timeout.</span>
+        <span class="k">throw</span><span class="p">;</span>
     <span class="p">}</span>
 <span class="p">}</span></code></pre></figure>
 
-<h2 id="when-to-poll">When to Poll</h2>
+<p>However, this code has the same issue! It’s possible that <code>DoSomethingElseAsync</code> may <em>itself</em> use a linked cancellation token (or may be changed to use one in the future)!</p>
 
-<p>Polling is an appropriate option for observing cancellation if your code is synchronous, such as CPU-bound code. Cancellation is often thought of as only a concern for asynchronous code; it was explicitly pointed out in the documentation for <code>async</code> when <code>async</code> was introduced. But cancellation in .NET predates <code>async</code>, and cancellation is just as applicable to synchronous code as to asynchronous code. In fact, <code>Parallel</code> loops and PLINQ each have built-in support for cancellation: <code>ParallelOptions.CancellationToken</code> for <code>Parallel</code>, and <code>WithCancellation</code> for PLINQ.</p>
+<p>The solution - again - is to not use <code>OperationCanceledException.CancellationToken</code>:</p>
 
-<p>That’s not to say you can’t use it for asynchronous code. It’s also appropriate to inject a <code>ThrowIfCancellationRequested</code> in asynchronous code, if you are not sure whether other methods will respect their cancellation tokens. Remember, taking a <code>CancellationToken</code> parameter means that the method <em>may</em> respect cancellation; it may also ignore the token and just ignore any cancellation requests. So your code may want to inject cancellation checks in-between “steps” of its operation. In this case, <code>ThrowIfCancellationRequested</code> isn’t so much “polling” as it is an “occasional check”:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">DoComplexWorkAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
 <span class="p">{</span>
-    <span class="c1">// From testing, it appears that DoStep1Async and DoStep2Async do not always cancel when requested.</span>
-    <span class="n">cancellationToken</span><span class="p">.</span><span class="n">ThrowIfCancellationRequested</span><span class="p">();</span>
-    <span class="k">await</span> <span class="nf">DoStep1Async</span><span class="p">(</span><span class="n">cancellationToken</span><span class="p">);</span>
+    <span class="k">using</span> <span class="nn">var</span> <span class="n">cts</span> <span class="p">=</span> <span class="n">CancellationTokenSource</span><span class="p">.</span><span class="n">CreateLinkedTokenSource</span><span class="p">(</span><span class="n">cancellationToken</span><span class="p">);</span>
+    <span class="n">cts</span><span class="p">.</span><span class="n">CancelAfter</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">FromSeconds</span><span class="p">(</span><span class="m">10</span><span class="p">));</span>
 
-    <span class="n">cancellationToken</span><span class="p">.</span><span class="n">ThrowIfCancellationRequested</span><span class="p">();</span>
-    <span class="k">await</span> <span class="nf">DoStep2Async</span><span class="p">(</span><span class="n">cancellationToken</span><span class="p">);</span>
+    <span class="k">try</span>
+    <span class="p">{</span>
+        <span class="k">await</span> <span class="nf">DoSomethingElseAsync</span><span class="p">(</span><span class="n">cts</span><span class="p">.</span><span class="n">Token</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">OperationCanceledException</span> <span class="n">ex</span><span class="p">)</span> <span class="n">when</span> <span class="p">(</span><span class="n">cts</span><span class="p">.</span><span class="n">IsCancellationRequested</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="p">...</span> <span class="c1">// Do some recovery specific to the timeout.</span>
+        <span class="k">throw</span><span class="p">;</span>
+    <span class="p">}</span>
 <span class="p">}</span></code></pre></figure>
-
-<p>While you <em>can</em> sprinkle calls to <code>ThrowIfCancellationRequested</code> throughout your code like this, I only do this when testing indicates that the code does not respect cancellation. In other words, I assume that <code>DoStep1Async</code> and <code>DoStep2Async</code> will respect cancellation until proven otherwise by testing.</p>
-
-<p>It is also appropriate to use <code>ThrowIfCancellationRequested</code> at certain points where your code is about to do something expensive. Just adding a cancellation check there means your code won’t have to do the expensive work if it’s cancelled anyway.</p>
 
 <h2 id="summary">Summary</h2>
 
-<p>Polling - implemented by periodic calls to <code>ThrowIfCancellationRequested</code> - is one way to respond to cancellation requests. This is the common solution for synchronous, CPU-bound methods, and can also be used in a few other scenarios. Most asynchronous code does not use polling; we’ll cover that scenario next time!</p>
+<p>Most of the time you won’t need to use linked cancellation tokens in your code, but linked cancellation tokens are useful when you need them! Some points to remember:</p>
+
+<ul>
+  <li>Dispose your cancellation token sources - including linked cancellation token sources.</li>
+  <li>Don’t use <code>OperationCanceledException.CancellationToken</code>; use <code>IsCancellationRequested</code> instead.</li>
+  <li>For any code that has multiple tokens in scope, be mindful about which one you are observing.</li>
+</ul>
 
   </article>
     
@@ -366,14 +510,14 @@ img.comment-author-profile-image {
 
         
             <ul class="pager">
-                <li class="previous"><a href="/2022/03/cancellation-3-detecting-cancellation.html" title="Cancellation, Part 3: Detecting Cancellation">&larr; Previous in Cancellation</a></li>
-                <li class="next"><a href="/2024/08/cancellation-5-registration.html" title="Cancellation, Part 5: Registration">Next in Cancellation &rarr;</a></li>
+                <li class="previous"><a href="/2024/08/cancellation-5-registration.html" title="Cancellation, Part 5: Registration">&larr; Previous in Cancellation</a></li>
+                
             </ul>
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2022/03/cancellation-3-detecting-cancellation.html" title="Cancellation, Part 3: Detecting Cancellation">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2022/09/modern-csharp-techniques-1-curiously-recurring-generic-pattern.html" title="Modern C# Techniques, Part 1: Curiously Recurring Generic Pattern">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2024/08/cancellation-5-registration.html" title="Cancellation, Part 5: Registration">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="comments"></div>
@@ -389,9 +533,9 @@ img.comment-author-profile-image {
                                     <li class="sidenavitem"><a href="/2022/02/cancellation-1-overview.html">Overview</a></li>
                                     <li class="sidenavitem"><a href="/2022/03/cancellation-2-requesting-cancellation.html">Requesting Cancellation</a></li>
                                     <li class="sidenavitem"><a href="/2022/03/cancellation-3-detecting-cancellation.html">Detecting Cancellation</a></li>
-                                    <li class="active sidenavitem"><a href="/2022/03/cancellation-4-polling.html">Polling</a></li>
+                                    <li class="sidenavitem"><a href="/2022/03/cancellation-4-polling.html">Polling</a></li>
                                     <li class="sidenavitem"><a href="/2024/08/cancellation-5-registration.html">Registration</a></li>
-                                    <li class="sidenavitem"><a href="/2024/10/cancellation-6-linking.html">Linking</a></li>
+                                    <li class="active sidenavitem"><a href="/2024/10/cancellation-6-linking.html">Linking</a></li>
                         </ul>
                     </div>
                 </div>
@@ -553,7 +697,7 @@ img.comment-author-profile-image {
 
 <script type="text/javascript">
 
-var pageUrl = "https://blog.stephencleary.com" + "/2022/03/cancellation-4-polling.html";
+var pageUrl = "https://blog.stephencleary.com" + "/2024/10/cancellation-6-linking.html";
 
 // (unnecessary) 1) If the URL starts with http://, replace with https://
 
