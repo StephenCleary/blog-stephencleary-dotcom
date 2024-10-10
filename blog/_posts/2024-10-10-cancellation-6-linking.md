@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Cancellation, Part 5: Linking"
+title: "Cancellation, Part 6: Linking"
 series: "Cancellation"
 seriesTitle: "Linking"
 description: "Providing complemetary cancellation by linking cancellation tokens."
