@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Cancellation, Part 6: Linking</title>
+    <title>C# Advent: No one loves the .NET Core name anymore</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Providing complemetary cancellation by linking cancellation tokens." />
-    <link rel="canonical" href="https://blog.stephencleary.com/2024/10/cancellation-6-linking.html" />
+    <meta name="description" content="A history of the .NET Core name." />
+    <link rel="canonical" href="https://blog.stephencleary.com/2024/12/netcore.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -276,228 +276,94 @@ img.comment-author-profile-image {
 
   <header>
       <div class="page-header">
-          <h1>Cancellation, Part 6: Linking</h1>
-          <small><time datetime="2024-10-10">Oct 10, 2024</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
+          <h1>C# Advent: No one loves the .NET Core name anymore</h1>
+          <small><time datetime="2024-12-03">Dec 3, 2024</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
       </div>
   </header>
 
   <article>
-  <p>So far we’ve covered how <a href="/2022/02/cancellation-1-overview.html">cancellation is requested by one piece of code, and responded to by another piece of code</a>. The requesting code has a <a href="/2022/03/cancellation-2-requesting-cancellation.html">standard way of requesting cancellation</a>, as well as a standard way of <a href="/2022/03/cancellation-3-detecting-cancellation.html">detecting whether the code was canceled or not</a>. Meanwhile, the responding code can observe cancellation either by <a href="/2022/03/cancellation-4-polling.html">polling</a> or (more commonly) by <a href="/2024/08/cancellation-5-registration.html">registering a cancellation callback</a>. So far, so good; and we’re ready for the next step!</p>
+  <p>This post is part of <a href="https://csadvent.christmas/">C# Advent</a> organized by <a href="https://x.com/mgroves">@mgroves</a>.</p>
 
-<p>In this article, we’ll look at how <em>linked</em> cancellation tokens work.</p>
+<h2 id="a-brief-history-of-net-core">A Brief History of “.NET Core”</h2>
 
-<h2 id="linked-cancellation-tokens">Linked Cancellation Tokens</h2>
+<blockquote class="blockquote">
+  <p>‘Twas a holiday season, so bright and so clear,<br />
+When .NET Core was a name we held dear.<br />
+Once, it meant Silverlight, in the browser’s embrace,<br />
+A vision of apps that could run with great grace.<br /></p>
 
-<p>Linked cancellation tokens allow your code to create a <code>CancellationTokenSource</code> that cancels whenever any other cancellation tokens are canceled, in addition to a manual cancellation request.</p>
+  <p>But as time moved on, so too did the trend,<br />
+Silverlight’s reign began to descend.<br />
+Then WinRT arrived, all shiny and new,<br />
+With Windows Store apps, the promise it grew.<br /></p>
 
-<p>The following code creates a linked cancellation token source:</p>
+  <p>Next came UWP, a universal dream,<br />
+For apps that could run on each Windows stream.<br />
+Yet, despite all the progress, something was amiss,<br />
+The tech world was changing, and something we’d miss.<br /></p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="k">using</span> <span class="nn">var</span> <span class="n">cts</span> <span class="p">=</span> <span class="n">CancellationTokenSource</span><span class="p">.</span><span class="n">CreateLinkedTokenSource</span><span class="p">(</span><span class="n">cancellationToken</span><span class="p">);</span>
-    <span class="kt">var</span> <span class="n">task</span> <span class="p">=</span> <span class="n">DoSomethingElseAsync</span><span class="p">(</span><span class="n">cts</span><span class="p">.</span><span class="n">Token</span><span class="p">);</span>
-    <span class="p">...</span> <span class="c1">// Do something while operation is in progress, possibly calling `cts.Cancel()`</span>
-    <span class="k">await</span> <span class="n">task</span><span class="p">;</span>
-<span class="p">}</span></code></pre></figure>
+  <p>Then .NET Core rose, its name now aglow,<br />
+A shift to the future, a new path to go.<br />
+It wasn’t just Windows, it reached far and wide,<br />
+Cross-platform magic, no longer confined.<br /></p>
 
-<p>The <code>DoSomethingAsync</code> method above takes a <code>cancellationToken</code> - I’ll call this the “outer” cancellation token. It then creates a CTS that is linked to that outer token. Then, when it calls <code>DoSomethingElseAsync</code>, it passes the token from that linked CTS, which I’ll call the “inner” cancellation token.</p>
+  <p>Gone were the days of Silverlight’s reign,<br />
+No more WinRT to tether and chain.<br />
+UWP too, was a chapter now closed,<br />
+But the legacy of .NET still brightly glowed.<br /></p>
 
-<p>If the outer cancellation token (<code>cancellationToken</code>) is ever canceled, then the linked CTS (<code>cts</code>) and its inner cancellation token (<code>cts.Token</code>) are also canceled. Furthermore, the <code>DoSomethingAsync</code> method has the option of explicitly cancelling the linked CTS - in this case, only the inner cancellation token would be canceled, leaving the outer cancellation token unchanged.</p>
+  <p>Now .NET Core means something profound,<br />
+A modern framework that’s world-renowned.<br />
+It’s cloud, it’s mobile, it’s web all combined,<br />
+A platform so nimble, for all to find.<br /></p>
 
-<p>Sharp observers may have noticed that the same thing can be done using registrations:</p>
+  <p>So here’s to the future, to the journey ahead,<br />
+With .NET Core, new dreams are now spread.<br />
+We celebrate Christmas, not just for the cheer,<br />
+But for how far .NET has come through the years!<br /></p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="k">using</span> <span class="nn">var</span> <span class="n">cts</span> <span class="p">=</span> <span class="k">new</span> <span class="n">CancellationTokenSource</span><span class="p">();</span>
-    <span class="k">using</span> <span class="nn">var</span> <span class="n">registration</span> <span class="p">=</span> <span class="n">cancellationToken</span><span class="p">.</span><span class="n">Register</span><span class="p">(</span><span class="n">cts</span><span class="p">.</span><span class="n">Cancel</span><span class="p">);</span>
-    <span class="kt">var</span> <span class="n">task</span> <span class="p">=</span> <span class="n">DoSomethingElseAsync</span><span class="p">(</span><span class="n">cts</span><span class="p">.</span><span class="n">Token</span><span class="p">);</span>
-    <span class="p">...</span> <span class="c1">// Do something while operation is in progress, possibly calling `cts.Cancel()`</span>
-    <span class="k">await</span> <span class="n">task</span><span class="p">;</span>
-<span class="p">}</span></code></pre></figure>
+  <footer class="blockquote-footer text-right"><cite>ChatGPT, of course. I couldn't write this.</cite></footer>
+</blockquote>
 
-<p>Indeed, logically this is pretty much what is happening: you can think of a linked cancellation token source as a perfectly ordinary cancellation token source along with a registration that cancels it when some other token is canceled.</p>
+<p>I thought today would be a fun time to write up something I’ve been meaning to write for years: the history of “.NET Core” terminology.</p>
 
-<h3 id="multiple-links">Multiple Links</h3>
+<p>More specifically, this is how <em>I’ve</em> seen the term “.NET Core” used in the past. It’s not guaranteed to be correct, and <em>certainly</em> not guaranteed to be complete! Am I missing anything? Feel free to shout out in the comments!</p>
 
-<p>The inner cancellation token above is canceled when the outer token is canceled <em>or</em> when its source is explicitly canceled. Similarly, we can pass any number of cancellation tokens into <code>CreateLinkedTokenSource</code>, and the cancellation token source it returns will be canceled when <em>any</em> of the outer tokens are canceled.</p>
+<h3 id="net-compact-framework">.NET Compact Framework</h3>
 
-<h2 id="use-cases">Use Cases</h2>
+<p>I believe I first heard the term “.NET Core” referring to the .NET Compact Framework. This was way back when .NET Framework 3.5 was the new hotness. Actually, that was “.NET Framework 3.5 SP1” - as in “Service Pack 1”. Yes, .NET used to have <em>service packs</em>.</p>
 
-<p>The outer token and the inner cancellation source can really represent anything; linked cancellation tokens are useful whenever you need code to be canceled if “A or B”.</p>
+<p>I’m not sure if “.NET Core” was the proper term to refer to NetCF or not. AFAIK, it was an unofficial term that was applied because .NET Compact Framework contained a small subset of the (massive) .NET Framework, intended to run on embedded devices. Hence, it was a “core” (minimal) framework.</p>
 
-<p>But I suspect the most common use case is when the outer token represents an end-user cancellation request, and the inner token represents a timeout. E.g., this can happen when the business logic includes a timeout-and-retry kind of code pattern, while also allowing the end-user to cancel all the retries with a single button click.</p>
+<h3 id="silverlight-winrt-windows-phone-windows-store-and-universal-windows-platform">Silverlight, WinRT, Windows Phone, Windows Store, and Universal Windows Platform</h3>
 
-<p>One natural place where this kind of code is used is Polly. Polly will allow you to pass in a cancellation token - an outer token that is under your control. Then it passes a <em>potentially different</em> cancellation token to your execution delegate; this inner token is controlled by Polly. Polly’s pipelines (e.g., timeout) may trigger the inner token to cancel your delegate. Naturally, if your code cancels the outer token passed to Polly, that would flow to the inner token as well. I.e., they are linked.</p>
+<p>Perhaps I should have put a trigger warning on this article… Sorry for anyone who winced in pain just reading the title for this section…</p>
 
-<p>Taking a simplified code example right from the Polly homepage:</p>
+<p>All of these technologies had something or other to do with “.NET Core” as a term. They were all minimal sub-frameworks of the full .NET Framework. And at least some of them had similar terminology for their runtimes (e.g., Silverlight ran on “Core CLR”). My brain has mercifully purged the sordid details. I only vaguely remember Windows Phone being different from Windows Phone Apps, and Silverlight getting even more stripped-down to run on Windows Phone.</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">ExecuteWithTimeoutAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="n">ResiliencePipeline</span> <span class="n">pipeline</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ResiliencePipelineBuilder</span><span class="p">()</span>
-        <span class="p">.</span><span class="n">AddTimeout</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">FromSeconds</span><span class="p">(</span><span class="m">10</span><span class="p">))</span>
-        <span class="p">.</span><span class="n">Build</span><span class="p">();</span>
+<p>This was not a fun time to be a library developer.</p>
 
-    <span class="k">await</span> <span class="n">pipeline</span><span class="p">.</span><span class="n">ExecuteAsync</span><span class="p">(</span><span class="k">async</span> <span class="n">token</span> <span class="p">=&gt;</span>
-    <span class="p">{</span>
-        <span class="cm">/* Your custom logic goes here */</span>
-    <span class="p">},</span> <span class="n">cancellationToken</span><span class="p">);</span>
-<span class="p">}</span></code></pre></figure>
+<h3 id="netcore-as-a-target-framework-moniker">netcore as a Target Framework Moniker</h3>
 
-<p>The <code>ExecuteWithRetryAndTimeoutAsync</code> takes an outer token <code>cancellationToken</code> and passes it to Polly. Polly then creates a linked inner token (which includes pipeline behaviors such as the timeout), and passes the inner token (<code>token</code>) to your delegate.</p>
+<p>This is what I actually want to focus on. <a href="https://learn.microsoft.com/en-us/dotnet/standard/frameworks?WT.mc_id=DT-MVP-5000058">Target framework monikers (TFMs)</a> are very important to library developers.</p>
 
-<div class="alert alert-danger">
-  <p><i class="fa fa-exclamation-triangle fa-2x pull-left"></i></p>
+<p>The term “.NET Core” officially entered the NuGet space as a TFM, but it <em>wasn’t</em> for what we call .NET Core today. It was for Windows Store apps (and WinRT apps), and briefly extending into UWP apps.</p>
 
-  <p>Delegates you pass to Polly should observe the token they get from Polly, not any other tokens!</p>
-</div>
+<p>Yes, Windows Store projects way back in Windows 8.0 (as well as WinRT) used a TFM identifier of <code>netcore45</code>. Windows 8.1 used <code>netcore451</code>. When Windows Store apps were replaced by Universal Windows Platform (UWP) apps, they briefly used <code>netcore50</code> before changing to <code>uap10.0</code>.</p>
 
-<p>This is particularly a pitfall when you’re adding Polly pipelines to existing code, e.g., when adding timeouts to this code:</p>
+<p>So, when the (modern) .NET Core team needed a TFM, they found <code>netcoreNN</code> wasn’t available. I assume this is why they went with <code>netcoreappNN</code> instead (after a brief foray into <code>dnxcore50</code> and <code>aspnetcore50</code>). So .NET Core TFMs for older versions (1.0-3.1) are <code>netcoreapp1.0</code> - <code>netcoreapp3.1</code>. It was just an unfortunate accident of history.</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">ExecuteAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">!=</span> <span class="m">10</span><span class="p">;</span> <span class="p">++</span><span class="n">i</span><span class="p">)</span>
-        <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">FromSeconds</span><span class="p">(</span><span class="m">1</span><span class="p">),</span> <span class="n">cancellationToken</span><span class="p">);</span>
-<span class="p">}</span></code></pre></figure>
+<h2 id="no-more-net-core">No More .NET Core</h2>
 
-<p>A common mistake is to forget to update the token usage:</p>
+<p>The .NET team has dropped “Core”. There is now one .NET moving forward - a great relief to library authors!</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// BAD CODE!!! DO NOT USE!!!</span>
-<span class="k">async</span> <span class="n">Task</span> <span class="nf">ExecuteWithTimeoutAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="n">ResiliencePipeline</span> <span class="n">pipeline</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ResiliencePipelineBuilder</span><span class="p">()</span>
-        <span class="p">.</span><span class="n">AddTimeout</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">FromSeconds</span><span class="p">(</span><span class="m">10</span><span class="p">))</span>
-        <span class="p">.</span><span class="n">Build</span><span class="p">();</span>
+<p>Since v5, the TFMs have even changed: modern .NET uses <code>net9.0</code> and similar, dropping the “core” moniker even from the TFM.</p>
 
-    <span class="k">await</span> <span class="n">pipeline</span><span class="p">.</span><span class="n">ExecuteAsync</span><span class="p">(</span><span class="k">async</span> <span class="n">token</span> <span class="p">=&gt;</span>
-    <span class="p">{</span>
-        <span class="c1">// BAD CODE!!! DO NOT USE!!!</span>
-        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">!=</span> <span class="m">10</span><span class="p">;</span> <span class="p">++</span><span class="n">i</span><span class="p">)</span>
-            <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">FromSeconds</span><span class="p">(</span><span class="m">1</span><span class="p">),</span> <span class="n">cancellationToken</span><span class="p">);</span>
-    <span class="p">},</span> <span class="n">cancellationToken</span><span class="p">);</span>
-<span class="p">}</span></code></pre></figure>
+<p>I still refer to .NET as “.NET Core” from time to time, especially in conversations that have to do with both .NET Framework and the new .NET. E.g., I’ll refer to a “.NET Core migration” rather than just “.NET migration” for a project currently targeting .NET Framework. The proper term, though, is no longer “.NET Core” but just “.NET”.</p>
 
-<p>In this case, the delegate is still observing <code>cancellationToken</code>, when it should be observing <code>token</code> instead:</p>
+<p>“.NET Core” is gone. And good riddance!</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">ExecuteWithTimeoutAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="n">ResiliencePipeline</span> <span class="n">pipeline</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ResiliencePipelineBuilder</span><span class="p">()</span>
-        <span class="p">.</span><span class="n">AddTimeout</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">FromSeconds</span><span class="p">(</span><span class="m">10</span><span class="p">))</span>
-        <span class="p">.</span><span class="n">Build</span><span class="p">();</span>
-
-    <span class="k">await</span> <span class="n">pipeline</span><span class="p">.</span><span class="n">ExecuteAsync</span><span class="p">(</span><span class="k">async</span> <span class="n">token</span> <span class="p">=&gt;</span>
-    <span class="p">{</span>
-        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">!=</span> <span class="m">10</span><span class="p">;</span> <span class="p">++</span><span class="n">i</span><span class="p">)</span>
-            <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">FromSeconds</span><span class="p">(</span><span class="m">1</span><span class="p">),</span> <span class="n">token</span><span class="p">);</span>
-    <span class="p">},</span> <span class="n">cancellationToken</span><span class="p">);</span>
-<span class="p">}</span></code></pre></figure>
-
-<h2 id="sharp-corner-dont-use-operationcanceledexceptioncancellationtoken">Sharp Corner: Don’t use OperationCanceledException.CancellationToken</h2>
-
-<p>Consider the original example code again:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="k">using</span> <span class="nn">var</span> <span class="n">cts</span> <span class="p">=</span> <span class="n">CancellationTokenSource</span><span class="p">.</span><span class="n">CreateLinkedTokenSource</span><span class="p">(</span><span class="n">cancellationToken</span><span class="p">);</span>
-    <span class="kt">var</span> <span class="n">task</span> <span class="p">=</span> <span class="n">DoSomethingElseAsync</span><span class="p">(</span><span class="n">cts</span><span class="p">.</span><span class="n">Token</span><span class="p">);</span>
-    <span class="p">...</span> <span class="c1">// Do something while operation is in progress, possibly calling `cts.Cancel()`</span>
-    <span class="k">await</span> <span class="n">task</span><span class="p">;</span>
-<span class="p">}</span></code></pre></figure>
-
-<p>Now consider some code that may call <code>DoSomethingAsync</code> and respond to cancellation:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// BAD CODE!!! DO NOT USE!!!</span>
-<span class="k">async</span> <span class="n">Task</span> <span class="nf">MainAsync</span><span class="p">()</span>
-<span class="p">{</span>
-    <span class="k">using</span> <span class="nn">var</span> <span class="n">cts</span> <span class="p">=</span> <span class="k">new</span> <span class="n">CancellationTokenSource</span><span class="p">();</span>
-    <span class="n">cts</span><span class="p">.</span><span class="n">CancelAfter</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">FromSeconds</span><span class="p">(</span><span class="m">2000</span><span class="p">));</span>
-
-    <span class="k">try</span>
-    <span class="p">{</span>
-        <span class="k">await</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="n">cts</span><span class="p">.</span><span class="n">Token</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="k">catch</span> <span class="p">(</span><span class="n">OperationCanceledException</span> <span class="n">ex</span><span class="p">)</span> <span class="n">when</span> <span class="p">(</span><span class="n">ex</span><span class="p">.</span><span class="n">CancellationToken</span> <span class="p">==</span> <span class="n">cts</span><span class="p">.</span><span class="n">Token</span><span class="p">)</span> <span class="c1">// BAD CODE!!! DO NOT USE!!!</span>
-    <span class="p">{</span>
-        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Timeout!&quot;</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span>
-    <span class="p">{</span>
-        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">ex</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span></code></pre></figure>
-
-<p>The intent of the handling code is to do something different if the code is canceled <em>due to this particular cancellation source</em>. Unfortunately, this code is problematic in the real world; <code>DoSomethingAsync</code> may be using a linked cancellation token source, in which case the <code>OperationCanceledException.CancellationToken</code> would not match <code>cts.Token</code>, even if that was the source of the cancellation!</p>
-
-<p>This is why I always recommend <a href="/2022/03/cancellation-3-detecting-cancellation.html">not using <code>OperationCanceledException.CancellationToken</code></a>. A proper solution is to check whether that source has been triggered:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">MainAsync</span><span class="p">()</span>
-<span class="p">{</span>
-    <span class="k">using</span> <span class="nn">var</span> <span class="n">cts</span> <span class="p">=</span> <span class="k">new</span> <span class="n">CancellationTokenSource</span><span class="p">();</span>
-    <span class="n">cts</span><span class="p">.</span><span class="n">CancelAfter</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">FromSeconds</span><span class="p">(</span><span class="m">2000</span><span class="p">));</span>
-
-    <span class="k">try</span>
-    <span class="p">{</span>
-        <span class="k">await</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="n">cts</span><span class="p">.</span><span class="n">Token</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="k">catch</span> <span class="p">(</span><span class="n">OperationCanceledException</span><span class="p">)</span> <span class="n">when</span> <span class="p">(</span><span class="n">cts</span><span class="p">.</span><span class="n">IsCancellationRequested</span><span class="p">)</span>
-    <span class="p">{</span>
-        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Timeout!&quot;</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span>
-    <span class="p">{</span>
-        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">ex</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span></code></pre></figure>
-
-<h3 id="checking-inner-tokens-still-dont-use-operationcanceledexceptioncancellationtoken">Checking Inner Tokens: Still don’t use OperationCanceledException.CancellationToken</h3>
-
-<p>You might be tempted to do this kind of test when using linked cancellation tokens, again to determine what the cancellation source is:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// BAD CODE!!! DO NOT USE!!!</span>
-<span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="k">using</span> <span class="nn">var</span> <span class="n">cts</span> <span class="p">=</span> <span class="n">CancellationTokenSource</span><span class="p">.</span><span class="n">CreateLinkedTokenSource</span><span class="p">(</span><span class="n">cancellationToken</span><span class="p">);</span>
-    <span class="n">cts</span><span class="p">.</span><span class="n">CancelAfter</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">FromSeconds</span><span class="p">(</span><span class="m">10</span><span class="p">));</span>
-
-    <span class="k">try</span>
-    <span class="p">{</span>
-        <span class="k">await</span> <span class="nf">DoSomethingElseAsync</span><span class="p">(</span><span class="n">cts</span><span class="p">.</span><span class="n">Token</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="k">catch</span> <span class="p">(</span><span class="n">OperationCanceledException</span> <span class="n">ex</span><span class="p">)</span> <span class="n">when</span> <span class="p">(</span><span class="n">ex</span><span class="p">.</span><span class="n">CancellationToken</span> <span class="p">==</span> <span class="n">cts</span><span class="p">.</span><span class="n">Token</span><span class="p">)</span> <span class="c1">// BAD CODE!!! DO NOT USE!!!</span>
-    <span class="p">{</span>
-        <span class="p">...</span> <span class="c1">// Do some recovery specific to the timeout.</span>
-        <span class="k">throw</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span></code></pre></figure>
-
-<p>However, this code has the same issue! It’s possible that <code>DoSomethingElseAsync</code> may <em>itself</em> use a linked cancellation token (or may be changed to use one in the future)!</p>
-
-<p>The solution - again - is to not use <code>OperationCanceledException.CancellationToken</code>:</p>
-
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">(</span><span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="k">using</span> <span class="nn">var</span> <span class="n">cts</span> <span class="p">=</span> <span class="n">CancellationTokenSource</span><span class="p">.</span><span class="n">CreateLinkedTokenSource</span><span class="p">(</span><span class="n">cancellationToken</span><span class="p">);</span>
-    <span class="n">cts</span><span class="p">.</span><span class="n">CancelAfter</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">FromSeconds</span><span class="p">(</span><span class="m">10</span><span class="p">));</span>
-
-    <span class="k">try</span>
-    <span class="p">{</span>
-        <span class="k">await</span> <span class="nf">DoSomethingElseAsync</span><span class="p">(</span><span class="n">cts</span><span class="p">.</span><span class="n">Token</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="k">catch</span> <span class="p">(</span><span class="n">OperationCanceledException</span> <span class="n">ex</span><span class="p">)</span> <span class="n">when</span> <span class="p">(</span><span class="n">cts</span><span class="p">.</span><span class="n">IsCancellationRequested</span><span class="p">)</span>
-    <span class="p">{</span>
-        <span class="p">...</span> <span class="c1">// Do some recovery specific to the timeout.</span>
-        <span class="k">throw</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span></code></pre></figure>
-
-<h2 id="summary">Summary</h2>
-
-<p>Most of the time you won’t need to use linked cancellation tokens in your code, but linked cancellation tokens are useful when you need them! Some points to remember:</p>
-
-<ul>
-  <li>Dispose your cancellation token sources - including linked cancellation token sources.</li>
-  <li>Don’t use <code>OperationCanceledException.CancellationToken</code>; use <code>IsCancellationRequested</code> instead.</li>
-  <li>For any code that has multiple tokens in scope, be mindful about which one you are observing.</li>
-</ul>
+<p>May the future be One .NET, and I wish you all joy in this Christmas season!</p>
 
   </article>
     
@@ -509,15 +375,10 @@ img.comment-author-profile-image {
         </div>
 
         
-            <ul class="pager">
-                <li class="previous"><a href="/2024/08/cancellation-5-registration.html" title="Cancellation, Part 5: Registration">&larr; Previous in Cancellation</a></li>
-                
-            </ul>
-        
         
         <ul class="pager">
-            <li class="previous"><a href="/2024/08/cancellation-5-registration.html" title="Cancellation, Part 5: Registration">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2024/12/netcore.html" title="C# Advent: No one loves the .NET Core name anymore">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2024/10/cancellation-6-linking.html" title="Cancellation, Part 6: Linking">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="comments"></div>
@@ -526,19 +387,6 @@ img.comment-author-profile-image {
         </div>
         <div class="col-sm-2 col-md-3 col-md-offset-0 col-lg-2 col-lg-offset-1 affix hidden-print" data-spy="affix" role="navigation">
             
-                <div class="panel panel-primary">
-                    <div class="panel-heading">Cancellation</div>
-                    <div class="panel-body sidenav">
-                        <ul class="nav nav-pills nav-stacked">
-                                    <li class="sidenavitem"><a href="/2022/02/cancellation-1-overview.html">Overview</a></li>
-                                    <li class="sidenavitem"><a href="/2022/03/cancellation-2-requesting-cancellation.html">Requesting Cancellation</a></li>
-                                    <li class="sidenavitem"><a href="/2022/03/cancellation-3-detecting-cancellation.html">Detecting Cancellation</a></li>
-                                    <li class="sidenavitem"><a href="/2022/03/cancellation-4-polling.html">Polling</a></li>
-                                    <li class="sidenavitem"><a href="/2024/08/cancellation-5-registration.html">Registration</a></li>
-                                    <li class="active sidenavitem"><a href="/2024/10/cancellation-6-linking.html">Linking</a></li>
-                        </ul>
-                    </div>
-                </div>
             
         </div>
         <div class="col-sm-2 sidebar hidden-print">
@@ -629,17 +477,6 @@ img.comment-author-profile-image {
 
 <!-- Scroll the sidebar into view (if necessary) -->
 
-<script src="/lib/jquery.scrollTo.min.js"></script>
-<script type="text/javascript">
-    (function ($) {
-        $(function () {
-            var container = $('.affix').filter(function() { return $(this).css('position') == 'fixed'; });
-            var target = container.find('.active');
-            container.scrollTo(target, { offset: - (container.height() / 2 - target.height() / 2) });
-        });
-    })(window.jQuery);
-</script>
-
 
 <!-- Moment -->
 <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.6.0/moment.min.js"></script>
@@ -697,7 +534,7 @@ img.comment-author-profile-image {
 
 <script type="text/javascript">
 
-var pageUrl = "https://blog.stephencleary.com" + "/2024/10/cancellation-6-linking.html";
+var pageUrl = "https://blog.stephencleary.com" + "/2024/12/netcore.html";
 
 // (unnecessary) 1) If the URL starts with http://, replace with https://
 

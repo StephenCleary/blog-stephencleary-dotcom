@@ -8,6 +8,96 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>C# Advent: No one loves the .NET Core name anymore</title>
+        <description>&lt;p&gt;This post is part of &lt;a href=&quot;https://csadvent.christmas/&quot;&gt;C# Advent&lt;/a&gt; organized by &lt;a href=&quot;https://x.com/mgroves&quot;&gt;@mgroves&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;a-brief-history-of-net-core&quot;&gt;A Brief History of “.NET Core”&lt;/h2&gt;
+
+&lt;blockquote class=&quot;blockquote&quot;&gt;
+  &lt;p&gt;‘Twas a holiday season, so bright and so clear,&lt;br /&gt;
+When .NET Core was a name we held dear.&lt;br /&gt;
+Once, it meant Silverlight, in the browser’s embrace,&lt;br /&gt;
+A vision of apps that could run with great grace.&lt;br /&gt;&lt;/p&gt;
+
+  &lt;p&gt;But as time moved on, so too did the trend,&lt;br /&gt;
+Silverlight’s reign began to descend.&lt;br /&gt;
+Then WinRT arrived, all shiny and new,&lt;br /&gt;
+With Windows Store apps, the promise it grew.&lt;br /&gt;&lt;/p&gt;
+
+  &lt;p&gt;Next came UWP, a universal dream,&lt;br /&gt;
+For apps that could run on each Windows stream.&lt;br /&gt;
+Yet, despite all the progress, something was amiss,&lt;br /&gt;
+The tech world was changing, and something we’d miss.&lt;br /&gt;&lt;/p&gt;
+
+  &lt;p&gt;Then .NET Core rose, its name now aglow,&lt;br /&gt;
+A shift to the future, a new path to go.&lt;br /&gt;
+It wasn’t just Windows, it reached far and wide,&lt;br /&gt;
+Cross-platform magic, no longer confined.&lt;br /&gt;&lt;/p&gt;
+
+  &lt;p&gt;Gone were the days of Silverlight’s reign,&lt;br /&gt;
+No more WinRT to tether and chain.&lt;br /&gt;
+UWP too, was a chapter now closed,&lt;br /&gt;
+But the legacy of .NET still brightly glowed.&lt;br /&gt;&lt;/p&gt;
+
+  &lt;p&gt;Now .NET Core means something profound,&lt;br /&gt;
+A modern framework that’s world-renowned.&lt;br /&gt;
+It’s cloud, it’s mobile, it’s web all combined,&lt;br /&gt;
+A platform so nimble, for all to find.&lt;br /&gt;&lt;/p&gt;
+
+  &lt;p&gt;So here’s to the future, to the journey ahead,&lt;br /&gt;
+With .NET Core, new dreams are now spread.&lt;br /&gt;
+We celebrate Christmas, not just for the cheer,&lt;br /&gt;
+But for how far .NET has come through the years!&lt;br /&gt;&lt;/p&gt;
+
+  &lt;footer class=&quot;blockquote-footer text-right&quot;&gt;&lt;cite&gt;ChatGPT, of course. I couldn't write this.&lt;/cite&gt;&lt;/footer&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;I thought today would be a fun time to write up something I’ve been meaning to write for years: the history of “.NET Core” terminology.&lt;/p&gt;
+
+&lt;p&gt;More specifically, this is how &lt;em&gt;I’ve&lt;/em&gt; seen the term “.NET Core” used in the past. It’s not guaranteed to be correct, and &lt;em&gt;certainly&lt;/em&gt; not guaranteed to be complete! Am I missing anything? Feel free to shout out in the comments!&lt;/p&gt;
+
+&lt;h3 id=&quot;net-compact-framework&quot;&gt;.NET Compact Framework&lt;/h3&gt;
+
+&lt;p&gt;I believe I first heard the term “.NET Core” referring to the .NET Compact Framework. This was way back when .NET Framework 3.5 was the new hotness. Actually, that was “.NET Framework 3.5 SP1” - as in “Service Pack 1”. Yes, .NET used to have &lt;em&gt;service packs&lt;/em&gt;.&lt;/p&gt;
+
+&lt;p&gt;I’m not sure if “.NET Core” was the proper term to refer to NetCF or not. AFAIK, it was an unofficial term that was applied because .NET Compact Framework contained a small subset of the (massive) .NET Framework, intended to run on embedded devices. Hence, it was a “core” (minimal) framework.&lt;/p&gt;
+
+&lt;h3 id=&quot;silverlight-winrt-windows-phone-windows-store-and-universal-windows-platform&quot;&gt;Silverlight, WinRT, Windows Phone, Windows Store, and Universal Windows Platform&lt;/h3&gt;
+
+&lt;p&gt;Perhaps I should have put a trigger warning on this article… Sorry for anyone who winced in pain just reading the title for this section…&lt;/p&gt;
+
+&lt;p&gt;All of these technologies had something or other to do with “.NET Core” as a term. They were all minimal sub-frameworks of the full .NET Framework. And at least some of them had similar terminology for their runtimes (e.g., Silverlight ran on “Core CLR”). My brain has mercifully purged the sordid details. I only vaguely remember Windows Phone being different from Windows Phone Apps, and Silverlight getting even more stripped-down to run on Windows Phone.&lt;/p&gt;
+
+&lt;p&gt;This was not a fun time to be a library developer.&lt;/p&gt;
+
+&lt;h3 id=&quot;netcore-as-a-target-framework-moniker&quot;&gt;netcore as a Target Framework Moniker&lt;/h3&gt;
+
+&lt;p&gt;This is what I actually want to focus on. &lt;a href=&quot;https://learn.microsoft.com/en-us/dotnet/standard/frameworks?WT.mc_id=DT-MVP-5000058&quot;&gt;Target framework monikers (TFMs)&lt;/a&gt; are very important to library developers.&lt;/p&gt;
+
+&lt;p&gt;The term “.NET Core” officially entered the NuGet space as a TFM, but it &lt;em&gt;wasn’t&lt;/em&gt; for what we call .NET Core today. It was for Windows Store apps (and WinRT apps), and briefly extending into UWP apps.&lt;/p&gt;
+
+&lt;p&gt;Yes, Windows Store projects way back in Windows 8.0 (as well as WinRT) used a TFM identifier of &lt;code&gt;netcore45&lt;/code&gt;. Windows 8.1 used &lt;code&gt;netcore451&lt;/code&gt;. When Windows Store apps were replaced by Universal Windows Platform (UWP) apps, they briefly used &lt;code&gt;netcore50&lt;/code&gt; before changing to &lt;code&gt;uap10.0&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;So, when the (modern) .NET Core team needed a TFM, they found &lt;code&gt;netcoreNN&lt;/code&gt; wasn’t available. I assume this is why they went with &lt;code&gt;netcoreappNN&lt;/code&gt; instead (after a brief foray into &lt;code&gt;dnxcore50&lt;/code&gt; and &lt;code&gt;aspnetcore50&lt;/code&gt;). So .NET Core TFMs for older versions (1.0-3.1) are &lt;code&gt;netcoreapp1.0&lt;/code&gt; - &lt;code&gt;netcoreapp3.1&lt;/code&gt;. It was just an unfortunate accident of history.&lt;/p&gt;
+
+&lt;h2 id=&quot;no-more-net-core&quot;&gt;No More .NET Core&lt;/h2&gt;
+
+&lt;p&gt;The .NET team has dropped “Core”. There is now one .NET moving forward - a great relief to library authors!&lt;/p&gt;
+
+&lt;p&gt;Since v5, the TFMs have even changed: modern .NET uses &lt;code&gt;net9.0&lt;/code&gt; and similar, dropping the “core” moniker even from the TFM.&lt;/p&gt;
+
+&lt;p&gt;I still refer to .NET as “.NET Core” from time to time, especially in conversations that have to do with both .NET Framework and the new .NET. E.g., I’ll refer to a “.NET Core migration” rather than just “.NET migration” for a project currently targeting .NET Framework. The proper term, though, is no longer “.NET Core” but just “.NET”.&lt;/p&gt;
+
+&lt;p&gt;“.NET Core” is gone. And good riddance!&lt;/p&gt;
+
+&lt;p&gt;May the future be One .NET, and I wish you all joy in this Christmas season!&lt;/p&gt;
+</description>
+        <pubDate>Tue, 03 Dec 2024 00:00:00 +0000</pubDate>
+        <link>https://blog.stephencleary.com/2024/12/netcore.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2024/12/netcore.html</guid>
+      </item>
+    
+      <item>
         <title>Cancellation, Part 6: Linking</title>
         <description>&lt;p&gt;So far we’ve covered how &lt;a href=&quot;/2022/02/cancellation-1-overview.html&quot;&gt;cancellation is requested by one piece of code, and responded to by another piece of code&lt;/a&gt;. The requesting code has a &lt;a href=&quot;/2022/03/cancellation-2-requesting-cancellation.html&quot;&gt;standard way of requesting cancellation&lt;/a&gt;, as well as a standard way of &lt;a href=&quot;/2022/03/cancellation-3-detecting-cancellation.html&quot;&gt;detecting whether the code was canceled or not&lt;/a&gt;. Meanwhile, the responding code can observe cancellation either by &lt;a href=&quot;/2022/03/cancellation-4-polling.html&quot;&gt;polling&lt;/a&gt; or (more commonly) by &lt;a href=&quot;/2024/08/cancellation-5-registration.html&quot;&gt;registering a cancellation callback&lt;/a&gt;. So far, so good; and we’re ready for the next step!&lt;/p&gt;
 
@@ -1147,202 +1237,6 @@ Do not comment on unused References.
         <pubDate>Thu, 18 May 2023 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2023/05/grounded-chatgpt.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2023/05/grounded-chatgpt.html</guid>
-      </item>
-    
-      <item>
-        <title>Modern C# Techniques, Part 3: Generic Code Generation</title>
-        <description>&lt;p&gt;This technique really excites me! We’re in for a good ride today…&lt;/p&gt;
-
-&lt;h2 id=&quot;c-templates-and-code-generation&quot;&gt;C++ Templates and Code Generation&lt;/h2&gt;
-
-&lt;p&gt;Before we take a look at C# generics, first I’ll take a brief look at how C++ templates are used for code generation.&lt;/p&gt;
-
-&lt;p&gt;Templates (and generics) are both forms of polymorphic functions; that is, you define one type (or method) that takes a type parameter, and the generic type/method is able to change its behavior based on the type passed in.&lt;/p&gt;
-
-&lt;p&gt;C++ templates are purely a compile-time construct; they instruct the compiler how to generate the code for the template type/method. Specifically, the compiler performs a transformation called &lt;a href=&quot;https://en.wikipedia.org/wiki/Monomorphization&quot;&gt;monomorphization&lt;/a&gt;; for each of the template arguments actually passed to the type/method, the compiler generates a new copy of the type/method specifically for that template argument.&lt;/p&gt;
-
-&lt;p&gt;Monomorphization is what enables C++ templates to be used as code generators.&lt;/p&gt;
-
-&lt;h2 id=&quot;c-generics&quot;&gt;C# Generics&lt;/h2&gt;
-
-&lt;p&gt;C# generics are a run-time construct; the compiler actually outputs the generic type/method itself into the IL (intermediate language). At runtime, the implementation of a generic type/method is shared between the generic arguments.&lt;/p&gt;
-
-&lt;p&gt;In other words, C# generics do &lt;em&gt;not&lt;/em&gt; undergo monomorphization… except…&lt;/p&gt;
-
-&lt;h3 id=&quot;generics-and-value-types&quot;&gt;Generics and Value Types&lt;/h3&gt;
-
-&lt;p&gt;…except when used with value types!&lt;/p&gt;
-
-&lt;p&gt;C# generics do &lt;em&gt;not&lt;/em&gt; undergo monomorphization for reference types; there’s only one copy of the type/method implementation that is shared between all reference types. However, C# generics &lt;em&gt;do&lt;/em&gt; undergo monomorphization for value types!&lt;/p&gt;
-
-&lt;p&gt;This makes sense; if a method &lt;code&gt;Something&amp;lt;T&amp;gt;&lt;/code&gt; defines a local variable &lt;code&gt;T value;&lt;/code&gt;, the compiler needs to know how big that &lt;code&gt;T&lt;/code&gt; is. The size of a reference is the same regardless of the type being referred to, but the size of value type values can vary.&lt;/p&gt;
-
-&lt;p&gt;So, it turns out that C# generics &lt;em&gt;do&lt;/em&gt; have monomorphization. They just don’t do it for &lt;em&gt;all&lt;/em&gt; generic arguments, only the ones that are value types. And monomorphization isn’t done by the C# compiler; it’s done by the JIT compiler (at runtime).&lt;/p&gt;
-
-&lt;h3 id=&quot;generics-and-constrained-value-types&quot;&gt;Generics and Constrained Value Types&lt;/h3&gt;
-
-&lt;p&gt;Monomorphization is fine for &lt;code&gt;List&amp;lt;T&amp;gt;&lt;/code&gt; and friends, which don’t actually &lt;em&gt;do&lt;/em&gt; anything with the &lt;code&gt;T&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;For code generation, though, monomorphization is most useful if you also constrain the generics to a specific interface. A simple (and rather silly) example will make this more clear:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&quot;language-C#&quot;&gt;interface ISample
-{
-  int Setting { get; }
-}
-
-void Function&amp;lt;T&amp;gt;()
-    where T : struct, ISample
-{
-  if (default(T).Setting == 13)
-    Console.WriteLine(&quot;Ah, my favorite number!&quot;);
-  else
-    Console.WriteLine($&quot;You passed {default(T).Setting}.&quot;);
-}
-
-readonly struct Sample7 : ISample
-{
-  public int Setting =&amp;gt; 7;
-}
-
-readonly struct Sample13 : ISample
-{
-  public int Setting =&amp;gt; 13;
-}
-
-Function&amp;lt;Sample7&amp;gt;();
-Function&amp;lt;Sample13&amp;gt;();
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;The C# compiler just treats &lt;code&gt;Function&lt;/code&gt; like an ordinary generic function. The JIT compiler will create &lt;em&gt;two separate copies&lt;/em&gt; of &lt;code&gt;Function&lt;/code&gt;; because &lt;code&gt;Sample7&lt;/code&gt; and &lt;code&gt;Sample13&lt;/code&gt; are both value types, monomorphization occurs and the JIT compiler generates &lt;em&gt;two&lt;/em&gt; copies of the method. In both copies, the &lt;code&gt;default(T).Setting&lt;/code&gt; code is emmitted as a constrained virtual call.&lt;/p&gt;
-
-&lt;p&gt;Then, each copy of the method has a high likelihood of being optimized. After all, the compiler knows the type of &lt;code&gt;T&lt;/code&gt; for each copy. When it optimizes &lt;code&gt;Function&amp;lt;Sample7&amp;gt;&lt;/code&gt;, it &lt;em&gt;knows&lt;/em&gt; that the &lt;code&gt;default(T).Setting&lt;/code&gt; is calling the &lt;code&gt;ISample.get_Setting&lt;/code&gt; method on the &lt;code&gt;Sample7&lt;/code&gt; type. The &lt;code&gt;Sample7&lt;/code&gt; implementation of &lt;code&gt;ISample.Setting&lt;/code&gt; is trivial and is likely going to be inlined, which means that the &lt;code&gt;if&lt;/code&gt; branch can be precomputed. It is extremely likely that both copies of &lt;code&gt;Function&amp;lt;T&amp;gt;&lt;/code&gt; only end up having a single &lt;code&gt;Console.WriteLine&lt;/code&gt; call, without any &lt;code&gt;if&lt;/code&gt; statement at all!&lt;/p&gt;
-
-&lt;p&gt;At this point, we have real code generation using C# generics!&lt;/p&gt;
-
-&lt;h3 id=&quot;generics-and-constrained-value-types-with-static-abstract-interface-methods&quot;&gt;Generics and Constrained Value Types with Static Abstract Interface Methods&lt;/h3&gt;
-
-&lt;p&gt;Static abstract interface methods allow us to clean this up even a bit more. Instead of defining &lt;code&gt;Setting&lt;/code&gt; as an instance method, it can now be a static method, as such:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&quot;language-C#&quot;&gt;interface ISample
-{
-  static abstract int Setting { get; }
-}
-
-void Function&amp;lt;T&amp;gt;()
-    where T : struct, ISample
-{
-  if (T.Setting == 13)
-    Console.WriteLine(&quot;Ah, my favorite number!&quot;);
-  else
-    Console.WriteLine($&quot;You passed {T.Setting}.&quot;);
-}
-
-readonly struct Sample7 : ISample
-{
-  public static int Setting =&amp;gt; 7;
-}
-
-readonly struct Sample13 : ISample
-{
-  public static int Setting =&amp;gt; 13;
-}
-
-Function&amp;lt;Sample7&amp;gt;();
-Function&amp;lt;Sample13&amp;gt;();
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Now there’s no need for a &lt;code&gt;default(T)&lt;/code&gt; value inside &lt;code&gt;Function&amp;lt;T&amp;gt;&lt;/code&gt;.&lt;/p&gt;
-
-&lt;h2 id=&quot;warnings-and-limitations&quot;&gt;Warnings and Limitations&lt;/h2&gt;
-
-&lt;p&gt;By using C# generics with value types, we can ensure monomorphization takes place; however, the rest of the behavior is not guaranteed.&lt;/p&gt;
-
-&lt;h3 id=&quot;no-guarantees&quot;&gt;No Guarantees&lt;/h3&gt;
-
-&lt;p&gt;The JIT compiler doesn’t actually &lt;em&gt;guarantee&lt;/em&gt; that any particular methods are inlined, or that any kind of optimization takes place (e.g., removing the &lt;code&gt;if&lt;/code&gt; statement in our example). It’s reasonable to assume that &lt;em&gt;some&lt;/em&gt; optimization will take place, and with modern tiered optimization, you can also expect that the method will become &lt;em&gt;more&lt;/em&gt; optimized if it is called a lot.&lt;/p&gt;
-
-&lt;p&gt;With C++ templates (and other compile-time-only monomorphization systems), you can &lt;em&gt;know&lt;/em&gt; that the resulting code will be fully optimized. With C# generics, the optimization happens at runtime, so the runtime has to balance between executing the code &lt;em&gt;now&lt;/em&gt; and speeding it up for &lt;em&gt;later&lt;/em&gt;. At the end of the day, the best you can do is hope.&lt;/p&gt;
-
-&lt;h3 id=&quot;limited-to-interfaces&quot;&gt;Limited to Interfaces&lt;/h3&gt;
-
-&lt;p&gt;When doing this kind of code generation, you’re limited to only what can be expressed as interface members. You can define methods and properties, but not &lt;code&gt;const&lt;/code&gt; values or nested types. It’s not a &lt;em&gt;complete&lt;/em&gt; code generation solution like C++ templates, but it’s certainly useful nonetheless.&lt;/p&gt;
-
-&lt;h2 id=&quot;applications&quot;&gt;Applications&lt;/h2&gt;
-
-&lt;h3 id=&quot;more-efficient-general-algortihms&quot;&gt;More Efficient General Algortihms&lt;/h3&gt;
-
-&lt;p&gt;There are some algorithms that take parameters that often don’t change for a given program. To take an example I’m familiar with, CRC32 hashes are actually a &lt;em&gt;class&lt;/em&gt; of hash algorithms with different values for polynomials, initializers, and a few other parameters. Usually, a program that uses a CRC32 hash only uses &lt;em&gt;one&lt;/em&gt; of these algorithms (one specific polynomial with a specific initializer value, etc). If the CRC32 implementation uses code generation, that will allow the JIT compiler to optimize just for that specific CRC32 hash algorithm.&lt;/p&gt;
-
-&lt;h3 id=&quot;more-general-algortihms&quot;&gt;More General Algortihms&lt;/h3&gt;
-
-&lt;p&gt;It’s also possible to make one algorithm even more generic, especially due to the static interface methods. For a similar example to the above, CRC16 is &lt;em&gt;another&lt;/em&gt; class of hash algorithms that is practically the same as CRC32 except it uses 16-bit integers instead of 32-bit integers. Static interface methods would allow a single unified “CRC” algorithm that can handle &lt;a href=&quot;https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/tutorials/static-virtual-interface-members?WT.mc_id=DT-MVP-5000058#generic-math&quot;&gt;any numeric type with generic math constraints&lt;/a&gt;. So our CRC32 and CRC16 implementations can be combined.&lt;/p&gt;
-
-&lt;h3 id=&quot;replacing-constant-arguments&quot;&gt;Replacing Constant Arguments&lt;/h3&gt;
-
-&lt;p&gt;There are a few situations in code where certain method arguments are always constant values. This is usually an indication that the method should be split into two methods, but sometimes there are maintenance concerns that are sufficiently strong, keeping the methods as a single implementation.&lt;/p&gt;
-
-&lt;p&gt;The example that I’m most familiar with here is the &lt;a href=&quot;https://learn.microsoft.com/en-us/archive/msdn-magazine/2015/july/async-programming-brownfield-async-development?WT.mc_id=DT-MVP-5000058#the-flag-argument-hack&quot;&gt;boolean argument hack&lt;/a&gt; for providing both synchronous and asynchronous versions of a method, which looks like this:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&quot;language-C#&quot;&gt;private async Task&amp;lt;string&amp;gt; GetCoreAsync(bool sync)
-{
-  if (sync)
-    Thread.Sleep(TimeSpan.FromSeconds(1));
-  else
-    await Task.Delay(TimeSpan.FromSeconds(1));
-  return &quot;Hi!&quot;;
-}
-
-public string Get() =&amp;gt; GetCoreAsync(sync: true).GetAwaiter().GetResult();
-public Task&amp;lt;string&amp;gt; GetAsync() =&amp;gt; GetCoreAsync(sync: false);
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;In the code above, &lt;code&gt;GetCoreAsync&lt;/code&gt; has a &lt;code&gt;sync&lt;/code&gt; argument that is &lt;em&gt;always&lt;/em&gt; a constant. Really, it &lt;em&gt;should&lt;/em&gt; be two different methods, but if we pretend that &lt;code&gt;GetCoreAsync&lt;/code&gt; is much longer and more complex, then making it two different methods does cause a maintenance burden.&lt;/p&gt;
-
-&lt;p&gt;So, let’s use generic code generation to &lt;em&gt;generate&lt;/em&gt; two different methods!&lt;/p&gt;
-
-&lt;p&gt;First, we’d extract the code differences (&lt;code&gt;Thread.Sleep&lt;/code&gt; vs &lt;code&gt;Task.Delay&lt;/code&gt;). These are going to need a definition in our interface, and they’ll be implemented by each value type. Since we’re talking about code that may be synchronous or asynchronous, we’ll use value tasks as the return type. (Reminder: any time you have a method whose implementation &lt;em&gt;may&lt;/em&gt; be asynchronous, then it should have an asynchronous signature). Then, &lt;code&gt;GetCoreAsync&lt;/code&gt; can just invoke those interface methods. We end up with something like this:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&quot;language-C#&quot;&gt;private interface IDelay
-{
-  static abstract ValueTask DelayAsync(TimeSpan delay);
-}
-
-private readonly struct SynchronousDelay : IDelay
-{
-  static ValueTask DelayAsync(TimeSpan delay)
-  {
-    Thread.Sleep(delay);
-    return new();
-  }
-}
-
-private readonly struct AsynchronousDelay : IDelay
-{
-  static async ValueTask DelayAsync(TimeSpan delay) =&amp;gt; await Task.Delay(delay);
-}
-
-private async Task&amp;lt;string&amp;gt; GetCoreAsync&amp;lt;TDelay&amp;gt;()
-    where TDelay: struct, IDelay
-{
-  await TDelay.DelayAsync(TimeSpan.FromSeconds(1));
-  return &quot;Hi!&quot;;
-}
-
-public string Get() =&amp;gt; GetCoreAsync&amp;lt;SynchronousDelay&amp;gt;().GetAwaiter().GetResult();
-public Task&amp;lt;string&amp;gt; GetAsync() =&amp;gt; GetCoreAsync&amp;lt;AsynchronousDelay&amp;gt;();
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;The core implementation (&lt;code&gt;GetCoreAsync&lt;/code&gt;) is simplified and is more obviously correct. The public interface (&lt;code&gt;Get&lt;/code&gt; and &lt;code&gt;GetAsync&lt;/code&gt;) didn’t change at all. And at runtime, if only one path is used, then only one path will be JITted. If both paths are used, then two copies of &lt;code&gt;GetCoreAsync&lt;/code&gt; are created by the JITter, each one optimized for its own situation (asynchronous or synchronous). This is a particularly useful technique for libraries, which may need to provide both forms of methods, but have a high likelihood of only one of them being used.&lt;/p&gt;
-
-&lt;p&gt;Stephen Toub discusses how the BCL uses this technique &lt;a href=&quot;https://devblogs.microsoft.com/dotnet/performance_improvements_in_net_7/?WT.mc_id=DT-MVP-5000058#:~:text=One%20final%20change%20related%20to%20reading%20and%20writing%20performance&quot;&gt;in a recent blog post&lt;/a&gt;.&lt;/p&gt;
-
-&lt;h2 id=&quot;summary&quot;&gt;Summary&lt;/h2&gt;
-
-&lt;p&gt;Generic code generation provides a limited form of code generation in C#, because value types cause monomorphization. Static interface members provide an even nicer way to do generic code generation.&lt;/p&gt;
-</description>
-        <pubDate>Thu, 13 Oct 2022 00:00:00 +0000</pubDate>
-        <link>https://blog.stephencleary.com/2022/10/modern-csharp-techniques-3-generic-code-generation.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2022/10/modern-csharp-techniques-3-generic-code-generation.html</guid>
       </item>
     
   </channel>
