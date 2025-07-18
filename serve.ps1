@@ -1,0 +1,3 @@
+$www = Start-Job -ScriptBlock { docker run --rm --volume=D:\Code\blog-stephencleary-dotcom:/srv/jekyll -w /srv/jekyll/blog -p 127.0.0.1:4001:4001 pwbgl/docker-jekyll-pygments jekyll serve --incremental --watch --force_polling --config _config.www.yml,_config.www.local.yml }
+$blog = Start-Job -ScriptBlock { docker run --rm --volume=D:\Code\blog-stephencleary-dotcom:/srv/jekyll -w /srv/jekyll/blog -p 127.0.0.1:4000:4000 pwbgl/docker-jekyll-pygments jekyll serve --incremental --watch --force_polling --config _config.blog.yml,_config.blog.local.yml }
+Receive-Job $www, $blog -Wait

@@ -10,7 +10,7 @@ git submodule foreach 'git checkout gh-pages'
 ## To Serve Locally
 
 ```
-npm run serve
+./serve.ps1
 ```
 
 # Patterns

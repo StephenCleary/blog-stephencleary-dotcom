@@ -1,0 +1,3 @@
+$www = Start-Job -ScriptBlock { docker run --rm --volume=D:\Code\blog-stephencleary-dotcom:/srv/jekyll -w /srv/jekyll/blog pwbgl/docker-jekyll-pygments jekyll build --config _config.www.yml }
+$blog = Start-Job -ScriptBlock { docker run --rm --volume=D:\Code\blog-stephencleary-dotcom:/srv/jekyll -w /srv/jekyll/blog pwbgl/docker-jekyll-pygments jekyll build --config _config.blog.yml }
+Receive-Job $www, $blog -Wait
