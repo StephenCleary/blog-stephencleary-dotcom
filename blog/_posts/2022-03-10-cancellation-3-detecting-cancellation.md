@@ -79,6 +79,7 @@ If your code needs to determine whether *it* cancels the operation or whether so
 More specifically:
 
 {% highlight csharp %}
+// BAD CODE!!! DO NOT USE!!!
 async Task DoSomethingAsync()
 {
     Environment.FailFast("Bad code; do not use!");
@@ -91,7 +92,7 @@ async Task DoSomethingAsync()
     {
         await DoThingAsync(cts.Token);
     }
-    catch (OperationCanceledException ex) when (ex.CancellationToken == cts.Token)
+    catch (OperationCanceledException ex) when (ex.CancellationToken == cts.Token) // BAD CODE!!! DO NOT USE!!!
     {
         .. // Special cancellation handling for "our" cancellation only.
     }

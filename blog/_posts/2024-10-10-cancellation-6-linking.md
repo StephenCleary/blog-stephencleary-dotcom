@@ -227,13 +227,15 @@ async Task DoSomethingAsync(CancellationToken cancellationToken)
     {
         await DoSomethingElseAsync(cts.Token);
     }
-    catch (OperationCanceledException ex) when (cts.IsCancellationRequested)
+    catch (OperationCanceledException ex) when (cts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
     {
         ... // Do some recovery specific to the timeout.
         throw;
     }
 }
 {% endhighlight %}
+
+Since the cancellation token source is linked, `cts.IsCancellationRequested` can be true if the parent `cancellationToken` is canceled _or_ the timeout expired. If you want to do cancellation specific to the timeout, you'll need to catch `OperationCanceledException` only when the parent `cancellationToken` is _not_ canceled. (Thanks to Daniil K. in the comments for this correction!)
 
 ## Summary
 
