@@ -12,6 +12,10 @@ This is some behavior that I've found surprising (and others have as well): ASP.
 
 Specifically, the host will invoke `IHostedService.StartAsync` for all its hosted services, and `BackgroundService` [directly invokes `ExecuteAsync` before returning from `StartAsync`](https://github.com/dotnet/runtime/blob/e3ffd343ad5bd3a999cb9515f59e6e7a777b2c34/src/libraries/Microsoft.Extensions.Hosting.Abstractions/src/BackgroundService.cs#L37). So `BackgroundService` *assumes* that its derived classes will have an asynchronous `ExecuteAsync`. If the `ExecuteAsync` implementation is synchronous (or starts executing with a blocking call), then problems will ensue.
 
+<div class="alert alert-info" markdown="1">
+**Update:** .NET 10 will change this behavior. `BackgroundService.ExecuteAsync` [is now started on a background thread](https://github.com/dotnet/runtime/pull/116283){:.alert-link}. This blog post is preserved for historical reasons.
+</div>
+
 ## Problem Description
 
 The resulting behavior is that the background service will start executing, but the host will be unable to finish starting up. This will block other background services from starting.
