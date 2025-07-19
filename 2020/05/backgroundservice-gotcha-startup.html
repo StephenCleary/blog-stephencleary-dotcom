@@ -288,6 +288,10 @@ img.comment-author-profile-image {
 
 <p>Specifically, the host will invoke <code>IHostedService.StartAsync</code> for all its hosted services, and <code>BackgroundService</code> <a href="https://github.com/dotnet/runtime/blob/e3ffd343ad5bd3a999cb9515f59e6e7a777b2c34/src/libraries/Microsoft.Extensions.Hosting.Abstractions/src/BackgroundService.cs#L37">directly invokes <code>ExecuteAsync</code> before returning from <code>StartAsync</code></a>. So <code>BackgroundService</code> <em>assumes</em> that its derived classes will have an asynchronous <code>ExecuteAsync</code>. If the <code>ExecuteAsync</code> implementation is synchronous (or starts executing with a blocking call), then problems will ensue.</p>
 
+<div class="alert alert-info">
+  <p><strong>Update:</strong> .NET 10 will change this behavior. <code>BackgroundService.ExecuteAsync</code> <a href="https://github.com/dotnet/runtime/pull/116283" class="alert-link">is now started on a background thread</a>. This blog post is preserved for historical reasons.</p>
+</div>
+
 <h2 id="problem-description">Problem Description</h2>
 
 <p>The resulting behavior is that the background service will start executing, but the host will be unable to finish starting up. This will block other background services from starting.</p>
