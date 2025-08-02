@@ -75,7 +75,7 @@ title: 'Cleary Cryptocurrency Syndicate Status'
         }
 
         function recalculate() {
-            fetch('https://api.etherscan.io/api?module=stats&action=ethprice&apikey=' + apikey).then(
+            fetch('https://api.etherscan.io/v2/api?chainid=1&module=stats&action=ethprice&apikey=' + apikey).then(
                 function (response) {
                     if (response.status !== 200) {
                         document.getElementById("messages").innerText = "Error: " + response.status;
