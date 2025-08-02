@@ -482,12 +482,14 @@ img.comment-author-profile-image {
     <span class="p">{</span>
         <span class="k">await</span> <span class="nf">DoSomethingElseAsync</span><span class="p">(</span><span class="n">cts</span><span class="p">.</span><span class="n">Token</span><span class="p">);</span>
     <span class="p">}</span>
-    <span class="k">catch</span> <span class="p">(</span><span class="n">OperationCanceledException</span> <span class="n">ex</span><span class="p">)</span> <span class="n">when</span> <span class="p">(</span><span class="n">cts</span><span class="p">.</span><span class="n">IsCancellationRequested</span><span class="p">)</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">OperationCanceledException</span> <span class="n">ex</span><span class="p">)</span> <span class="n">when</span> <span class="p">(</span><span class="n">cts</span><span class="p">.</span><span class="n">IsCancellationRequested</span> <span class="p">&amp;&amp;</span> <span class="p">!</span><span class="n">cancellationToken</span><span class="p">.</span><span class="n">IsCancellationRequested</span><span class="p">)</span>
     <span class="p">{</span>
         <span class="p">...</span> <span class="c1">// Do some recovery specific to the timeout.</span>
         <span class="k">throw</span><span class="p">;</span>
     <span class="p">}</span>
 <span class="p">}</span></code></pre></figure>
+
+<p>Since the cancellation token source is linked, <code>cts.IsCancellationRequested</code> can be true if the parent <code>cancellationToken</code> is canceled <em>or</em> the timeout expired. If you want to do cancellation specific to the timeout, you’ll need to catch <code>OperationCanceledException</code> only when the parent <code>cancellationToken</code> is <em>not</em> canceled. (Thanks to Daniil K. in the comments for this correction!)</p>
 
 <h2 id="summary">Summary</h2>
 

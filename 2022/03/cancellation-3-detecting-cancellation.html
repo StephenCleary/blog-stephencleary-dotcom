@@ -350,7 +350,8 @@ img.comment-author-profile-image {
 
 <p>More specifically:</p>
 
-<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">()</span>
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="c1">// BAD CODE!!! DO NOT USE!!!</span>
+<span class="k">async</span> <span class="n">Task</span> <span class="nf">DoSomethingAsync</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="n">Environment</span><span class="p">.</span><span class="n">FailFast</span><span class="p">(</span><span class="s">&quot;Bad code; do not use!&quot;</span><span class="p">);</span>
 
@@ -362,7 +363,7 @@ img.comment-author-profile-image {
     <span class="p">{</span>
         <span class="k">await</span> <span class="nf">DoThingAsync</span><span class="p">(</span><span class="n">cts</span><span class="p">.</span><span class="n">Token</span><span class="p">);</span>
     <span class="p">}</span>
-    <span class="k">catch</span> <span class="p">(</span><span class="n">OperationCanceledException</span> <span class="n">ex</span><span class="p">)</span> <span class="n">when</span> <span class="p">(</span><span class="n">ex</span><span class="p">.</span><span class="n">CancellationToken</span> <span class="p">==</span> <span class="n">cts</span><span class="p">.</span><span class="n">Token</span><span class="p">)</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">OperationCanceledException</span> <span class="n">ex</span><span class="p">)</span> <span class="n">when</span> <span class="p">(</span><span class="n">ex</span><span class="p">.</span><span class="n">CancellationToken</span> <span class="p">==</span> <span class="n">cts</span><span class="p">.</span><span class="n">Token</span><span class="p">)</span> <span class="c1">// BAD CODE!!! DO NOT USE!!!</span>
     <span class="p">{</span>
         <span class="p">..</span> <span class="c1">// Special cancellation handling for &quot;our&quot; cancellation only.</span>
     <span class="p">}</span>
