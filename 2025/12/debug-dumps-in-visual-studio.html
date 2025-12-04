@@ -4,10 +4,10 @@
     <meta charset="utf-8"/>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>C# Advent: No one loves the .NET Core name anymore</title>
+    <title>Debug Dumps in Visual Studio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="A history of the .NET Core name." />
-    <link rel="canonical" href="https://blog.stephencleary.com/2024/12/netcore.html" />
+    <meta name="description" content="Best practices for debugging memory dumps in Visual Studio." />
+    <link rel="canonical" href="https://blog.stephencleary.com/2025/12/debug-dumps-in-visual-studio.html" />
     
     <link rel="alternate" type="application/rss+xml" title="Stephen Cleary (the blog)" href="http://feeds.feedburner.com/NitoPrograms" />
     
@@ -276,94 +276,87 @@ img.comment-author-profile-image {
 
   <header>
       <div class="page-header">
-          <h1>C# Advent: No one loves the .NET Core name anymore</h1>
-          <small><time datetime="2024-12-03">Dec 3, 2024</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
+          <h1>Debug Dumps in Visual Studio</h1>
+          <small><time datetime="2025-12-04">Dec 4, 2025</time> &bull; <a id="comment-counter" href="#comments">Comments</a></small>
       </div>
   </header>
 
   <article>
   <p>This post is part of <a href="https://csadvent.christmas/">C# Advent</a> organized by <a href="https://x.com/mgroves">@mgroves</a>.</p>
 
-<h2 id="a-brief-history-of-net-core">A Brief History of “.NET Core”</h2>
+<p>Did you know that Visual Studio can debug memory dumps directly these days? It’s actually been capable of that for many years. This post is a memory dump (heh) of my recommended settings when using Visual Studio to debug memory dumps.</p>
 
-<blockquote class="blockquote">
-  <p>‘Twas a holiday season, so bright and so clear,<br />
-When .NET Core was a name we held dear.<br />
-Once, it meant Silverlight, in the browser’s embrace,<br />
-A vision of apps that could run with great grace.<br /></p>
+<h2 id="memory-dumps">Memory Dumps?</h2>
 
-  <p>But as time moved on, so too did the trend,<br />
-Silverlight’s reign began to descend.<br />
-Then WinRT arrived, all shiny and new,<br />
-With Windows Store apps, the promise it grew.<br /></p>
+<p>If you’re not familiar with the concept, you’re going to love this! A memory dump is a file that contains a copy of the memory of a specific process (hence the name). Windows memory dump files generally have the <code>.dmp</code> extension.</p>
 
-  <p>Next came UWP, a universal dream,<br />
-For apps that could run on each Windows stream.<br />
-Yet, despite all the progress, something was amiss,<br />
-The tech world was changing, and something we’d miss.<br /></p>
+<p>This is useful when you have one of those super annoying bugs that only reproduce in production. And yes, this is generally a last resort! Normally you catch bugs by reproducing the issue locally and then you can just run the code in the debugger, which is an incredibly useful tool for… well… <em>debugging</em>. Sometimes reproducing the issue is challenging (or impossible), and a pretty decent fallback technique (I’ve found) is to just read the code. But if you can’t find/reproduce the bug in a reasonable amount of time, taking a memory dump is a great technique to get additional insight.</p>
 
-  <p>Then .NET Core rose, its name now aglow,<br />
-A shift to the future, a new path to go.<br />
-It wasn’t just Windows, it reached far and wide,<br />
-Cross-platform magic, no longer confined.<br /></p>
+<h2 id="capturing-memory-dumps">Capturing Memory Dumps</h2>
 
-  <p>Gone were the days of Silverlight’s reign,<br />
-No more WinRT to tether and chain.<br />
-UWP too, was a chapter now closed,<br />
-But the legacy of .NET still brightly glowed.<br /></p>
+<p>The best tool for this is <a href="https://learn.microsoft.com/en-us/sysinternals/downloads/procdump?WT.mc_id=DT-MVP-5000058">ProcDump</a>: you can capture dumps on demand, or capture based on some monitoring trigger (process crash, high CPU/memory usage, etc).</p>
 
-  <p>Now .NET Core means something profound,<br />
-A modern framework that’s world-renowned.<br />
-It’s cloud, it’s mobile, it’s web all combined,<br />
-A platform so nimble, for all to find.<br /></p>
+<p>However, ProcDump requires access to the machine, so this works great only for on-prem or virtual machine deployments. If you’re in an Azure WebApp situation, you can <a href="https://learn.microsoft.com/en-us/troubleshoot/azure/app-service/capture-memory-dumps-app-service?WT.mc_id=DT-MVP-5000058#collect-a-memory-dump-feature">capture memory dumps there as well</a>.</p>
 
-  <p>So here’s to the future, to the journey ahead,<br />
-With .NET Core, new dreams are now spread.<br />
-We celebrate Christmas, not just for the cheer,<br />
-But for how far .NET has come through the years!<br /></p>
+<h2 id="loading-the-dump">Loading the Dump</h2>
 
-  <footer class="blockquote-footer text-right"><cite>ChatGPT, of course. I couldn't write this.</cite></footer>
-</blockquote>
+<p>Long gone are the days when you had to <a href="https://learn.microsoft.com/en-us/windows-hardware/drivers/debugger/?WT.mc_id=DT-MVP-5000058">install a different debugger</a> (with… let’s say “interesting” UI design choices), learn about <code>SOS.dll</code>, set up a symbol server cache linked to the upstream Microsoft symbol server, learn who John Robbins is, and start typing arcane commands while desperately searching <a href="https://www.tessferrandez.com/">Tess Ferrandez’s</a> totally awesone blog, hoping that she has already explained what you need to do!</p>
 
-<p>I thought today would be a fun time to write up something I’ve been meaning to write for years: the history of “.NET Core” terminology.</p>
+<p>Ah, good times!</p>
 
-<p>More specifically, this is how <em>I’ve</em> seen the term “.NET Core” used in the past. It’s not guaranteed to be correct, and <em>certainly</em> not guaranteed to be complete! Am I missing anything? Feel free to shout out in the comments!</p>
+<p>Yeah, these days you can literally just <em>drag and drop the <code>dbg</code> file</em> onto Visual Studio 🤯. But before you do that, I do have some tips to get the best experience.</p>
 
-<h3 id="net-compact-framework">.NET Compact Framework</h3>
+<h2 id="recommended-visual-studio-settings">Recommended Visual Studio Settings</h2>
 
-<p>I believe I first heard the term “.NET Core” referring to the .NET Compact Framework. This was way back when .NET Framework 3.5 was the new hotness. Actually, that was “.NET Framework 3.5 SP1” - as in “Service Pack 1”. Yes, .NET used to have <em>service packs</em>.</p>
+<p>All screenshots are from VS2026, which is current at the time of writing this post.</p>
 
-<p>I’m not sure if “.NET Core” was the proper term to refer to NetCF or not. AFAIK, it was an unofficial term that was applied because .NET Compact Framework contained a small subset of the (massive) .NET Framework, intended to run on embedded devices. Hence, it was a “core” (minimal) framework.</p>
+<h3 id="just-my-code">Just My Code</h3>
 
-<h3 id="silverlight-winrt-windows-phone-windows-store-and-universal-windows-platform">Silverlight, WinRT, Windows Phone, Windows Store, and Universal Windows Platform</h3>
+<p>First, you should uncheck <a href="https://learn.microsoft.com/visualstudio/debugger/just-my-code?view=visualstudio&amp;WT.mc_id=DT-MVP-5000058">Just My Code</a>. I just find it more useful to see the full picture when debugging a dump file.</p>
 
-<p>Perhaps I should have put a trigger warning on this article… Sorry for anyone who winced in pain just reading the title for this section…</p>
+<p class="center"><a href="/assets/VS2026-disable-just-my-code.png"><img src="/assets/VS2026-disable-just-my-code.png" alt="Just My Code" /></a></p>
 
-<p>All of these technologies had something or other to do with “.NET Core” as a term. They were all minimal sub-frameworks of the full .NET Framework. And at least some of them had similar terminology for their runtimes (e.g., Silverlight ran on “Core CLR”). My brain has mercifully purged the sordid details. I only vaguely remember Windows Phone being different from Windows Phone Apps, and Silverlight getting even more stripped-down to run on Windows Phone.</p>
+<h3 id="symbols">Symbols</h3>
 
-<p>This was not a fun time to be a library developer.</p>
+<p>The next step is to enable loading of symbols (e.g., <code>.pdb</code> files). Visual Studio uses symbols to decipher the compiled code, especially if it was compiled in <code>Release</code>. Symbols are often necessary to make any sense of the stack at all.</p>
 
-<h3 id="netcore-as-a-target-framework-moniker">netcore as a Target Framework Moniker</h3>
+<p>I have found the best option is to tell Visual Studio to load <em>all</em> symbols when loading a dump file. This is <strong>not</strong> a setting I keep normally set, because loading all those symbols takes a <em>long</em> time. But if I’m debugging a dump file, I always turn this on.</p>
 
-<p>This is what I actually want to focus on. <a href="https://learn.microsoft.com/en-us/dotnet/standard/frameworks?WT.mc_id=DT-MVP-5000058">Target framework monikers (TFMs)</a> are very important to library developers.</p>
+<p class="center"><a href="/assets/VS2026-load-all-symbols.png"><img src="/assets/VS2026-load-all-symbols.png" alt="Load All Symbols" /></a></p>
 
-<p>The term “.NET Core” officially entered the NuGet space as a TFM, but it <em>wasn’t</em> for what we call .NET Core today. It was for Windows Store apps (and WinRT apps), and briefly extending into UWP apps.</p>
+<p>Next, you need to tell Visual Studio where to download those symbol files from. The two primary sources are <a href="https://learn.microsoft.com/windows-hardware/drivers/debugger/microsoft-public-symbols?WT.mc_id=DT-MVP-5000058">Microsoft</a> and <a href="https://learn.microsoft.com/nuget/create-packages/symbol-packages-snupkg?WT.mc_id=DT-MVP-5000058#nugetorg-symbol-server">NuGet</a> (<code>symbols.nuget.org</code>). Microsoft provides symbols for their OS (at least); the NuGet symbol server is the common place for .NET open source library symbols. These are both so common that you don’t have to type them in anymore; they’re just checkboxes in Visual Studio now.</p>
 
-<p>Yes, Windows Store projects way back in Windows 8.0 (as well as WinRT) used a TFM identifier of <code>netcore45</code>. Windows 8.1 used <code>netcore451</code>. When Windows Store apps were replaced by Universal Windows Platform (UWP) apps, they briefly used <code>netcore50</code> before changing to <code>uap10.0</code>.</p>
+<p class="center"><a href="/assets/VS2026-symbol-servers.png"><img src="/assets/VS2026-symbol-servers.png" alt="Symbol Servers" /></a></p>
 
-<p>So, when the (modern) .NET Core team needed a TFM, they found <code>netcoreNN</code> wasn’t available. I assume this is why they went with <code>netcoreappNN</code> instead (after a brief foray into <code>dnxcore50</code> and <code>aspnetcore50</code>). So .NET Core TFMs for older versions (1.0-3.1) are <code>netcoreapp1.0</code> - <code>netcoreapp3.1</code>. It was just an unfortunate accident of history.</p>
+<p>Finally, I recommend setting up a local symbol cache. This is a local folder that will hold all those <code>pdb</code> files. I recommend using a folder on your <a href="https://learn.microsoft.com/windows/dev-drive/?WT.mc_id=DT-MVP-5000058">dev drive</a> for this; mine is at <code>D:\Cache\symbols</code>, a sibling folder of <code>D:\Cache\nuget</code> which acts as my NuGet package cache. I like keeping them both under <code>D:\Cache</code> because I know I can just delete anything under there if I need more disk space.</p>
 
-<h2 id="no-more-net-core">No More .NET Core</h2>
+<p class="center"><a href="/assets/VS2026-symbol-server-cache.png"><img src="/assets/VS2026-symbol-server-cache.png" alt="Symbol Server Cache" /></a></p>
 
-<p>The .NET team has dropped “Core”. There is now one .NET moving forward - a great relief to library authors!</p>
+<h3 id="sources">Sources</h3>
 
-<p>Since v5, the TFMs have even changed: modern .NET uses <code>net9.0</code> and similar, dropping the “core” moniker even from the TFM.</p>
+<p>Now we have Visual Studio ready to aggressively load and debug all the symbols it can find. So let’s help it find the actual source code!</p>
 
-<p>I still refer to .NET as “.NET Core” from time to time, especially in conversations that have to do with both .NET Framework and the new .NET. E.g., I’ll refer to a “.NET Core migration” rather than just “.NET migration” for a project currently targeting .NET Framework. The proper term, though, is no longer “.NET Core” but just “.NET”.</p>
+<p>I always enable <a href="https://learn.microsoft.com/visualstudio/debugger/specify-symbol-dot-pdb-and-source-files-in-the-visual-studio-debugger?view=visualstudio&amp;WT.mc_id=DT-MVP-5000058#other-symbol-options-for-debugging">source server</a> support. Source servers are a way for Visual Studio to load the exact version of the original source files actually used to compile the program. These days, source servers are primarily used for unmanaged code, although some legacy .NET libraries may use them.</p>
 
-<p>“.NET Core” is gone. And good riddance!</p>
+<p class="center"><a href="/assets/VS2026-enable-source-server-support.png"><img src="/assets/VS2026-enable-source-server-support.png" alt="Enable Source Server Support" /></a></p>
 
-<p>May the future be One .NET, and I wish you all joy in this Christmas season!</p>
+<p>While you’re there, I also recommend enabling Git Credential Manager for Source Link. <a href="https://learn.microsoft.com/visualstudio/debugger/how-to-improve-diagnostics-debugging-with-sourcelink?view=visualstudio&amp;WT.mc_id=DT-MVP-5000058">Source Link</a> is the modern replacement for source servers, at least as far as .NET is concerned. Enabling GCM means you’ll be able to pull the original source files from your private source code repository. Actually, I’m not sure why this isn’t enabled by default; I can’t think of a reason I’d want it off.</p>
+
+<p class="center"><a href="/assets/VS2026-enable-GCM-sourcelink.png"><img src="/assets/VS2026-enable-GCM-sourcelink.png" alt="Enable Git Credential Manager for Source Link" /></a></p>
+
+<p>Source Link itself is enabled by default, so you’re good there.</p>
+
+<p>At this point, if you have access to the source code, Visual Studio should now load it automagically.</p>
+
+<h2 id="load-the-memory-dump">Load the Memory Dump</h2>
+
+<p>Visual Studio is now ready to load a memory dump file; you can just drag-and-drop it right into VS. Then go get a cup of coffee; loading all those symbols the first time is no joke, and it will take a while before it’s ready for you! As your cache fills up, dump files will load faster; the first load is generally the slowest.</p>
+
+<p>Visual Studio does ask you what kind of debugger you want to launch; I always choose <code>Mixed</code> - again, if I don’t know what a problem is, I want to be able to see everything.</p>
+
+<p>Once Visual Studio loads the dump file and the debugger, it will drop you into what looks like a debugging session. Of course, the application is not actually <em>running</em>, so you can’t unpause or step the debugger or anything like that. However, you can poke around. As a general rule, I find the <a href="https://learn.microsoft.com/visualstudio/debugger/using-the-parallel-stacks-window?view=visualstudio&amp;WT.mc_id=DT-MVP-5000058">Parallel Stacks</a>, <a href="https://learn.microsoft.com/visualstudio/debugger/walkthrough-debugging-a-multithreaded-application?view=visualstudio&amp;WT.mc_id=DT-MVP-5000058">Threads</a>, <a href="https://learn.microsoft.com/visualstudio/debugger/how-to-use-the-call-stack-window?view=visualstudio&amp;WT.mc_id=DT-MVP-5000058">Call Stack</a>, and <a href="https://learn.microsoft.com/visualstudio/debugger/how-to-use-the-modules-window?view=visualstudio&amp;WT.mc_id=DT-MVP-5000058">Modules</a> debugger windows to be good starting points on trying to figure out what’s going on.</p>
+
+<p>Happy debugging!</p>
 
   </article>
     
@@ -377,8 +370,8 @@ But for how far .NET has come through the years!<br /></p>
         
         
         <ul class="pager">
-            <li class="previous"><a href="/2024/10/cancellation-6-linking.html" title="Cancellation, Part 6: Linking">&larr; Previous Post</a></li>
-            <li class="next"><a href="/2025/12/debug-dumps-in-visual-studio.html" title="Debug Dumps in Visual Studio">Next Post &rarr;</a></li>
+            <li class="previous"><a href="/2024/12/netcore.html" title="C# Advent: No one loves the .NET Core name anymore">&larr; Previous Post</a></li>
+            
         </ul>
 
         <div id="comments"></div>
@@ -534,7 +527,7 @@ But for how far .NET has come through the years!<br /></p>
 
 <script type="text/javascript">
 
-var pageUrl = "https://blog.stephencleary.com" + "/2024/12/netcore.html";
+var pageUrl = "https://blog.stephencleary.com" + "/2025/12/debug-dumps-in-visual-studio.html";
 
 // (unnecessary) 1) If the URL starts with http://, replace with https://
 

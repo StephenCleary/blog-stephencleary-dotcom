@@ -8,6 +8,89 @@
     <atom:link rel="search" type="application/opensearchdescription+xml" href="https://stephencleary.com/opensearch.xml" title="Cleary Search" />
     
       <item>
+        <title>Debug Dumps in Visual Studio</title>
+        <description>&lt;p&gt;This post is part of &lt;a href=&quot;https://csadvent.christmas/&quot;&gt;C# Advent&lt;/a&gt; organized by &lt;a href=&quot;https://x.com/mgroves&quot;&gt;@mgroves&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Did you know that Visual Studio can debug memory dumps directly these days? It’s actually been capable of that for many years. This post is a memory dump (heh) of my recommended settings when using Visual Studio to debug memory dumps.&lt;/p&gt;
+
+&lt;h2 id=&quot;memory-dumps&quot;&gt;Memory Dumps?&lt;/h2&gt;
+
+&lt;p&gt;If you’re not familiar with the concept, you’re going to love this! A memory dump is a file that contains a copy of the memory of a specific process (hence the name). Windows memory dump files generally have the &lt;code&gt;.dmp&lt;/code&gt; extension.&lt;/p&gt;
+
+&lt;p&gt;This is useful when you have one of those super annoying bugs that only reproduce in production. And yes, this is generally a last resort! Normally you catch bugs by reproducing the issue locally and then you can just run the code in the debugger, which is an incredibly useful tool for… well… &lt;em&gt;debugging&lt;/em&gt;. Sometimes reproducing the issue is challenging (or impossible), and a pretty decent fallback technique (I’ve found) is to just read the code. But if you can’t find/reproduce the bug in a reasonable amount of time, taking a memory dump is a great technique to get additional insight.&lt;/p&gt;
+
+&lt;h2 id=&quot;capturing-memory-dumps&quot;&gt;Capturing Memory Dumps&lt;/h2&gt;
+
+&lt;p&gt;The best tool for this is &lt;a href=&quot;https://learn.microsoft.com/en-us/sysinternals/downloads/procdump?WT.mc_id=DT-MVP-5000058&quot;&gt;ProcDump&lt;/a&gt;: you can capture dumps on demand, or capture based on some monitoring trigger (process crash, high CPU/memory usage, etc).&lt;/p&gt;
+
+&lt;p&gt;However, ProcDump requires access to the machine, so this works great only for on-prem or virtual machine deployments. If you’re in an Azure WebApp situation, you can &lt;a href=&quot;https://learn.microsoft.com/en-us/troubleshoot/azure/app-service/capture-memory-dumps-app-service?WT.mc_id=DT-MVP-5000058#collect-a-memory-dump-feature&quot;&gt;capture memory dumps there as well&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;loading-the-dump&quot;&gt;Loading the Dump&lt;/h2&gt;
+
+&lt;p&gt;Long gone are the days when you had to &lt;a href=&quot;https://learn.microsoft.com/en-us/windows-hardware/drivers/debugger/?WT.mc_id=DT-MVP-5000058&quot;&gt;install a different debugger&lt;/a&gt; (with… let’s say “interesting” UI design choices), learn about &lt;code&gt;SOS.dll&lt;/code&gt;, set up a symbol server cache linked to the upstream Microsoft symbol server, learn who John Robbins is, and start typing arcane commands while desperately searching &lt;a href=&quot;https://www.tessferrandez.com/&quot;&gt;Tess Ferrandez’s&lt;/a&gt; totally awesone blog, hoping that she has already explained what you need to do!&lt;/p&gt;
+
+&lt;p&gt;Ah, good times!&lt;/p&gt;
+
+&lt;p&gt;Yeah, these days you can literally just &lt;em&gt;drag and drop the &lt;code&gt;dbg&lt;/code&gt; file&lt;/em&gt; onto Visual Studio 🤯. But before you do that, I do have some tips to get the best experience.&lt;/p&gt;
+
+&lt;h2 id=&quot;recommended-visual-studio-settings&quot;&gt;Recommended Visual Studio Settings&lt;/h2&gt;
+
+&lt;p&gt;All screenshots are from VS2026, which is current at the time of writing this post.&lt;/p&gt;
+
+&lt;h3 id=&quot;just-my-code&quot;&gt;Just My Code&lt;/h3&gt;
+
+&lt;p&gt;First, you should uncheck &lt;a href=&quot;https://learn.microsoft.com/visualstudio/debugger/just-my-code?view=visualstudio&amp;amp;WT.mc_id=DT-MVP-5000058&quot;&gt;Just My Code&lt;/a&gt;. I just find it more useful to see the full picture when debugging a dump file.&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/VS2026-disable-just-my-code.png&quot;&gt;&lt;img src=&quot;/assets/VS2026-disable-just-my-code.png&quot; alt=&quot;Just My Code&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;symbols&quot;&gt;Symbols&lt;/h3&gt;
+
+&lt;p&gt;The next step is to enable loading of symbols (e.g., &lt;code&gt;.pdb&lt;/code&gt; files). Visual Studio uses symbols to decipher the compiled code, especially if it was compiled in &lt;code&gt;Release&lt;/code&gt;. Symbols are often necessary to make any sense of the stack at all.&lt;/p&gt;
+
+&lt;p&gt;I have found the best option is to tell Visual Studio to load &lt;em&gt;all&lt;/em&gt; symbols when loading a dump file. This is &lt;strong&gt;not&lt;/strong&gt; a setting I keep normally set, because loading all those symbols takes a &lt;em&gt;long&lt;/em&gt; time. But if I’m debugging a dump file, I always turn this on.&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/VS2026-load-all-symbols.png&quot;&gt;&lt;img src=&quot;/assets/VS2026-load-all-symbols.png&quot; alt=&quot;Load All Symbols&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Next, you need to tell Visual Studio where to download those symbol files from. The two primary sources are &lt;a href=&quot;https://learn.microsoft.com/windows-hardware/drivers/debugger/microsoft-public-symbols?WT.mc_id=DT-MVP-5000058&quot;&gt;Microsoft&lt;/a&gt; and &lt;a href=&quot;https://learn.microsoft.com/nuget/create-packages/symbol-packages-snupkg?WT.mc_id=DT-MVP-5000058#nugetorg-symbol-server&quot;&gt;NuGet&lt;/a&gt; (&lt;code&gt;symbols.nuget.org&lt;/code&gt;). Microsoft provides symbols for their OS (at least); the NuGet symbol server is the common place for .NET open source library symbols. These are both so common that you don’t have to type them in anymore; they’re just checkboxes in Visual Studio now.&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/VS2026-symbol-servers.png&quot;&gt;&lt;img src=&quot;/assets/VS2026-symbol-servers.png&quot; alt=&quot;Symbol Servers&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Finally, I recommend setting up a local symbol cache. This is a local folder that will hold all those &lt;code&gt;pdb&lt;/code&gt; files. I recommend using a folder on your &lt;a href=&quot;https://learn.microsoft.com/windows/dev-drive/?WT.mc_id=DT-MVP-5000058&quot;&gt;dev drive&lt;/a&gt; for this; mine is at &lt;code&gt;D:\Cache\symbols&lt;/code&gt;, a sibling folder of &lt;code&gt;D:\Cache\nuget&lt;/code&gt; which acts as my NuGet package cache. I like keeping them both under &lt;code&gt;D:\Cache&lt;/code&gt; because I know I can just delete anything under there if I need more disk space.&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/VS2026-symbol-server-cache.png&quot;&gt;&lt;img src=&quot;/assets/VS2026-symbol-server-cache.png&quot; alt=&quot;Symbol Server Cache&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;sources&quot;&gt;Sources&lt;/h3&gt;
+
+&lt;p&gt;Now we have Visual Studio ready to aggressively load and debug all the symbols it can find. So let’s help it find the actual source code!&lt;/p&gt;
+
+&lt;p&gt;I always enable &lt;a href=&quot;https://learn.microsoft.com/visualstudio/debugger/specify-symbol-dot-pdb-and-source-files-in-the-visual-studio-debugger?view=visualstudio&amp;amp;WT.mc_id=DT-MVP-5000058#other-symbol-options-for-debugging&quot;&gt;source server&lt;/a&gt; support. Source servers are a way for Visual Studio to load the exact version of the original source files actually used to compile the program. These days, source servers are primarily used for unmanaged code, although some legacy .NET libraries may use them.&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/VS2026-enable-source-server-support.png&quot;&gt;&lt;img src=&quot;/assets/VS2026-enable-source-server-support.png&quot; alt=&quot;Enable Source Server Support&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;While you’re there, I also recommend enabling Git Credential Manager for Source Link. &lt;a href=&quot;https://learn.microsoft.com/visualstudio/debugger/how-to-improve-diagnostics-debugging-with-sourcelink?view=visualstudio&amp;amp;WT.mc_id=DT-MVP-5000058&quot;&gt;Source Link&lt;/a&gt; is the modern replacement for source servers, at least as far as .NET is concerned. Enabling GCM means you’ll be able to pull the original source files from your private source code repository. Actually, I’m not sure why this isn’t enabled by default; I can’t think of a reason I’d want it off.&lt;/p&gt;
+
+&lt;p class=&quot;center&quot;&gt;&lt;a href=&quot;/assets/VS2026-enable-GCM-sourcelink.png&quot;&gt;&lt;img src=&quot;/assets/VS2026-enable-GCM-sourcelink.png&quot; alt=&quot;Enable Git Credential Manager for Source Link&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Source Link itself is enabled by default, so you’re good there.&lt;/p&gt;
+
+&lt;p&gt;At this point, if you have access to the source code, Visual Studio should now load it automagically.&lt;/p&gt;
+
+&lt;h2 id=&quot;load-the-memory-dump&quot;&gt;Load the Memory Dump&lt;/h2&gt;
+
+&lt;p&gt;Visual Studio is now ready to load a memory dump file; you can just drag-and-drop it right into VS. Then go get a cup of coffee; loading all those symbols the first time is no joke, and it will take a while before it’s ready for you! As your cache fills up, dump files will load faster; the first load is generally the slowest.&lt;/p&gt;
+
+&lt;p&gt;Visual Studio does ask you what kind of debugger you want to launch; I always choose &lt;code&gt;Mixed&lt;/code&gt; - again, if I don’t know what a problem is, I want to be able to see everything.&lt;/p&gt;
+
+&lt;p&gt;Once Visual Studio loads the dump file and the debugger, it will drop you into what looks like a debugging session. Of course, the application is not actually &lt;em&gt;running&lt;/em&gt;, so you can’t unpause or step the debugger or anything like that. However, you can poke around. As a general rule, I find the &lt;a href=&quot;https://learn.microsoft.com/visualstudio/debugger/using-the-parallel-stacks-window?view=visualstudio&amp;amp;WT.mc_id=DT-MVP-5000058&quot;&gt;Parallel Stacks&lt;/a&gt;, &lt;a href=&quot;https://learn.microsoft.com/visualstudio/debugger/walkthrough-debugging-a-multithreaded-application?view=visualstudio&amp;amp;WT.mc_id=DT-MVP-5000058&quot;&gt;Threads&lt;/a&gt;, &lt;a href=&quot;https://learn.microsoft.com/visualstudio/debugger/how-to-use-the-call-stack-window?view=visualstudio&amp;amp;WT.mc_id=DT-MVP-5000058&quot;&gt;Call Stack&lt;/a&gt;, and &lt;a href=&quot;https://learn.microsoft.com/visualstudio/debugger/how-to-use-the-modules-window?view=visualstudio&amp;amp;WT.mc_id=DT-MVP-5000058&quot;&gt;Modules&lt;/a&gt; debugger windows to be good starting points on trying to figure out what’s going on.&lt;/p&gt;
+
+&lt;p&gt;Happy debugging!&lt;/p&gt;
+</description>
+        <pubDate>Thu, 04 Dec 2025 00:00:00 +0000</pubDate>
+        <link>https://blog.stephencleary.com/2025/12/debug-dumps-in-visual-studio.html</link>
+        <guid isPermaLink="true">https://blog.stephencleary.com/2025/12/debug-dumps-in-visual-studio.html</guid>
+      </item>
+    
+      <item>
         <title>C# Advent: No one loves the .NET Core name anymore</title>
         <description>&lt;p&gt;This post is part of &lt;a href=&quot;https://csadvent.christmas/&quot;&gt;C# Advent&lt;/a&gt; organized by &lt;a href=&quot;https://x.com/mgroves&quot;&gt;@mgroves&lt;/a&gt;.&lt;/p&gt;
 
@@ -1175,70 +1258,6 @@ And, sure, there's nothing really _wrong_ with this, but there's some parts that
         <pubDate>Thu, 28 Sep 2023 00:00:00 +0000</pubDate>
         <link>https://blog.stephencleary.com/2023/09/memory-mapped-files-overlaid-structs.html</link>
         <guid isPermaLink="true">https://blog.stephencleary.com/2023/09/memory-mapped-files-overlaid-structs.html</guid>
-      </item>
-    
-      <item>
-        <title>Grounded ChatGPT</title>
-        <description>&lt;p&gt;So, there’s this thing you may have heard of called ChatGPT. A lot of people (myself included) have thought “OK, nice toy. It’s pretty good at producing human-sounding text. But I want to run it &lt;em&gt;on my own data&lt;/em&gt; without becoming a data scientist and spending a few hundred thousand dollars in training costs.”&lt;/p&gt;
-
-&lt;p&gt;Then someone pointed out to me there’s already a technique for this called Retrieval Augmented Generation, and in fact there’s some &lt;a href=&quot;https://github.com/Azure-Samples/azure-search-openai-demo&quot;&gt;sample code right there&lt;/a&gt; showing how to do it.&lt;/p&gt;
-
-&lt;h2 id=&quot;retrieval-augmented-generation&quot;&gt;Retrieval Augmented Generation&lt;/h2&gt;
-
-&lt;p&gt;To save you a Google search (or ChatGPT query?), here’s my super-simple description of this technique: when the user asks a question, instead of just giving it to ChatGPT directly, first do a &lt;em&gt;search&lt;/em&gt; for that question over your own data, and combine the search results &lt;em&gt;along with&lt;/em&gt; the user’s question as the ChatGPT input.&lt;/p&gt;
-
-&lt;p&gt;This technique “grounds” ChatGPT, giving it your own data alongside the user’s question. If you structure your input properly, you can influence ChatGPT to produce relevant results, even including source references. With this technique, ChatGPT is able to produce much better results, without the need for training or even fine-tuning the model itself.&lt;/p&gt;
-
-&lt;h2 id=&quot;sample-code&quot;&gt;Sample Code&lt;/h2&gt;
-
-&lt;p&gt;The official sample referenced above is in Python. And I love Python. As a language, I mean. But it’s been… um… 25 years or so since I’ve used it. Definitely rusty. So I decided to write my own sample (heavily influenced by the official one) in C#. And using local Docker containers as much as possible instead of creating a bunch of Azure resources.&lt;/p&gt;
-
-&lt;p&gt;You can find my &lt;a href=&quot;https://github.com/StephenCleary/grounded-chatgpt&quot;&gt;C# Retrieval Augmented Generation code on GitHub&lt;/a&gt;. It’s not production-ready, but it gets the general point across. You can use it pretty easily to “teach” ChatGPT about modern events or your own custom data. It uses Elasticsearch and Seq (both in local Docker containers), preserving its data in local Docker volumes. And it has exhaustive logging out of the box, so you can always review what APIs were called and how exactly they work. My code does use the Azure OpenAI API to talk to ChatGPT, but everything else is in local Docker containers.&lt;/p&gt;
-
-&lt;h2 id=&quot;more-implementation-details&quot;&gt;More Implementation Details&lt;/h2&gt;
-
-&lt;p&gt;When you use this sample code to do a retrieval-augmented generation, what actually happens is this:&lt;/p&gt;
-
-&lt;p&gt;The user’s question is sent to ChatGPT to extract search keywords, using this template:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;Below is a question asked by the user that needs to be answered by searching.
-Generate a search query based on names and concepts extracted from the question.
-
-### Question:
-{question}
-
-### Search query:
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;ChatGPT is pretty good at generating a search query from a user question; I set the &lt;code&gt;temperature&lt;/code&gt; to zero to ensure there’s no randomness in this call.&lt;/p&gt;
-
-&lt;p&gt;Next, this ChatGPT response is sent to Elasticsearch (just as a &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-simple-query-string-query.html&quot;&gt;simple query string&lt;/a&gt;).&lt;/p&gt;
-
-&lt;p&gt;The results of the Elasticsearch search are then formatted and injected into a ChatGPT prompt that looks like this:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;Answer the following question. You may include multiple answers, but each answer may only use the data provided in the References below.
-Each Reference has a number followed by tab and then its data.
-Use square brakets to indicate which Reference was used, e.g. [7]
-Don't combine References; list each Reference separately, e.g. [1][2]
-If you cannot answer using the References below, say you don't know. Only provide answers that include at least one Reference name.
-If asking a clarifying question to the user would help, ask the question.
-Do not comment on unused References.
-
-### References:
-{sources}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;The result is then post-processed to extract the quoted references and change them to hyperlinks.&lt;/p&gt;
-
-&lt;h2 id=&quot;have-fun&quot;&gt;Have Fun!&lt;/h2&gt;
-
-&lt;p&gt;I’ve been pretty pleased with the results, even though I’m using very simplistic source processing, and a lexical search instead of a more proper semantic/vector search. Even with those limitations, the results are pretty impressive!&lt;/p&gt;
-
-&lt;p&gt;That’s all I have to say for now. Have fun!&lt;/p&gt;
-</description>
-        <pubDate>Thu, 18 May 2023 00:00:00 +0000</pubDate>
-        <link>https://blog.stephencleary.com/2023/05/grounded-chatgpt.html</link>
-        <guid isPermaLink="true">https://blog.stephencleary.com/2023/05/grounded-chatgpt.html</guid>
       </item>
     
   </channel>
